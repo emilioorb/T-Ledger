@@ -3005,7 +3005,7 @@ export const moneySchema = z
     minorUnits: z.string().regex(/^-?\d+$/, { error: 'El monto debe ser un entero en unidades mínimas' }),
     currency: z.enum(CURRENCIES),
   })
-  .meta({ title: 'Money' })
+  .meta({ id: 'Money', title: 'Money' })
 
 export type MoneyDto = z.infer<typeof moneySchema>
 
@@ -3015,7 +3015,7 @@ export const toMoney = (dto: MoneyDto): Money =>
 export const fromMoney = (money: Money): MoneyDto => money.toJSON()
 ```
 
-Cada schema expuesto lleva `title` en su `meta`, para que los tipos generados en el frontend salgan con nombre propio y no como objetos anónimos.
+Cada schema expuesto lleva `id` y `title` en su `meta`. El `id` es lo que zod-openapi extrae a `components.schemas`; sin él el documento queda con los objetos incrustados y sin nombre. El `title` es lo que muestran las herramientas.
 
 - [x] **Paso 6: Escribir el test del controlador que falla**
 
@@ -3205,9 +3205,9 @@ export const createDebtSchema = z
     direction: z.enum(['BORROWED', 'LENT']),
     budgetBucket: z.string().trim().min(1).nullable(),
   })
-  .meta({ title: 'CreateDebtInput' })
+  .meta({ id: 'CreateDebtInput', title: 'CreateDebtInput' })
 
-export const updateDebtSchema = createDebtSchema.partial().meta({ title: 'UpdateDebtInput' })
+export const updateDebtSchema = createDebtSchema.partial().meta({ id: 'UpdateDebtInput', title: 'UpdateDebtInput' })
 
 export const listDebtsQuerySchema = z
   .object({
@@ -3215,7 +3215,7 @@ export const listDebtsQuerySchema = z
     pageSize: z.coerce.number().int().positive().max(100).default(20),
     direction: z.enum(['BORROWED', 'LENT']).optional(),
   })
-  .meta({ title: 'ListDebtsQuery' })
+  .meta({ id: 'ListDebtsQuery', title: 'ListDebtsQuery' })
 
 export const debtResponseSchema = z
   .object({
@@ -3234,7 +3234,7 @@ export const debtResponseSchema = z
     totalInterest: moneySchema,
     payoffDate: isoDate,
   })
-  .meta({ title: 'Debt' })
+  .meta({ id: 'Debt', title: 'Debt' })
 
 export type CreateDebtInput = z.infer<typeof createDebtSchema>
 export type UpdateDebtInput = z.infer<typeof updateDebtSchema>
@@ -3654,7 +3654,7 @@ git commit -m "✨ feat: API de deudas con formato de error único, paginación 
   - `GetScheduleUseCase.execute(id)`, `SimulateExtraPaymentUseCase.execute(id, input)`, `GetPayoffPlanUseCase.execute(strategy, orderedIds)`
   - `GET /api/v1/openapi.json`
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 `api/src/modules/debts/infrastructure/debts-schedule.controller.spec.ts`:
 
@@ -3796,9 +3796,13 @@ describe('POST /api/v1/debts/:id/simulate', () => {
 })
 
 describe('GET /api/v1/debts/payoff-plan', () => {
+  // El plan de pago ordena deudas vivas: una saldada ya no compite por el excedente y
+  // cae al final. Estas fixtures llevan plazo vigente para que el orden sea el de la estrategia.
+  const crearViva = (overrides: Record<string, unknown> = {}) => crear({ termMonths: 240, ...overrides })
+
   it('ordena por tasa descendente con avalancha', async () => {
-    await crear({ name: 'Barata', annualRate: '9' })
-    await crear({ name: 'Cara', annualRate: '42' })
+    await crearViva({ name: 'Barata', annualRate: '9' })
+    await crearViva({ name: 'Cara', annualRate: '42' })
 
     const response = await request(app.getHttpServer()).get(
       '/api/v1/debts/payoff-plan?strategy=avalanche',
@@ -3810,8 +3814,8 @@ describe('GET /api/v1/debts/payoff-plan', () => {
   })
 
   it('ordena por saldo ascendente con bola de nieve', async () => {
-    await crear({ name: 'Grande', principal: { minorUnits: '50000000', currency: 'CRC' } })
-    await crear({ name: 'Chica', principal: { minorUnits: '1000000', currency: 'CRC' } })
+    await crearViva({ name: 'Grande', principal: { minorUnits: '50000000', currency: 'CRC' } })
+    await crearViva({ name: 'Chica', principal: { minorUnits: '1000000', currency: 'CRC' } })
 
     const response = await request(app.getHttpServer()).get(
       '/api/v1/debts/payoff-plan?strategy=snowball',
@@ -3821,8 +3825,8 @@ describe('GET /api/v1/debts/payoff-plan', () => {
   })
 
   it('deja fuera los préstamos otorgados', async () => {
-    await crear({ name: 'Propia' })
-    await crear({ name: 'Prestada', direction: 'LENT', budgetBucket: null })
+    await crearViva({ name: 'Propia' })
+    await crearViva({ name: 'Prestada', direction: 'LENT', budgetBucket: null })
 
     const response = await request(app.getHttpServer()).get(
       '/api/v1/debts/payoff-plan?strategy=avalanche',
@@ -3842,7 +3846,7 @@ describe('GET /api/v1/debts/payoff-plan', () => {
 
 `payoff-plan` va declarado **antes** que `:id` en el controlador. Si `:id` viniera primero, Nest resolvería `/debts/payoff-plan` como una deuda con id `payoff-plan` y el endpoint devolvería 404.
 
-- [ ] **Paso 2: Correr el test y confirmar que falla**
+- [x] **Paso 2: Correr el test y confirmar que falla**
 
 ```bash
 cd api && npm test -- debts-schedule
@@ -3850,7 +3854,7 @@ cd api && npm test -- debts-schedule
 
 Esperado: FAIL con 404 en los tres endpoints nuevos.
 
-- [ ] **Paso 3: Esquemas y presentadores de la tabla**
+- [x] **Paso 3: Esquemas y presentadores de la tabla**
 
 `api/src/modules/debts/infrastructure/schedule.schemas.ts`:
 
@@ -3867,7 +3871,7 @@ export const installmentSchema = z
     interest: moneySchema,
     balance: moneySchema,
   })
-  .meta({ title: 'Installment' })
+  .meta({ id: 'Installment', title: 'Installment' })
 
 export const scheduleResponseSchema = z
   .object({
@@ -3875,7 +3879,7 @@ export const scheduleResponseSchema = z
     totalInterest: moneySchema,
     totalPaid: moneySchema,
   })
-  .meta({ title: 'AmortizationSchedule' })
+  .meta({ id: 'AmortizationSchedule', title: 'AmortizationSchedule' })
 
 export const simulateExtraPaymentSchema = z
   .object({
@@ -3883,7 +3887,7 @@ export const simulateExtraPaymentSchema = z
     afterInstallment: z.number().int().positive(),
     mode: z.enum(['REDUCE_TERM', 'REDUCE_PAYMENT']),
   })
-  .meta({ title: 'SimulateExtraPaymentInput' })
+  .meta({ id: 'SimulateExtraPaymentInput', title: 'SimulateExtraPaymentInput' })
 
 export const projectionResponseSchema = z
   .object({
@@ -3894,14 +3898,14 @@ export const projectionResponseSchema = z
     monthsSaved: z.number().int(),
     totalPaidWithExtra: moneySchema,
   })
-  .meta({ title: 'ExtraPaymentProjection' })
+  .meta({ id: 'ExtraPaymentProjection', title: 'ExtraPaymentProjection' })
 
 export const payoffPlanQuerySchema = z
   .object({
     strategy: z.enum(['avalanche', 'snowball', 'manual']).default('avalanche'),
     order: z.string().optional(),
   })
-  .meta({ title: 'PayoffPlanQuery' })
+  .meta({ id: 'PayoffPlanQuery', title: 'PayoffPlanQuery' })
 
 export const payoffPlanResponseSchema = z
   .object({
@@ -3916,7 +3920,7 @@ export const payoffPlanResponseSchema = z
       }),
     ),
   })
-  .meta({ title: 'PayoffPlan' })
+  .meta({ id: 'PayoffPlan', title: 'PayoffPlan' })
 
 export type SimulateExtraPaymentInput = z.infer<typeof simulateExtraPaymentSchema>
 export type PayoffPlanQuery = z.infer<typeof payoffPlanQuerySchema>
@@ -3958,7 +3962,7 @@ export const toProjectionResponse = (projection: DebtProjection): ProjectionResp
 })
 ```
 
-- [ ] **Paso 4: Casos de uso**
+- [x] **Paso 4: Casos de uso**
 
 `api/src/modules/debts/application/get-schedule.use-case.ts`:
 
@@ -4026,7 +4030,7 @@ export class GetPayoffPlanUseCase {
 }
 ```
 
-- [ ] **Paso 5: Ampliar el controlador**
+- [x] **Paso 5: Ampliar el controlador**
 
 Agregar a `api/src/modules/debts/infrastructure/debts.controller.ts`, **antes** del método `get(':id')`:
 
@@ -4074,10 +4078,10 @@ Sumar al constructor `private readonly getSchedule: GetScheduleUseCase`, `privat
 
 `POST /simulate` responde 200, no 201: simular no crea nada.
 
-- [ ] **Paso 6: Publicar el OpenAPI**
+- [x] **Paso 6: Publicar el OpenAPI**
 
 ```bash
-cd api && npm install zod-openapi@5.5.0
+cd api && npm install zod-openapi@6.0.2
 ```
 
 Agregar a `api/src/main.ts`, antes de `app.listen`:
@@ -4095,20 +4099,20 @@ import { debtsOpenApiPaths } from './modules/debts/infrastructure/debts.openapi.
   app.getHttpAdapter().get('/api/v1/openapi.json', (_req, res) => res.json(openapi))
 ```
 
-`api/src/modules/debts/infrastructure/debts.openapi.ts` declara cada ruta reutilizando los mismos esquemas Zod ya definidos — `createDebtSchema`, `debtResponseSchema`, `scheduleResponseSchema`, `simulateExtraPaymentSchema`, `projectionResponseSchema`, `payoffPlanResponseSchema` — como `requestBody` y `responses`. Ningún esquema se redefine: el contrato tiene una sola fuente y el `title` de cada `meta` es lo que nombra los tipos generados.
+`api/src/modules/debts/infrastructure/debts.openapi.ts` declara cada ruta reutilizando los mismos esquemas Zod ya definidos — `createDebtSchema`, `debtResponseSchema`, `scheduleResponseSchema`, `simulateExtraPaymentSchema`, `projectionResponseSchema`, `payoffPlanResponseSchema` — como `requestBody` y `responses`, tipado con `ZodOpenApiPathsObject`. Ningún esquema se redefine: el contrato tiene una sola fuente y el `id` de cada `meta` es lo que nombra los componentes generados.
 
-- [ ] **Paso 7: Correr todo y verificar el OpenAPI**
+- [x] **Paso 7: Correr todo y verificar el OpenAPI**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
-npm run start:dev
+npm run build && npm start
 # en otra terminal
 curl -s localhost:3000/api/v1/openapi.json | head -40
 ```
 
 Esperado: el documento incluye los componentes `Debt`, `Money`, `AmortizationSchedule` y `ExtraPaymentProjection` con esos nombres.
 
-- [ ] **Paso 8: Commit**
+- [x] **Paso 8: Commit**
 
 ```bash
 git add api
@@ -4116,11 +4120,11 @@ git commit -m "✨ feat: tabla de amortización, simulador de abono, plan de pag
 ```
 
 **Acceptance criteria:**
-- [ ] `GET /debts/:id/schedule` devuelve la tabla de referencia con la última cuota en 3.400.222 y saldo 0
-- [ ] `POST /debts/:id/simulate` reporta interés ahorrado y meses ganados, y responde 200
-- [ ] `GET /debts/payoff-plan` está declarado antes de `:id` y no se resuelve como una deuda
-- [ ] El plan de pago excluye los préstamos otorgados
-- [ ] `/api/v1/openapi.json` expone los componentes con `title` propio
+- [x] `GET /debts/:id/schedule` devuelve la tabla de referencia con la última cuota en 3.400.222 y saldo 0
+- [x] `POST /debts/:id/simulate` reporta interés ahorrado y meses ganados, y responde 200
+- [x] `GET /debts/payoff-plan` está declarado antes de `:id` y no se resuelve como una deuda
+- [x] El plan de pago excluye los préstamos otorgados
+- [x] `/api/v1/openapi.json` expone los componentes con `title` propio
 
 ---
 

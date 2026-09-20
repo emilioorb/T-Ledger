@@ -17,9 +17,9 @@ export const createDebtSchema = z
     direction: z.enum(['BORROWED', 'LENT']),
     budgetBucket: z.string().trim().min(1).nullable(),
   })
-  .meta({ title: 'CreateDebtInput' })
+  .meta({ id: 'CreateDebtInput', title: 'CreateDebtInput' })
 
-export const updateDebtSchema = createDebtSchema.partial().meta({ title: 'UpdateDebtInput' })
+export const updateDebtSchema = createDebtSchema.partial().meta({ id: 'UpdateDebtInput', title: 'UpdateDebtInput' })
 
 export const listDebtsQuerySchema = z
   .object({
@@ -27,7 +27,7 @@ export const listDebtsQuerySchema = z
     pageSize: z.coerce.number().int().positive().max(100).default(20),
     direction: z.enum(['BORROWED', 'LENT']).optional(),
   })
-  .meta({ title: 'ListDebtsQuery' })
+  .meta({ id: 'ListDebtsQuery', title: 'ListDebtsQuery' })
 
 export const debtResponseSchema = z
   .object({
@@ -46,7 +46,7 @@ export const debtResponseSchema = z
     totalInterest: moneySchema,
     payoffDate: isoDate,
   })
-  .meta({ title: 'Debt' })
+  .meta({ id: 'Debt', title: 'Debt' })
 
 export type CreateDebtInput = z.infer<typeof createDebtSchema>
 export type UpdateDebtInput = z.infer<typeof updateDebtSchema>

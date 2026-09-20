@@ -3,7 +3,10 @@ import { PrismaModule } from '../../shared/prisma/prisma.module.js'
 import { CreateDebtUseCase } from './application/create-debt.use-case.js'
 import { DeleteDebtUseCase } from './application/delete-debt.use-case.js'
 import { GetDebtUseCase } from './application/get-debt.use-case.js'
+import { GetPayoffPlanUseCase } from './application/get-payoff-plan.use-case.js'
+import { GetScheduleUseCase } from './application/get-schedule.use-case.js'
 import { ListDebtsUseCase } from './application/list-debts.use-case.js'
+import { SimulateExtraPaymentUseCase } from './application/simulate-extra-payment.use-case.js'
 import { UpdateDebtUseCase } from './application/update-debt.use-case.js'
 import { DEBT_REPOSITORY } from './domain/debt-repository.port.js'
 import { DebtsController } from './infrastructure/debts.controller.js'
@@ -19,6 +22,9 @@ import { PrismaDebtRepository } from './infrastructure/prisma-debt.repository.js
     GetDebtUseCase,
     UpdateDebtUseCase,
     DeleteDebtUseCase,
+    GetScheduleUseCase,
+    SimulateExtraPaymentUseCase,
+    GetPayoffPlanUseCase,
   ],
   exports: [DEBT_REPOSITORY],
 })

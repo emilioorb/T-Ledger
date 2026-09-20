@@ -8,7 +8,7 @@ export const moneySchema = z
     minorUnits: z.string().regex(/^-?\d+$/, { error: 'El monto debe ser un entero en unidades mínimas' }),
     currency: z.enum(CURRENCIES),
   })
-  .meta({ title: 'Money' })
+  .meta({ id: 'Money', title: 'Money' })
 
 export type MoneyDto = z.infer<typeof moneySchema>
 
