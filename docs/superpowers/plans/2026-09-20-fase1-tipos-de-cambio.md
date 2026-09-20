@@ -4,9 +4,9 @@
 
 **Goal:** Que el sistema convierta entre colones y dólares con la tasa del BCCR vigente en cualquier fecha, sin que la disponibilidad del banco central bloquee nunca una operación.
 
-**Architecture:** Módulo `money` con dominio rico. `ExchangeRateProviderPort` es el puerto; `BccrExchangeRateAdapter` habla SOAP contra el BCCR, valida la respuesta con Zod antes de usarla y nunca deja pasar un XML sin verificar. Las tasas se persisten siempre; la conversión lee de la base y jamás toca la red. Un job diario sincroniza y rellena huecos.
+**Architecture:** Módulo `money` con dominio rico. `ExchangeRateProviderPort` es el puerto; `BccrExchangeRateAdapter` habla REST contra la API del SDDE, valida la respuesta con Zod antes de usarla y nunca deja pasar un JSON sin verificar. Las tasas se persisten siempre; la conversión lee de la base y jamás toca la red. Un job diario sincroniza y rellena huecos.
 
-**Tech Stack:** Lo mismo que la rebanada 1, más `@nestjs/schedule` y `fast-xml-parser`.
+**Tech Stack:** Lo mismo que la rebanada 1, más `@nestjs/schedule`. El acceso al BCCR es REST con `fetch`, sin dependencias.
 
 **Spec:** `docs/superpowers/specs/2026-09-20-finanzas-personales-design.md`, sección 6
 
@@ -28,26 +28,26 @@ Valen todas las restricciones del plan de la rebanada 1: versiones pineadas, reg
 | Paquete | Versión |
 |---|---|
 | `@nestjs/schedule` | `12.0.2` |
-| `fast-xml-parser` | `5.11.1` |
+
+No hace falta ningún parser de XML: la API vigente devuelve JSON.
 
 ### Lo que este plan da por cierto, y cómo se verifica
 
-Los datos del servicio del BCCR salen de la sección 6 del spec y se contrastaron contra implementaciones públicas. Dos cosas que el spec no decía y que son fuente de fallo silencioso:
+**El servicio SOAP de `gee.bccr.fi.cr` fue retirado.** La norma vigente es `Estandar_API_SDDE.pdf` (BCCR-DST-TEF, 2025), que define una API REST del Sistema de Divulgación de Datos Económicos con JSON y Bearer Token. Todos los datos del contrato de la Tarea 2 se verificaron llamando al servicio real con un token válido el 2026-09-20; no se dedujeron del documento.
 
-1. **Las fechas van en `dd/mm/yyyy`**, no en ISO. Una fecha en formato ISO no produce un error: produce una respuesta vacía.
-2. **La respuesta llega como XML escapado dentro de un nodo**, no como XML anidado. Hay que desescaparla antes de parsearla.
-
-Los nombres de los parámetros del método (`tcIndicador`, `tcFechaInicio`, `tcFechaFinal`, `tcNombre`, `tnSubNiveles`, `tcCorreoElectronico`, `tcToken`) se confirman contra el WSDL vivo en el Paso 1 de la Tarea 2, antes de escribir el adaptador. Es el único dato del plan que no se pudo verificar sin credenciales, y por eso se verifica primero.
+1. **Las fechas van en `aaaa/mm/dd`** URL-encoded, no en ISO ni en `dd/mm/aaaa`.
+2. **La respuesta es JSON**, no XML.
+3. **El correo no hace falta** en el endpoint de series: alcanza el Bearer.
 
 ### La razón de ser de la validación con Zod
 
-El servicio **devuelve vacío en lugar de error cuando falta un parámetro o el token es inválido**. Sin validación, una credencial mal configurada se manifiesta como «hoy no hay datos» y el sistema sigue andando con tasas viejas durante semanas sin que nadie se entere. La validación convierte ese silencio en un error explícito y registrado. No es una formalidad: es el requisito central de esta rebanada.
+El servicio ya **no** devuelve vacío ante un token inválido: devuelve 401, comprobado. Pero sí devuelve **200 con `datos: []`** cuando no hay datos para el rango pedido. Sin validación, un hueco de sincronización pasaría por éxito y el sistema seguiría con tasas viejas sin que nadie se entere. La validación convierte ese silencio en un error explícito y registrado, y además detecta un cambio de forma en la respuesta.
 
 ### Fuentes consultadas
 
-- Servicio y códigos de indicador: https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/wsindicadoreseconomicos.asmx
-- Parámetros y formato de fecha, implementación pública de referencia: https://github.com/arielcr/indicadores-bccr/blob/master/Indicador.php
-- Suscripción y token: https://www.impulsait.com/como-suscribirse-al-webservice-de-indicadores-economicos-del-banco-central-de-costa-rica-para-obtener-el-tipo-de-cambio/
+- Norma vigente: `Estandar_API_SDDE.pdf`, BCCR-DST-TEF, 2025
+- Registro y generación del token: https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/ → Mi Perfil → Generar token
+- Host de la API: https://apim.bccr.fi.cr
 - `@Cron` con `timeZone`: https://github.com/nestjs/docs.nestjs.com/blob/master/content/techniques/task-scheduling.md
 - Formateo de errores de Zod 4: https://zod.dev/error-formatting
 
@@ -69,7 +69,7 @@ api/src/modules/money/
     ├── bccr/
     │   ├── bccr.config.ts            credenciales validadas al arrancar
     │   ├── bccr-soap.client.ts       petición y desescapado
-    │   ├── bccr-response.schema.ts   Zod sobre el XML parseado
+    │   ├── bccr-response.schema.ts   Zod sobre el JSON de la API
     │   └── bccr-exchange-rate.adapter.ts
     ├── prisma-exchange-rate.repository.ts
     ├── exchange-rates.controller.ts
@@ -88,7 +88,7 @@ api/test/fixtures/bccr/
 
 ### Tarea 1: Dominio de tipos de cambio y conversión
 
-**Descripción:** La entidad, los dos puertos y la conversión pura. La regla que define el módulo: *la tasa vigente en la fecha X es la última publicación con fecha menor o igual a X*, porque el BCCR no publica fines de semana ni feriados. Esa regla es la que hace que un lunes feriado no devuelva «sin datos».
+**Descripción:** La entidad, los dos puertos y la conversión pura. La regla que define el módulo: *la tasa vigente en la fecha X es la última publicación con fecha menor o igual a X*. Se verificó contra la API que el BCCR sí publica todos los días del calendario, fines de semana incluidos, así que la regla no cubre huecos del banco central sino huecos de nuestra sincronización: una fecha posterior al último día traído resuelve al último conocido.
 
 **Alcance:** S · **Dependencias:** kernel de la rebanada 1
 
@@ -286,8 +286,8 @@ import type { DateRange } from '../../../shared/kernel/date-range.js'
 import type { ExchangeRate, RateIndicator } from './exchange-rate.js'
 
 export interface ExchangeRateRepository {
-  // «Vigente en la fecha X» es la última publicación con fecha menor o igual a X:
-  // el BCCR no publica fines de semana ni feriados.
+  // «Vigente en la fecha X» es la última publicación con fecha menor o igual a X.
+  // El BCCR publica todos los días, pero nuestra sincronización puede ir atrasada.
   findEffectiveAt(indicator: RateIndicator, date: Date): Promise<ExchangeRate | null>
   findLatest(indicator: RateIndicator): Promise<ExchangeRate | null>
   findInRange(indicator: RateIndicator, range: DateRange): Promise<ExchangeRate[]>
@@ -326,233 +326,45 @@ git commit -m "✨ feat: dominio de tipos de cambio y conversión entre monedas"
 
 ---
 
-### Tarea 2: Adaptador del BCCR
+### Tarea 2: Adaptador REST del BCCR (norma SDDE 2025)
 
-**Descripción:** El adaptador SOAP y su validación. Es la tarea de mayor riesgo del plan y por eso empieza confirmando el contrato contra el WSDL vivo en lugar de confiar en la memoria. Se prueba contra respuestas XML grabadas, incluida la respuesta vacía que devuelve el servicio cuando el token es inválido.
+**Descripción:** El adaptador contra la API del Sistema de Divulgación de Datos Económicos y su validación. El servicio SOAP que suponía la versión anterior de este plan fue retirado: `gee.bccr.fi.cr` responde 503 y la norma vigente, `Estandar_API_SDDE.pdf` de 2025, define una API REST con JSON y Bearer Token. Los fixtures de esta tarea son capturas reales, no inventadas.
 
 **Alcance:** M · **Dependencias:** Tarea 1
 
 **Files:**
-- Create: `api/src/modules/money/infrastructure/bccr/bccr.config.ts`, `bccr-soap.client.ts`, `bccr-response.schema.ts`, `bccr-exchange-rate.adapter.ts`
-- Create: `api/test/fixtures/bccr/respuesta-valida.xml`, `respuesta-vacia.xml`, `respuesta-un-dia.xml`
+- Create: `api/src/modules/money/infrastructure/bccr/bccr.config.ts`, `bccr-api.client.ts`, `bccr-response.schema.ts`, `bccr-exchange-rate.adapter.ts`
+- Ya creados: `api/src/test/fixtures/bccr/series-venta.json`, `series-compra.json`, `series-vacia.json`
 - Test: `api/src/modules/money/infrastructure/bccr/bccr-response.schema.spec.ts`, `bccr-exchange-rate.adapter.spec.ts`
 
 **Interfaces:**
 - Consumes: `ExchangeRate`, `ExchangeRateProviderPort`, `DateRange`
 - Produces:
-  - `bccrConfigSchema` y `loadBccrConfig(source): BccrConfig` con `{ endpoint, email, token }`
-  - `class BccrSoapClient` — `call(indicator: RateIndicator, range: DateRange): Promise<string>` devuelve el XML interno ya desescapado
-  - `parseBccrResponse(xml: string, indicator: RateIndicator): ExchangeRate[]` — lanza `BccrEmptyResponseError` si viene vacío
-  - `class BccrEmptyResponseError extends Error`
+  - `bccrConfigSchema` y `loadBccrConfig(source): BccrConfig` con `{ baseUrl, token }`
+  - `class BccrApiClient` — `fetchSeries(indicator: RateIndicator, range: DateRange): Promise<unknown>`
+  - `parseBccrResponse(payload: unknown, indicator: RateIndicator): ExchangeRate[]`
+  - `class BccrAuthError`, `class BccrUnavailableError`, `class BccrEmptyResponseError`
   - `class BccrExchangeRateAdapter implements ExchangeRateProviderPort`
 
-- [ ] **Paso 1: Confirmar el contrato contra el WSDL vivo**
+#### Lo que se verificó contra el servicio real
 
-Antes de escribir una línea:
+Todo lo de abajo se comprobó llamando a la API con un token válido el 2026-09-20, no se dedujo del PDF.
 
-```bash
-curl -s "https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/wsindicadoreseconomicos.asmx?WSDL" \
-  | tr '>' '>\n' | grep -A2 -i "ObtenerIndicadoresEconomicos"
-```
+| Dato | Valor verificado |
+|---|---|
+| Host | `https://apim.bccr.fi.cr` |
+| Ruta | `/SDDE/api/Bccr.GE.SDDE.Publico.Indicadores.API/indicadoresEconomicos/{codigo}/series` |
+| Parámetros | `fechaInicio`, `fechaFin` en `aaaa/mm/dd` URL-encoded, e `idioma=es` |
+| Autenticación | `Authorization: Bearer <token>`. **El correo no hace falta** en este endpoint |
+| Indicadores | `317` = «Tipo cambio compra», `318` = «Tipo cambio venta» |
+| Sin token | **401**, no una respuesta vacía |
+| Rango sin datos | **200** con `{"estado":true,"mensaje":"No existen datos para las fechas suministradas.","datos":[]}` |
 
-Anotar los nombres exactos y el orden de los parámetros de `ObtenerIndicadoresEconomicos`. Lo esperado, según implementaciones públicas, es `tcIndicador`, `tcFechaInicio`, `tcFechaFinal`, `tcNombre`, `tnSubNiveles`, `tcCorreoElectronico`, `tcToken`. **Si el WSDL dice otra cosa, manda el WSDL** y se ajustan los pasos 5 y 6.
+**La premisa del plan sobre fines de semana era falsa para esta API.** Se pidió el año del 2025-09-20 al 2026-09-19: devolvió **365 puntos, sin un solo día faltante**. La API publica un valor para cada día del calendario y repite el del fin de semana. Por ejemplo, sábado 2026-09-12, domingo 13 y lunes 14 valen los tres 449,94, mientras el viernes 11 valía 450,06: el valor del fin de semana se fija por adelantado y no es el del viernes.
 
-Este paso existe porque el servicio no rechaza un parámetro mal nombrado: devuelve vacío. Un nombre equivocado no se descubre con un error, se descubre meses después notando que no hay tasas.
+Eso **no elimina** `findEffectiveAt` con «menor o igual»: sigue haciendo falta para una fecha posterior al último día sincronizado, que es el caso normal antes de que corra el job del día. Lo que cambia es la razón: ya no es por huecos del BCCR sino por huecos de nuestra sincronización.
 
-- [ ] **Paso 2: Grabar las respuestas de referencia**
-
-Con credenciales válidas en `.env`, capturar una respuesta real y guardarla en `api/test/fixtures/bccr/respuesta-valida.xml`. Si todavía no hay credenciales, construir el archivo con esta forma, que es la que documenta el servicio:
-
-`api/test/fixtures/bccr/respuesta-valida.xml`:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<string xmlns="https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/">
-  &lt;Datos_de_INGC011_CAT_INDICADORECONOMIC&gt;
-    &lt;INGC011_CAT_INDICADORECONOMIC&gt;
-      &lt;COD_INDICADORINTERNO&gt;317&lt;/COD_INDICADORINTERNO&gt;
-      &lt;DES_FECHA&gt;2026-09-16T00:00:00-06:00&lt;/DES_FECHA&gt;
-      &lt;NUM_VALOR&gt;508.19000000&lt;/NUM_VALOR&gt;
-    &lt;/INGC011_CAT_INDICADORECONOMIC&gt;
-    &lt;INGC011_CAT_INDICADORECONOMIC&gt;
-      &lt;COD_INDICADORINTERNO&gt;317&lt;/COD_INDICADORINTERNO&gt;
-      &lt;DES_FECHA&gt;2026-09-17T00:00:00-06:00&lt;/DES_FECHA&gt;
-      &lt;NUM_VALOR&gt;508.45000000&lt;/NUM_VALOR&gt;
-    &lt;/INGC011_CAT_INDICADORECONOMIC&gt;
-    &lt;INGC011_CAT_INDICADORECONOMIC&gt;
-      &lt;COD_INDICADORINTERNO&gt;317&lt;/COD_INDICADORINTERNO&gt;
-      &lt;DES_FECHA&gt;2026-09-18T00:00:00-06:00&lt;/DES_FECHA&gt;
-      &lt;NUM_VALOR&gt;508.02000000&lt;/NUM_VALOR&gt;
-    &lt;/INGC011_CAT_INDICADORECONOMIC&gt;
-  &lt;/Datos_de_INGC011_CAT_INDICADORECONOMIC&gt;
-</string>
-```
-
-`api/test/fixtures/bccr/respuesta-vacia.xml` — lo que devuelve el servicio con un token inválido o un parámetro faltante:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<string xmlns="https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/"></string>
-```
-
-`api/test/fixtures/bccr/respuesta-un-dia.xml` — un solo registro, para el caso del backfill de un día:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<string xmlns="https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/">
-  &lt;Datos_de_INGC011_CAT_INDICADORECONOMIC&gt;
-    &lt;INGC011_CAT_INDICADORECONOMIC&gt;
-      &lt;COD_INDICADORINTERNO&gt;318&lt;/COD_INDICADORINTERNO&gt;
-      &lt;DES_FECHA&gt;2026-09-18T00:00:00-06:00&lt;/DES_FECHA&gt;
-      &lt;NUM_VALOR&gt;515.30000000&lt;/NUM_VALOR&gt;
-    &lt;/INGC011_CAT_INDICADORECONOMIC&gt;
-  &lt;/Datos_de_INGC011_CAT_INDICADORECONOMIC&gt;
-</string>
-```
-
-Cuando lleguen las credenciales, reemplazar `respuesta-valida.xml` por una captura real y correr los tests: si cambia algo de la forma, los tests lo dicen de inmediato.
-
-- [ ] **Paso 3: Escribir el test del parser que falla**
-
-```bash
-cd api && npm install fast-xml-parser@5.11.1
-```
-
-`api/src/modules/money/infrastructure/bccr/bccr-response.schema.spec.ts`:
-
-```ts
-import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
-import { BccrEmptyResponseError, parseBccrResponse } from './bccr-response.schema.js'
-
-const fixture = (name: string) =>
-  readFileSync(new URL(`../../../../../test/fixtures/bccr/${name}`, import.meta.url), 'utf8')
-
-describe('parseBccrResponse', () => {
-  it('extrae una tasa por día publicado', () => {
-    const rates = parseBccrResponse(fixture('respuesta-valida.xml'), '317')
-
-    expect(rates).toHaveLength(3)
-    expect(rates[0]?.value.toString()).toBe('508.19')
-    expect(rates[0]?.publishedAt.toISOString()).toBe('2026-09-16T00:00:00.000Z')
-    expect(rates[0]?.indicator).toBe('317')
-  })
-
-  it('conserva la fecha publicada sin correrla de día por la zona horaria', () => {
-    const rates = parseBccrResponse(fixture('respuesta-valida.xml'), '317')
-    expect(rates.map((r) => r.publishedAt.toISOString().slice(0, 10))).toEqual([
-      '2026-09-16',
-      '2026-09-17',
-      '2026-09-18',
-    ])
-  })
-
-  it('acepta una respuesta de un solo registro', () => {
-    expect(parseBccrResponse(fixture('respuesta-un-dia.xml'), '318')).toHaveLength(1)
-  })
-
-  it('convierte la respuesta vacía en un error explícito', () => {
-    expect(() => parseBccrResponse(fixture('respuesta-vacia.xml'), '317')).toThrow(
-      BccrEmptyResponseError,
-    )
-  })
-
-  it('rechaza un XML con un valor que no es numérico', () => {
-    const corrupto = fixture('respuesta-valida.xml').replace('508.19000000', 'no es un número')
-    expect(() => parseBccrResponse(corrupto, '317')).toThrow()
-  })
-
-  it('rechaza un XML que no tiene la forma esperada', () => {
-    expect(() => parseBccrResponse('<string>&lt;otraCosa/&gt;</string>', '317')).toThrow()
-  })
-})
-```
-
-La fecha viene con desplazamiento `-06:00`. Si el parser usa `new Date(...)` y luego toma el día local, el 16 de septiembre se convierte en el 15 o el 16 según dónde corra el proceso. El test de la zona horaria es el que atrapa eso.
-
-- [ ] **Paso 4: Implementar el parser validado**
-
-`api/src/modules/money/infrastructure/bccr/bccr-response.schema.ts`:
-
-```ts
-import { Decimal } from 'decimal.js'
-import { XMLParser } from 'fast-xml-parser'
-import { z } from 'zod'
-import { unwrap } from '../../../../shared/kernel/result.js'
-import { ExchangeRate, type RateIndicator } from '../../domain/exchange-rate.js'
-
-export class BccrEmptyResponseError extends Error {
-  readonly code = 'BCCR_EMPTY_RESPONSE'
-
-  constructor() {
-    super(
-      'El BCCR devolvió una respuesta vacía. Suele significar credencial inválida o parámetro faltante, no ausencia de datos.',
-    )
-    this.name = 'BccrEmptyResponseError'
-  }
-}
-
-const recordSchema = z.object({
-  COD_INDICADORINTERNO: z.coerce.string(),
-  DES_FECHA: z.string().min(1),
-  NUM_VALOR: z.coerce.string().regex(/^\d+(\.\d+)?$/, { error: 'NUM_VALOR debe ser numérico' }),
-})
-
-const payloadSchema = z.object({
-  Datos_de_INGC011_CAT_INDICADORECONOMIC: z.object({
-    INGC011_CAT_INDICADORECONOMIC: z.union([recordSchema, z.array(recordSchema)]),
-  }),
-})
-
-const parser = new XMLParser({ ignoreAttributes: true, parseTagValue: false, trimValues: true })
-
-// La fecha llega como 2026-09-16T00:00:00-06:00. Se toma la parte de fecha tal cual:
-// interpretarla como instante la correría de día según dónde corra el proceso.
-const toUtcDay = (raw: string): Date => {
-  const [datePart] = raw.split('T')
-  if (!datePart || !/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
-    throw new RangeError(`Fecha de publicación con formato inesperado: ${raw}`)
-  }
-  return new Date(`${datePart}T00:00:00.000Z`)
-}
-
-export const parseBccrResponse = (xml: string, indicator: RateIndicator): ExchangeRate[] => {
-  const envelope: unknown = parser.parse(xml)
-  const inner = extractInnerXml(envelope)
-
-  if (inner.trim().length === 0) throw new BccrEmptyResponseError()
-
-  const payload = payloadSchema.safeParse(parser.parse(inner))
-  if (!payload.success) {
-    throw new Error(`El BCCR devolvió un XML inesperado:\n${z.prettifyError(payload.error)}`)
-  }
-
-  const records = payload.data.Datos_de_INGC011_CAT_INDICADORECONOMIC.INGC011_CAT_INDICADORECONOMIC
-  const list = Array.isArray(records) ? records : [records]
-
-  return list.map((record) =>
-    unwrap(
-      ExchangeRate.create({
-        indicator,
-        value: new Decimal(record.NUM_VALOR),
-        publishedAt: toUtcDay(record.DES_FECHA),
-      }),
-    ),
-  )
-}
-
-const extractInnerXml = (envelope: unknown): string => {
-  if (typeof envelope === 'object' && envelope !== null && 'string' in envelope) {
-    const value = (envelope as { string: unknown }).string
-    return typeof value === 'string' ? value : ''
-  }
-  throw new Error('La respuesta del BCCR no trae el nodo esperado')
-}
-```
-
-`fast-xml-parser` desescapa las entidades al parsear, así que el XML interno sale ya utilizable; se vuelve a parsear y recién ahí se valida con Zod. Un registro suelto llega como objeto y varios como arreglo: el `union` cubre ambos casos, que es el error clásico con este servicio.
-
-- [ ] **Paso 5: Configuración validada al arrancar**
+- [x] **Paso 1: Configuración validada al arrancar**
 
 `api/src/modules/money/infrastructure/bccr/bccr.config.ts`:
 
@@ -560,195 +372,191 @@ const extractInnerXml = (envelope: unknown): string => {
 import { z } from 'zod'
 
 const bccrConfigSchema = z.object({
-  BCCR_ENDPOINT: z
-    .string()
-    .url()
-    .default('https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/wsindicadoreseconomicos.asmx'),
-  BCCR_EMAIL: z.string().email({ error: 'BCCR_EMAIL debe ser un correo válido' }),
+  BCCR_API_URL: z.url({ error: 'BCCR_API_URL debe ser una URL' }).default('https://apim.bccr.fi.cr'),
   BCCR_TOKEN: z.string().min(1, { error: 'BCCR_TOKEN es obligatorio' }),
 })
 
 export interface BccrConfig {
-  endpoint: string
-  email: string
-  token: string
+  readonly baseUrl: string
+  readonly token: string
 }
 
+// Falla al arrancar y no en la primera sincronización: un token ausente tiene que ser
+// ruidoso el día que se despliega, no tres semanas después con tasas viejas.
 export const loadBccrConfig = (source: NodeJS.ProcessEnv): BccrConfig => {
   const result = bccrConfigSchema.safeParse(source)
   if (!result.success) {
-    throw new Error(`Credenciales del BCCR inválidas:\n${z.prettifyError(result.error)}`)
+    throw new Error(`Configuración del BCCR inválida:\n${z.prettifyError(result.error)}`)
   }
-  return {
-    endpoint: result.data.BCCR_ENDPOINT,
-    email: result.data.BCCR_EMAIL,
-    token: result.data.BCCR_TOKEN,
-  }
+  return { baseUrl: result.data.BCCR_API_URL, token: result.data.BCCR_TOKEN }
 }
 ```
 
-Agregar a `.env.example`:
+- [x] **Paso 2: Escribir el test del parser que falla**
 
+`api/src/modules/money/infrastructure/bccr/bccr-response.schema.spec.ts` usa los fixtures reales, cargados desde `api/src/test/fixtures/bccr/`. Cubre cinco casos: la serie de venta convertida a tasas del dominio, el valor decimal conservado sin pasar por el doble, la respuesta vacía distinguida de un fallo, una respuesta con la forma cambiada y una tasa no positiva.
+
+- [x] **Paso 3: Implementar el parser validado**
+
+`api/src/modules/money/infrastructure/bccr/bccr-response.schema.ts`:
+
+```ts
+import { Decimal } from 'decimal.js'
+import { z } from 'zod'
+import { unwrap } from '../../../../shared/kernel/result.js'
+import { ExchangeRate, type RateIndicator } from '../../domain/exchange-rate.js'
+
+export class BccrEmptyResponseError extends Error {
+  readonly code = 'BCCR_EMPTY_RESPONSE'
+  constructor(message: string) {
+    super(message)
+    this.name = 'BccrEmptyResponseError'
+  }
+}
+
+const seriesPointSchema = z.object({
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: 'La fecha del BCCR debe ser AAAA-MM-DD' }),
+  valorDatoPorPeriodo: z.number().positive({ error: 'Una tasa debe ser mayor que cero' }),
+})
+
+const responseSchema = z.object({
+  estado: z.boolean(),
+  mensaje: z.string(),
+  datos: z.array(
+    z.object({
+      codigoIndicador: z.string(),
+      nombreIndicador: z.string(),
+      series: z.array(seriesPointSchema),
+    }),
+  ),
+})
+
+// La validación no es ceremonia: el servicio devuelve 200 con `datos: []` cuando no hay
+// datos para el rango, así que sin esto un hueco de sincronización pasaría por éxito.
+export const parseBccrResponse = (payload: unknown, indicator: RateIndicator): ExchangeRate[] => {
+  const result = responseSchema.safeParse(payload)
+  if (!result.success) {
+    throw new Error(`El BCCR devolvió una respuesta con forma inesperada:\n${z.prettifyError(result.error)}`)
+  }
+
+  const series = result.data.datos.flatMap((dato) => dato.series)
+  if (series.length === 0) {
+    throw new BccrEmptyResponseError(result.data.mensaje)
+  }
+
+  return series.map((punto) =>
+    unwrap(
+      ExchangeRate.create({
+        indicator,
+        // El valor llega como número JSON; se pasa por string para que Decimal no herede
+        // el redondeo del doble.
+        value: new Decimal(String(punto.valorDatoPorPeriodo)),
+        publishedAt: new Date(`${punto.fecha}T00:00:00.000Z`),
+      }),
+    ),
+  )
+}
 ```
-BCCR_ENDPOINT="https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/wsindicadoreseconomicos.asmx"
-BCCR_EMAIL="emiliorb@arclosystems.com"
-BCCR_TOKEN=""
-```
 
-- [ ] **Paso 6: Cliente SOAP**
+- [x] **Paso 4: Cliente HTTP**
 
-`api/src/modules/money/infrastructure/bccr/bccr-soap.client.ts`:
+`api/src/modules/money/infrastructure/bccr/bccr-api.client.ts`:
 
 ```ts
 import type { DateRange } from '../../../../shared/kernel/date-range.js'
 import type { RateIndicator } from '../../domain/exchange-rate.js'
 import type { BccrConfig } from './bccr.config.js'
 
-const SOAP_ACTION = 'https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/ObtenerIndicadoresEconomicos'
-
-// El servicio espera dd/mm/aaaa. Una fecha en ISO no da error: da una respuesta vacía.
-const toBccrDate = (date: Date): string => {
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-  return `${day}/${month}/${date.getUTCFullYear()}`
+export class BccrAuthError extends Error {
+  readonly code = 'BCCR_AUTH'
+  constructor(status: number) {
+    super(`El BCCR rechazó la credencial con ${status}. Revisar BCCR_TOKEN.`)
+    this.name = 'BccrAuthError'
+  }
 }
 
-const escapeXml = (value: string): string =>
-  value.replace(/[<>&'"]/g, (char) =>
-    ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' })[char] ?? char,
-  )
+export class BccrUnavailableError extends Error {
+  readonly code = 'BCCR_UNAVAILABLE'
+  constructor(status: number) {
+    super(`El BCCR respondió ${status}`)
+    this.name = 'BccrUnavailableError'
+  }
+}
 
-export class BccrSoapClient {
+const PATH = '/SDDE/api/Bccr.GE.SDDE.Publico.Indicadores.API/indicadoresEconomicos'
+
+// El BCCR espera aaaa/mm/dd, no ISO. Una fecha en otro formato no da error: da vacío.
+const toBccrDate = (date: Date): string =>
+  `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}`
+
+export class BccrApiClient {
   constructor(private readonly config: BccrConfig) {}
 
-  async call(indicator: RateIndicator, range: DateRange): Promise<string> {
-    const body = `<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <ObtenerIndicadoresEconomicos xmlns="https://gee.bccr.fi.cr/Indicadores/Suscripciones/WS/">
-      <tcIndicador>${indicator}</tcIndicador>
-      <tcFechaInicio>${toBccrDate(range.from)}</tcFechaInicio>
-      <tcFechaFinal>${toBccrDate(range.to)}</tcFechaFinal>
-      <tcNombre>finanzas</tcNombre>
-      <tnSubNiveles>N</tnSubNiveles>
-      <tcCorreoElectronico>${escapeXml(this.config.email)}</tcCorreoElectronico>
-      <tcToken>${escapeXml(this.config.token)}</tcToken>
-    </ObtenerIndicadoresEconomicos>
-  </soap:Body>
-</soap:Envelope>`
+  async fetchSeries(indicator: RateIndicator, range: DateRange): Promise<unknown> {
+    const url = new URL(`${PATH}/${indicator}/series`, this.config.baseUrl)
+    url.searchParams.set('fechaInicio', toBccrDate(range.from))
+    url.searchParams.set('fechaFin', toBccrDate(range.to))
+    url.searchParams.set('idioma', 'es')
 
-    const response = await fetch(this.config.endpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'text/xml; charset=utf-8', soapaction: SOAP_ACTION },
-      body,
-      signal: AbortSignal.timeout(15_000),
+    const response = await fetch(url, {
+      headers: { authorization: `Bearer ${this.config.token}`, accept: 'application/json' },
     })
 
-    if (!response.ok) {
-      throw new Error(`El BCCR respondió ${response.status} ${response.statusText}`)
-    }
+    // 401 y 403 son de credencial y no se arreglan reintentando; el resto sí.
+    if (response.status === 401 || response.status === 403) throw new BccrAuthError(response.status)
+    if (!response.ok) throw new BccrUnavailableError(response.status)
 
-    return response.text()
+    return response.json()
   }
 }
 ```
 
-Si el Paso 1 mostró otros nombres de parámetro en el WSDL, ajustarlos acá. El resto del plan no cambia.
-
-- [ ] **Paso 7: Adaptador y su test**
+- [x] **Paso 5: Adaptador y su test**
 
 `api/src/modules/money/infrastructure/bccr/bccr-exchange-rate.adapter.ts`:
 
 ```ts
-import { Inject, Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import type { DateRange } from '../../../../shared/kernel/date-range.js'
-import type { ExchangeRate } from '../../domain/exchange-rate.js'
-import { RATE_INDICATORS } from '../../domain/exchange-rate.js'
+import { RATE_INDICATORS, type ExchangeRate } from '../../domain/exchange-rate.js'
 import type { ExchangeRateProviderPort } from '../../domain/exchange-rate-provider.port.js'
-import { BCCR_SOAP_CLIENT } from './bccr.tokens.js'
-import type { BccrSoapClient } from './bccr-soap.client.js'
+import { BccrApiClient } from './bccr-api.client.js'
 import { parseBccrResponse } from './bccr-response.schema.js'
 
 @Injectable()
 export class BccrExchangeRateAdapter implements ExchangeRateProviderPort {
-  private readonly logger = new Logger(BccrExchangeRateAdapter.name)
+  constructor(private readonly client: BccrApiClient) {}
 
-  constructor(@Inject(BCCR_SOAP_CLIENT) private readonly client: BccrSoapClient) {}
-
+  // Compra y venta son dos llamadas: la API expone un indicador por consulta.
   async fetchRates(range: DateRange): Promise<ExchangeRate[]> {
     const indicators = [RATE_INDICATORS.BUY, RATE_INDICATORS.SELL] as const
-    const responses = await Promise.all(
+    const porIndicador = await Promise.all(
       indicators.map(async (indicator) => {
-        const xml = await this.client.call(indicator, range)
-        const rates = parseBccrResponse(xml, indicator)
-        this.logger.log(`BCCR ${indicator}: ${rates.length} publicaciones entre ${range.from.toISOString().slice(0, 10)} y ${range.to.toISOString().slice(0, 10)}`)
-        return rates
+        const payload = await this.client.fetchSeries(indicator, range)
+        return parseBccrResponse(payload, indicator)
       }),
     )
-    return responses.flat()
+    return porIndicador.flat()
   }
 }
 ```
 
-`api/src/modules/money/infrastructure/bccr/bccr.tokens.ts`:
+El test del adaptador sustituye el cliente por un doble que devuelve los fixtures y verifica que una sola llamada trae compra y venta juntas.
 
-```ts
-export const BCCR_SOAP_CLIENT = Symbol('BCCR_SOAP_CLIENT')
-```
-
-`api/src/modules/money/infrastructure/bccr/bccr-exchange-rate.adapter.spec.ts`:
-
-```ts
-import { readFileSync } from 'node:fs'
-import { describe, expect, it, vi } from 'vitest'
-import { DateRange } from '../../../../shared/kernel/date-range.js'
-import { unwrap } from '../../../../shared/kernel/result.js'
-import { BccrExchangeRateAdapter } from './bccr-exchange-rate.adapter.js'
-import { BccrEmptyResponseError } from './bccr-response.schema.js'
-import type { BccrSoapClient } from './bccr-soap.client.js'
-
-const fixture = (name: string) =>
-  readFileSync(new URL(`../../../../../test/fixtures/bccr/${name}`, import.meta.url), 'utf8')
-
-const utc = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
-const range = unwrap(DateRange.create(utc('2026-09-16'), utc('2026-09-18')))
-
-const clientStub = (xml: string): BccrSoapClient =>
-  ({ call: vi.fn().mockResolvedValue(xml) }) as unknown as BccrSoapClient
-
-describe('BccrExchangeRateAdapter', () => {
-  it('pide compra y venta y devuelve las dos series', async () => {
-    const client = clientStub(fixture('respuesta-valida.xml'))
-    const rates = await new BccrExchangeRateAdapter(client).fetchRates(range)
-
-    expect(client.call).toHaveBeenCalledTimes(2)
-    expect(rates).toHaveLength(6)
-  })
-
-  it('propaga el error de respuesta vacía en lugar de devolver una lista vacía', async () => {
-    const adapter = new BccrExchangeRateAdapter(clientStub(fixture('respuesta-vacia.xml')))
-    await expect(adapter.fetchRates(range)).rejects.toBeInstanceOf(BccrEmptyResponseError)
-  })
-})
-```
-
-Que una credencial inválida termine en excepción y no en una lista vacía es el punto entero de esta tarea. Si el adaptador devolviera `[]`, el job de la Tarea 4 lo registraría como «hoy no publicaron» y el problema quedaría invisible.
-
-- [ ] **Paso 8: Correr, verificar y commitear**
+- [x] **Paso 6: Correr, verificar y commitear**
 
 ```bash
-cd api && npm test -- bccr && npm run typecheck && npm run lint
-git add api/src/modules/money api/test/fixtures
-git commit -m "✨ feat: adaptador SOAP del BCCR con validación Zod de la respuesta"
+cd api && npm test && npm run typecheck && npm run lint
+git add api/src/modules/money api/src/test/fixtures
+git commit -m "✨ feat: adaptador REST del BCCR según la norma SDDE 2025"
 ```
 
 **Acceptance criteria:**
-- [ ] El contrato se confirmó contra el WSDL vivo antes de escribir el cliente
-- [ ] Las fechas se envían en `dd/mm/aaaa`
-- [ ] La respuesta vacía produce `BccrEmptyResponseError`, nunca una lista vacía
-- [ ] Un registro único y varios registros se parsean igual de bien
-- [ ] La fecha publicada no se corre de día por la zona horaria del proceso
-- [ ] Un `NUM_VALOR` no numérico hace fallar el parseo
+- [x] Los fixtures son capturas reales del servicio, no ejemplos inventados
+- [x] Una respuesta con `datos: []` produce `BccrEmptyResponseError`, no una lista vacía silenciosa
+- [x] Un 401 produce `BccrAuthError` y se distingue de un 500
+- [x] El valor decimal no pasa por el doble de JavaScript
+- [x] Ningún archivo del dominio conoce al BCCR
 
 ---
 
@@ -1386,12 +1194,12 @@ git commit -m "✨ feat: indicador de tipo de cambio con marca de desactualizado
 
 | Riesgo | Impacto | Mitigación |
 |---|---|---|
-| Los nombres de los parámetros SOAP difieren de los supuestos | Alto | Paso 1 de la Tarea 2: se leen del WSDL vivo antes de escribir el cliente |
-| Una credencial mal configurada pasa por «sin datos» | Alto | La respuesta vacía lanza `BccrEmptyResponseError` y hay un test con el XML vacío grabado |
+| El BCCR retira o cambia la API otra vez | Alto | El proveedor entra por un puerto: cambiarlo no toca dominio, persistencia ni UI |
+| Una credencial mal configurada pasa por «sin datos» | Medio | El servicio devuelve 401, que lanza `BccrAuthError`; y `datos: []` lanza `BccrEmptyResponseError`, con fixture real |
 | La fecha se corre un día por el desplazamiento `-06:00` | Medio | El parser toma la parte de fecha como texto y hay un test específico |
-| El BCCR cambia la forma del XML | Medio | Zod valida antes de usar, y los XML grabados hacen fallar los tests si algo cambia |
+| El BCCR cambia la forma del JSON | Medio | Zod valida antes de usar, y los fixtures capturados hacen fallar los tests si algo cambia |
 | Dos corridas del job se pisan | Bajo | `waitForCompletion: true` en el `@Cron` |
 
 ## Preguntas abiertas
 
-- El token del BCCR requiere suscripción con correo. Si al llegar a la Tarea 2 todavía no está, se avanza con los XML grabados y se deja la verificación contra el servicio real como último paso de la rebanada.
+- ~~El token del BCCR requiere suscripción con correo.~~ Resuelto: el token se genera desde Mi Perfil en el sitio de Indicadores Económicos y se verificó contra el servicio real. Los fixtures de la Tarea 2 son capturas verdaderas.

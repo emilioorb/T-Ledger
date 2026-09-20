@@ -1,0 +1,36 @@
+{
+  "estado": true,
+  "mensaje": "Consulta exitosa",
+  "datos": [
+    {
+      "codigoIndicador": "317",
+      "nombreIndicador": "Tipo cambio compra",
+      "series": [
+        {
+          "fecha": "2026-09-14",
+          "valorDatoPorPeriodo": 444.07
+        },
+        {
+          "fecha": "2026-09-15",
+          "valorDatoPorPeriodo": 444.46
+        },
+        {
+          "fecha": "2026-09-16",
+          "valorDatoPorPeriodo": 444.46
+        },
+        {
+          "fecha": "2026-09-17",
+          "valorDatoPorPeriodo": 443.43
+        },
+        {
+          "fecha": "2026-09-18",
+          "valorDatoPorPeriodo": 443.2
+        },
+        {
+          "fecha": "2026-09-19",
+          "valorDatoPorPeriodo": 443.27
+        }
+      ]
+    }
+  ]
+}
