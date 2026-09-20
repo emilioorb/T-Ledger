@@ -24,6 +24,8 @@ export const copy = {
       counterparty: 'A quién',
     },
     loading: 'Cargando deudas',
+    truncated: (mostradas: number, total: number) =>
+      `Se muestran ${mostradas} de ${total}. El resto queda fuera de esta página.`,
   },
 
   empty: {

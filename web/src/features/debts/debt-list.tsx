@@ -81,6 +81,12 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
           <Row key={debt.id} debt={debt} />
         ))}
       </ul>
+      {/* Truncar en silencio sería mentir sobre cuántas deudas hay. */}
+      {data.pagination.totalItems > data.data.length ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {copy.list.truncated(data.data.length, data.pagination.totalItems)}
+        </p>
+      ) : null}
     </div>
   )
 }

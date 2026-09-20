@@ -19,7 +19,9 @@ import type {
 // Ningún hook trae onError: el QueryCache y el MutationCache del router ya cubren
 // todos los errores con un toast. Repetirlo acá duplicaría el toast, no lo reforzaría.
 
-export const useDebts = (direction: DebtDirection, page = 1, pageSize = 20) =>
+// 100 es el tope que admite la API. Con un solo usuario, una lista entera de un
+// tirón se lee mejor que partida en páginas, que es lo que pide la densidad.
+export const useDebts = (direction: DebtDirection, page = 1, pageSize = 100) =>
   useQuery({
     queryKey: queryKeys.debts.list({ page, pageSize, direction }),
     queryFn: () =>
