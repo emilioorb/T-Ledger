@@ -459,7 +459,7 @@ git commit -m "🏗️ build: proyecto de la API, tooling, Postgres local y tipo
   - `class CurrencyMismatchError extends Error` con `readonly code = 'CURRENCY_MISMATCH'`
   - `class Money` con: `static fromMinorUnits(minorUnits: bigint, currency: CurrencyCode): Money` · `static fromDecimal(value: Decimal.Value, currency: CurrencyCode): Money` · `static zero(currency: CurrencyCode): Money` · `add(other: Money): Result<Money, CurrencyMismatchError>` · `subtract(other: Money): Result<Money, CurrencyMismatchError>` · `multiply(factor: Decimal.Value): Money` · `allocate(ratios: readonly number[]): Money[]` · `compareTo(other: Money): Result<number, CurrencyMismatchError>` · `negate(): Money` · `isZero(): boolean` · `isNegative(): boolean` · `equals(other: Money): boolean` · `toDecimal(): Decimal` · `toJSON(): { minorUnits: string; currency: CurrencyCode }` · propiedades `minorUnits: bigint` y `currency: CurrencyCode`
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 `api/src/shared/kernel/money.spec.ts`:
 
@@ -467,7 +467,7 @@ git commit -m "🏗️ build: proyecto de la API, tooling, Postgres local y tipo
 import { Decimal } from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 import { CurrencyMismatchError, Money } from './money.js'
-import { isErr, isOk, unwrap } from './result.js'
+import { isErr, unwrap } from './result.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
 
@@ -541,7 +541,7 @@ describe('Money', () => {
 
 El caso `56_349_293_00n` no es decorativo: son ₡56.349.293 en céntimos, y desborda un `int32`. Es la razón por la que la persistencia usa `BigInt`.
 
-- [ ] **Paso 2: Correr el test y confirmar que falla**
+- [x] **Paso 2: Correr el test y confirmar que falla**
 
 ```bash
 cd api && npm test -- money
@@ -549,7 +549,7 @@ cd api && npm test -- money
 
 Esperado: FAIL con `Failed to resolve import "./money.js"`.
 
-- [ ] **Paso 3: Implementar la moneda**
+- [x] **Paso 3: Implementar la moneda**
 
 `api/src/shared/kernel/currency.ts`:
 
@@ -567,7 +567,7 @@ export const isCurrencyCode = (value: string): value is CurrencyCode =>
   (CURRENCIES as readonly string[]).includes(value)
 ```
 
-- [ ] **Paso 4: Implementar `Money`**
+- [x] **Paso 4: Implementar `Money`**
 
 `api/src/shared/kernel/money.ts`:
 
@@ -690,7 +690,7 @@ export class Money {
 }
 ```
 
-- [ ] **Paso 5: Correr el test y confirmar que pasa**
+- [x] **Paso 5: Correr el test y confirmar que pasa**
 
 ```bash
 cd api && npm test -- money && npm run typecheck && npm run lint
@@ -698,7 +698,7 @@ cd api && npm test -- money && npm run typecheck && npm run lint
 
 Esperado: 11 tests pasando.
 
-- [ ] **Paso 6: Commit**
+- [x] **Paso 6: Commit**
 
 ```bash
 git add api/src/shared/kernel
@@ -706,9 +706,9 @@ git commit -m "✨ feat: Money con aritmética exacta y reparto sin pérdida de 
 ```
 
 **Acceptance criteria:**
-- [ ] `allocate` cuadra exactamente en repartos no divisibles, incluido el caso negativo
-- [ ] Operar CRC con USD devuelve `Err` con `CurrencyMismatchError`, no lanza
-- [ ] `toJSON` serializa el monto como string, sin `Number`
+- [x] `allocate` cuadra exactamente en repartos no divisibles, incluido el caso negativo
+- [x] Operar CRC con USD devuelve `Err` con `CurrencyMismatchError`, no lanza
+- [x] `toJSON` serializa el monto como string, sin `Number`
 
 ---
 
