@@ -1,21 +1,18 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { copy } from '@/features/debts/copy'
-import { DebtDialog } from '@/features/debts/debt-dialog'
 import { DebtList } from '@/features/debts/debt-list'
 
 const DebtsScreen = () => {
   const newDebtButton = (
-    <DebtDialog
-      trigger={
-        <Button size="sm">
-          <Plus className="size-4" aria-hidden="true" />
-          {copy.form.createTitle}
-        </Button>
-      }
-    />
+    <Button size="sm" asChild>
+      <Link to="/deudas/nueva">
+        <Plus className="size-4" aria-hidden="true" />
+        {copy.form.createTitle}
+      </Link>
+    </Button>
   )
 
   return (

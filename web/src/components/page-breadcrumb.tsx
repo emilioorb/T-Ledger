@@ -10,21 +10,49 @@ import {
 import { copy } from '@/features/debts/copy'
 import { useDebt } from '@/features/debts/use-debts'
 
-const DebtCrumb = ({ id }: { id: string }) => {
+const Crumb = ({ to, label }: { to: string; label: string }) => (
+  <>
+    <BreadcrumbItem>
+      <BreadcrumbLink asChild>
+        <Link to={to} className="inline-flex min-h-6 items-center">
+          {label}
+        </Link>
+      </BreadcrumbLink>
+    </BreadcrumbItem>
+    <BreadcrumbSeparator />
+  </>
+)
+
+const DebtCrumbs = ({ id, leaf }: { id: string; leaf?: string }) => {
   const debt = useDebt(id)
+  const name = debt.data?.name ?? '…'
+
   return (
     <>
-      <BreadcrumbItem>
-        <BreadcrumbLink asChild>
-          <Link to="/deudas" className="inline-flex min-h-6 items-center">
-            {copy.nav.debts}
-          </Link>
-        </BreadcrumbLink>
-      </BreadcrumbItem>
-      <BreadcrumbSeparator />
-      <BreadcrumbItem>
-        <BreadcrumbPage>{debt.data?.name ?? '...'}</BreadcrumbPage>
-      </BreadcrumbItem>
+      <Crumb to="/deudas" label={copy.nav.debts} />
+      {leaf ? (
+        <>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link
+                to="/deudas/$debtId"
+                params={{ debtId: id }}
+                className="inline-flex min-h-6 items-center"
+              >
+                {name}
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{leaf}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </>
+      ) : (
+        <BreadcrumbItem>
+          <BreadcrumbPage>{name}</BreadcrumbPage>
+        </BreadcrumbItem>
+      )}
     </>
   )
 }
@@ -33,22 +61,30 @@ const DebtCrumb = ({ id }: { id: string }) => {
 // de declararla dejaría el encabezado mintiendo sobre dónde estás.
 export const PageBreadcrumb = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const segments = pathname.split('/').filter(Boolean)
-  const [section, id] = segments
+  const [section, second, third] = pathname.split('/').filter(Boolean)
 
   if (!section) return null
+
+  const leaf = (label: string) => (
+    <BreadcrumbItem>
+      <BreadcrumbPage>{label}</BreadcrumbPage>
+    </BreadcrumbItem>
+  )
 
   return (
     <Breadcrumb>
       <BreadcrumbList>
-        {section === 'deudas' && id ? (
-          <DebtCrumb id={id} />
+        {section !== 'deudas' ? (
+          leaf(copy.nav.payoffPlan)
+        ) : second === 'nueva' ? (
+          <>
+            <Crumb to="/deudas" label={copy.nav.debts} />
+            {leaf(copy.form.createTitle)}
+          </>
+        ) : second ? (
+          <DebtCrumbs id={second} leaf={third === 'editar' ? copy.detail.edit : undefined} />
         ) : (
-          <BreadcrumbItem>
-            <BreadcrumbPage>
-              {section === 'deudas' ? copy.nav.debts : copy.nav.payoffPlan}
-            </BreadcrumbPage>
-          </BreadcrumbItem>
+          leaf(copy.nav.debts)
         )}
       </BreadcrumbList>
     </Breadcrumb>

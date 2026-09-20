@@ -1,11 +1,10 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AmortizationTable } from '@/features/debts/amortization-table'
 import { BalanceChart } from '@/features/debts/balance-chart'
 import { copy } from '@/features/debts/copy'
-import { DebtDialog } from '@/features/debts/debt-dialog'
 import { ErrorState } from '@/features/debts/error-state'
 import { ExtraPaymentSimulator } from '@/features/debts/extra-payment-simulator'
 import { useDebt, useDeleteDebt, useSchedule } from '@/features/debts/use-debts'
@@ -46,15 +45,12 @@ const DebtDetail = () => {
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h1 className="text-xl font-semibold tracking-tight">{data.name}</h1>
           <div className="flex gap-1">
-          <DebtDialog
-            debt={data}
-            trigger={
-              <Button variant="ghost" size="sm">
-                <Pencil className="size-4" aria-hidden="true" />
-                {copy.detail.edit}
-              </Button>
-            }
-          />
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/deudas/$debtId/editar" params={{ debtId: data.id }}>
+              <Pencil className="size-4" aria-hidden="true" />
+              {copy.detail.edit}
+            </Link>
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -112,6 +108,6 @@ const DebtDetail = () => {
   )
 }
 
-export const Route = createFileRoute('/deudas/$debtId')({
+export const Route = createFileRoute('/deudas/$debtId/')({
   component: DebtDetail,
 })
