@@ -6,3 +6,4 @@ coverage/
 *.tsbuildinfo
 web/src/routeTree.gen.ts
 .playwright-mcp/
+web/.tanstack/

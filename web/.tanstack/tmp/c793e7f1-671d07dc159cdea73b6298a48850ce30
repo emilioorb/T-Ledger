@@ -1,9 +1,0 @@
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/deudas/$debtId')({
-  component: RouteComponent,
-})
-
-function RouteComponent() {
-  return <div>Hello "/deudas/$debtId"!</div>
-}
