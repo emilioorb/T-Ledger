@@ -1973,7 +1973,7 @@ Las tres ignoran los préstamos otorgados: una deuda con `direction: LENT` no co
   - `const DEBT_REPOSITORY: unique symbol`
   - `interface DebtRepository { findAll(page: number, pageSize: number, direction?: DebtDirection): Promise<DebtPage>; findById(id: string): Promise<Debt | null>; save(debt: Debt): Promise<void>; delete(id: string): Promise<boolean> }`
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 `api/src/modules/debts/domain/payoff-strategy.spec.ts`:
 
@@ -2091,7 +2091,7 @@ describe('payoffStrategyFor', () => {
 })
 ```
 
-- [ ] **Paso 2: Correr el test y confirmar que falla**
+- [x] **Paso 2: Correr el test y confirmar que falla**
 
 ```bash
 cd api && npm test -- payoff-strategy
@@ -2099,7 +2099,7 @@ cd api && npm test -- payoff-strategy
 
 Esperado: FAIL, `./payoff-strategy.js` sin resolver.
 
-- [ ] **Paso 3: Implementar las estrategias**
+- [x] **Paso 3: Implementar las estrategias**
 
 `api/src/modules/debts/domain/payoff-strategy.ts`:
 
@@ -2184,7 +2184,7 @@ export const payoffStrategyFor = (
 }
 ```
 
-- [ ] **Paso 4: Declarar el puerto del repositorio**
+- [x] **Paso 4: Declarar el puerto del repositorio**
 
 `api/src/modules/debts/domain/debt-repository.port.ts`:
 
@@ -2209,13 +2209,13 @@ export interface DebtRepository {
 export const DEBT_REPOSITORY = Symbol('DEBT_REPOSITORY')
 ```
 
-- [ ] **Paso 5: Correr todo y confirmar que pasa**
+- [x] **Paso 5: Correr todo y confirmar que pasa**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
 ```
 
-- [ ] **Paso 6: Commit**
+- [x] **Paso 6: Commit**
 
 ```bash
 git add api/src/modules/debts/domain
@@ -2223,20 +2223,20 @@ git commit -m "✨ feat: estrategias de pago avalancha, bola de nieve y manual"
 ```
 
 **Acceptance criteria:**
-- [ ] Avalancha ordena por tasa descendente; bola de nieve por saldo ascendente
-- [ ] El orden manual manda al final las deudas no listadas sin perderlas
-- [ ] Ninguna estrategia muta la lista recibida
-- [ ] Ninguna estrategia incluye préstamos otorgados en el orden de pago
-- [ ] `DEBT_REPOSITORY` es un `Symbol`, no un string
+- [x] Avalancha ordena por tasa descendente; bola de nieve por saldo ascendente
+- [x] El orden manual manda al final las deudas no listadas sin perderlas
+- [x] Ninguna estrategia muta la lista recibida
+- [x] Ninguna estrategia incluye préstamos otorgados en el orden de pago
+- [x] `DEBT_REPOSITORY` es un `Symbol`, no un string
 
 ---
 
 ### Checkpoint: dominio de deudas completo (tras las Tareas 4–6)
 
-- [ ] `cd api && npm test` → dominio completo en verde
-- [ ] Ningún archivo bajo `modules/debts/domain/` importa Nest, Prisma ni HTTP (`npm run lint` lo verifica)
-- [ ] La tabla francesa de referencia coincide fila por fila
-- [ ] Revisión con Emilio antes de tocar persistencia
+- [x] `cd api && npm test` → dominio completo en verde
+- [x] Ningún archivo bajo `modules/debts/domain/` importa Nest, Prisma ni HTTP (`npm run lint` lo verifica)
+- [x] La tabla francesa de referencia coincide fila por fila
+- [x] Revisión con Emilio antes de tocar persistencia
 
 ---
 
