@@ -731,7 +731,7 @@ git commit -m "✨ feat: Money con aritmética exacta y reparto sin pérdida de 
   - `class DateRange`: `static create(from: Date, to: Date): Result<DateRange, RangeError>` · `readonly from: Date` · `readonly to: Date` · `contains(date: Date): boolean` · `days(): number`
   - `src/shared/kernel/index.ts` reexporta todo el kernel
 
-- [ ] **Paso 1: Escribir los tests que fallan**
+- [x] **Paso 1: Escribir los tests que fallan**
 
 `api/src/shared/kernel/percentage.spec.ts`:
 
@@ -818,7 +818,7 @@ describe('DateRange', () => {
 })
 ```
 
-- [ ] **Paso 2: Correr los tests y confirmar que fallan**
+- [x] **Paso 2: Correr los tests y confirmar que fallan**
 
 ```bash
 cd api && npm test -- percentage interest-rate date-range
@@ -826,7 +826,7 @@ cd api && npm test -- percentage interest-rate date-range
 
 Esperado: FAIL, los tres módulos sin resolver.
 
-- [ ] **Paso 3: Implementar `Percentage`**
+- [x] **Paso 3: Implementar `Percentage`**
 
 `api/src/shared/kernel/percentage.ts`:
 
@@ -855,7 +855,7 @@ export class Percentage {
 }
 ```
 
-- [ ] **Paso 4: Implementar `InterestRate`**
+- [x] **Paso 4: Implementar `InterestRate`**
 
 `api/src/shared/kernel/interest-rate.ts`:
 
@@ -900,7 +900,7 @@ export class InterestRate {
 }
 ```
 
-- [ ] **Paso 5: Implementar `DateRange`**
+- [x] **Paso 5: Implementar `DateRange`**
 
 `api/src/shared/kernel/date-range.ts`:
 
@@ -941,7 +941,7 @@ export class DateRange {
 }
 ```
 
-- [ ] **Paso 6: Barril del kernel**
+- [x] **Paso 6: Barril del kernel**
 
 `api/src/shared/kernel/index.ts`:
 
@@ -954,7 +954,7 @@ export * from './percentage.js'
 export * from './result.js'
 ```
 
-- [ ] **Paso 7: Correr todo y confirmar que pasa**
+- [x] **Paso 7: Correr todo y confirmar que pasa**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -962,7 +962,7 @@ cd api && npm test && npm run typecheck && npm run lint
 
 Esperado: 25 tests pasando.
 
-- [ ] **Paso 8: Commit**
+- [x] **Paso 8: Commit**
 
 ```bash
 git add api/src/shared/kernel
@@ -970,18 +970,18 @@ git commit -m "✨ feat: Percentage, InterestRate y DateRange en el kernel"
 ```
 
 **Acceptance criteria:**
-- [ ] `InterestRate.create(0, 'MONTHLY')` es válida y `monthlyRate()` devuelve 0
-- [ ] Un porcentaje de 100,01 es rechazado con `Err`
-- [ ] `DateRange` de un solo día cuenta 1 día
+- [x] `InterestRate.create(0, 'MONTHLY')` es válida y `monthlyRate()` devuelve 0
+- [x] Un porcentaje de 100,01 es rechazado con `Err`
+- [x] `DateRange` de un solo día cuenta 1 día
 
 ---
 
 ### Checkpoint: kernel completo (tras las Tareas 1–3)
 
-- [ ] `cd api && npm test` → 25 tests pasando
-- [ ] `npm run typecheck` y `npm run lint` limpios
-- [ ] Ningún archivo de `shared/kernel/` importa Nest, Prisma ni HTTP
-- [ ] Revisión con Emilio antes de seguir
+- [x] `cd api && npm test` → 25 tests pasando
+- [x] `npm run typecheck` y `npm run lint` limpios
+- [x] Ningún archivo de `shared/kernel/` importa Nest, Prisma ni HTTP
+- [x] Revisión con Emilio antes de seguir
 
 ---
 
