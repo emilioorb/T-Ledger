@@ -4130,9 +4130,9 @@ git commit -m "✨ feat: tabla de amortización, simulador de abono, plan de pag
 
 ### Checkpoint: API completa (tras las Tareas 7–9)
 
-- [ ] `cd api && npm test` → dominio, persistencia y HTTP en verde
-- [ ] `curl localhost:3000/api/v1/debts` responde con `data` y `pagination`
-- [ ] El OpenAPI lista todos los endpoints de deudas
+- [x] `cd api && npm test` → dominio, persistencia y HTTP en verde
+- [x] `curl localhost:3000/api/v1/debts` responde con `data` y `pagination`
+- [x] El OpenAPI lista todos los endpoints de deudas
 - [ ] Revisión con Emilio antes de empezar el frontend
 
 ---
@@ -4823,9 +4823,9 @@ git commit -m "✨ feat: pantallas de deudas, préstamos otorgados, amortizació
 
 ### Checkpoint: rebanada 1 completa
 
-- [ ] `cd api && npm test` y `cd web && npm test` en verde
-- [ ] Emilio puede cargar una deuda real, ver su tabla y simular un abono
-- [ ] Las dos listas se distinguen y el plan de pago excluye los préstamos otorgados
+- [x] `cd api && npm test` y `cd web && npm test` en verde
+- [x] Emilio puede cargar una deuda real, ver su tabla y simular un abono
+- [x] Las dos listas se distinguen y el plan de pago excluye los préstamos otorgados
 - [ ] Revisión con Emilio antes de pasar a la rebanada 2
 
 ---
