@@ -5,8 +5,11 @@ export const copy = {
     section: 'Dinero',
     debts: 'Deudas',
     payoffPlan: 'Plan de pago',
-    lightTheme: 'Tema claro',
-    darkTheme: 'Tema oscuro',
+    theme: 'Tema',
+    lightTheme: 'Claro',
+    darkTheme: 'Oscuro',
+    user: 'Emilio',
+    userSubtitle: 'Datos locales',
   },
 
   tabs: {
