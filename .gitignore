@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+api/generated/
+coverage/
+*.tsbuildinfo
+web/src/routeTree.gen.ts
