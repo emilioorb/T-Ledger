@@ -112,7 +112,7 @@ export const DebtForm = ({ onSubmit, onCancel, pending, defaults, submitLabel }:
         </RadioGroup>
       </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-1.5">
           <Label htmlFor="name">{fields.name.label}</Label>
           <Input id="name" aria-invalid={Boolean(error('name'))} {...form.register('name')} />
@@ -228,7 +228,7 @@ export const DebtForm = ({ onSubmit, onCancel, pending, defaults, submitLabel }:
         </div>
 
         {!isLent ? (
-          <div className="space-y-1.5 sm:col-span-2">
+          <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
             <Label htmlFor="budgetBucket">{fields.budgetBucket.label}</Label>
             <Input
               id="budgetBucket"

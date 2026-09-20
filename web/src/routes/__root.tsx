@@ -21,7 +21,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             />
             <PageBreadcrumb />
           </header>
-          <main className="mx-auto w-full max-w-5xl px-4 py-6">
+          <main className="w-full px-4 py-6 md:px-6">
             <Outlet />
           </main>
         </SidebarInset>

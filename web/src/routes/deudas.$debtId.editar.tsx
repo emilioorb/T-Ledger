@@ -16,7 +16,7 @@ const EditDebtScreen = () => {
 
   if (debt.isPending) {
     return (
-      <div className="max-w-3xl space-y-4" aria-busy="true">
+      <div className="space-y-4" aria-busy="true">
         <Skeleton className="h-7 w-52" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -28,7 +28,7 @@ const EditDebtScreen = () => {
   const { data } = debt
 
   return (
-    <section className="max-w-3xl space-y-5">
+    <section className="space-y-5">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">{copy.form.editTitle}</h1>
         <p className="mt-0.5 text-sm text-muted-foreground">{data.name}</p>

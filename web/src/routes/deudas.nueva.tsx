@@ -8,7 +8,7 @@ const NewDebtScreen = () => {
   const createDebt = useCreateDebt()
 
   return (
-    <section className="max-w-3xl space-y-5">
+    <section className="space-y-5">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">{copy.form.createTitle}</h1>
         <p className="mt-0.5 max-w-[65ch] text-sm text-muted-foreground">
