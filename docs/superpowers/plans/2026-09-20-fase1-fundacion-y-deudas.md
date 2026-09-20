@@ -4161,7 +4161,7 @@ git commit -m "✨ feat: tabla de amortización, simulador de abono, plan de pag
   - `queryKeys.debts.list(params)`, `queryKeys.debts.detail(id)`, `queryKeys.debts.schedule(id)`, `queryKeys.debts.payoffPlan(strategy)`
   - `router` con `context: { queryClient }`
 
-- [ ] **Paso 1: Fijar el contexto de diseño antes de tocar código**
+- [x] **Paso 1: Fijar el contexto de diseño antes de tocar código**
 
 Cargar las skills obligatorias y sus `reference/`: `frontend-design`, `impeccable`, `emil-design-eng`, `accessibility`, `color-contrast`, `mobile-responsiveness`.
 
@@ -4193,7 +4193,7 @@ Resueltos los tres, **escribirlos de vuelta en `DESIGN.md`** reemplazando los ma
 
 Las reglas con nombre de `DESIGN.md` son vinculantes y se verifican en la puerta de calidad: la del Monocromo, la del Signo, la de la Cifra Tabular, la del Código, la del Tono sobre la Sombra y la del Gráfico.
 
-- [ ] **Paso 2: Crear el proyecto**
+- [x] **Paso 2: Crear el proyecto**
 
 ```bash
 cd finanzas
@@ -4201,8 +4201,14 @@ npm create vite@latest web -- --template react-ts
 cd web
 npm install
 npm install @tanstack/react-router@1.170.38 @tanstack/react-query@5.103.1 sonner@2.0.8
-npm install -D @tanstack/router-plugin@1.168.40 tailwindcss@4.3.3 @tailwindcss/vite@4.3.3 openapi-typescript@7.13.0 vitest@5.0.1 typescript@6.0.3
+npm install @fontsource-variable/geist@5.3.0 @fontsource-variable/geist-mono@5.3.0
+npm install react-hook-form@7.88.0 @hookform/resolvers@5.9.1 zod@4.6.5
+npm install -D @tanstack/router-plugin@1.168.40 tailwindcss@4.3.3 @tailwindcss/vite@4.3.3 openapi-typescript@7.13.0 vitest@5.0.1 typescript@5.9.3
 ```
+
+`web/` se queda en TypeScript 5.9.3, no en 6: `openapi-typescript` declara `typescript: ^5.x` como peer y con TS 6 todo `npm install` exige `--legacy-peer-deps`. TS 6 es un requisito de `api/`, que lo necesita por `emitDecoratorMetadata`; el frontend no tiene decoradores y no gana nada con saltar.
+
+Los iconos salen de `lucide-react`, que ya viene con el preset de shadcn. No se dibuja un `<svg>` a mano ni se instala otra familia.
 
 `web/package.json` — scripts:
 
@@ -4210,16 +4216,16 @@ npm install -D @tanstack/router-plugin@1.168.40 tailwindcss@4.3.3 @tailwindcss/v
 {
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc -b --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "api:types": "node scripts/generate-api-types.mjs"
   }
 }
 ```
 
-- [ ] **Paso 3: Configurar Vite**
+- [x] **Paso 3: Configurar Vite**
 
 `web/vite.config.ts`:
 
@@ -4239,7 +4245,7 @@ export default defineConfig({
 
 `tanstackRouter()` va **antes** que `react()`. Al revés, la generación del árbol de rutas y el code splitting fallan en silencio: no hay error, simplemente no funcionan.
 
-- [ ] **Paso 4: Tailwind 4 y shadcn con los tokens de `DESIGN.md`**
+- [x] **Paso 4: Tailwind 4 y shadcn con los tokens de `DESIGN.md`**
 
 `web/src/styles.css`:
 
@@ -4248,24 +4254,34 @@ export default defineConfig({
 ```
 
 ```bash
-cd web && npx shadcn@latest init
-npx shadcn@latest add button card table input select dialog skeleton sonner badge tabs form label chart
+cd web && npx shadcn@latest init --preset nova --base radix --yes --css-variables --no-monorepo
+npx shadcn@latest add button card table input select dialog skeleton sonner badge tabs field label chart --yes
 ```
+
+`init` es interactivo sin `--preset`. El preset `nova` es el de Lucide + Geist, que es justo lo que fija `DESIGN.md`.
+
+`form` ya no trae archivos en el registry actual: su reemplazo es `field`, que arrastra también `separator`.
 
 Terminado el init, **reemplazar** los tokens que shadcn deja por defecto por los valores OKLCH de `DESIGN.md`, en `:root` y en el bloque de tema oscuro. Los grises por defecto de shadcn son el punto de partida, no el resultado.
 
-- [ ] **Paso 5: Generar los tipos desde el OpenAPI**
+- [x] **Paso 5: Generar los tipos desde el OpenAPI**
 
 `web/scripts/generate-api-types.mjs`:
 
 ```js
-import { execFileSync } from 'node:child_process'
+import { writeFile } from 'node:fs/promises'
+import openapiTS, { astToString } from 'openapi-typescript'
 
 const source = process.env.OPENAPI_URL ?? 'http://localhost:3000/api/v1/openapi.json'
+const target = 'src/lib/api-types.gen.ts'
 
-execFileSync('npx', ['openapi-typescript', source, '-o', 'src/lib/api-types.gen.ts'], {
-  stdio: 'inherit',
-})
+// Se usa la API de la librería en vez de lanzar el CLI: un subproceso con npx no es
+// portable en Windows y obliga a elegir entre un .cmd que Node no puede lanzar sin
+// shell y un shell que concatena los argumentos sin escaparlos.
+const ast = await openapiTS(new URL(source))
+await writeFile(target, astToString(ast))
+
+console.log(`${source} -> ${target}`)
 ```
 
 ```bash
@@ -4275,7 +4291,7 @@ cd web && npm run api:types
 
 `src/lib/api-types.gen.ts` se regenera, nunca se edita a mano. Agregarlo a `.gitignore` sería un error: se versiona, para que un `git diff` muestre cuándo cambió el contrato.
 
-- [ ] **Paso 6: Escribir el test de formateo que falla**
+- [x] **Paso 6: Escribir el test de formateo que falla**
 
 `web/src/lib/money.spec.ts`:
 
@@ -4324,7 +4340,7 @@ describe('parseMoneyInput', () => {
 
 El caso que desborda el entero seguro no es decorativo: si el formateo pasa por `Number`, ese test falla. Los montos se formatean desde `bigint`, punto.
 
-- [ ] **Paso 7: Implementar el formateo de montos**
+- [x] **Paso 7: Implementar el formateo de montos**
 
 `web/src/lib/money.ts`:
 
@@ -4365,7 +4381,7 @@ export const parseMoneyInput = (text: string, currency: CurrencyCode): MoneyDto 
 }
 ```
 
-- [ ] **Paso 8: Cliente HTTP con el formato de error del backend**
+- [x] **Paso 8: Cliente HTTP con el formato de error del backend**
 
 `web/src/lib/api.ts`:
 
@@ -4429,7 +4445,7 @@ export const queryKeys = {
 }
 ```
 
-- [ ] **Paso 9: Router con el `queryClient` en contexto y toasts globales**
+- [x] **Paso 9: Router con el `queryClient` en contexto y toasts globales**
 
 `web/src/router.tsx`:
 
@@ -4496,7 +4512,7 @@ createRoot(container).render(
 )
 ```
 
-- [ ] **Paso 10: Errores globales con toast**
+- [x] **Paso 10: Errores globales con toast**
 
 Agregar al `QueryClient` de `web/src/router.tsx`:
 
@@ -4517,7 +4533,7 @@ export const queryClient = new QueryClient({
 
 Un `QueryCache` y un `MutationCache` con `onError` cubren el 100 % de los errores de una sola vez, sin que cada pantalla tenga que acordarse. Es la única forma de que la regla F5 se cumpla por construcción y no por disciplina.
 
-- [ ] **Paso 11: Verificar**
+- [x] **Paso 11: Verificar**
 
 ```bash
 cd web && npm test && npm run typecheck && npm run build
@@ -4526,14 +4542,14 @@ npm run dev
 
 Verificar a mano, con las herramientas de desarrollo del navegador:
 
-- [ ] La app carga sin errores en consola
-- [ ] Apagando la API, cualquier navegación dispara un toast de error, no una pantalla en blanco
-- [ ] A 360 px no hay desplazamiento horizontal
-- [ ] Los colores salen de `DESIGN.md`, no de los tokens por defecto de shadcn
-- [ ] El contraste de texto llega a 4,5:1 y el de los controles a 3:1, **en los dos temas** (skill `color-contrast`)
-- [ ] El interruptor de tema cambia entre oscuro y claro, y la preferencia sobrevive a recargar la página
+- [x] La app carga sin errores en consola
+- [x] Apagando la API, cualquier navegación dispara un toast de error, no una pantalla en blanco
+- [x] A 360 px no hay desplazamiento horizontal
+- [x] Los colores salen de `DESIGN.md`, no de los tokens por defecto de shadcn
+- [x] El contraste de texto llega a 4,5:1 y el de los controles a 3:1, **en los dos temas** (skill `color-contrast`)
+- [x] El interruptor de tema cambia entre oscuro y claro, y la preferencia sobrevive a recargar la página
 
-- [ ] **Paso 12: Commit**
+- [x] **Paso 12: Commit**
 
 ```bash
 git add PRODUCT.md DESIGN.md web
@@ -4541,13 +4557,13 @@ git commit -m "🏗️ build: frontend con Vite, TanStack, Tailwind 4, shadcn y 
 ```
 
 **Acceptance criteria:**
-- [ ] `PRODUCT.md` y `DESIGN.md` existen y los tokens de shadcn salen de ahí
-- [ ] Los dos temas están completos y cumplen contraste; el oscuro es el que abre
-- [ ] No hay ni un token dorado, ámbar, mostaza o bronce en `DESIGN.md`
-- [ ] `tanstackRouter()` está declarado antes que `react()` en `vite.config.ts`
-- [ ] Los tipos de la API están generados desde el OpenAPI, no escritos a mano
-- [ ] Un monto de 18 dígitos se formatea sin perder precisión
-- [ ] Todo error de query o mutación produce un toast, sin código por pantalla
+- [x] `PRODUCT.md` y `DESIGN.md` existen y los tokens de shadcn salen de ahí
+- [x] Los dos temas están completos y cumplen contraste; el oscuro es el que abre
+- [x] No hay ni un token dorado, ámbar, mostaza o bronce en `DESIGN.md`
+- [x] `tanstackRouter()` está declarado antes que `react()` en `vite.config.ts`
+- [x] Los tipos de la API están generados desde el OpenAPI, no escritos a mano
+- [x] Un monto de 18 dígitos se formatea sin perder precisión
+- [x] Todo error de query o mutación produce un toast, sin código por pantalla
 
 ---
 

@@ -43,7 +43,20 @@ La escala completa, tintada. **El tinte es la marca**, porque es lo único crom�
 - El croma baja conforme la luminancia se acerca a 0 o a 100: croma alto en los extremos se ve sucio.
 - Pasos necesarios: fondo, superficie, superficie elevada, borde sutil, borde, texto atenuado, texto secundario, texto principal.
 
-`[valores OKLCH exactos a resolver durante la implementación]`
+| Paso | Oscuro | Claro |
+|---|---|---|
+| Fondo | `oklch(0.155 0.006 65)` · `#0e0c0a` | `oklch(0.988 0.004 75)` · `#fdfbf8` |
+| Superficie | `oklch(0.195 0.007 65)` · `#171412` | `oklch(0.962 0.005 75)` · `#f4f2ef` |
+| Superficie elevada | `oklch(0.235 0.008 65)` · `#211d1a` | `oklch(0.930 0.006 75)` · `#eae7e3` |
+| Borde sutil | `oklch(0.285 0.008 65)` · `#2d2926` | `oklch(0.895 0.007 75)` · `#dfdcd7` |
+| Borde | `oklch(0.560 0.011 65)` · `#79736e` | `oklch(0.560 0.013 75)` · `#79746c` |
+| Texto atenuado | `oklch(0.660 0.011 65)` · `#97918b` | `oklch(0.500 0.014 65)` · `#69625b` |
+| Texto secundario | `oklch(0.800 0.008 65)` · `#c1bdb8` | `oklch(0.400 0.014 65)` · `#4d4640` |
+| Texto principal | `oklch(0.955 0.005 65)` · `#f3efed` | `oklch(0.215 0.010 65)` · `#1d1915` |
+
+El matiz es 65 en el tema oscuro y 75 en las superficies del claro: un near-black y un near-white cálidos, lejos del azul oscuro de todo tablero financiero. El croma cae a 0,004–0,008 en los extremos de luminancia y sube apenas en el medio, donde no ensucia.
+
+El borde llega a 3,92:1 sobre la superficie en oscuro y 4,17:1 en claro, porque es lo que identifica un control (WCAG 1.4.11, mínimo 3:1). El borde sutil es decorativo —1,27:1 y 1,23:1— y nunca es lo único que identifica algo.
 
 ### Semantic
 
@@ -53,7 +66,23 @@ Los únicos colores del sistema. Aparecen en menos del 5 % de cualquier pantalla
 - **Positivo** — metas alcanzadas, períodos que cuadran, excedente disponible.
 - **Advertencia** — tasa desactualizada, movimiento sin contabilizar, período que no se puede cerrar.
 
-`[valores OKLCH exactos a resolver durante la implementación, verificados a 4,5:1 sobre las superficies de los dos temas]`
+| Rol | Oscuro | Claro |
+|---|---|---|
+| Negativo | `oklch(0.705 0.165 25)` · `#f6706a` | `oklch(0.480 0.185 25)` · `#ae1320` |
+| Positivo | `oklch(0.760 0.110 165)` · `#66c7a0` | `oklch(0.470 0.095 165)` · `#0c6b4d` |
+| Advertencia | `oklch(0.735 0.130 305)` · `#bc93eb` | `oklch(0.450 0.180 305)` · `#6d2ea3` |
+
+Contraste medido contra fondo, superficie y superficie elevada de su propio tema:
+
+| Rol | Oscuro (fondo / superficie / elevada) | Claro (fondo / superficie / elevada) |
+|---|---|---|
+| Negativo | 6,93 / 6,49 / 5,92 | 6,96 / 6,45 / 5,86 |
+| Positivo | 9,55 / 8,94 / 8,15 | 6,27 / 5,81 / 5,28 |
+| Advertencia | 7,94 / 7,44 / 6,78 | 7,90 / 7,32 / 6,65 |
+
+**La advertencia es violeta, no ámbar.** El ámbar está prohibido por la sección 6 y es además el color que todo el rubro usa por reflejo. El violeta cumple el 4,5:1 en los dos temas y, a diferencia del ámbar, se separa de negativo y positivo también para quien no distingue rojo de verde. El positivo tira a verde azulado para no caer en el verde de terminal, que la sección 6 también prohíbe.
+
+Ninguno de los tres se usa solo: rige la Regla del Signo.
 
 ### Named Rules
 
@@ -69,7 +98,11 @@ Los únicos colores del sistema. Aparecen en menos del 5 % de cualquier pantalla
 
 **Label/Mono Font:** mono para **toda cifra**: montos, códigos de cuenta, fechas, porcentajes, identificadores.
 
-`[familias concretas a elegir en la implementación; prohibidas Inter, Roboto, Arial y las del sistema]`
+**Interfaz:** **Geist Sans**. Grotesca técnica, de ancho apretado y formas cerradas, dibujada para interfaz densa. No es Inter ni Roboto ni una del sistema.
+
+**Cifras:** **Geist Mono**. El `1` lleva bandera y barra de base, y la `l` lleva cola: `1101` y `1l01` se distinguen de un vistazo, que es lo que exige la Regla del Código.
+
+Las dos son OFL y se sirven desde Fontsource, no desde un CDN externo. Comparten esqueleto, así que una cifra en mono al lado de una etiqueta en sans no se lee como un injerto.
 
 **Character:** dos familias, una función cada una. La sans dice qué es cada cosa; la mono dice cuánto. Esa división es lo que permite escanear una columna de montos sin leerla: las cifras se distinguen del texto antes de enfocarlas.
 

@@ -5,3 +5,4 @@ api/src/generated/
 coverage/
 *.tsbuildinfo
 web/src/routeTree.gen.ts
+.playwright-mcp/

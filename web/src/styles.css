@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+/* Geist y Geist Mono desde Fontsource: se sirven con la app, no desde un CDN externo. */
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is([data-theme="dark"] *), &:is([data-theme="dark"]));
+
+/* Tokens de DESIGN.md. Escala neutra cálida (matiz 65/75, croma 0,004–0,014) y tres
+   colores semánticos verificados a 4,5:1 sobre las tres superficies de cada tema.
+   Los grises por defecto de shadcn se reemplazan enteros: son el punto de partida. */
+:root {
+  --bg: oklch(0.988 0.004 75);
+  --surface: oklch(0.962 0.005 75);
+  --raised: oklch(0.93 0.006 75);
+  --border-subtle: oklch(0.895 0.007 75);
+  --border-strong: oklch(0.56 0.013 75);
+  --text-muted: oklch(0.5 0.014 65);
+  --text-secondary: oklch(0.4 0.014 65);
+  --text: oklch(0.215 0.01 65);
+  --negative: oklch(0.48 0.185 25);
+  --positive: oklch(0.47 0.095 165);
+  --warning: oklch(0.45 0.18 305);
+
+  /* Series de gráfico: rampa de luminancia, no de matiz. La Regla del Gráfico. */
+  --chart-1: oklch(0.215 0.01 65);
+  --chart-2: oklch(0.4 0.014 65);
+  --chart-3: oklch(0.56 0.013 75);
+  --chart-4: oklch(0.7 0.011 75);
+  --chart-5: oklch(0.83 0.008 75);
+
+  --radius: 0.25rem;
+}
+
+[data-theme="dark"] {
+  --bg: oklch(0.155 0.006 65);
+  --surface: oklch(0.195 0.007 65);
+  --raised: oklch(0.235 0.008 65);
+  --border-subtle: oklch(0.285 0.008 65);
+  --border-strong: oklch(0.56 0.011 65);
+  --text-muted: oklch(0.66 0.011 65);
+  --text-secondary: oklch(0.8 0.008 65);
+  --text: oklch(0.955 0.005 65);
+  --negative: oklch(0.705 0.165 25);
+  --positive: oklch(0.76 0.11 165);
+  --warning: oklch(0.735 0.13 305);
+
+  --chart-1: oklch(0.955 0.005 65);
+  --chart-2: oklch(0.8 0.008 65);
+  --chart-3: oklch(0.66 0.011 65);
+  --chart-4: oklch(0.52 0.011 65);
+  --chart-5: oklch(0.38 0.009 65);
+}
+
+/* Puente a los tokens que consume shadcn. No hay primario cromático: el botón
+   principal se resuelve por contraste de luminancia, que es lo que fija DESIGN.md. */
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--raised);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--text);
+  --color-primary-foreground: var(--bg);
+  --color-secondary: var(--raised);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--surface);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent: var(--raised);
+  --color-accent-foreground: var(--text);
+  --color-destructive: var(--negative);
+  --color-destructive-foreground: var(--bg);
+  --color-border: var(--border-subtle);
+  --color-input: var(--border-strong);
+  --color-ring: var(--text-secondary);
+
+  --color-positive: var(--positive);
+  --color-warning: var(--warning);
+  --color-negative: var(--negative);
+  --color-border-strong: var(--border-strong);
+  --color-text-secondary: var(--text-secondary);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-sans: "Geist Variable", ui-sans-serif, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --font-heading: var(--font-sans);
+
+  --radius-sm: 0.125rem;
+  --radius-md: var(--radius);
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: light;
+    @apply font-sans;
+  }
+
+  [data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* La Regla de la Cifra Tabular: toda cifra en mono, tabular y alineada a la derecha. */
+  .num {
+    @apply font-mono text-right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* El borde que identifica un control llega a 3:1; el sutil es decorativo (WCAG 1.4.11). */
+  input,
+  select,
+  textarea {
+    border-color: var(--border-strong);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--text-secondary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
