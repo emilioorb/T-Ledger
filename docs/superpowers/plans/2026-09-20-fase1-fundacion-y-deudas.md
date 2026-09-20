@@ -229,7 +229,8 @@ CORS_ORIGIN="http://localhost:5173"
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "build": "tsc -p tsconfig.json",
-    "start:dev": "node --watch --experimental-strip-types src/main.ts"
+    "start:dev": "nest start --watch",
+    "start": "node dist/main.js"
   },
   "dependencies": {
     "decimal.js": "10.6.0"
@@ -2758,15 +2759,29 @@ git commit -m "✨ feat: persistencia de deudas con Prisma 7 y pruebas contra Po
   - `toDebtResponse(debt: Debt): DebtResponse` en `debt.presenter.ts`
   - Casos de uso: `ListDebtsUseCase.execute(page, pageSize, direction?)`, `CreateDebtUseCase.execute(input)`, `GetDebtUseCase.execute(id)`, `UpdateDebtUseCase.execute(id, input)`, `DeleteDebtUseCase.execute(id)`
 
-- [ ] **Paso 1: Instalar Nest y Zod**
+- [x] **Paso 1: Instalar Nest y Zod**
 
 ```bash
 cd api
-npm install @nestjs/common@12.0.3 @nestjs/core@12.0.3 @nestjs/platform-express@12.0.3 @nestjs/config@12.0.0 @nestjs/swagger@12.0.1 reflect-metadata@0.2.2 rxjs@7.8.2 zod@4.6.5
-npm install -D @nestjs/cli@12.0.3 @nestjs/testing@12.0.3 supertest@7.2.2 @types/supertest@7.2.1
+# Nest y Zod ya quedaron instalados en la Tarea 7, que los necesita para @Injectable().
+npm install -D @nestjs/cli@12.0.3 @nestjs/testing@12.0.3 supertest@7.2.2 @types/supertest@7.2.1 @types/express@5.0.5
 ```
 
-- [ ] **Paso 2: Escribir el test de configuración que falla**
+`nest-cli.json` en `api/`, para que `nest start --watch` encuentre el proyecto:
+
+```json
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true
+  }
+}
+```
+
+`node --experimental-strip-types` no sirve para arrancar esta API: no reescribe los specifiers `.js` a `.ts` ni emite la metadata de decoradores que Nest necesita para inyectar por tipo.
+
+- [x] **Paso 2: Escribir el test de configuración que falla**
 
 `api/src/shared/config/env.spec.ts`:
 
@@ -2799,7 +2814,7 @@ describe('loadEnv', () => {
 })
 ```
 
-- [ ] **Paso 3: Implementar la configuración**
+- [x] **Paso 3: Implementar la configuración**
 
 `api/src/shared/config/env.ts`:
 
@@ -2827,7 +2842,7 @@ export const loadEnv = (source: NodeJS.ProcessEnv): Env => {
 
 En Zod 4 el parámetro de error es `error`, no `message`, y el formateo legible es `z.prettifyError`.
 
-- [ ] **Paso 4: Formato único de error**
+- [x] **Paso 4: Formato único de error**
 
 `api/src/shared/http/api-error.ts`:
 
@@ -2947,7 +2962,7 @@ export class ZodValidationPipe<T> implements PipeTransform<unknown, T> {
 }
 ```
 
-- [ ] **Paso 5: Paginación y representación de montos**
+- [x] **Paso 5: Paginación y representación de montos**
 
 `api/src/shared/http/pagination.ts`:
 
@@ -3002,7 +3017,7 @@ export const fromMoney = (money: Money): MoneyDto => money.toJSON()
 
 Cada schema expuesto lleva `title` en su `meta`, para que los tipos generados en el frontend salgan con nombre propio y no como objetos anónimos.
 
-- [ ] **Paso 6: Escribir el test del controlador que falla**
+- [x] **Paso 6: Escribir el test del controlador que falla**
 
 `api/src/modules/debts/infrastructure/debts.controller.spec.ts`:
 
@@ -3158,7 +3173,7 @@ describe('GET, PATCH y DELETE /api/v1/debts/:id', () => {
 })
 ```
 
-- [ ] **Paso 7: Correr los tests y confirmar que fallan**
+- [x] **Paso 7: Correr los tests y confirmar que fallan**
 
 ```bash
 cd api && npm test -- debts.controller env.spec
@@ -3166,7 +3181,7 @@ cd api && npm test -- debts.controller env.spec
 
 Esperado: FAIL, `./debts.module.js` y `./env.js` sin resolver.
 
-- [ ] **Paso 8: Esquemas y presentador de deudas**
+- [x] **Paso 8: Esquemas y presentador de deudas**
 
 `api/src/modules/debts/infrastructure/debt.schemas.ts`:
 
@@ -3257,7 +3272,7 @@ export const toDebtResponse = (debt: Debt): DebtResponse => {
 }
 ```
 
-- [ ] **Paso 9: Casos de uso**
+- [x] **Paso 9: Casos de uso**
 
 `api/src/modules/debts/application/create-debt.use-case.ts`:
 
@@ -3419,7 +3434,7 @@ export class DeleteDebtUseCase {
 }
 ```
 
-- [ ] **Paso 10: Controlador y módulo**
+- [x] **Paso 10: Controlador y módulo**
 
 `api/src/modules/debts/infrastructure/debts.controller.ts`:
 
@@ -3550,7 +3565,7 @@ import { PrismaService } from './prisma.service.js'
 export class PrismaModule {}
 ```
 
-- [ ] **Paso 11: Arranque de la aplicación**
+- [x] **Paso 11: Arranque de la aplicación**
 
 `api/src/app.module.ts`:
 
@@ -3584,16 +3599,16 @@ const bootstrap = async (): Promise<void> => {
 void bootstrap()
 ```
 
-- [ ] **Paso 12: Correr los tests y confirmar que pasan**
+- [x] **Paso 12: Correr los tests y confirmar que pasan**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
 ```
 
-- [ ] **Paso 13: Verificar la API a mano**
+- [x] **Paso 13: Verificar la API a mano**
 
 ```bash
-cd api && npm run start:dev
+cd api && npm run build && npm start
 # en otra terminal
 curl -s localhost:3000/api/v1/debts | head
 curl -s -X POST localhost:3000/api/v1/debts -H 'content-type: application/json' \
@@ -3602,7 +3617,7 @@ curl -s -X POST localhost:3000/api/v1/debts -H 'content-type: application/json' 
 
 Esperado: la lista vacía con `pagination`, y la creación devolviendo 201 con el monto como string.
 
-- [ ] **Paso 14: Commit**
+- [x] **Paso 14: Commit**
 
 ```bash
 git add api
@@ -3610,12 +3625,12 @@ git commit -m "✨ feat: API de deudas con formato de error único, paginación 
 ```
 
 **Acceptance criteria:**
-- [ ] Una configuración sin `DATABASE_URL` impide arrancar, con el nombre de la variable en el mensaje
-- [ ] Los cuatro códigos de error del spec salen con el mismo formato: 400, 404, 409 y 422
-- [ ] Un error no previsto devuelve 500 sin filtrar su mensaje interno
-- [ ] `GET /debts` pagina y filtra por `direction`
-- [ ] `PATCH` acepta un objeto parcial sin exigir el resto de los campos
-- [ ] Los montos viajan como string en todas las respuestas
+- [x] Una configuración sin `DATABASE_URL` impide arrancar, con el nombre de la variable en el mensaje
+- [x] Los cuatro códigos de error del spec salen con el mismo formato: 400, 404, 409 y 422
+- [x] Un error no previsto devuelve 500 sin filtrar su mensaje interno
+- [x] `GET /debts` pagina y filtra por `direction`
+- [x] `PATCH` acepta un objeto parcial sin exigir el resto de los campos
+- [x] Los montos viajan como string en todas las respuestas
 
 ---
 

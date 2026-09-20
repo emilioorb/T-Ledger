@@ -1,0 +1,149 @@
+import { Test } from '@nestjs/testing'
+import type { INestApplication } from '@nestjs/common'
+import request from 'supertest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { AllExceptionsFilter } from '../../../shared/http/all-exceptions.filter.js'
+import { PrismaService } from '../../../shared/prisma/prisma.service.js'
+import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
+import { DebtsModule } from '../debts.module.js'
+
+let postgres: RunningPostgres
+let app: INestApplication
+let prisma: PrismaService
+
+const nuevaDeuda = {
+  name: 'CONAPE',
+  counterparty: 'CONAPE',
+  principal: { minorUnits: '5634929300', currency: 'CRC' },
+  annualRate: '9.5',
+  compounding: 'MONTHLY',
+  termMonths: 120,
+  startDate: '2026-01-15',
+  kind: 'FRENCH',
+  direction: 'BORROWED',
+  budgetBucket: 'necesidades',
+}
+
+beforeAll(async () => {
+  postgres = await startPostgres()
+  const moduleRef = await Test.createTestingModule({ imports: [DebtsModule] })
+    .overrideProvider(PrismaService)
+    .useValue(new PrismaService(postgres.url))
+    .compile()
+
+  app = moduleRef.createNestApplication()
+  app.setGlobalPrefix('api/v1')
+  app.useGlobalFilters(new AllExceptionsFilter())
+  await app.init()
+  prisma = app.get(PrismaService)
+}, 180_000)
+
+afterAll(async () => {
+  await app.close()
+  await postgres.stop()
+})
+
+beforeEach(async () => {
+  await prisma.debt.deleteMany()
+})
+
+describe('POST /api/v1/debts', () => {
+  it('crea una deuda y devuelve el monto como string', async () => {
+    const response = await request(app.getHttpServer()).post('/api/v1/debts').send(nuevaDeuda)
+
+    expect(response.status).toBe(201)
+    expect(response.body.principal).toEqual({ minorUnits: '5634929300', currency: 'CRC' })
+    expect(response.body.id).toEqual(expect.any(String))
+  })
+
+  it('rechaza una entrada inválida con 400 y el formato de error único', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/debts')
+      .send({ ...nuevaDeuda, termMonths: -3 })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error.code).toBe('VALIDATION_ERROR')
+    expect(response.body.error.message).toEqual(expect.any(String))
+  })
+
+  it('rechaza con 422 una deuda propia sin cubeta de presupuesto', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/debts')
+      .send({ ...nuevaDeuda, budgetBucket: null })
+
+    expect(response.status).toBe(422)
+    expect(response.body.error.code).toBe('SEMANTIC_VALIDATION_ERROR')
+  })
+
+  it('acepta un préstamo otorgado sin cubeta', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/debts')
+      .send({ ...nuevaDeuda, direction: 'LENT', budgetBucket: null, counterparty: 'Andrés' })
+
+    expect(response.status).toBe(201)
+    expect(response.body.direction).toBe('LENT')
+  })
+})
+
+describe('GET /api/v1/debts', () => {
+  it('pagina y reporta el total', async () => {
+    for (let index = 0; index < 3; index += 1) {
+      await request(app.getHttpServer())
+        .post('/api/v1/debts')
+        .send({ ...nuevaDeuda, name: `Deuda ${index}` })
+    }
+
+    const response = await request(app.getHttpServer()).get('/api/v1/debts?page=1&pageSize=2')
+
+    expect(response.status).toBe(200)
+    expect(response.body.data).toHaveLength(2)
+    expect(response.body.pagination).toEqual({
+      page: 1,
+      pageSize: 2,
+      totalItems: 3,
+      totalPages: 2,
+    })
+  })
+
+  it('filtra por dirección', async () => {
+    await request(app.getHttpServer()).post('/api/v1/debts').send(nuevaDeuda)
+    await request(app.getHttpServer())
+      .post('/api/v1/debts')
+      .send({ ...nuevaDeuda, direction: 'LENT', budgetBucket: null })
+
+    const response = await request(app.getHttpServer()).get('/api/v1/debts?direction=LENT')
+
+    expect(response.body.data).toHaveLength(1)
+    expect(response.body.data[0].direction).toBe('LENT')
+  })
+})
+
+describe('GET, PATCH y DELETE /api/v1/debts/:id', () => {
+  it('devuelve 404 con el formato de error único para un id inexistente', async () => {
+    const response = await request(app.getHttpServer()).get(
+      '/api/v1/debts/0199a1c0-0000-7000-8000-00000000ffff',
+    )
+
+    expect(response.status).toBe(404)
+    expect(response.body.error.code).toBe('NOT_FOUND')
+  })
+
+  it('actualiza parcialmente sin exigir el objeto completo', async () => {
+    const created = await request(app.getHttpServer()).post('/api/v1/debts').send(nuevaDeuda)
+
+    const response = await request(app.getHttpServer())
+      .patch(`/api/v1/debts/${created.body.id}`)
+      .send({ name: 'CONAPE reestructurado' })
+
+    expect(response.status).toBe(200)
+    expect(response.body.name).toBe('CONAPE reestructurado')
+    expect(response.body.termMonths).toBe(120)
+  })
+
+  it('borra y luego devuelve 404', async () => {
+    const created = await request(app.getHttpServer()).post('/api/v1/debts').send(nuevaDeuda)
+
+    expect((await request(app.getHttpServer()).delete(`/api/v1/debts/${created.body.id}`)).status).toBe(204)
+    expect((await request(app.getHttpServer()).get(`/api/v1/debts/${created.body.id}`)).status).toBe(404)
+  })
+})
