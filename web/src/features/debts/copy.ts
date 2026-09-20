@@ -2,8 +2,11 @@
 // una sola lectura. Tono de PRODUCT.md: denso, directo, verificable. Sin rayas largas.
 export const copy = {
   nav: {
+    section: 'Dinero',
     debts: 'Deudas',
     payoffPlan: 'Plan de pago',
+    lightTheme: 'Tema claro',
+    darkTheme: 'Tema oscuro',
   },
 
   tabs: {
@@ -146,8 +149,7 @@ export const copy = {
     payoffDate: 'Libre en',
     monthlyPayment: 'Cuota',
     budgetBucket: 'Cubeta',
-    noBucket: 'Sin cubeta, es un préstamo otorgado',
-    back: 'Volver a la lista',
+    edit: 'Editar',
     delete: 'Borrar',
   },
 

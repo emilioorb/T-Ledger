@@ -83,6 +83,13 @@
   --color-border-strong: var(--border-strong);
   --color-text-secondary: var(--text-secondary);
 
+  --color-sidebar: var(--surface);
+  --color-sidebar-foreground: var(--text-secondary);
+  --color-sidebar-accent: var(--raised);
+  --color-sidebar-accent-foreground: var(--text);
+  --color-sidebar-border: var(--border-subtle);
+  --color-sidebar-ring: var(--text-secondary);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

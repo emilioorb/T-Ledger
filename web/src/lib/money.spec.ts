@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatMoney, parseMoneyInput } from './money.js'
+import { formatMoney, parseMoneyInput, toMoneyInput } from './money.js'
 
 describe('formatMoney', () => {
   it('formatea colones con separadores de miles y sin decimales sobrantes', () => {
@@ -36,5 +36,23 @@ describe('parseMoneyInput', () => {
 
   it('rechaza texto que no es un monto', () => {
     expect(() => parseMoneyInput('mucha plata', 'CRC')).toThrow(RangeError)
+  })
+})
+
+describe('toMoneyInput', () => {
+  it('devuelve el monto listo para un campo de texto, sin símbolo ni separadores', () => {
+    expect(toMoneyInput({ minorUnits: '5634929300', currency: 'CRC' })).toBe('56349293,00')
+  })
+
+  it('conserva el signo y no pierde precisión', () => {
+    expect(toMoneyInput({ minorUnits: '-2500', currency: 'CRC' })).toBe('-25,00')
+    expect(toMoneyInput({ minorUnits: '900719925474099100', currency: 'CRC' })).toBe(
+      '9007199254740991,00',
+    )
+  })
+
+  it('es la inversa de parseMoneyInput', () => {
+    const money = { minorUnits: '5634929300', currency: 'CRC' } as const
+    expect(parseMoneyInput(toMoneyInput(money), 'CRC')).toEqual(money)
   })
 })

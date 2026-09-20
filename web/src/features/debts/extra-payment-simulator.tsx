@@ -90,24 +90,30 @@ export const ExtraPaymentSimulator = ({ debt }: Props) => {
             onValueChange={(value) => setMode(value as SimulateInput['mode'])}
             className="gap-2"
           >
-            <div className="flex items-start gap-2">
-              <RadioGroupItem value="REDUCE_TERM" id="mode-term" className="mt-1" />
-              <Label htmlFor="mode-term" className="flex-col items-start gap-0.5 font-normal">
+            <Label
+              htmlFor="mode-term"
+              className="flex min-h-11 items-start gap-2 py-1.5 font-normal"
+            >
+              <RadioGroupItem value="REDUCE_TERM" id="mode-term" className="mt-0.5" />
+              <span className="flex flex-col gap-0.5">
                 <span className="font-medium">{copy.simulator.mode.reduceTerm}</span>
                 <span className="text-xs text-muted-foreground">
                   {copy.simulator.mode.reduceTermHint}
                 </span>
-              </Label>
-            </div>
-            <div className="flex items-start gap-2">
-              <RadioGroupItem value="REDUCE_PAYMENT" id="mode-payment" className="mt-1" />
-              <Label htmlFor="mode-payment" className="flex-col items-start gap-0.5 font-normal">
+              </span>
+            </Label>
+            <Label
+              htmlFor="mode-payment"
+              className="flex min-h-11 items-start gap-2 py-1.5 font-normal"
+            >
+              <RadioGroupItem value="REDUCE_PAYMENT" id="mode-payment" className="mt-0.5" />
+              <span className="flex flex-col gap-0.5">
                 <span className="font-medium">{copy.simulator.mode.reducePayment}</span>
                 <span className="text-xs text-muted-foreground">
                   {copy.simulator.mode.reducePaymentHint}
                 </span>
-              </Label>
-            </div>
+              </span>
+            </Label>
           </RadioGroup>
         </fieldset>
 

@@ -32,3 +32,14 @@ export const parseMoneyInput = (text: string, currency: CurrencyCode): MoneyDto 
   const minor = `${absWhole}${fraction.padEnd(exponent, '0')}`.replace(/^0+(?=\d)/, '')
   return { minorUnits: `${negative ? '-' : ''}${minor}`, currency }
 }
+
+// El valor que vuelve a un campo de texto: sin símbolo ni separadores de miles, porque
+// lo que se edita es un número, no un monto ya compuesto. Es la inversa de parseMoneyInput.
+export const toMoneyInput = (money: MoneyDto): string => {
+  const exponent = MINOR_UNIT_EXPONENT[money.currency]
+  const negative = money.minorUnits.startsWith('-')
+  const digits = (negative ? money.minorUnits.slice(1) : money.minorUnits).padStart(exponent + 1, '0')
+  const whole = digits.slice(0, digits.length - exponent)
+  const fraction = digits.slice(digits.length - exponent)
+  return `${negative ? '-' : ''}${whole},${fraction}`
+}
