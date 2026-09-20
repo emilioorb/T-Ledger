@@ -1,13 +1,11 @@
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Pencil, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { createFileRoute } from '@tanstack/react-router'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AmortizationTable } from '@/features/debts/amortization-table'
 import { BalanceChart } from '@/features/debts/balance-chart'
 import { copy } from '@/features/debts/copy'
 import { ErrorState } from '@/features/debts/error-state'
 import { ExtraPaymentSimulator } from '@/features/debts/extra-payment-simulator'
-import { useDebt, useDeleteDebt, useSchedule } from '@/features/debts/use-debts'
+import { useDebt, useSchedule } from '@/features/debts/use-debts'
 import { formatIsoDate } from '@/lib/dates'
 import { formatMoney } from '@/lib/money'
 
@@ -20,10 +18,8 @@ const Fact = ({ label, value }: { label: string; value: string }) => (
 
 const DebtDetail = () => {
   const { debtId } = Route.useParams()
-  const navigate = useNavigate()
   const debt = useDebt(debtId)
   const schedule = useSchedule(debtId)
-  const deleteDebt = useDeleteDebt()
 
   if (debt.isPending) {
     return (
@@ -42,28 +38,7 @@ const DebtDetail = () => {
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">{data.name}</h1>
-          <div className="flex gap-1">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/deudas/$debtId/editar" params={{ debtId: data.id }}>
-              <Pencil className="size-4" aria-hidden="true" />
-              {copy.detail.edit}
-            </Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={deleteDebt.isPending}
-            onClick={() =>
-              deleteDebt.mutate(data.id, { onSuccess: () => navigate({ to: '/deudas' }) })
-            }
-          >
-            <Trash2 className="size-4" aria-hidden="true" />
-            {copy.detail.delete}
-          </Button>
-          </div>
-        </div>
+        <h1 className="text-xl font-semibold tracking-tight">{data.name}</h1>
 
         <dl className="grid gap-x-6 sm:grid-cols-3 lg:grid-cols-6">
           <Fact label={copy.detail.counterparty} value={data.counterparty} />

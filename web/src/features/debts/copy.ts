@@ -29,6 +29,9 @@ export const copy = {
       counterparty: 'A quién',
     },
     loading: 'Cargando deudas',
+    actions: 'Acciones',
+    edit: (name: string) => `Editar ${name}`,
+    delete: (name: string) => `Borrar ${name}`,
     search: { placeholder: 'Buscar por nombre o contraparte', label: 'Buscar entre las deudas' },
     noMatches: (query: string) => `Ninguna deuda coincide con «${query}».`,
     truncated: (mostradas: number, total: number) =>
@@ -156,13 +159,20 @@ export const copy = {
     monthlyPayment: 'Cuota',
     budgetBucket: 'Cubeta',
     edit: 'Editar',
-    delete: 'Borrar',
   },
 
   error: {
     title: 'No se pudieron traer los datos',
     description: 'La API no respondió. Los datos siguen en el servidor, no se perdió nada.',
     retry: 'Reintentar',
+  },
+
+  confirmDelete: {
+    title: '¿Borrar esta deuda?',
+    description: (name: string) =>
+      `Se borra «${name}» con su tabla de amortización. No se puede deshacer.`,
+    cancel: 'Cancelar',
+    confirm: 'Borrar',
   },
 
   toast: {

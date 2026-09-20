@@ -8,6 +8,7 @@ import { formatIsoDate } from '@/lib/dates'
 import { formatMoney } from '@/lib/money'
 import { useTableControls, type SortValue } from '@/lib/use-table-controls'
 import { copy } from './copy'
+import { DebtRowActions } from './debt-row-actions'
 import { EmptyState } from './empty-state'
 import { ErrorState } from './error-state'
 import type { Debt, DebtDirection } from './types'
@@ -22,7 +23,7 @@ interface Props {
 // fijo: con `auto` cada grilla la resuelve por su cuenta y las cifras dejan de alinear.
 // Solo las columnas, sin el display: el encabezado se oculta bajo sm y la fila no.
 const COLS =
-  'grid-cols-[1fr_auto] gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_6.5rem]'
+  'grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_6.5rem_4.5rem]'
 
 const columns = {
   name: (debt: Debt) => debt.name,
@@ -34,28 +35,31 @@ const columns = {
 type ColumnKey = keyof typeof columns
 
 const Row = ({ debt }: { debt: Debt }) => (
-  <li>
+  <li
+    className={`group grid ${COLS} items-baseline px-1 py-2 transition-colors hover:bg-accent/40`}
+  >
     <Link
       to="/deudas/$debtId"
       params={{ debtId: debt.id }}
-      className={`grid ${COLS} items-baseline px-1 py-3 transition-colors hover:bg-accent/40`}
+      className="truncate text-sm font-medium hover:underline"
     >
-      <span className="truncate text-sm font-medium">{debt.name}</span>
-      <span className="num text-sm">{formatMoney(debt.principal)}</span>
-      <span className="num hidden text-sm text-muted-foreground sm:block">
-        {formatMoney(debt.monthlyPayment)}
-      </span>
-      <span className="num hidden text-xs text-muted-foreground sm:block">
-        {formatIsoDate(debt.payoffDate)}
-      </span>
-      {/* Bajo sm la fila se parte en dos renglones: nombre y saldo arriba, que es lo que
-          se viene a mirar, y cuota y fecha debajo como pie. */}
-      <span className="col-span-2 text-xs text-muted-foreground sm:hidden">
-        <span className="num">{formatMoney(debt.monthlyPayment)}</span>
-        {' · '}
-        <span className="num">{formatIsoDate(debt.payoffDate)}</span>
-      </span>
+      {debt.name}
     </Link>
+    <span className="num text-sm">{formatMoney(debt.principal)}</span>
+    <span className="num hidden text-sm text-muted-foreground sm:block">
+      {formatMoney(debt.monthlyPayment)}
+    </span>
+    <span className="num hidden text-xs text-muted-foreground sm:block">
+      {formatIsoDate(debt.payoffDate)}
+    </span>
+    <DebtRowActions debt={debt} />
+    {/* Bajo sm la fila se parte en dos renglones: nombre y saldo arriba, que es lo que
+        se viene a mirar, y cuota y fecha debajo como pie. */}
+    <span className="col-span-2 text-xs text-muted-foreground sm:hidden">
+      <span className="num">{formatMoney(debt.monthlyPayment)}</span>
+      {' · '}
+      <span className="num">{formatIsoDate(debt.payoffDate)}</span>
+    </span>
   </li>
 )
 
@@ -130,6 +134,7 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
           {header('balance', copy.list.columns.balance)}
           {header('payment', copy.list.columns.payment)}
           {header('payoffDate', copy.list.columns.payoffDate)}
+          <span className="inline-flex min-h-6 items-center justify-end">{copy.list.actions}</span>
         </div>
 
         {table.rows.length === 0 ? (
