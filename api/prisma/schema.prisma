@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DebtKind {
+  FRENCH
+  FIXED_PRINCIPAL
+  INTEREST_FREE
+}
+
+enum Compounding {
+  MONTHLY
+  ANNUAL
+}
+
+enum DebtDirection {
+  BORROWED
+  LENT
+}
+
+model Debt {
+  id             String        @id @default(uuid(7))
+  name           String
+  counterparty   String
+  principalMinor BigInt
+  currency       String        @db.Char(3)
+  annualRate     Decimal       @db.Decimal(9, 6)
+  compounding    Compounding
+  termMonths     Int
+  startDate      DateTime      @db.Date
+  kind           DebtKind
+  direction      DebtDirection @default(BORROWED)
+  budgetBucket   String?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
+
+  @@index([direction])
+  @@map("debts")
+}

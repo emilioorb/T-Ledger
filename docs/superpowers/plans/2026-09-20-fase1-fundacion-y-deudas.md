@@ -170,7 +170,7 @@ mkdir -p api/src/shared/kernel
 node_modules/
 dist/
 .env
-api/generated/
+api/src/generated/
 coverage/
 *.tsbuildinfo
 web/src/routeTree.gen.ts
@@ -287,7 +287,7 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'generated/**', 'node_modules/**'] },
+  { ignores: ['dist/**', 'src/generated/**', 'node_modules/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -2251,7 +2251,7 @@ git commit -m "✨ feat: estrategias de pago avalancha, bola de nieve y manual"
 - Create: `api/src/shared/prisma/prisma.service.ts`
 - Create: `api/src/modules/debts/infrastructure/debt.mapper.ts`
 - Create: `api/src/modules/debts/infrastructure/prisma-debt.repository.ts`
-- Create: `api/test/postgres-container.ts`
+- Create: `api/src/test/postgres-container.ts`
 - Test: `api/src/modules/debts/infrastructure/prisma-debt.repository.spec.ts`
 
 **Interfaces:**
@@ -2260,26 +2260,30 @@ git commit -m "✨ feat: estrategias de pago avalancha, bola de nieve y manual"
   - `class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy`
   - `toDomain(row: DebtRow): Debt` y `toRow(debt: Debt): DebtRow` en `debt.mapper.ts`
   - `class PrismaDebtRepository implements DebtRepository`
-  - `startPostgres(): Promise<{ url: string; stop: () => Promise<void> }>` en `test/postgres-container.ts`
+  - `startPostgres(): Promise<{ url: string; stop: () => Promise<void> }>` en `src/test/postgres-container.ts`
 
-- [ ] **Paso 1: Instalar Prisma pineado**
+- [x] **Paso 1: Instalar Prisma pineado**
 
 ```bash
 cd api
 npm install prisma@7.10.0 @prisma/client@7.10.0 @prisma/adapter-pg@7.10.0 pg@8.23.0
+npm install @nestjs/common@12.0.3 @nestjs/core@12.0.3 @nestjs/platform-express@12.0.3 @nestjs/config@12.0.0 @nestjs/swagger@12.0.1 reflect-metadata@0.2.2 rxjs@7.8.2 zod@4.6.5
 npm install -D @testcontainers/postgresql@12.1.0 @types/pg@8.16.0
 ```
 
 `prisma` sin versión traería `8.0.0-rc.15`, porque su dist-tag `latest` apunta a un release candidate mientras `@prisma/client` estable va en 7.10.0. Instalarlos desalineados rompe la generación del cliente.
 
-- [ ] **Paso 2: Configuración de Prisma 7**
+- [x] **Paso 2: Configuración de Prisma 7**
 
 `api/prisma.config.ts`:
 
 ```ts
 import path from 'node:path'
+import { config } from 'dotenv'
 import { defineConfig } from 'prisma/config'
-import 'dotenv/config'
+
+// El `.env` vive en la raíz del repositorio, no dentro de `api/`: dotenv solo mira el cwd.
+config({ path: path.join(import.meta.dirname, '..', '.env') })
 
 export default defineConfig({
   earlyAccess: true,
@@ -2301,7 +2305,7 @@ En Prisma 7 la CLI ya no carga `.env` sola y el `datasource` sale de este archiv
 ```prisma
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
   moduleFormat = "esm"
 }
 
@@ -2350,7 +2354,7 @@ model Debt {
 
 `budgetBucket` es opcional en la base porque un préstamo otorgado no pertenece a ninguna cubeta; la regla de que una deuda propia sí la necesita vive en el dominio, no en el esquema. El índice sobre `direction` sostiene la consulta que separa las dos listas de la pantalla.
 
-- [ ] **Paso 3: Generar el cliente y la primera migración**
+- [x] **Paso 3: Generar el cliente y la primera migración**
 
 ```bash
 cd .. && docker compose up -d db && cd api
@@ -2362,14 +2366,14 @@ npx prisma generate
 
 Si `prisma validate` reclama que falta `url` en el bloque `datasource`, agregar `url = env("DATABASE_URL")` al schema y volver a correrlo; el resto del plan no cambia.
 
-- [ ] **Paso 4: Servicio de Prisma con el driver adapter**
+- [x] **Paso 4: Servicio de Prisma con el driver adapter**
 
 `api/src/shared/prisma/prisma.service.ts`:
 
 ```ts
 import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '../../../generated/prisma/client.js'
+import { PrismaClient } from '../../generated/prisma/client.js'
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -2389,12 +2393,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
 En Prisma 7 el adapter es obligatorio en tiempo de ejecución: el cliente ya no arma la conexión por su cuenta.
 
-- [ ] **Paso 5: Escribir el test de integración que falla**
+- [x] **Paso 5: Escribir el test de integración que falla**
 
 `api/test/postgres-container.ts`:
 
 ```ts
 import { execSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 
 export interface RunningPostgres {
@@ -2409,12 +2414,18 @@ export const startPostgres = async (): Promise<RunningPostgres> => {
   const url = container.getConnectionUri()
 
   execSync('npx prisma migrate deploy', {
-    cwd: new URL('..', import.meta.url).pathname,
+    // fileURLToPath y no URL.pathname: en Windows este último devuelve "/C:/..." y no es un cwd válido.
+    cwd: fileURLToPath(new URL('../..', import.meta.url)),
     env: { ...process.env, DATABASE_URL: url },
     stdio: 'inherit',
   })
 
-  return { url, stop: () => container.stop() }
+  return {
+    url,
+    stop: async () => {
+      await container.stop()
+    },
+  }
 }
 ```
 
@@ -2427,7 +2438,7 @@ import { Money } from '../../../shared/kernel/money.js'
 import { unwrap } from '../../../shared/kernel/result.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import { Debt } from '../domain/debt.js'
-import { startPostgres, type RunningPostgres } from '../../../../test/postgres-container.js'
+import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { PrismaDebtRepository } from './prisma-debt.repository.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
@@ -2569,7 +2580,7 @@ describe('PrismaDebtRepository', () => {
 })
 ```
 
-- [ ] **Paso 6: Correr el test y confirmar que falla**
+- [x] **Paso 6: Correr el test y confirmar que falla**
 
 ```bash
 cd api && npm test -- prisma-debt
@@ -2577,7 +2588,7 @@ cd api && npm test -- prisma-debt
 
 Esperado: FAIL, `./prisma-debt.repository.js` sin resolver.
 
-- [ ] **Paso 7: Implementar el mapeo**
+- [x] **Paso 7: Implementar el mapeo**
 
 `api/src/modules/debts/infrastructure/debt.mapper.ts`:
 
@@ -2643,7 +2654,7 @@ export const toRow = (debt: Debt): Omit<DebtRow, 'annualRate'> & { annualRate: s
 })
 ```
 
-- [ ] **Paso 8: Implementar el repositorio**
+- [x] **Paso 8: Implementar el repositorio**
 
 `api/src/modules/debts/infrastructure/prisma-debt.repository.ts`:
 
@@ -2694,7 +2705,7 @@ export class PrismaDebtRepository implements DebtRepository {
 }
 ```
 
-- [ ] **Paso 9: Correr el test y confirmar que pasa**
+- [x] **Paso 9: Correr el test y confirmar que pasa**
 
 ```bash
 cd api && npm test -- prisma-debt
@@ -2702,7 +2713,7 @@ cd api && npm test -- prisma-debt
 
 Esperado: 8 tests pasando. La primera corrida descarga la imagen de Postgres y tarda; por eso el `beforeAll` tiene 180 s de tope.
 
-- [ ] **Paso 10: Verificar la suite completa y commitear**
+- [x] **Paso 10: Verificar la suite completa y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -2711,12 +2722,12 @@ git commit -m "✨ feat: persistencia de deudas con Prisma 7 y pruebas contra Po
 ```
 
 **Acceptance criteria:**
-- [ ] ₡56.349.293 sobrevive el viaje de ida y vuelta como `5_634_929_300n`
-- [ ] La tasa vuelve como decimal exacto, sin error de punto flotante
-- [ ] `findById` devuelve una instancia de `Debt`, comprobado con `toBeInstanceOf`
-- [ ] `startDate` vuelve como el mismo día, sin desplazamiento de zona horaria
-- [ ] Guardar dos veces el mismo id actualiza, no duplica
-- [ ] Un préstamo otorgado se persiste con `budgetBucket` nulo y vuelve como `LENT`
+- [x] ₡56.349.293 sobrevive el viaje de ida y vuelta como `5_634_929_300n`
+- [x] La tasa vuelve como decimal exacto, sin error de punto flotante
+- [x] `findById` devuelve una instancia de `Debt`, comprobado con `toBeInstanceOf`
+- [x] `startDate` vuelve como el mismo día, sin desplazamiento de zona horaria
+- [x] Guardar dos veces el mismo id actualiza, no duplica
+- [x] Un préstamo otorgado se persiste con `budgetBucket` nulo y vuelve como `LENT`
 
 ---
 
@@ -3002,7 +3013,7 @@ import request from 'supertest'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { AllExceptionsFilter } from '../../../shared/http/all-exceptions.filter.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
-import { startPostgres, type RunningPostgres } from '../../../../test/postgres-container.js'
+import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { DebtsModule } from '../debts.module.js'
 
 let postgres: RunningPostgres
@@ -3639,7 +3650,7 @@ import request from 'supertest'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { AllExceptionsFilter } from '../../../shared/http/all-exceptions.filter.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
-import { startPostgres, type RunningPostgres } from '../../../../test/postgres-container.js'
+import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { DebtsModule } from '../debts.module.js'
 
 let postgres: RunningPostgres

@@ -2,7 +2,9 @@
   "name": "finanzas-api",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
@@ -12,12 +14,31 @@
     "start:dev": "node --watch --experimental-strip-types src/main.ts"
   },
   "dependencies": {
-    "decimal.js": "10.6.0"
+    "@nestjs/common": "^12.0.3",
+    "@nestjs/config": "^12.0.0",
+    "@nestjs/core": "^12.0.3",
+    "@nestjs/platform-express": "^12.0.3",
+    "@nestjs/swagger": "^12.0.1",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "decimal.js": "10.6.0",
+    "pg": "^8.23.0",
+    "prisma": "^7.10.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@nestjs/cli": "^12.0.3",
+    "@nestjs/testing": "^12.0.3",
+    "@testcontainers/postgresql": "^12.1.0",
     "@types/node": "26.6.2",
+    "@types/pg": "^8.16.0",
+    "@types/supertest": "^7.2.1",
+    "dotenv": "^17.2.3",
     "eslint": "10.11.0",
+    "supertest": "^7.2.2",
     "typescript": "6.0.3",
     "typescript-eslint": "8.70.0",
     "vitest": "5.0.1"
