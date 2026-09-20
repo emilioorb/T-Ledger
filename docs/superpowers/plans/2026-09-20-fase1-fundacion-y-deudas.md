@@ -1405,7 +1405,7 @@ El agregado cubre las dos direcciones: `BORROWED` es lo que Emilio debe, `LENT` 
 
 `budgetBucket` es `string | null`: una deuda propia pertenece a una cubeta del presupuesto, un préstamo otorgado no consume ninguna. Que el tipo lo diga evita tener que recordarlo.
 
-- [ ] **Paso 1: Escribir el test de abono extraordinario que falla**
+- [x] **Paso 1: Escribir el test de abono extraordinario que falla**
 
 `api/src/modules/debts/domain/extra-payment.spec.ts`:
 
@@ -1531,7 +1531,7 @@ describe('buildScheduleWithExtraPayment — entradas inválidas', () => {
 })
 ```
 
-- [ ] **Paso 2: Correr el test y confirmar que falla**
+- [x] **Paso 2: Correr el test y confirmar que falla**
 
 ```bash
 cd api && npm test -- extra-payment
@@ -1539,7 +1539,7 @@ cd api && npm test -- extra-payment
 
 Esperado: FAIL, `./extra-payment.js` sin resolver.
 
-- [ ] **Paso 3: Implementar el abono extraordinario**
+- [x] **Paso 3: Implementar el abono extraordinario**
 
 `api/src/modules/debts/domain/extra-payment.ts`:
 
@@ -1664,7 +1664,7 @@ const renumber = (
   }))
 ```
 
-- [ ] **Paso 4: Escribir el test de `Debt` que falla**
+- [x] **Paso 4: Escribir el test de `Debt` que falla**
 
 `api/src/modules/debts/domain/debt.spec.ts`:
 
@@ -1782,7 +1782,7 @@ describe('Debt', () => {
 })
 ```
 
-- [ ] **Paso 5: Correr el test y confirmar que falla**
+- [x] **Paso 5: Correr el test y confirmar que falla**
 
 ```bash
 cd api && npm test -- debt.spec
@@ -1790,7 +1790,7 @@ cd api && npm test -- debt.spec
 
 Esperado: FAIL, `./debt.js` sin resolver.
 
-- [ ] **Paso 6: Implementar `Debt`**
+- [x] **Paso 6: Implementar `Debt`**
 
 `api/src/modules/debts/domain/debt.ts`:
 
@@ -1917,13 +1917,13 @@ export class Debt {
 }
 ```
 
-- [ ] **Paso 7: Correr todo y confirmar que pasa**
+- [x] **Paso 7: Correr todo y confirmar que pasa**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
 ```
 
-- [ ] **Paso 8: Commit**
+- [x] **Paso 8: Commit**
 
 ```bash
 git add api/src/modules/debts
@@ -1931,12 +1931,12 @@ git commit -m "✨ feat: agregado Debt y simulación de abono extraordinario"
 ```
 
 **Acceptance criteria:**
-- [ ] `applyExtraPayment` en modo `REDUCE_TERM` acorta el plazo y baja el interés total
-- [ ] En modo `REDUCE_PAYMENT` el plazo se mantiene y la cuota baja
-- [ ] El capital amortizado más el abono iguala el capital original
-- [ ] Un abono inválido devuelve `Err`, no lanza hacia el llamador
-- [ ] Un préstamo otorgado produce exactamente la misma tabla que la deuda equivalente
-- [ ] El tipo obliga: `BORROWED` sin cubeta es `Err`, `LENT` con cubeta es `Err`
+- [x] `applyExtraPayment` en modo `REDUCE_TERM` acorta el plazo y baja el interés total
+- [x] En modo `REDUCE_PAYMENT` el plazo se mantiene y la cuota baja
+- [x] El capital amortizado más el abono iguala el capital original
+- [x] Un abono inválido devuelve `Err`, no lanza hacia el llamador
+- [x] Un préstamo otorgado produce exactamente la misma tabla que la deuda equivalente
+- [x] El tipo obliga: `BORROWED` sin cubeta es `Err`, `LENT` con cubeta es `Err`
 
 ---
 
