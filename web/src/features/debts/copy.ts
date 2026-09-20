@@ -29,6 +29,8 @@ export const copy = {
       counterparty: 'A quién',
     },
     loading: 'Cargando deudas',
+    search: { placeholder: 'Buscar por nombre o contraparte', label: 'Buscar entre las deudas' },
+    noMatches: (query: string) => `Ninguna deuda coincide con «${query}».`,
     truncated: (mostradas: number, total: number) =>
       `Se muestran ${mostradas} de ${total}. El resto queda fuera de esta página.`,
   },
@@ -141,6 +143,8 @@ export const copy = {
       payment: 'Cuota',
     },
     lentNote: 'Los préstamos otorgados quedan fuera: no compiten por el excedente, lo alimentan.',
+    search: { placeholder: 'Buscar por nombre', label: 'Buscar en el plan de pago' },
+    noMatches: (query: string) => `Ninguna deuda coincide con «${query}».`,
   },
 
   detail: {

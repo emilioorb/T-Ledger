@@ -1,7 +1,12 @@
 import { Link } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
+import { SearchInput } from '@/components/search-input'
+import { SortButton } from '@/components/sort-button'
+import { SortSelect } from '@/components/sort-select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatIsoDate } from '@/lib/dates'
 import { formatMoney } from '@/lib/money'
+import { useTableControls, type SortValue } from '@/lib/use-table-controls'
 import { copy } from './copy'
 import { EmptyState } from './empty-state'
 import { ErrorState } from './error-state'
@@ -10,7 +15,7 @@ import { useDebts } from './use-debts'
 
 interface Props {
   direction: DebtDirection
-  emptyAction?: React.ReactNode
+  emptyAction?: ReactNode
 }
 
 // Encabezado y filas comparten la misma plantilla de columnas, con la última de ancho
@@ -18,6 +23,15 @@ interface Props {
 // Solo las columnas, sin el display: el encabezado se oculta bajo sm y la fila no.
 const COLS =
   'grid-cols-[1fr_auto] gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_6.5rem]'
+
+const columns = {
+  name: (debt: Debt) => debt.name,
+  balance: (debt: Debt) => BigInt(debt.principal.minorUnits),
+  payment: (debt: Debt) => BigInt(debt.monthlyPayment.minorUnits),
+  payoffDate: (debt: Debt) => debt.payoffDate,
+} satisfies Record<string, (debt: Debt) => SortValue>
+
+type ColumnKey = keyof typeof columns
 
 const Row = ({ debt }: { debt: Debt }) => (
   <li>
@@ -50,6 +64,13 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
   const empty = direction === 'LENT' ? copy.empty.lent : copy.empty.borrowed
   const labels = direction === 'LENT' ? copy.list.lentColumns : copy.list.columns
 
+  const table = useTableControls<Debt, ColumnKey>({
+    rows: data?.data ?? [],
+    columns,
+    initial: { key: 'balance', direction: 'desc' },
+    searchable: (debt) => `${debt.name} ${debt.counterparty}`,
+  })
+
   if (isPending) {
     return (
       <div className="space-y-2 py-3" aria-label={copy.list.loading} aria-busy="true">
@@ -66,27 +87,68 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
     return <EmptyState title={empty.title} description={empty.description} action={emptyAction} />
   }
 
+  const header = (key: ColumnKey, label: string, align: 'left' | 'right' = 'right') => (
+    <SortButton
+      label={label}
+      align={align}
+      className="uppercase"
+      active={table.sort.key === key}
+      direction={table.sort.direction}
+      onClick={() => table.toggle(key)}
+    />
+  )
+
   return (
-    <div>
-      <div
-        className={`hidden ${COLS} border-b border-border px-1 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:grid`}
-      >
-        <span>{labels.name}</span>
-        <span className="text-right">{copy.list.columns.balance}</span>
-        <span className="text-right">{copy.list.columns.payment}</span>
-        <span className="text-right">{copy.list.columns.payoffDate}</span>
+    <div className="space-y-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <SearchInput
+          value={table.query}
+          onChange={table.setQuery}
+          placeholder={copy.list.search.placeholder}
+          label={copy.list.search.label}
+        />
+        <SortSelect
+          options={[
+            { key: 'name', label: labels.name },
+            { key: 'balance', label: copy.list.columns.balance },
+            { key: 'payment', label: copy.list.columns.payment },
+            { key: 'payoffDate', label: copy.list.columns.payoffDate },
+          ]}
+          value={table.sort.key}
+          direction={table.sort.direction}
+          onChange={(key) => table.setSort(key)}
+          onFlip={() => table.toggle(table.sort.key)}
+          className="sm:hidden"
+        />
       </div>
-      <ul className="divide-y divide-border">
-        {data.data.map((debt) => (
-          <Row key={debt.id} debt={debt} />
-        ))}
-      </ul>
-      {/* Truncar en silencio sería mentir sobre cuántas deudas hay. */}
-      {data.pagination.totalItems > data.data.length ? (
-        <p className="mt-3 text-xs text-muted-foreground">
-          {copy.list.truncated(data.data.length, data.pagination.totalItems)}
-        </p>
-      ) : null}
+
+      <div>
+        <div
+          className={`hidden ${COLS} border-b border-border px-1 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:grid`}
+        >
+          {header('name', labels.name, 'left')}
+          {header('balance', copy.list.columns.balance)}
+          {header('payment', copy.list.columns.payment)}
+          {header('payoffDate', copy.list.columns.payoffDate)}
+        </div>
+
+        {table.rows.length === 0 ? (
+          <p className="py-6 text-sm text-muted-foreground">{copy.list.noMatches(table.query)}</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {table.rows.map((debt) => (
+              <Row key={debt.id} debt={debt} />
+            ))}
+          </ul>
+        )}
+
+        {/* Truncar en silencio sería mentir sobre cuántas deudas hay. */}
+        {data.pagination.totalItems > data.data.length ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            {copy.list.truncated(data.data.length, data.pagination.totalItems)}
+          </p>
+        ) : null}
+      </div>
     </div>
   )
 }
