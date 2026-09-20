@@ -4,9 +4,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -70,24 +69,16 @@ export const NavUser = ({ name, subtitle }: Props) => {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            {/* Lo único que hay para elegir hoy. No se inventan cuenta, facturación ni
-                notificaciones: este producto no tiene ninguna de las tres. */}
-            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-              {copy.nav.theme}
-            </DropdownMenuLabel>
-            <DropdownMenuRadioGroup
-              value={theme}
-              onValueChange={(value) => setTheme(value as Theme)}
-            >
-              <DropdownMenuRadioItem value="dark">
-                <MoonIcon aria-hidden="true" />
-                {copy.nav.darkTheme}
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="light">
+            {/* Una sola fila: la elección es binaria y el rótulo dice a qué se va, no
+                dónde se está. Tres renglones para un sí o no es desperdicio. */}
+            <DropdownMenuItem onSelect={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              {theme === 'dark' ? (
                 <SunIcon aria-hidden="true" />
-                {copy.nav.lightTheme}
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
+              ) : (
+                <MoonIcon aria-hidden="true" />
+              )}
+              {theme === 'dark' ? copy.nav.lightTheme : copy.nav.darkTheme}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
