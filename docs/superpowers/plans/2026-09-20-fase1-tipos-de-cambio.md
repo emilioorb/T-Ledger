@@ -105,7 +105,7 @@ api/test/fixtures/bccr/
   - `interface ExchangeRateProviderPort { fetchRates(range: DateRange): Promise<ExchangeRate[]> }` y `const EXCHANGE_RATE_PROVIDER: unique symbol`
   - `convert(amount: Money, to: CurrencyCode, rate: ExchangeRate): Result<Money, RangeError>`
 
-- [ ] **Paso 1: Escribir los tests que fallan**
+- [x] **Paso 1: Escribir los tests que fallan**
 
 `api/src/modules/money/domain/exchange-rate.spec.ts`:
 
@@ -154,6 +154,7 @@ describe('ExchangeRate', () => {
 ```ts
 import { Decimal } from 'decimal.js'
 import { describe, expect, it } from 'vitest'
+import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import { Money } from '../../../shared/kernel/money.js'
 import { isErr, unwrap } from '../../../shared/kernel/result.js'
 import { convert } from './currency-converter.js'
@@ -181,8 +182,11 @@ describe('convert', () => {
     expect(unwrap(convert(original, 'CRC', venta)).minorUnits).toBe(12_345n)
   })
 
-  it('falla si el par no corresponde a la tasa recibida', () => {
-    expect(isErr(convert(Money.fromMinorUnits(100n, 'CRC'), 'CRC', venta))).toBe(false)
+  // Hoy la rama es inalcanzable: con CRC y USD todo par es identidad o está definido. El
+  // test existe para el día que aparezca una tercera moneda y nadie defina su conversión.
+  it('falla ante un par sin conversión definida', () => {
+    const euro = Money.fromMinorUnits(100n, 'EUR' as CurrencyCode)
+    expect(isErr(convert(euro, 'CRC', venta))).toBe(true)
   })
 
   it('redondea a la unidad mínima sin perder el resto en el aire', () => {
@@ -192,13 +196,13 @@ describe('convert', () => {
 })
 ```
 
-- [ ] **Paso 2: Correr y confirmar que fallan**
+- [x] **Paso 2: Correr y confirmar que fallan**
 
 ```bash
 cd api && npm test -- exchange-rate currency-converter
 ```
 
-- [ ] **Paso 3: Implementar la entidad**
+- [x] **Paso 3: Implementar la entidad**
 
 `api/src/modules/money/domain/exchange-rate.ts`:
 
@@ -245,7 +249,7 @@ export class ExchangeRate {
 }
 ```
 
-- [ ] **Paso 4: Implementar la conversión**
+- [x] **Paso 4: Implementar la conversión**
 
 `api/src/modules/money/domain/currency-converter.ts`:
 
@@ -273,7 +277,7 @@ export const convert = (
 }
 ```
 
-- [ ] **Paso 5: Declarar los puertos**
+- [x] **Paso 5: Declarar los puertos**
 
 `api/src/modules/money/domain/exchange-rate-repository.port.ts`:
 
@@ -306,7 +310,7 @@ export interface ExchangeRateProviderPort {
 export const EXCHANGE_RATE_PROVIDER = Symbol('EXCHANGE_RATE_PROVIDER')
 ```
 
-- [ ] **Paso 6: Correr, verificar y commitear**
+- [x] **Paso 6: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -315,10 +319,10 @@ git commit -m "✨ feat: dominio de tipos de cambio y conversión entre monedas"
 ```
 
 **Acceptance criteria:**
-- [ ] La publicación se normaliza a medianoche UTC
-- [ ] Una tasa de cero o negativa es rechazada con `Err`
-- [ ] Convertir a la misma moneda devuelve el mismo monto sin tocar la tasa
-- [ ] Ningún archivo del dominio importa Nest, Prisma ni HTTP
+- [x] La publicación se normaliza a medianoche UTC
+- [x] Una tasa de cero o negativa es rechazada con `Err`
+- [x] Convertir a la misma moneda devuelve el mismo monto sin tocar la tasa
+- [x] Ningún archivo del dominio importa Nest, Prisma ni HTTP
 
 ---
 
