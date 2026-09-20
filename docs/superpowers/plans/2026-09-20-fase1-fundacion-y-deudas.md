@@ -4585,7 +4585,7 @@ git commit -m "🏗️ build: frontend con Vite, TanStack, Tailwind 4, shadcn y 
   - `useDebts(params)`, `useDebt(id)`, `useSchedule(id)`, `usePayoffPlan(strategy)`, `useCreateDebt()`, `useUpdateDebt()`, `useDeleteDebt()`, `useSimulateExtraPayment(id)`
   - `<DebtList direction>`, `<DebtForm mode debt?>`, `<AmortizationTable installments>`, `<ExtraPaymentSimulator debtId>`, `<BalanceChart installments>`, `<EmptyState title description action?>`
 
-- [ ] **Paso 1: Copy antes que componentes**
+- [x] **Paso 1: Copy antes que componentes**
 
 Invocar la skill `copywriting` y producir con ella **todo** el texto de esta tarea, antes de escribir JSX. Como mínimo: los dos títulos de pestaña, el estado vacío de cada lista, las etiquetas y textos de ayuda del formulario, los encabezados de la tabla, el texto del simulador y sus resultados, y los mensajes de error y de éxito de cada mutación.
 
@@ -4593,7 +4593,7 @@ El copy queda en `web/src/features/debts/copy.ts` como un objeto de constantes, 
 
 Regla del copy: nada de rayas largas, y ninguna palabra que solo repita el título que tiene encima.
 
-- [ ] **Paso 2: Hooks de datos**
+- [x] **Paso 2: Hooks de datos**
 
 `web/src/features/debts/use-debts.ts`:
 
@@ -4673,13 +4673,15 @@ Ningún hook trae `onError`: el `QueryCache` y el `MutationCache` de la Tarea 10
 
 `web/src/features/debts/types.ts` reexporta desde `api-types.gen.ts` los alias que el módulo usa. Ningún tipo de respuesta se declara a mano.
 
-- [ ] **Paso 3: Escribir el test de la tabla que falla**
+- [x] **Paso 3: Escribir el test de la tabla que falla**
 
 ```bash
-cd web && npm install -D @testing-library/react@17.0.2 @testing-library/jest-dom@7.0.2 jsdom@28.0.1
+cd web && npm install -D @testing-library/react@16.3.3 @testing-library/jest-dom@7.0.1 jsdom@30.1.0
 ```
 
-Agregar a `web/vitest.config.ts` (o al bloque `test` de `vite.config.ts`): `environment: 'jsdom'`, `setupFiles: ['./src/test-setup.ts']`, con `import '@testing-library/jest-dom/vitest'` dentro.
+Agregar al bloque `test` de `vite.config.ts`: `globals: true`, `environment: 'jsdom'`, `setupFiles: ['./src/test-setup.ts']`, con `import '@testing-library/jest-dom/vitest'` dentro, e importar `defineConfig` desde `vitest/config`.
+
+`globals: true` no es opcional: es lo que habilita el `cleanup` automático de Testing Library. Sin él el DOM se acumula entre tests del mismo archivo y `getByRole('table')` encuentra la tabla de la prueba anterior.
 
 `web/src/features/debts/amortization-table.spec.tsx`:
 
@@ -4700,12 +4702,12 @@ describe('AmortizationTable', () => {
   it('muestra una fila por cuota con el monto formateado', () => {
     render(<AmortizationTable installments={installments} />)
     expect(screen.getAllByRole('row')).toHaveLength(installments.length + 1)
-    expect(screen.getByText(/3 400 221/)).toBeInTheDocument()
+    expect(screen.getAllByText(/34\s002,21/).length).toBeGreaterThan(0)
   })
 
   it('marca la última cuota, que es la que absorbe el residuo', () => {
     render(<AmortizationTable installments={installments} />)
-    expect(screen.getByText(/3 400 222/)).toBeInTheDocument()
+    expect(screen.getAllByText(/34\s002,22/).length).toBeGreaterThan(0)
   })
 
   it('expone la tabla con encabezados accesibles', () => {
@@ -4720,7 +4722,9 @@ describe('AmortizationTable', () => {
 })
 ```
 
-- [ ] **Paso 4: Tabla de amortización, responsive de verdad**
+**Aclaraciones sobre estas aserciones.** La tabla muestra el monto formateado, no las unidades mínimas en crudo: 3.400.221 céntimos se ven como `₡34 002,21`. El separador de miles es un espacio fino que Testing Library normaliza a uno común, así que la expresión regular usa `\s` en vez del carácter literal. Las dos ramas de la tabla, la de escritorio y la de teléfono, renderizan el mismo monto, de ahí `getAllByText`.
+
+- [x] **Paso 4: Tabla de amortización, responsive de verdad**
 
 `web/src/features/debts/amortization-table.tsx` rinde **dos estructuras**, no una tabla con desplazamiento horizontal:
 
@@ -4729,7 +4733,7 @@ describe('AmortizationTable', () => {
 
 Ambas ramas salen del mismo arreglo de datos; se alternan con las utilidades responsivas de Tailwind, no con JavaScript midiendo el ancho. Una tabla de 120 cuotas dentro de un contenedor con `overflow-x` en un teléfono es exactamente lo que la regla F3 prohíbe.
 
-- [ ] **Paso 5: Gráfico de saldo con el componente `chart` de shadcn**
+- [x] **Paso 5: Gráfico de saldo con el componente `chart` de shadcn**
 
 `web/src/features/debts/balance-chart.tsx` usa `ChartContainer`, `ChartTooltip` y `ChartTooltipContent` de `@/components/ui/chart`. Nunca se importa nada de `recharts` directamente: shadcn lo envuelve y es ese envoltorio el que aporta los tokens del tema y el tooltip accesible.
 
@@ -4738,7 +4742,7 @@ Ambas ramas salen del mismo arreglo de datos; se alternan con las utilidades res
 - El gráfico va acompañado de la tabla, nunca solo: quien no puede leer el gráfico tiene el dato exacto al lado.
 - `aria-label` con una frase que resuma la curva.
 
-- [ ] **Paso 6: Simulador de abono**
+- [x] **Paso 6: Simulador de abono**
 
 `web/src/features/debts/extra-payment-simulator.tsx`:
 
@@ -4747,7 +4751,7 @@ Ambas ramas salen del mismo arreglo de datos; se alternan con las utilidades res
 - Muestra interés ahorrado, meses ganados y la fecha nueva de finalización, comparados contra el escenario base.
 - Mientras la mutación corre, el bloque de resultados muestra `Skeleton`. Si falla, el toast global ya avisa y el bloque vuelve a su estado anterior.
 
-- [ ] **Paso 7: Listas, formulario y estados vacíos**
+- [x] **Paso 7: Listas, formulario y estados vacíos**
 
 `web/src/routes/deudas.tsx` monta las dos pestañas con `Tabs` de shadcn. Cada pestaña usa `<DebtList direction>`.
 
@@ -4759,13 +4763,13 @@ Tres estados por lista, los tres obligatorios:
 | Vacío | `<EmptyState>` con el copy de `copywriting` y el botón que lleva a crear la primera |
 | Con datos | Filas con nombre, contraparte, saldo, cuota y fecha de finalización |
 
-`debt-form.tsx` usa `Form` de shadcn. El campo de cubeta de presupuesto **se oculta cuando la dirección es `LENT`**, porque el backend rechaza esa combinación con 422: la interfaz no ofrece caminos que la API va a negar. El monto se escribe en unidades corrientes y se convierte con `parseMoneyInput` antes de enviarse.
+`debt-form.tsx` usa `react-hook-form` con `zodResolver` sobre los componentes `Label`, `Input`, `Select` y `RadioGroup`. El item `form` del registry de shadcn ya no trae archivos; su reemplazo, `field`, queda instalado para formularios posteriores. El campo de cubeta de presupuesto **se oculta cuando la dirección es `LENT`**, porque el backend rechaza esa combinación con 422: la interfaz no ofrece caminos que la API va a negar. El monto se escribe en unidades corrientes y se convierte con `parseMoneyInput` antes de enviarse.
 
-- [ ] **Paso 8: Plan de pago**
+- [x] **Paso 8: Plan de pago**
 
 `web/src/routes/plan-de-pago.tsx` muestra el orden que devuelve la API para la estrategia elegida, con un selector entre avalancha y bola de nieve, y una línea que explica el criterio de cada una. Debajo de la lista, una nota de que los préstamos otorgados no aparecen porque no compiten por el excedente.
 
-- [ ] **Paso 9: Puerta de calidad de diseño**
+- [x] **Paso 9: Puerta de calidad de diseño**
 
 Ninguna pantalla se da por terminada por el hecho de funcionar. Antes de verificar, con la app corriendo:
 
@@ -4778,7 +4782,7 @@ Ninguna pantalla se da por terminada por el hecho de funcionar. Antes de verific
 
 Criterio de rechazo, aplicado sin negociar: si alguna captura se parece a la plantilla de administración genérica —barra lateral gris, encabezado, cuatro tarjetas de métricas iguales arriba—, la pantalla se rehace. Lo mismo si todas las secciones tienen el mismo peso visual, si el espaciado es idéntico en todos lados, o si un extraño no podría decir qué es lo más importante de la pantalla en dos segundos.
 
-- [ ] **Paso 10: Verificar**
+- [x] **Paso 10: Verificar**
 
 ```bash
 cd web && npm test && npm run typecheck && npm run build
@@ -4787,16 +4791,16 @@ npm run dev
 
 Verificación manual, con la API corriendo:
 
-- [ ] Crear una deuda, verla en «lo que debo», abrir el detalle y ver las 120 cuotas
-- [ ] Crear un préstamo otorgado y comprobar que aparece solo en la otra pestaña
-- [ ] Simular un abono y ver el interés ahorrado sin recargar la página
-- [ ] Apagar la API: cada pantalla muestra un toast de error, ninguna queda en blanco
-- [ ] A 360 px la tabla es una lista y no hay desplazamiento horizontal en ninguna pantalla
-- [ ] Recorrer toda la pantalla con el teclado: foco visible en cada control, orden lógico, ningún control inalcanzable
-- [ ] Contraste verificado en los dos temas
-- [ ] Correr `impeccable audit web/src` y `impeccable critique web/src` y resolver lo que salga
+- [x] Crear una deuda, verla en «lo que debo», abrir el detalle y ver las 120 cuotas
+- [x] Crear un préstamo otorgado y comprobar que aparece solo en la otra pestaña
+- [x] Simular un abono y ver el interés ahorrado sin recargar la página
+- [x] Apagar la API: cada pantalla muestra un toast de error, ninguna queda en blanco
+- [x] A 360 px la tabla es una lista y no hay desplazamiento horizontal en ninguna pantalla
+- [x] Recorrer toda la pantalla con el teclado: foco visible en cada control, orden lógico, ningún control inalcanzable
+- [x] Contraste verificado en los dos temas
+- [x] Correr `impeccable audit web/src` y `impeccable critique web/src` y resolver lo que salga
 
-- [ ] **Paso 11: Commit**
+- [x] **Paso 11: Commit**
 
 ```bash
 git add web
@@ -4804,16 +4808,16 @@ git commit -m "✨ feat: pantallas de deudas, préstamos otorgados, amortizació
 ```
 
 **Acceptance criteria:**
-- [ ] Todo el copy salió de la skill `copywriting` y vive en `copy.ts`
-- [ ] Bajo 768 px la tabla de amortización es una lista, no una tabla con desplazamiento
-- [ ] El gráfico usa el componente `chart` de shadcn, sin importar Recharts directamente
-- [ ] El resultado del simulador aparece en la página, no en un modal
-- [ ] El formulario oculta la cubeta cuando la dirección es `LENT`
-- [ ] Los tres estados —cargando, vacío y con datos— existen en las dos listas
-- [ ] Todo error muestra un toast, sin `onError` repetido en cada hook
-- [ ] Cada pantalla tiene sus cinco estados: cargando, vacía, con uno, con muchos y con error
-- [ ] Las dieciocho capturas existen, fueron revisadas, y ninguna se parece a la plantilla de administración genérica
-- [ ] `impeccable critique`, `audit` y `polish` corridos, con sus hallazgos resueltos
+- [x] Todo el copy salió de la skill `copywriting` y vive en `copy.ts`
+- [x] Bajo 768 px la tabla de amortización es una lista, no una tabla con desplazamiento
+- [x] El gráfico usa el componente `chart` de shadcn, sin importar Recharts directamente
+- [x] El resultado del simulador aparece en la página, no en un modal
+- [x] El formulario oculta la cubeta cuando la dirección es `LENT`
+- [x] Los tres estados —cargando, vacío y con datos— existen en las dos listas
+- [x] Todo error muestra un toast, sin `onError` repetido en cada hook
+- [x] Cada pantalla tiene sus cinco estados: cargando, vacía, con uno, con muchos y con error
+- [x] Las dieciocho capturas existen, fueron revisadas, y ninguna se parece a la plantilla de administración genérica
+- [x] `impeccable critique`, `audit` y `polish` corridos, con sus hallazgos resueltos
 
 ---
 

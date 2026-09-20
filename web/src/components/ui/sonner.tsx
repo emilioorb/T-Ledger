@@ -1,13 +1,14 @@
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { useCurrentTheme } from "@/lib/use-current-theme"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  // next-themes no tiene provider en este proyecto: el tema sale de data-theme.
+  const theme = useCurrentTheme()
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme}
       className="toaster group"
       icons={{
         success: (
@@ -28,9 +29,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
+          "--normal-bg": "var(--raised)",
+          "--normal-text": "var(--text)",
+          "--normal-border": "var(--border-subtle)",
+          "--error-bg": "var(--raised)",
+          "--error-text": "var(--negative)",
+          "--error-border": "var(--border-subtle)",
+          "--success-bg": "var(--raised)",
+          "--success-text": "var(--positive)",
+          "--success-border": "var(--border-subtle)",
           "--border-radius": "var(--radius)",
         } as React.CSSProperties
       }
