@@ -1545,6 +1545,7 @@ Esperado: FAIL, `./extra-payment.js` sin resolver.
 
 ```ts
 import { Decimal } from 'decimal.js'
+import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import { Money } from '../../../shared/kernel/money.js'
 import { unwrap } from '../../../shared/kernel/result.js'
 import { addMonths } from './add-months.js'
@@ -1605,8 +1606,15 @@ export const buildScheduleWithExtraPayment = (
     )
   }
 
-  // El abono cubre todo el saldo: la deuda queda cerrada en la cuota en que se aplica.
-  return new AmortizationSchedule(kept, params.principal)
+  // El abono cubre todo el saldo: la deuda queda cerrada en la cuota en que se aplica,
+  // así que esa cuota deja de arrastrar saldo y el plan termina ahí.
+  return new AmortizationSchedule(closedAt(kept, params.principal.currency), params.principal)
+}
+
+const closedAt = (kept: readonly Installment[], currency: CurrencyCode): Installment[] => {
+  const last = kept.at(-1)
+  if (!last) return [...kept]
+  return [...kept.slice(0, -1), { ...last, balance: Money.zero(currency) }]
 }
 
 const keptPayment = (baseline: AmortizationSchedule, kept: readonly Installment[]): Money =>
