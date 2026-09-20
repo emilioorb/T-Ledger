@@ -1023,7 +1023,7 @@ Interés total: 200.664 · Pagado total: 10.200.664 = 10.000.000 + 200.664.
 
 La cuota 3 vale un céntimo más que las anteriores: ahí se absorbe el residuo. Es la condición que hace que el saldo final sea exactamente cero y no «casi cero».
 
-- [ ] **Paso 1: Escribir el test de `addMonths` que falla**
+- [x] **Paso 1: Escribir el test de `addMonths` que falla**
 
 `api/src/modules/debts/domain/add-months.spec.ts`:
 
@@ -1049,7 +1049,7 @@ describe('addMonths', () => {
 })
 ```
 
-- [ ] **Paso 2: Escribir el test de amortización que falla**
+- [x] **Paso 2: Escribir el test de amortización que falla**
 
 `api/src/modules/debts/domain/amortization.spec.ts`:
 
@@ -1197,7 +1197,7 @@ describe('buildSchedule — entradas inválidas', () => {
 })
 ```
 
-- [ ] **Paso 3: Correr los tests y confirmar que fallan**
+- [x] **Paso 3: Correr los tests y confirmar que fallan**
 
 ```bash
 cd api && npm test -- amortization add-months
@@ -1205,7 +1205,7 @@ cd api && npm test -- amortization add-months
 
 Esperado: FAIL, módulos sin resolver.
 
-- [ ] **Paso 4: Implementar `debt-kind` y `add-months`**
+- [x] **Paso 4: Implementar `debt-kind` y `add-months`**
 
 `api/src/modules/debts/domain/debt-kind.ts`:
 
@@ -1237,7 +1237,7 @@ export const addMonths = (date: Date, months: number): Date => {
 }
 ```
 
-- [ ] **Paso 5: Implementar la amortización**
+- [x] **Paso 5: Implementar la amortización**
 
 `api/src/modules/debts/domain/amortization.ts`:
 
@@ -1356,7 +1356,7 @@ export const buildSchedule = (params: ScheduleParams): AmortizationSchedule => {
 }
 ```
 
-- [ ] **Paso 6: Correr los tests y confirmar que pasan**
+- [x] **Paso 6: Correr los tests y confirmar que pasan**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -1364,7 +1364,7 @@ cd api && npm test && npm run typecheck && npm run lint
 
 Esperado: todos los tests de amortización en verde, incluida la tabla calculada a mano fila por fila.
 
-- [ ] **Paso 7: Commit**
+- [x] **Paso 7: Commit**
 
 ```bash
 git add api/src/modules/debts
@@ -1372,10 +1372,10 @@ git commit -m "✨ feat: tabla de amortización francesa, capital fijo y sin int
 ```
 
 **Acceptance criteria:**
-- [ ] La tabla francesa coincide fila por fila con la tabla de referencia
-- [ ] El saldo final es `0n` exacto en los tres tipos
-- [ ] Una deuda con tasa 0 % no divide por cero y reparte el capital linealmente
-- [ ] Un plazo de 0 meses lanza `RangeError`
+- [x] La tabla francesa coincide fila por fila con la tabla de referencia
+- [x] El saldo final es `0n` exacto en los tres tipos
+- [x] Una deuda con tasa 0 % no divide por cero y reparte el capital linealmente
+- [x] Un plazo de 0 meses lanza `RangeError`
 
 ---
 
