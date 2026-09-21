@@ -276,7 +276,7 @@ const ModelCard = ({ model, onEdit }: { model: BudgetModel; onEdit: () => void }
     //
     // El `active` es el que hace que se sienta apretada. Baja poco —es una superficie grande,
     // y un 0,97 en algo de este tamaño se bambolea— y vuelve rápido.
-    className="cursor-pointer gap-3 px-4 text-left outline-none transition-[background-color,box-shadow,transform] duration-150 ease-out-quart hover:bg-accent hover:ring-foreground/25 active:scale-[0.995] active:duration-100 focus-visible:ring-3 focus-visible:ring-ring/50"
+    className="cursor-pointer gap-3 px-4 text-left outline-none transition-[background-color,box-shadow,transform] duration-(--duration-press) ease-(--ease-out-quart) hover:bg-accent hover:ring-foreground/25 active:scale-[0.995] focus-visible:ring-3 focus-visible:ring-ring/50"
   >
     <div className="flex items-baseline justify-between gap-3">
       <h2 className={cn('text-base', model.active && 'font-medium')}>{model.name}</h2>

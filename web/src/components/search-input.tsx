@@ -30,7 +30,7 @@ export const SearchInput = ({ value, onChange, placeholder, label, className }: 
         type="button"
         onClick={() => onChange('')}
         aria-label={copy.controls.clearSearch}
-        className="absolute top-1/2 right-1 grid size-6 -translate-y-1/2 place-items-center rounded-sm text-muted-foreground hover:text-foreground"
+        className="absolute top-1/2 right-1 grid size-6 -translate-y-1/2 place-items-center rounded-sm text-muted-foreground transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-(--duration-press) ease-(--ease-out-quart) hover:text-foreground active:scale-95"
       >
         <X className="size-3.5" aria-hidden="true" />
       </button>

@@ -53,7 +53,7 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
               onClick={() => onToggle(node.code)}
               aria-expanded={isOpen}
               aria-label={copy.accounts.expand(node.name)}
-              className="-ml-1 flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground pointer-coarse:size-8"
+              className="-ml-1 flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-(--duration-press) ease-(--ease-out-quart) hover:text-foreground active:scale-90 pointer-coarse:size-8"
             >
               <ChevronRight
                 className={cn('size-3.5 transition-transform', isOpen && 'rotate-90')}

@@ -119,7 +119,7 @@ const GoalDetailScreen = () => {
       <StatGrid>
         <StatCard
           icon={Target}
-          className="sm:col-span-2"
+          className="@xl:col-span-2"
           label={
             meta.reached
               ? copy.goals.reached

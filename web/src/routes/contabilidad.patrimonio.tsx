@@ -81,7 +81,7 @@ const NetWorthScreen = () => {
           <StatGrid>
             <StatCard
               icon={Landmark}
-              className="sm:col-span-2"
+              className="@xl:col-span-2"
               label={copy.netWorth.total}
               hint={foreign ? copy.netWorth.rateNote(foreign.rate) : copy.netWorth.description}
             >

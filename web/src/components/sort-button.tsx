@@ -32,7 +32,7 @@ export const SortButton = ({
       onClick={onClick}
       aria-label={sort.label(label, estado)}
       className={cn(
-        'inline-flex min-h-6 items-center gap-1 rounded-sm transition-colors hover:text-foreground',
+        'inline-flex min-h-6 items-center gap-1 rounded-sm transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-(--duration-press) ease-(--ease-out-quart) hover:text-foreground active:translate-y-px',
         active && 'text-foreground',
         align === 'right' && 'flex-row-reverse',
         className,

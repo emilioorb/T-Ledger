@@ -103,7 +103,7 @@ const LedgerScreen = () => {
               la respuesta y el inicial explica de dónde salió. Antes vivían dentro del marco,
               en `text-xl`, empatados con el título de la pantalla. */}
           <StatGrid className="mb-5">
-            <StatCard icon={Landmark} className="sm:col-span-2" label={copy.ledger.closingBalance}>
+            <StatCard icon={Landmark} className="@xl:col-span-2" label={copy.ledger.closingBalance}>
               <Amount
                 money={ledger.data.closingBalance}
                 emphasis="strong"

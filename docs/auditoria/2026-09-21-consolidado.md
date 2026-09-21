@@ -367,9 +367,26 @@ nada hasta que se baja.
 
 ---
 
-## Fase 5 — Animación
+## Fase 5 — Animación ✅ cerrada el 21/09/2026
 
 Criterio: lo que se ve cientos de veces al día no se anima; las acciones de teclado tampoco.
+
+Los once puntos quedaron cerrados. Lo que salió de acá y vale para lo que venga: la escala de
+duraciones vive en `styles.css` —press 100 ms, tooltip 120, dropdown 160, overlay 200— ordenada
+por cuánto ocupa lo que aparece, y ningún primitivo usa ya `transition-all` ni `ease-in-out`.
+
+Medido en el navegador: el botón anima seis propiedades nombradas en 100 ms con
+`--ease-out-quart`; el modal, 200 ms con la misma curva; la barra lateral, 0 s.
+
+Fuera de la lista, el tablero cambió por pedido: se fue la tarjeta «Queda libre este mes»
+—el gráfico de abajo dice lo mismo con más contexto—, la rejilla reparte sin dejar una tarjeta
+sola abajo, y una cifra solo se achica cuando el monto de verdad no entra en su tarjeta. Eso
+último se calcula exacto porque la fuente de las cifras es monoespaciada: `Amount` publica
+cuántos caracteres mide el monto y la tarjeta resuelve el tamaño que entra.
+
+Barrido final: **126 combinaciones limpias de 126** (dieciocho pantallas por siete anchos), sin
+contenido fuera de pantalla, sin montos cortados, sin saltos de encabezado y con un solo `main`
+y un solo `h1` por pantalla.
 
 - **`transition-all`** en `ui/button.tsx:9`, `ui/tabs.tsx:65`, `ui/badge.tsx:7` y
   `ui/sidebar.tsx:289`: animan `width` y `padding`, o sea layout.

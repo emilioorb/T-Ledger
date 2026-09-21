@@ -308,7 +308,7 @@ const ReconciliationScreen = () => {
           <StatGrid>
             <StatCard
               icon={Scale}
-              className="sm:col-span-2"
+              className="@xl:col-span-2"
               label={copy.reconciliation.difference}
               hint={
                 <>

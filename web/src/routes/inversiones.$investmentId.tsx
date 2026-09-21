@@ -131,7 +131,7 @@ const InvestmentDetailScreen = () => {
       <StatGrid>
         <StatCard
           icon={PiggyBank}
-          className="sm:col-span-2"
+          className="@xl:col-span-2"
           label={copy.investments.columns.value}
           hint={
             <span className={data.matured ? 'text-positive' : undefined}>
@@ -162,7 +162,7 @@ const InvestmentDetailScreen = () => {
         </StatCard>
         <StatCard
           icon={Percent}
-          className="sm:col-span-2 lg:col-span-4"
+          className="@xl:col-span-2 @5xl:col-span-4"
           label={copy.investments.columns.rate}
         >
           <p className="num text-left text-2xl">{data.annualRate}%</p>

@@ -63,7 +63,7 @@ const TrialBalanceScreen = () => {
                 trae alineación a la derecha y en un bloque suelto la dejaba flotando. */}
             <StatCard
               icon={Scale}
-              className="sm:col-span-2"
+              className="@xl:col-span-2"
               label={copy.trialBalance.difference}
               hint={
                 balance.data.balances

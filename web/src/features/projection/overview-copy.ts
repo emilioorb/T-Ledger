@@ -16,7 +16,7 @@ export const copy = {
     maturing: (name: string, month: string) => `${name} vence en ${month}`,
     stats: {
       netWorth: 'Patrimonio',
-      netWorthHint: 'Todo lo que tenés menos todo lo que debés, en colones.',
+      netWorthHint: 'Lo que tenés menos lo que debés.',
       surplus: 'Queda libre este mes',
       surplusNegative: 'Este mes no cierra',
       saved: 'Ahorrado este mes',

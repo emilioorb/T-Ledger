@@ -37,7 +37,7 @@ function Calendar({
         week: "mt-1 flex w-full",
         day: "num relative size-8 p-0 text-center text-sm",
         day_button: cn(
-          "size-8 rounded-md font-normal outline-none transition-colors hover:bg-foreground/15 focus-visible:ring-3 focus-visible:ring-ring/50"
+          "size-8 rounded-md font-normal outline-none transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-(--duration-press) ease-(--ease-out-quart) hover:bg-foreground/15 active:translate-y-px focus-visible:ring-3 focus-visible:ring-ring/50"
         ),
         // El tramo se marca con el fondo de la celda y las puntas con el del botón: así se
         // ve el rango entero de un vistazo, sin que el color tenga que significar nada. El

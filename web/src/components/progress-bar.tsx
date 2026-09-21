@@ -19,11 +19,21 @@ const FILL: Record<ProgressTone, string> = {
   positive: 'bg-positive',
 }
 
+// El relleno crece con `scaleX` y no con `width`: cambiar el ancho recalcula el layout en
+// cada frame, escalar no toca nada. `origin-left` es lo que hace que crezca desde la
+// izquierda en vez de estirarse desde el centro.
 export const ProgressBar = ({ value, label, tone = 'plain', className }: Props) => (
-  <div className={cn('h-1 w-full bg-border-strong', className)} role="img" aria-label={label}>
+  <div
+    className={cn('h-1 w-full overflow-hidden bg-border-strong', className)}
+    role="img"
+    aria-label={label}
+  >
     <div
-      className={cn('h-full', FILL[tone])}
-      style={{ width: `${Math.min(Math.max(value, 0), 1) * 100}%` }}
+      className={cn(
+        'h-full w-full origin-left transition-transform duration-500 ease-(--ease-out-expo)',
+        FILL[tone],
+      )}
+      style={{ transform: `scaleX(${Math.min(Math.max(value, 0), 1)})` }}
     />
   </div>
 )

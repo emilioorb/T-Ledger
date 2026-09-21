@@ -177,10 +177,10 @@ const BudgetScreen = () => {
         <div className="space-y-7">
           {/* La pregunta del mes no es cuánto queda sin gastar: es si alguna cubeta se pasó.
               Cuando la respuesta es un estado, el héroe es la frase; cuando es un monto, la cifra. */}
-          <StatGrid className="lg:grid-cols-3">
+          <StatGrid>
             <StatCard
               icon={Wallet}
-              className="sm:col-span-2 lg:col-span-3"
+              className="@xl:col-span-2 @3xl:col-span-3"
               label={
                 overBucket ? (
                   <span className="text-warning">{copy.budget.overBucket(overBucket.name)}</span>

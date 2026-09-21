@@ -60,7 +60,7 @@ const DebtDetail = () => {
         <StatGrid>
           <StatCard
             icon={Coins}
-            className="sm:col-span-2"
+            className="@xl:col-span-2"
             label={copy.detail.monthlyPayment}
             hint={copy.detail.paymentHint}
           >
