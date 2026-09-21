@@ -25,6 +25,7 @@ import { apiFetch } from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import { formatIsoDate, today } from '@/lib/dates'
 import { parseMoneyInput, type CurrencyCode } from '@/lib/money'
+import { Screen } from '@/components/screen'
 
 const POINTS = 12
 
@@ -61,21 +62,25 @@ const InvestmentDetailScreen = () => {
 
   if (investment.isPending) {
     return (
-      <div className="space-y-3" role="status" aria-label={copy.common.loading}>
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-56 w-full" />
-      </div>
+      <Screen title={copy.investments.title}>
+        <div className="space-y-3" role="status" aria-label={copy.common.loading}>
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-56 w-full rounded-xl" />
+        </div>
+      </Screen>
     )
   }
 
   if (investment.isError) {
     return (
-      <ErrorState
-        title={copy.common.error.title}
-        description={copy.common.error.description}
-        retryLabel={copy.common.retry}
-        onRetry={() => void investment.refetch()}
-      />
+      <Screen title={copy.investments.title}>
+        <ErrorState
+          title={copy.common.error.title}
+          description={copy.common.error.description}
+          retryLabel={copy.common.retry}
+          onRetry={() => void investment.refetch()}
+        />
+      </Screen>
     )
   }
 

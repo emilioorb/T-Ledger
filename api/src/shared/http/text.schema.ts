@@ -19,3 +19,22 @@ export const annualRate = z
 
 // Cincuenta años. Una deuda a 100.000 meses generaba una tabla de 23 MB en quince segundos.
 export const termMonths = z.number().int().positive().max(600)
+
+// El comprobante se guarda como texto y hoy no se renderiza como enlace, pero el campo se
+// llama «Comprobante»: el día que se muestre, un `javascript:` guardado es XSS almacenado y
+// el arreglo habría llegado tarde. Se permite lo que de verdad sirve para llegar a un
+// comprobante y nada más.
+const SAFE_PROTOCOLS = ['http:', 'https:']
+
+const isSafeUrl = (value: string): boolean => {
+  try {
+    return SAFE_PROTOCOLS.includes(new URL(value).protocol)
+  } catch {
+    // Una ruta relativa no lleva protocolo y no puede ejecutar nada.
+    return value.startsWith('/') && !value.startsWith('//')
+  }
+}
+
+export const receiptUrl = longText.refine(isSafeUrl, {
+  error: 'El comprobante tiene que ser una dirección http o https',
+})

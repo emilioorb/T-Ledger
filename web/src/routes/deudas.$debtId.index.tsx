@@ -18,6 +18,7 @@ import { ErrorState } from '@/components/error-state'
 import { ExtraPaymentSimulator } from '@/features/debts/extra-payment-simulator'
 import { useDebt, useSchedule } from '@/features/debts/use-debts'
 import { formatIsoDate } from '@/lib/dates'
+import { Screen } from '@/components/screen'
 
 const DebtDetail = () => {
   const { debtId } = Route.useParams()
@@ -26,22 +27,25 @@ const DebtDetail = () => {
 
   if (debt.isPending) {
     return (
-      <div className="space-y-4" aria-busy="true">
-        <Skeleton className="h-7 w-52" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-48 w-full" />
-      </div>
+      <Screen title={copy.nav.debts}>
+        <div className="space-y-4" role="status" aria-label={copy.list.loading} aria-busy="true">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-48 w-full rounded-xl" />
+        </div>
+      </Screen>
     )
   }
 
   if (debt.isError || !debt.data)
     return (
-      <ErrorState
-        title={copy.error.title}
-        description={copy.error.description}
-        retryLabel={copy.error.retry}
-        onRetry={() => void debt.refetch()}
-      />
+      <Screen title={copy.nav.debts}>
+        <ErrorState
+          title={copy.error.title}
+          description={copy.error.description}
+          retryLabel={copy.error.retry}
+          onRetry={() => void debt.refetch()}
+        />
+      </Screen>
     )
 
   const { data } = debt

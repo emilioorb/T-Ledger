@@ -58,9 +58,10 @@ const EntryBlock = ({ entry, nameOf, highlighted }: EntryProps) => (
         columna Debe y se leía como un importe. */}
     <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pr-[14rem]">
       <span className="num text-xs text-muted-foreground">{formatIsoDate(entry.date)}</span>
-      <h3 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
+      {/* h2 y no h3: el único encabezado por encima es el h1 de la pantalla. */}
+      <h2 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
         {entry.description}
-      </h3>
+      </h2>
       {entry.reversesEntryId ? (
         <span className="text-xs text-warning">{copy.journal.reversal}</span>
       ) : null}

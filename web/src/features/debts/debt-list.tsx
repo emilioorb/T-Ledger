@@ -83,7 +83,7 @@ export const DebtList = ({ direction, emptyAction, onEdit }: Props) => {
 
   if (isPending) {
     return (
-      <div className="space-y-2 py-3" aria-label={copy.list.loading} aria-busy="true">
+      <div className="space-y-2 py-3" role="status" aria-label={copy.list.loading} aria-busy="true">
         {[0, 1, 2].map((index) => (
           <Skeleton key={index} className="h-10 w-full" />
         ))}

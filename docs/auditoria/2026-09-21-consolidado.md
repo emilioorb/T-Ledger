@@ -328,7 +328,20 @@ seis anchos), así que la fase 2 sigue en pie.
 
 ---
 
-## Fase 4 — Accesibilidad y arranque
+## Fase 4 — Accesibilidad y arranque ✅ cerrada el 21/09/2026
+
+Los doce puntos quedaron cerrados. Medido en el navegador: un solo `<main>`, el encabezado y el
+pie afuera, dos landmarks de navegación con nombre, `aria-current` en el enlace activo, el primer
+tabulador llega al salto al contenido y al navegar el foco aterriza en el contenido.
+
+El título de la pestaña no se declara ruta por ruta: se deriva del camino, igual que la miga, y
+las dos leen el mismo módulo. Una pantalla que se olvide de declararlo dejaría la pestaña
+mintiendo, y son veintiocho.
+
+Recharts sale del camino crítico: ya no está entre los `modulepreload` del HTML y solo se pide
+cuando el gráfico está por entrar en pantalla, así que en un teléfono el de tendencia no cuesta
+nada hasta que se baja.
+
 
 - **Un solo `<title>` para 28 rutas.** TanStack Router ya exporta `HeadContent` y acepta `head:`
   por ruta; el título exacto de cada pantalla ya está en su `copy.ts`.

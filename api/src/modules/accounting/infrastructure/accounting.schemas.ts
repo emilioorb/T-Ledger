@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { nameText, longText } from '../../../shared/http/text.schema.js'
+import { longText, nameText, receiptUrl } from '../../../shared/http/text.schema.js'
 import { isoDate, periodParam } from '../../../shared/http/date.schema.js'
 import { CURRENCIES } from '../../../shared/kernel/currency.js'
 import { moneySchema } from '../../../shared/http/money.schema.js'
@@ -82,7 +82,7 @@ const movementFields = {
   counterparty: nameText,
   amount: moneySchema,
   paymentAccountCode: accountCode.nullable(),
-  receiptUrl: longText.nullable(),
+  receiptUrl: receiptUrl.nullable(),
 }
 
 export const createMovementSchema = z

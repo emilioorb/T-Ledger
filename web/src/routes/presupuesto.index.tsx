@@ -49,7 +49,8 @@ const BucketRow = ({ bucket, month }: RowProps) => {
   return (
     <Card size="sm" className="gap-3 px-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className={cn('text-sm', isOver && 'font-medium')}>{bucket.name}</h3>
+        {/* h2 y no h3: la pantalla no tiene ningún encabezado entre su h1 y esta tarjeta. */}
+        <h2 className={cn('text-sm', isOver && 'font-medium')}>{bucket.name}</h2>
         <span className={cn('text-xs', isOver ? 'text-warning' : 'text-muted-foreground')}>
           {isOver ? copy.budget.overBy(formatMoney(deviation)) : copy.budget.status[bucket.status]}
         </span>

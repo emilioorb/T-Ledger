@@ -24,6 +24,31 @@ describe('esquemas de actualización', () => {
   })
 })
 
+describe('el comprobante de un movimiento', () => {
+  const conComprobante = (receiptUrl: string) =>
+    createMovementSchema.safeParse({
+      date: '2026-09-21',
+      kind: 'EXPENSE',
+      categoryId: 'cat-1',
+      counterparty: 'Automercado',
+      amount: { minorUnits: '1000000', currency: 'CRC' },
+      receiptUrl,
+    })
+
+  it('acepta una dirección http, https o una ruta del propio servidor', () => {
+    expect(conComprobante('https://drive.example.com/factura.pdf').success).toBe(true)
+    expect(conComprobante('http://localhost:9000/factura.pdf').success).toBe(true)
+    expect(conComprobante('/comprobantes/factura.pdf').success).toBe(true)
+  })
+
+  // Hoy no se renderiza como enlace; el día que se muestre, esto sería XSS almacenado.
+  it('rechaza un protocolo que puede ejecutar código', () => {
+    expect(conComprobante('javascript:alert(1)').success).toBe(false)
+    expect(conComprobante('data:text/html,<script>alert(1)</script>').success).toBe(false)
+    expect(conComprobante('//evil.example.com/x.pdf').success).toBe(false)
+  })
+})
+
 describe('esquemas de creación', () => {
   it('una cuenta nueva sin jerarquía queda activa, en la raíz y de primera', () => {
     expect(

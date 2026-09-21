@@ -34,7 +34,7 @@ export const NavMain = ({ label, items }: Props) => (
         <Collapsible key={item.to} asChild defaultOpen>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={item.title}>
-              <Link to={item.to} activeProps={{ 'data-active': true }}>
+              <Link to={item.to} activeProps={{ 'data-active': true, 'aria-current': 'page' }}>
                 <item.icon aria-hidden="true" />
                 <span>{item.title}</span>
               </Link>
@@ -55,7 +55,10 @@ export const NavMain = ({ label, items }: Props) => (
                     {item.items.map((sub) => (
                       <SidebarMenuSubItem key={sub.to}>
                         <SidebarMenuSubButton asChild>
-                          <Link to={sub.to} activeProps={{ 'data-active': true }}>
+                          <Link
+                            to={sub.to}
+                            activeProps={{ 'data-active': true, 'aria-current': 'page' }}
+                          >
                             <span>{sub.title}</span>
                           </Link>
                         </SidebarMenuSubButton>

@@ -32,6 +32,7 @@ export const copy = {
       history: 'Aportes de capital',
       curve: 'Cómo crece',
       curveHint: 'El valor proyectado mes a mes. La distancia con el capital es el interés.',
+      curveLabel: 'Valor proyectado contra capital invertido, mes a mes',
     },
     form: {
       createTitle: 'Nueva inversión',

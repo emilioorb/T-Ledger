@@ -115,7 +115,7 @@ const PayoffPlanScreen = () => {
       ) : null}
 
       {plan.isPending ? (
-        <div className="space-y-2" aria-busy="true">
+        <div className="space-y-2" role="status" aria-label={copy.list.loading} aria-busy="true">
           {[0, 1, 2].map((index) => (
             <Skeleton key={index} className="h-10 w-full" />
           ))}

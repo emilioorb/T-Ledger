@@ -24,6 +24,11 @@ import { PanelLeftIcon } from "lucide-react"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+// Lo primero que se anuncia al abrir la barra en el teléfono: iba en inglés en una app que
+// está entera en español.
+const SIDEBAR_LABEL = "Navegación"
+const SIDEBAR_DESCRIPTION = "Las secciones de Tape."
+
 const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
@@ -195,8 +200,8 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>{SIDEBAR_LABEL}</SheetTitle>
+            <SheetDescription>{SIDEBAR_DESCRIPTION}</SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
@@ -301,9 +306,12 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   )
 }
 
-function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+// Un <div> y no un <main>: adentro van el encabezado y el pie de la app, y encerrarlos en
+// el contenido principal les quita los roles `banner` y `contentinfo`. El <main> lo pone el
+// armazón, alrededor del <Outlet /> y nada más.
+function SidebarInset({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <main
+    <div
       data-slot="sidebar-inset"
       className={cn(
         "relative flex w-full flex-1 flex-col bg-background md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
@@ -364,9 +372,10 @@ function SidebarSeparator({
   )
 }
 
-function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarContent({ className, ...props }: React.ComponentProps<"nav">) {
   return (
-    <div
+    <nav
+      aria-label={SIDEBAR_LABEL}
       data-slot="sidebar-content"
       data-sidebar="content"
       className={cn(

@@ -9,6 +9,7 @@ export const copy = {
     dashboard: 'Dashboard',
     releases: 'Novedades',
     toggleSidebar: 'Alternar la barra lateral',
+    skipToContent: 'Saltar al contenido',
     expand: (section: string) => `Desplegar ${section}`,
   },
   // Lo que dice un control sin texto visible es copy igual: vive acá para poder revisarlo

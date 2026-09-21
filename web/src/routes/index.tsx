@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { lazy, type ReactNode } from 'react'
 import {
   Banknote,
   BellRing,
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
+import { LazyChart } from '@/components/lazy-chart'
 import { ProgressBar } from '@/components/progress-bar'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
@@ -25,7 +26,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isNegativeMoney } from '@/features/accounting/amount'
 import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { ExpenseBreakdown, type ExpenseSlice } from '@/features/accounting/expense-breakdown'
-import { IncomeVsSpendingChart } from '@/features/accounting/income-vs-spending-chart'
 import { useMonthlyResults } from '@/features/accounting/use-monthly-results'
 import {
   useAccountsTree,
@@ -42,7 +42,6 @@ import { copy as goalsCopy } from '@/features/goals/copy'
 import { useGoals } from '@/features/goals/use-goals'
 import { useInvestments } from '@/features/investments/use-investments'
 import { copy } from '@/features/projection/overview-copy'
-import { SurplusChart } from '@/features/projection/surplus-chart'
 import { useCashFlowProjection } from '@/features/projection/use-projection'
 import type { Money } from '@/features/projection/types'
 import { formatIsoDate, formatIsoMonth, monthEnd, monthStart, today } from '@/lib/dates'
@@ -81,6 +80,17 @@ const sum = (amounts: Money[], currency: Money['currency']): Money => ({
     .toString(),
   currency,
 })
+
+// Los dos gráficos de Recharts se cargan aparte: son la mitad del peso de abrir el tablero
+// y no hacen falta hasta que hay datos que dibujar.
+const SurplusChart = lazy(() =>
+  import('@/features/projection/surplus-chart').then((m) => ({ default: m.SurplusChart })),
+)
+const IncomeVsSpendingChart = lazy(() =>
+  import('@/features/accounting/income-vs-spending-chart').then((m) => ({
+    default: m.IncomeVsSpendingChart,
+  })),
+)
 
 const ratio = (part: Money, whole: Money): number => {
   const total = Number(whole.minorUnits)
@@ -368,7 +378,9 @@ const DashboardScreen = () => {
             to="/proyeccion"
             action={copy.overview.goTo.projection}
           >
-            <SurplusChart flows={flows} />
+            <LazyChart height="h-56">
+              <SurplusChart flows={flows} />
+            </LazyChart>
           </Panel>
 
           <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr]">
@@ -379,11 +391,13 @@ const DashboardScreen = () => {
               to="/contabilidad/resultados"
               action={copy.overview.goTo.results}
             >
-              <IncomeVsSpendingChart
-                months={trend}
-                currency="CRC"
-                label={copy.overview.trend.label}
-              />
+              <LazyChart height="h-48">
+                <IncomeVsSpendingChart
+                  months={trend}
+                  currency="CRC"
+                  label={copy.overview.trend.label}
+                />
+              </LazyChart>
             </Panel>
 
             <Panel

@@ -33,7 +33,12 @@ const config = {
 } satisfies ChartConfig
 
 export const GrowthChart = ({ points }: Props) => (
-  <ChartContainer config={config} className="mt-3 h-56 w-full">
+  <ChartContainer
+    config={config}
+    className="mt-3 h-56 w-full"
+    role="img"
+    aria-label={copy.investments.detail.curveLabel}
+  >
     <AreaChart data={points} margin={{ left: 4, right: 4, top: 4 }}>
       <CartesianGrid vertical={false} strokeDasharray="2 4" />
       <XAxis

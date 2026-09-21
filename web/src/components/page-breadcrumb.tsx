@@ -12,41 +12,15 @@ import { copy as banking } from '@/features/banking/copy'
 import { copy as budget } from '@/features/budget/copy'
 import { copy as goals } from '@/features/goals/copy'
 import { copy as investments } from '@/features/investments/copy'
-import { copy as projection } from '@/features/projection/copy'
 import { copy as overview } from '@/features/projection/overview-copy'
 import { copy as shell } from '@/features/shell/copy'
 import { copy as guide } from '@/features/shell/guide-copy'
+import { ACCOUNTING_LABELS, BANKING_LABELS, PLAN_LABELS } from '@/features/shell/page-title'
 import { copy } from '@/features/debts/copy'
 import { useDebt } from '@/features/debts/use-debts'
 import { useGoal } from '@/features/goals/use-goals'
 import { today } from '@/lib/dates'
 import { useInvestmentProjection } from '@/features/investments/use-investments'
-
-const ACCOUNTING_LABELS: Record<string, string> = {
-  movimientos: accounting.nav.movements,
-  asientos: accounting.nav.journal,
-  cuentas: accounting.nav.accounts,
-  categorias: accounting.nav.categories,
-  mayor: accounting.nav.ledger,
-  comprobacion: accounting.nav.trialBalance,
-  patrimonio: accounting.nav.netWorth,
-  situacion: accounting.nav.financialPosition,
-  resultados: accounting.nav.incomeStatement,
-  cierre: accounting.nav.closing,
-}
-
-const PLAN_LABELS: Record<string, string> = {
-  presupuesto: budget.nav.budget,
-  metas: goals.goals.title,
-  inversiones: investments.investments.title,
-  proyeccion: projection.projection.title,
-}
-
-const BANKING_LABELS: Record<string, string> = {
-  cuentas: banking.nav.accounts,
-  importar: banking.nav.import,
-  conciliacion: banking.nav.reconciliation,
-}
 
 const Crumb = ({ to, label }: { to: string; label: string }) => (
   <>

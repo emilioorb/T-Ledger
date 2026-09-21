@@ -22,6 +22,7 @@ import { useContribute, useGoal } from '@/features/goals/use-goals'
 import { formatIsoDate, today } from '@/lib/dates'
 import { parseMoneyInput, type CurrencyCode } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { Screen } from '@/components/screen'
 
 // Cuántos meses tarde llega, para nombrar el desvío en vez de solo pintarlo.
 const monthsBetween = (from: string, to: string | null): number => {
@@ -71,21 +72,25 @@ const GoalDetailScreen = () => {
 
   if (goal.isPending) {
     return (
-      <div className="space-y-3" role="status" aria-label={copy.common.loading}>
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-40 w-full" />
-      </div>
+      <Screen title={copy.goals.title}>
+        <div className="space-y-3" role="status" aria-label={copy.common.loading}>
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-40 w-full rounded-xl" />
+        </div>
+      </Screen>
     )
   }
 
   if (goal.isError) {
     return (
-      <ErrorState
-        title={copy.common.error.title}
-        description={copy.common.error.description}
-        retryLabel={copy.common.retry}
-        onRetry={() => void goal.refetch()}
-      />
+      <Screen title={copy.goals.title}>
+        <ErrorState
+          title={copy.common.error.title}
+          description={copy.common.error.description}
+          retryLabel={copy.common.retry}
+          onRetry={() => void goal.refetch()}
+        />
+      </Screen>
     )
   }
 

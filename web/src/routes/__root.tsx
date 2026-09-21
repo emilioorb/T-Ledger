@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
-import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
+import { Outlet, createRootRouteWithContext, useRouterState } from '@tanstack/react-router'
 import { Keyboard } from 'lucide-react'
 import { AppFooter } from '@/components/app-footer'
+import { DocumentTitle } from '@/components/document-title'
 import { AppSidebar } from '@/components/app-sidebar'
 import { PageBreadcrumb } from '@/components/page-breadcrumb'
 import { ExchangeRateIndicator } from '@/features/money/exchange-rate-indicator'
@@ -17,14 +18,43 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 import { Toaster } from '@/components/ui/sonner'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
+const CONTENT_ID = 'contenido'
+
 const Shell = () => {
   const [helpOpen, setHelpOpen] = useState(false)
   const openHelp = useCallback(() => setHelpOpen(true), [])
+  const content = useRef<HTMLElement>(null)
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const rutaAnterior = useRef(pathname)
 
   useShortcuts(openHelp)
 
+  // Al cambiar de pantalla el foco se queda donde estaba, así que el siguiente Tab vuelve a
+  // recorrer los veinte enlaces de la barra antes de llegar al contenido. Se mueve al
+  // contenido, que además hace que el lector de pantalla anuncie la pantalla nueva.
+  //
+  // La guarda compara rutas y no un booleano de «primera vez»: en desarrollo React corre los
+  // efectos dos veces, y con un booleano la segunda pasada robaba el foco en la carga inicial,
+  // dejando el enlace de saltar al contenido fuera del alcance del primer tabulador.
+  useEffect(() => {
+    if (rutaAnterior.current === pathname) return
+    rutaAnterior.current = pathname
+    content.current?.focus()
+  }, [pathname])
+
   return (
     <SidebarProvider className="h-svh overflow-hidden">
+      <DocumentTitle />
+
+      {/* El primer tabulador de la página salta el menú entero. Invisible hasta que recibe
+          el foco, que es cuando hace falta. */}
+      <a
+        href={`#${CONTENT_ID}`}
+        className="sr-only z-50 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
+      >
+        {shell.nav.skipToContent}
+      </a>
+
       <AppSidebar />
       {/* min-w-0: sin esto el inset no puede encogerse por debajo del ancho mínimo de
           su contenido, y a 768 px el contenido empuja la página al desplazamiento lateral. */}
@@ -69,9 +99,17 @@ const Shell = () => {
             la barra lateral. A 768 px el contenido mide 489 y a 1024 mide 745, así que una
             regla en `sm:` se encendía justo cuando el espacio se achicaba. Las pantallas
             usan `@sm:`, `@lg:` y demás para mirar este ancho y no el del navegador. */}
-        <div className="@container w-full min-w-0 flex-1 overflow-y-auto px-4 py-6 md:px-6">
+        {/* El <main> envuelve solo las pantallas: el encabezado y el pie quedan afuera para
+            conservar sus roles. `tabIndex={-1}` lo hace enfocable por programa sin meterlo en
+            el recorrido del tabulador. */}
+        <main
+          id={CONTENT_ID}
+          ref={content}
+          tabIndex={-1}
+          className="@container w-full min-w-0 flex-1 overflow-y-auto px-4 py-6 outline-none md:px-6"
+        >
           <Outlet />
-        </div>
+        </main>
 
         <AppFooter />
       </SidebarInset>
