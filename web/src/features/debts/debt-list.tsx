@@ -18,6 +18,7 @@ import { Amount } from '@/features/accounting/amount'
 interface Props {
   direction: DebtDirection
   emptyAction?: ReactNode
+  onEdit: (debt: Debt) => void
 }
 
 // Encabezado y filas comparten la misma plantilla de columnas, con la última de ancho
@@ -38,7 +39,7 @@ const columns = {
 
 type ColumnKey = keyof typeof columns
 
-const Row = ({ debt }: { debt: Debt }) => (
+const Row = ({ debt, onEdit }: { debt: Debt; onEdit: () => void }) => (
   <li
     className={`group grid ${COLS} ${FRAME_ROW} items-baseline transition-colors hover:bg-accent/40`}
   >
@@ -57,7 +58,7 @@ const Row = ({ debt }: { debt: Debt }) => (
     <span className="num num-right hidden text-xs text-muted-foreground @2xl:block">
       {formatIsoDate(debt.payoffDate)}
     </span>
-    <DebtRowActions debt={debt} />
+    <DebtRowActions debt={debt} onEdit={onEdit} />
     {/* Bajo sm la fila se parte en dos renglones: nombre y saldo arriba, que es lo que
         se viene a mirar, y cuota y fecha debajo como pie. */}
     <span className="col-span-2 text-xs text-muted-foreground @2xl:hidden">
@@ -68,7 +69,7 @@ const Row = ({ debt }: { debt: Debt }) => (
   </li>
 )
 
-export const DebtList = ({ direction, emptyAction }: Props) => {
+export const DebtList = ({ direction, emptyAction, onEdit }: Props) => {
   const { data, isPending, isError, refetch } = useDebts(direction)
   const empty = direction === 'LENT' ? copy.empty.lent : copy.empty.borrowed
   const labels = direction === 'LENT' ? copy.list.lentColumns : copy.list.columns
@@ -154,7 +155,7 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
         ) : (
           <ul className="divide-y divide-border">
             {table.rows.map((debt) => (
-              <Row key={debt.id} debt={debt} />
+              <Row key={debt.id} debt={debt} onEdit={() => onEdit(debt)} />
             ))}
           </ul>
         )}

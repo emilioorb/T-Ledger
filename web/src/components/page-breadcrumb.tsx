@@ -61,36 +61,15 @@ const Crumb = ({ to, label }: { to: string; label: string }) => (
   </>
 )
 
-const DebtCrumbs = ({ id, leaf }: { id: string; leaf?: string }) => {
+const DebtCrumbs = ({ id }: { id: string }) => {
   const debt = useDebt(id)
-  const name = debt.data?.name ?? '…'
 
   return (
     <>
       <Crumb to="/deudas" label={copy.nav.debts} />
-      {leaf ? (
-        <>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link
-                to="/deudas/$debtId"
-                params={{ debtId: id }}
-                className="inline-flex min-h-6 items-center"
-              >
-                {name}
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{leaf}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </>
-      ) : (
-        <BreadcrumbItem>
-          <BreadcrumbPage>{name}</BreadcrumbPage>
-        </BreadcrumbItem>
-      )}
+      <BreadcrumbItem>
+        <BreadcrumbPage>{debt.data?.name ?? '…'}</BreadcrumbPage>
+      </BreadcrumbItem>
     </>
   )
 }
@@ -123,7 +102,7 @@ const InvestmentCrumbs = ({ id }: { id: string }) => {
 // de declararla dejaría el encabezado mintiendo sobre dónde estás.
 export const PageBreadcrumb = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const [section, second, third] = pathname.split('/').filter(Boolean)
+  const [section, second] = pathname.split('/').filter(Boolean)
 
   const leaf = (label: string) => (
     <BreadcrumbItem>
@@ -173,13 +152,8 @@ export const PageBreadcrumb = () => {
           leaf(shell.nav.releases)
         ) : section === 'guia' ? (
           leaf(guide.guide.title)
-        ) : section !== 'deudas' ? null : second === 'nueva' ? (
-          <>
-            <Crumb to="/deudas" label={copy.nav.debts} />
-            {leaf(copy.form.createTitle)}
-          </>
-        ) : second ? (
-          <DebtCrumbs id={second} leaf={third === 'editar' ? copy.detail.edit : undefined} />
+        ) : section !== 'deudas' ? null : second ? (
+          <DebtCrumbs id={second} />
         ) : (
           leaf(copy.nav.debts)
         )}

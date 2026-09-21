@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router'
 import { Pencil, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
@@ -18,20 +17,34 @@ import { useDeleteDebt } from './use-debts'
 
 // Un diálogo de confirmación sí es el lugar del modal: interrumpe una acción irreversible
 // y no hay nada que editar detrás de él.
-export const DebtRowActions = ({ debt }: { debt: Debt }) => {
+interface Props {
+  debt: Debt
+  onEdit: () => void
+}
+
+export const DebtRowActions = ({ debt, onEdit }: Props) => {
   const deleteDebt = useDeleteDebt()
 
   return (
     <div className="flex justify-end gap-0.5">
-      <Button variant="ghost" size="sm" className="size-8" asChild>
-        <Link to="/deudas/$debtId/editar" params={{ debtId: debt.id }} aria-label={copy.list.edit(debt.name)}>
-          <Pencil className="size-4" aria-hidden="true" />
-        </Link>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="size-8"
+        aria-label={copy.list.edit(debt.name)}
+        onClick={onEdit}
+      >
+        <Pencil className="size-4" aria-hidden="true" />
       </Button>
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="ghost" size="sm" className="size-8" aria-label={copy.list.delete(debt.name)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="size-8"
+            aria-label={copy.list.delete(debt.name)}
+          >
             <Trash2 className="size-4" aria-hidden="true" />
           </Button>
         </AlertDialogTrigger>

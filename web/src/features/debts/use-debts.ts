@@ -55,10 +55,12 @@ export const useCreateDebt = () => {
   })
 }
 
-export const useUpdateDebt = (id: string) => {
+// El id viaja con la llamada y no con el hook: el modal de edición es uno solo y la deuda
+// que muestra cambia con cada fila.
+export const useUpdateDebt = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: DebtPatch) =>
+    mutationFn: ({ id, input }: { id: string; input: DebtPatch }) =>
       apiFetch<Debt>(`/debts/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
     onSuccess: async () => {
       toast.success(copy.toast.updated)
@@ -81,5 +83,8 @@ export const useDeleteDebt = () => {
 export const useSimulateExtraPayment = (id: string) =>
   useMutation({
     mutationFn: (input: SimulateInput) =>
-      apiFetch<Projection>(`/debts/${id}/simulate`, { method: 'POST', body: JSON.stringify(input) }),
+      apiFetch<Projection>(`/debts/${id}/simulate`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
   })

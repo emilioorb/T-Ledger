@@ -1,19 +1,35 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { Plus, Receipt } from 'lucide-react'
+import { FormDialog } from '@/components/form-dialog'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { copy } from '@/features/debts/copy'
+import { DebtForm } from '@/features/debts/debt-form'
 import { DebtList } from '@/features/debts/debt-list'
+import type { Debt } from '@/features/debts/types'
+import { useCreateDebt, useUpdateDebt } from '@/features/debts/use-debts'
+import { toMoneyInput } from '@/lib/money'
+
+// `debt` ausente es un alta; presente, una edición. Un solo estado para las dos cosas
+// evita la ventana en que los dos modales podrían estar abiertos.
+type Editing = { debt?: Debt }
 
 const DebtsScreen = () => {
+  const [editing, setEditing] = useState<Editing | null>(null)
+  const createDebt = useCreateDebt()
+  const updateDebt = useUpdateDebt()
+
+  const close = () => setEditing(null)
+
   const newDebtButton = (
-    <Button size="sm" asChild>
-      <Link to="/deudas/nueva">
-        <Plus className="size-4" aria-hidden="true" />
-        {copy.form.createTitle}
-      </Link>
+    <Button size="sm" onClick={() => setEditing({})}>
+      <Plus className="size-4" aria-hidden="true" />
+      {copy.form.createTitle}
     </Button>
   )
+
+  const editingDebt = editing?.debt
 
   return (
     <section className="space-y-5">
@@ -22,16 +38,63 @@ const DebtsScreen = () => {
         {newDebtButton}
       </div>
 
+      <FormDialog
+        icon={Receipt}
+        open={editing !== null}
+        className="sm:max-w-2xl"
+        title={editingDebt ? copy.form.editTitle : copy.form.createTitle}
+        onOpenChange={(open) => !open && close()}
+      >
+        {editing ? (
+          <DebtForm
+            key={editingDebt?.id ?? 'nueva'}
+            pending={createDebt.isPending || updateDebt.isPending}
+            submitLabel={editingDebt ? copy.form.submitEdit : undefined}
+            onCancel={close}
+            defaults={
+              editingDebt
+                ? {
+                    direction: editingDebt.direction,
+                    name: editingDebt.name,
+                    counterparty: editingDebt.counterparty,
+                    principal: toMoneyInput(editingDebt.principal),
+                    currency: editingDebt.principal.currency,
+                    annualRate: editingDebt.annualRate,
+                    compounding: editingDebt.compounding,
+                    termMonths: editingDebt.termMonths,
+                    startDate: editingDebt.startDate,
+                    kind: editingDebt.kind,
+                    budgetBucket: editingDebt.budgetBucket ?? '',
+                  }
+                : undefined
+            }
+            onSubmit={(input) =>
+              editingDebt
+                ? updateDebt.mutate({ id: editingDebt.id, input }, { onSuccess: close })
+                : createDebt.mutate(input, { onSuccess: close })
+            }
+          />
+        ) : null}
+      </FormDialog>
+
       <Tabs defaultValue="BORROWED">
         <TabsList>
           <TabsTrigger value="BORROWED">{copy.tabs.borrowed}</TabsTrigger>
           <TabsTrigger value="LENT">{copy.tabs.lent}</TabsTrigger>
         </TabsList>
         <TabsContent value="BORROWED" className="mt-4">
-          <DebtList direction="BORROWED" emptyAction={newDebtButton} />
+          <DebtList
+            direction="BORROWED"
+            emptyAction={newDebtButton}
+            onEdit={(debt) => setEditing({ debt })}
+          />
         </TabsContent>
         <TabsContent value="LENT" className="mt-4">
-          <DebtList direction="LENT" emptyAction={newDebtButton} />
+          <DebtList
+            direction="LENT"
+            emptyAction={newDebtButton}
+            onEdit={(debt) => setEditing({ debt })}
+          />
         </TabsContent>
       </Tabs>
     </section>
