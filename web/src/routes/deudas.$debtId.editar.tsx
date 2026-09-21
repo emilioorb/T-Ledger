@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Skeleton } from '@/components/ui/skeleton'
 import { copy } from '@/features/debts/copy'
 import { DebtForm } from '@/features/debts/debt-form'
-import { ErrorState } from '@/features/debts/error-state'
+import { ErrorState } from '@/components/error-state'
 import { useDebt, useUpdateDebt } from '@/features/debts/use-debts'
 import { toMoneyInput } from '@/lib/money'
 
@@ -23,7 +23,14 @@ const EditDebtScreen = () => {
     )
   }
 
-  if (debt.isError || !debt.data) return <ErrorState onRetry={() => void debt.refetch()} />
+  if (debt.isError || !debt.data) return (
+      <ErrorState
+        title={copy.error.title}
+        description={copy.error.description}
+        retryLabel={copy.error.retry}
+        onRetry={() => void debt.refetch()}
+      />
+    )
 
   const { data } = debt
 

@@ -1,5 +1,13 @@
 import { Link } from '@tanstack/react-router'
-import { ListOrdered, Receipt } from 'lucide-react'
+import {
+  BookOpen,
+  CalendarCheck,
+  FolderTree,
+  ListOrdered,
+  Receipt,
+  Scale,
+  Tags,
+} from 'lucide-react'
 import { NavMain, type NavItem } from '@/components/nav-main'
 import { NavUser } from '@/components/nav-user'
 import {
@@ -11,11 +19,33 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import { copy as accounting } from '@/features/accounting/copy'
 import { copy } from '@/features/debts/copy'
 
 const navMain: NavItem[] = [
   { title: copy.nav.debts, to: '/deudas', icon: Receipt },
   { title: copy.nav.payoffPlan, to: '/plan-de-pago', icon: ListOrdered },
+]
+
+// Nueve vistas planas serían la barra lateral de quince ítems que la anti-referencia
+// prohíbe. Los cuatro reportes cuelgan del mayor, que es por donde se entra a mirarlos.
+const navAccounting: NavItem[] = [
+  { title: accounting.nav.movements, to: '/contabilidad/movimientos', icon: Receipt },
+  { title: accounting.nav.journal, to: '/contabilidad/asientos', icon: BookOpen },
+  {
+    title: accounting.nav.reportsGroup,
+    to: '/contabilidad/comprobacion',
+    icon: Scale,
+    items: [
+      { title: accounting.nav.trialBalance, to: '/contabilidad/comprobacion' },
+      { title: accounting.nav.ledger, to: '/contabilidad/mayor' },
+      { title: accounting.nav.financialPosition, to: '/contabilidad/situacion' },
+      { title: accounting.nav.incomeStatement, to: '/contabilidad/resultados' },
+    ],
+  },
+  { title: accounting.nav.accounts, to: '/contabilidad/cuentas', icon: FolderTree },
+  { title: accounting.nav.categories, to: '/contabilidad/categorias', icon: Tags },
+  { title: accounting.nav.closing, to: '/contabilidad/cierre', icon: CalendarCheck },
 ]
 
 export const AppSidebar = () => (
@@ -37,6 +67,7 @@ export const AppSidebar = () => (
 
     <SidebarContent>
       <NavMain label={copy.nav.section} items={navMain} />
+      <NavMain label={accounting.nav.section} items={navAccounting} />
     </SidebarContent>
 
     <SidebarFooter>

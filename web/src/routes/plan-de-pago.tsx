@@ -6,8 +6,8 @@ import { SortSelect } from '@/components/sort-select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { copy } from '@/features/debts/copy'
-import { EmptyState } from '@/features/debts/empty-state'
-import { ErrorState } from '@/features/debts/error-state'
+import { EmptyState } from '@/components/empty-state'
+import { ErrorState } from '@/components/error-state'
 import type { PayoffStrategy } from '@/features/debts/types'
 import { usePayoffPlan } from '@/features/debts/use-debts'
 import { formatMoney } from '@/lib/money'
@@ -113,7 +113,12 @@ const PayoffPlanScreen = () => {
           ))}
         </div>
       ) : plan.isError ? (
-        <ErrorState onRetry={() => void plan.refetch()} />
+        <ErrorState
+          title={copy.error.title}
+          description={copy.error.description}
+          retryLabel={copy.error.retry}
+          onRetry={() => void plan.refetch()}
+        />
       ) : !plan.data || plan.data.order.length === 0 ? (
         <EmptyState
           title={copy.empty.payoffPlan.title}

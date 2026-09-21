@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { AmortizationTable } from '@/features/debts/amortization-table'
 import { BalanceChart } from '@/features/debts/balance-chart'
 import { copy } from '@/features/debts/copy'
-import { ErrorState } from '@/features/debts/error-state'
+import { ErrorState } from '@/components/error-state'
 import { ExtraPaymentSimulator } from '@/features/debts/extra-payment-simulator'
 import { useDebt, useSchedule } from '@/features/debts/use-debts'
 import { formatIsoDate } from '@/lib/dates'
@@ -31,7 +31,14 @@ const DebtDetail = () => {
     )
   }
 
-  if (debt.isError || !debt.data) return <ErrorState onRetry={() => void debt.refetch()} />
+  if (debt.isError || !debt.data) return (
+      <ErrorState
+        title={copy.error.title}
+        description={copy.error.description}
+        retryLabel={copy.error.retry}
+        onRetry={() => void debt.refetch()}
+      />
+    )
 
   const { data } = debt
 
@@ -58,7 +65,12 @@ const DebtDetail = () => {
         {schedule.isPending ? (
           <Skeleton className="h-64 w-full" />
         ) : schedule.isError ? (
-          <ErrorState onRetry={() => void schedule.refetch()} />
+          <ErrorState
+            title={copy.error.title}
+            description={copy.error.description}
+            retryLabel={copy.error.retry}
+            onRetry={() => void schedule.refetch()}
+          />
         ) : schedule.data ? (
           <>
             <BalanceChart installments={schedule.data.installments} />

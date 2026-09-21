@@ -9,3 +9,15 @@ export const formatIsoMonth = (iso: string): string => {
   const [year, month] = iso.split('-')
   return year && month ? `${month}/${year}` : iso
 }
+
+// El día de hoy en AAAA-MM-DD, tomado en UTC como las fechas que viajan a la API.
+export const today = (): string => new Date().toISOString().slice(0, 10)
+
+export const monthStart = (iso: string): string => `${iso.slice(0, 7)}-01`
+
+export const monthEnd = (iso: string): string => {
+  const [year, month] = iso.split('-').map(Number)
+  if (!year || !month) return iso
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  return `${iso.slice(0, 7)}-${String(lastDay).padStart(2, '0')}`
+}

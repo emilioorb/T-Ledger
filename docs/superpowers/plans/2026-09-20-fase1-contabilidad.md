@@ -1877,7 +1877,7 @@ export class PeriodGuard {
 
 El guardián vive en la capa de aplicación, no en el agregado: saber si un período está cerrado requiere ir al repositorio, y el dominio no habla con repositorios.
 
-- [ ] **Paso 8: Casos de uso de cierre y reapertura**
+- [x] **Paso 8: Casos de uso de cierre y reapertura**
 
 Estos tres dependen de la comprobación, que se construye en la Tarea 6, y de los repositorios de la Tarea 5. Se escriben ahí, no acá: el dominio del período y el guardián son lo que esta tarea deja listo.
 
@@ -2200,7 +2200,7 @@ git commit -m "✨ feat: persistencia de contabilidad con agregación en base y 
   - `buildIncomeStatement(totals, chart, currency): IncomeStatement` con `{ income, costOfRevenue, operatingExpenses, result }`
   - `rollUp(chart, balances): Map<string, Money>` — acumula de las hojas hacia las agrupadoras
 
-- [ ] **Paso 1: Escribir el test de la comprobación que falla**
+- [x] **Paso 1: Escribir el test de la comprobación que falla**
 
 Casos obligatorios, todos con funciones puras sobre totales ya agregados:
 
@@ -2267,7 +2267,7 @@ describe('buildTrialBalance', () => {
 
 Los tres saldos del primer caso salen de las capturas de referencia. Si el signo del saldo normal estuviera invertido en alguna clase, ese test lo dice.
 
-- [ ] **Paso 2: Escribir el test del estado de situación**
+- [x] **Paso 2: Escribir el test del estado de situación**
 
 ```ts
 describe('buildFinancialPosition', () => {
@@ -2323,7 +2323,7 @@ describe('buildFinancialPosition', () => {
 
 El segundo caso es el que justifica el diseño entero: sin la línea derivada de resultado del período, un gasto pagado de caja dejaría el activo en −10.000 contra un patrimonio en 0, y la identidad no cuadraría hasta correr asientos de cierre.
 
-- [ ] **Paso 3: Correr, implementar y volver a correr**
+- [x] **Paso 3: Correr, implementar y volver a correr**
 
 ```bash
 cd api && npm test -- trial-balance financial-position general-ledger income-statement
@@ -2335,11 +2335,11 @@ Los cuatro constructores son funciones puras que reciben los totales ya agregado
 
 `buildLedger` arranca del saldo inicial y va acumulando fila por fila. El saldo corrido usa el signo del saldo normal de la cuenta, igual que el resto.
 
-- [ ] **Paso 4: Casos de uso**
+- [x] **Paso 4: Casos de uso**
 
 Cada reporte tiene su caso de uso, que carga el plan, pide las agregaciones al repositorio y llama al constructor puro. El de situación pide `totalsUpTo` (acumulado hasta la fecha); los de comprobación, mayor y resultados piden por rango.
 
-- [ ] **Paso 5: Verificar y commitear**
+- [x] **Paso 5: Verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -2348,12 +2348,12 @@ git commit -m "✨ feat: mayor, comprobación, estado de situación y estado de 
 ```
 
 **Acceptance criteria:**
-- [ ] La comprobación muestra el saldo con el signo del saldo normal
-- [ ] Cuando no cuadra, la diferencia queda a la vista
-- [ ] El estado de situación cuadra con el resultado del período en patrimonio
-- [ ] Las agrupadoras acumulan el saldo de sus hijas
-- [ ] Un libro vacío cuadra en cero en los cuatro reportes
-- [ ] Los cuatro constructores son funciones puras, sin E/S
+- [x] La comprobación muestra el saldo con el signo del saldo normal
+- [x] Cuando no cuadra, la diferencia queda a la vista
+- [x] El estado de situación cuadra con el resultado del período en patrimonio
+- [x] Las agrupadoras acumulan el saldo de sus hijas
+- [x] Un libro vacío cuadra en cero en los cuatro reportes
+- [x] Los cuatro constructores son funciones puras, sin E/S
 
 ---
 

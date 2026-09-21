@@ -9,8 +9,8 @@ import { formatMoney } from '@/lib/money'
 import { useTableControls, type SortValue } from '@/lib/use-table-controls'
 import { copy } from './copy'
 import { DebtRowActions } from './debt-row-actions'
-import { EmptyState } from './empty-state'
-import { ErrorState } from './error-state'
+import { EmptyState } from '@/components/empty-state'
+import { ErrorState } from '@/components/error-state'
 import type { Debt, DebtDirection } from './types'
 import { useDebts } from './use-debts'
 
@@ -85,7 +85,12 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
     )
   }
 
-  if (isError) return <ErrorState onRetry={() => void refetch()} />
+  if (isError) return <ErrorState
+        title={copy.error.title}
+        description={copy.error.description}
+        retryLabel={copy.error.retry}
+        onRetry={() => void refetch()}
+      />
 
   if (!data || data.data.length === 0) {
     return <EmptyState title={empty.title} description={empty.description} action={emptyAction} />

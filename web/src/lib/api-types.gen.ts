@@ -321,6 +321,849 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista el plan de cuentas */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    accountClass?: "ASSET" | "LIABILITY" | "EQUITY" | "INCOME" | "COST_OF_REVENUE" | "OPERATING_EXPENSE";
+                    active?: "true" | "false";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cuentas del plan */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Account"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Agrega una cuenta al plan */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateAccountInput"];
+                };
+            };
+            responses: {
+                /** @description Cuenta creada */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Account"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/accounts/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve el plan de cuentas como árbol, con el saldo acumulado a una fecha */
+        get: {
+            parameters: {
+                query: {
+                    currency: "CRC" | "USD";
+                    at: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Árbol de cuentas con saldos */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReportNode"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/accounts/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve una cuenta */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cuenta */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Account"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Modifica una cuenta */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateAccountInput"];
+                };
+            };
+            responses: {
+                /** @description Cuenta modificada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Account"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista las categorías */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Categorías */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Category"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Crea una categoría */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateCategoryInput"];
+                };
+            };
+            responses: {
+                /** @description Categoría creada */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Category"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve una categoría */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Categoría */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Category"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Borra una categoría */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Borrada */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Modifica una categoría */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCategoryInput"];
+                };
+            };
+            responses: {
+                /** @description Categoría modificada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Category"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista movimientos */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    kind?: "EXPENSE" | "INCOME";
+                    status?: "ACTIVE" | "VOIDED";
+                    categoryId?: string;
+                    from?: string;
+                    to?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Movimientos */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Movement"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Registra un gasto o un ingreso, y su asiento si la categoría tiene cuenta */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateMovementInput"];
+                };
+            };
+            responses: {
+                /** @description Movimiento registrado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Movement"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/movements/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve un movimiento */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Movimiento */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Movement"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Corrige un movimiento: revierte su asiento vigente y emite uno nuevo */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateMovementInput"];
+                };
+            };
+            responses: {
+                /** @description Movimiento corregido */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Movement"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/movements/{id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Anula un movimiento y registra el asiento de reversión */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Movimiento anulado */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Movement"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/journal-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista los asientos de un rango */
+        get: {
+            parameters: {
+                query: {
+                    page?: number;
+                    pageSize?: number;
+                    from: string;
+                    to: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Asientos */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JournalEntry"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Registra un asiento manual, con invariante por moneda */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateJournalEntryInput"];
+                };
+            };
+            responses: {
+                /** @description Asiento registrado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JournalEntry"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/journal-entries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve un asiento */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Asiento */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JournalEntry"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mayor de una cuenta en una moneda */
+        get: {
+            parameters: {
+                query: {
+                    currency: "CRC" | "USD";
+                    from: string;
+                    to: string;
+                    account: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Mayor con saldo inicial, corrido y final */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GeneralLedger"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/trial-balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Balance de comprobación, en JSON o CSV */
+        get: {
+            parameters: {
+                query: {
+                    currency: "CRC" | "USD";
+                    from: string;
+                    to: string;
+                    format?: "json" | "csv";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Comprobación del período */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrialBalance"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/financial-position": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado de situación a una fecha, con el resultado del período en patrimonio */
+        get: {
+            parameters: {
+                query: {
+                    currency: "CRC" | "USD";
+                    at: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Estado de situación */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FinancialPosition"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/income-statement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado de resultados de un rango */
+        get: {
+            parameters: {
+                query: {
+                    currency: "CRC" | "USD";
+                    from: string;
+                    to: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Estado de resultados */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IncomeStatement"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado de cada mes con actividad y qué falta para poder cerrarlo */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Períodos */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PeriodSummary"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/periods/{period}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cierra un mes si no hay bloqueos */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Período cerrado */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AccountingPeriod"];
+                    };
+                };
+                /** @description El período tiene bloqueos */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/periods/{period}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reabre un mes y todos los posteriores que estén cerrados */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Períodos reabiertos */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ReopenedPeriods"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -369,6 +1212,94 @@ export interface components {
             afterInstallment: number;
             /** @enum {string} */
             mode: "REDUCE_TERM" | "REDUCE_PAYMENT";
+        };
+        /** CreateAccountInput */
+        CreateAccountInput: {
+            code: string;
+            name: string;
+            /** @enum {string} */
+            accountClass: "ASSET" | "LIABILITY" | "EQUITY" | "INCOME" | "COST_OF_REVENUE" | "OPERATING_EXPENSE";
+            /** @default null */
+            parentCode: string | null;
+            /** @default true */
+            active: boolean;
+            /** @default 0 */
+            sortOrder: number;
+        };
+        /** UpdateAccountInput */
+        UpdateAccountInput: {
+            name?: string;
+            /** @enum {string} */
+            accountClass?: "ASSET" | "LIABILITY" | "EQUITY" | "INCOME" | "COST_OF_REVENUE" | "OPERATING_EXPENSE";
+            /** @default null */
+            parentCode: string | null;
+            /** @default true */
+            active: boolean;
+            /** @default 0 */
+            sortOrder: number;
+        };
+        /** CreateCategoryInput */
+        CreateCategoryInput: {
+            name: string;
+            /** @enum {string} */
+            kind: "EXPENSE" | "INCOME";
+            /** @default null */
+            accountCode: string | null;
+            /** @default 0 */
+            sortOrder: number;
+            /** @default true */
+            active: boolean;
+        };
+        /** UpdateCategoryInput */
+        UpdateCategoryInput: {
+            name?: string;
+            /** @enum {string} */
+            kind?: "EXPENSE" | "INCOME";
+            /** @default null */
+            accountCode: string | null;
+            /** @default 0 */
+            sortOrder: number;
+            /** @default true */
+            active: boolean;
+        };
+        /** CreateMovementInput */
+        CreateMovementInput: {
+            date: string;
+            /** @enum {string} */
+            kind: "EXPENSE" | "INCOME";
+            categoryId: string;
+            counterparty: string;
+            amount: components["schemas"]["Money"];
+            /** @default null */
+            paymentAccountCode: string | null;
+            /** @default null */
+            receiptUrl: string | null;
+        };
+        /** UpdateMovementInput */
+        UpdateMovementInput: {
+            date?: string;
+            /** @enum {string} */
+            kind?: "EXPENSE" | "INCOME";
+            categoryId?: string;
+            counterparty?: string;
+            amount?: components["schemas"]["Money"];
+            /** @default null */
+            paymentAccountCode: string | null;
+            /** @default null */
+            receiptUrl: string | null;
+        };
+        /** CreateJournalEntryInput */
+        CreateJournalEntryInput: {
+            date: string;
+            description: string;
+            /** @default null */
+            reference: string | null;
+            lines: {
+                accountCode: string;
+                amount: components["schemas"]["Money"];
+                /** @enum {string} */
+                side: "DEBIT" | "CREDIT";
+            }[];
         };
         /** Debt */
         Debt: {
@@ -439,6 +1370,142 @@ export interface components {
             sell: components["schemas"]["ExchangeRate"] | null;
             stale: boolean;
             checkedAt: string;
+        };
+        /** Account */
+        Account: {
+            code: string;
+            name: string;
+            /** @enum {string} */
+            accountClass: "ASSET" | "LIABILITY" | "EQUITY" | "INCOME" | "COST_OF_REVENUE" | "OPERATING_EXPENSE";
+            parentCode: string | null;
+            active: boolean;
+            sortOrder: number;
+        };
+        /** ReportNode */
+        ReportNode: {
+            code: string;
+            name: string;
+            balance: components["schemas"]["MoneyOutput"];
+            level: number;
+            children: components["schemas"]["ReportNode"][];
+        };
+        /** Category */
+        Category: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            kind: "EXPENSE" | "INCOME";
+            accountCode: string | null;
+            sortOrder: number;
+            active: boolean;
+            postable: boolean;
+        };
+        /** Movement */
+        Movement: {
+            id: string;
+            date: string;
+            /** @enum {string} */
+            kind: "EXPENSE" | "INCOME";
+            categoryId: string;
+            counterparty: string;
+            amount: components["schemas"]["MoneyOutput"];
+            paymentAccountCode: string | null;
+            receiptUrl: string | null;
+            /** @enum {string} */
+            status: "ACTIVE" | "VOIDED";
+            posted: boolean;
+            journalEntryId: string | null;
+        };
+        /** JournalEntry */
+        JournalEntry: {
+            id: string;
+            date: string;
+            description: string;
+            reference: string | null;
+            sourceMovementId: string | null;
+            reversesEntryId: string | null;
+            lines: {
+                accountCode: string;
+                amount: components["schemas"]["MoneyOutput"];
+                /** @enum {string} */
+                side: "DEBIT" | "CREDIT";
+            }[];
+        };
+        /** GeneralLedger */
+        GeneralLedger: {
+            openingBalance: components["schemas"]["MoneyOutput"];
+            rows: {
+                date: string;
+                entryId: string;
+                description: string;
+                debit: components["schemas"]["MoneyOutput"];
+                credit: components["schemas"]["MoneyOutput"];
+                runningBalance: components["schemas"]["MoneyOutput"];
+            }[];
+            closingBalance: components["schemas"]["MoneyOutput"];
+        };
+        /** TrialBalance */
+        TrialBalance: {
+            rows: {
+                accountCode: string;
+                accountName: string;
+                debits: components["schemas"]["MoneyOutput"];
+                credits: components["schemas"]["MoneyOutput"];
+                balance: components["schemas"]["MoneyOutput"];
+            }[];
+            totalDebits: components["schemas"]["MoneyOutput"];
+            totalCredits: components["schemas"]["MoneyOutput"];
+            difference: components["schemas"]["MoneyOutput"];
+            balances: boolean;
+        };
+        /** FinancialPosition */
+        FinancialPosition: {
+            assets: components["schemas"]["MoneyOutput"];
+            liabilities: components["schemas"]["MoneyOutput"];
+            equity: components["schemas"]["MoneyOutput"];
+            periodResult: components["schemas"]["MoneyOutput"];
+            balances: boolean;
+            sections: {
+                assets: components["schemas"]["ReportNode"][];
+                liabilities: components["schemas"]["ReportNode"][];
+                equity: components["schemas"]["ReportNode"][];
+            };
+        };
+        /** IncomeStatement */
+        IncomeStatement: {
+            income: components["schemas"]["MoneyOutput"];
+            costOfRevenue: components["schemas"]["MoneyOutput"];
+            operatingExpenses: components["schemas"]["MoneyOutput"];
+            result: components["schemas"]["MoneyOutput"];
+            sections: {
+                income: components["schemas"]["ReportNode"][];
+                costOfRevenue: components["schemas"]["ReportNode"][];
+                operatingExpenses: components["schemas"]["ReportNode"][];
+            };
+        };
+        /** PeriodSummary */
+        PeriodSummary: {
+            period: string;
+            /** @enum {string} */
+            status: "OPEN" | "CLOSED";
+            entryCount: number;
+            unpostedMovementCount: number;
+            trialBalanceBalances: boolean;
+            blockers: {
+                code: string;
+                reason: string;
+            }[];
+        };
+        /** AccountingPeriod */
+        AccountingPeriod: {
+            period: string;
+            /** @enum {string} */
+            status: "OPEN" | "CLOSED";
+            closedAt: string | null;
+        };
+        /** ReopenedPeriods */
+        ReopenedPeriods: {
+            reopened: components["schemas"]["AccountingPeriod"][];
         };
         /** Money */
         MoneyOutput: {
