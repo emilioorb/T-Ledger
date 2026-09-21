@@ -54,6 +54,7 @@ import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
 import { useDebounced } from '@/lib/use-debounced'
 import { usePage } from '@/lib/use-page'
 import { cn } from '@/lib/utils'
+import { TEXT_LINK } from '@/components/text-link'
 
 const ALL = 'all'
 
@@ -87,7 +88,7 @@ const Marks = ({ movement }: { movement: Movement }) => {
         <Link
           to="/contabilidad/asientos"
           search={{ entry: movement.journalEntryId }}
-          className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          className={TEXT_LINK}
         >
           {copy.movements.viewEntry}
         </Link>
@@ -150,7 +151,7 @@ const MovementCard = ({ movement, category, onEdit, onVoid }: RowProps) => {
   const struck = movement.status === 'VOIDED' && 'text-muted-foreground line-through'
 
   return (
-    <li className="border-b border-border py-2.5">
+    <li className="px-3 py-2.5">
       <div className="flex items-baseline gap-3">
         <span className={cn('min-w-0 flex-1 truncate text-sm', struck)}>
           {movement.counterparty}
@@ -381,17 +382,19 @@ const MovementsScreen = () => {
             </Table>
           </TableFrame>
 
-          <ul className="md:hidden">
-            {items.map((movement) => (
-              <MovementCard
-                key={movement.id}
-                movement={movement}
-                category={byId.get(movement.categoryId)}
-                onEdit={() => setEditing({ movement })}
-                onVoid={() => setVoiding(movement)}
-              />
-            ))}
-          </ul>
+          <TableFrame className="md:hidden">
+            <ul className="divide-y divide-border">
+              {items.map((movement) => (
+                <MovementCard
+                  key={movement.id}
+                  movement={movement}
+                  category={byId.get(movement.categoryId)}
+                  onEdit={() => setEditing({ movement })}
+                  onVoid={() => setVoiding(movement)}
+                />
+              ))}
+            </ul>
+          </TableFrame>
 
           <Pager
             page={page}

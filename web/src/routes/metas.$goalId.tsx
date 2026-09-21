@@ -251,13 +251,13 @@ const GoalDetailScreen = () => {
         {meta.contributions.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">{copy.goals.history.empty}</p>
         ) : (
-          <ul className="mt-2">
+          <ul className="mt-2 divide-y divide-border">
             {[...meta.contributions]
               .sort((a, b) => b.date.localeCompare(a.date))
               .map((contribution) => (
                 <li
                   key={contribution.id}
-                  className="flex items-baseline justify-between gap-3 border-b border-border py-2 text-sm"
+                  className="flex items-baseline justify-between gap-3 py-2 text-sm"
                 >
                   <span className="num text-xs text-muted-foreground">
                     {formatIsoDate(contribution.date)}

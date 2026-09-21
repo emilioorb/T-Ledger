@@ -155,18 +155,32 @@ Arreglo: `withTransaction(fn)` en los puertos sobre `prisma.$transaction`. El pa
 
 ---
 
-## Fase 1 — Interfaz transversal
+## Fase 1 — Interfaz transversal ✅ cerrada el 21/09/2026
 
 Un arreglo, muchas pantallas. Ordenado por pantallas curadas.
 
-### 1.1 `TableFrame` recorta en vez de desplazar
+Los nueve puntos quedaron cerrados. Tres notas de lo que se apartó del hallazgo:
+
+- **1.3**, primera mitad: medido en el navegador, colapsar la barra **sí** devuelve el espacio.
+  A 1024 px la barra pasa de 256 a 64 px y el contenido de 760 a 944. La medición original
+  probablemente cayó dentro de los 200 ms de la transición. La segunda mitad sí era real y se
+  arregló: en el teléfono la barra tapaba el botón que la abrió y la única salida era acertarle
+  al overlay; ahora el panel trae su botón de cerrar.
+- **1.5**, árbol de cuentas: se queda con el borde por fila en vez de `divide-y`. El árbol marca
+  la raíz con una línea más fuerte y el selector de `divide-y` le gana en especificidad al color
+  de la fila. El borde colgando ya estaba resuelto con `[&>li:last-child]:border-b-0`.
+- **1.9**: en vez de agrandar un área invisible, crece la caja del botón y solo en punteros
+  gruesos (`pointer-coarse`). Un área invisible de 44 px sobre botones de 24 px se solapa con el
+  vecino de la misma fila y le roba el toque: en Movimientos, Editar y Anular están pegados.
+
+### 1.1 ✅ `TableFrame` recorta en vez de desplazar
 
 `components/table-frame.tsx:20` usa `overflow-hidden`. Es el mismo elemento detrás de los recortes
 medidos en Proyección (163 px), Cuentas bancarias (216 px), Cierre (46 px), Asientos (73 px),
 Mayor (57 px) y Plan de pago (15 px). **Cero scroll horizontal en las 126 mediciones** significa
 que nada de eso se puede alcanzar. Un `overflow-x-auto` convierte cuatro «rompe» en «molesta».
 
-### 1.2 `DialogContent` sin altura máxima
+### 1.2 ✅ `DialogContent` sin altura máxima
 
 `components/ui/dialog.tsx:56` es `fixed top-1/2 -translate-y-1/2` sin `max-h` ni `overflow-y-auto`.
 Medido a 360×740: «Asiento manual» mide 942 px y «Nuevo perfil» 1068 px; se parten arriba y abajo,
@@ -175,13 +189,13 @@ inversión» mide 736 px: pasa por 4 px.
 
 Arreglo: `max-h-[calc(100svh-2rem)] overflow-y-auto`.
 
-### 1.3 Colapsar la barra lateral no devuelve espacio
+### 1.3 ✅ Colapsar la barra lateral no devuelve espacio
 
 El botón cambia `data-state` a `collapsed` pero `[data-slot="sidebar"]` sigue midiendo 256 px: el
 contenido pasa de 504 a 496 px. A 768 y 1024, que es donde falta espacio, el recurso obvio no
 funciona. Además, a 360 el botón del encabezado no cierra la barra (el overlay se come el clic).
 
-### 1.4 `StatGrid` salta de 2 a 4 columnas y recorta las cifras
+### 1.4 ✅ `StatGrid` salta de 2 a 4 columnas y recorta las cifras
 
 `features/accounting/stat-card.tsx:35`. A 1024 px cada tarjeta deja 137 px de interior para montos
 de ~185 px, y `Card` tiene `overflow-hidden`: **la cifra se corta sin scroll ni aviso**. Afecta a
@@ -189,7 +203,7 @@ Patrimonio, Comprobación, Conciliación, detalle de meta y detalle de inversió
 
 Arreglo: `sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4` y revisar los `sm:col-span-2`.
 
-### 1.5 `border-b` por fila (nueve lugares)
+### 1.5 ✅ `border-b` por fila (nueve lugares)
 
 Deja una línea colgando al final de cada bloque: `amortization-table.tsx:72,117`,
 `extra-payment-simulator.tsx:139,147,155,161`, `deudas.$debtId.index.tsx:14`,
@@ -199,17 +213,17 @@ Deja una línea colgando al final de cada bloque: `amortization-table.tsx:72,117
 
 Arreglo: `divide-y divide-border` en el contenedor.
 
-### 1.6 Dos tablas sin `TableFrame`
+### 1.6 ✅ Dos tablas sin `TableFrame`
 
 `features/debts/amortization-table.tsx:72` (la única `<Table>` del repo sin marco) y la lista móvil
 de `contabilidad.movimientos.tsx:384`.
 
-### 1.7 La barra de progreso está reimplementada cuatro veces
+### 1.7 ✅ La barra de progreso está reimplementada cuatro veces
 
 `index.tsx:127`, `presupuesto.index.tsx:71`, `metas.index.tsx:272`, `inversiones.index.tsx:350`.
 La del panel perdió `role="img"` y `aria-label`. Extraer a un componente con etiqueta obligatoria.
 
-### 1.8 Cifras fuera de escala y sin `Amount`
+### 1.8 ✅ Cifras fuera de escala y sin `Amount`
 
 - `text-lg` en cifras (no existe en la escala): `contabilidad.patrimonio.tsx:111,113,119`,
   `inversiones.$investmentId.tsx:163`.
@@ -218,7 +232,7 @@ La del panel perdió `role="img"` y `aria-label`. Extraer a un componente con et
   `debt-list.tsx:49,51,60`).
 - `journal-entry-form.tsx:224-235` imprime el descuadre sin `num`, justo donde más importa.
 
-### 1.9 Áreas táctiles por debajo de 32 px en toda la app
+### 1.9 ✅ Áreas táctiles por debajo de 32 px en toda la app
 
 Botones primarios 28 px, botones de fila 24 px, X de modal 16×16, plegar árbol 18×18, tabs 25 px,
 enlaces inline 16 px. Es una decisión en las variantes de `ui/button.tsx:28`, no 21 arreglos.

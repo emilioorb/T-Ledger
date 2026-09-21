@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
+import { ProgressBar } from '@/components/progress-bar'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -34,8 +35,10 @@ import {
   usePeriods,
 } from '@/features/accounting/use-accounting'
 import type { ReportNode } from '@/features/accounting/types'
+import { copy as budgetCopy } from '@/features/budget/copy'
 import { useBudgetEvaluation } from '@/features/budget/use-budget'
 import { useDebts } from '@/features/debts/use-debts'
+import { copy as goalsCopy } from '@/features/goals/copy'
 import { useGoals } from '@/features/goals/use-goals'
 import { useInvestments } from '@/features/investments/use-investments'
 import { copy } from '@/features/projection/overview-copy'
@@ -43,7 +46,9 @@ import { SurplusChart } from '@/features/projection/surplus-chart'
 import { useCashFlowProjection } from '@/features/projection/use-projection'
 import type { Money } from '@/features/projection/types'
 import { formatIsoDate, formatIsoMonth, monthEnd, monthStart, today } from '@/lib/dates'
+import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { TEXT_LINK } from '@/components/text-link'
 
 const HORIZON = 12
 const TOP_GOALS = 3
@@ -107,10 +112,7 @@ const Panel = ({
         {title}
       </h2>
       {to && action ? (
-        <Link
-          to={to}
-          className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-        >
+        <Link to={to} className={cn('shrink-0 text-xs', TEXT_LINK)}>
           {action}
         </Link>
       ) : null}
@@ -120,19 +122,6 @@ const Panel = ({
         queda colgando al final en vez de repartirse dentro. */}
     <div className="mt-4 flex flex-1 flex-col">{children}</div>
   </Card>
-)
-
-// Una barra con su cifra a cada extremo: lo que llevás a la izquierda, el tope a la derecha.
-const Bar = ({ value, tone }: { value: number; tone: 'plain' | 'warning' | 'positive' }) => (
-  <div className="h-1 w-full bg-border-strong">
-    <div
-      className={cn(
-        'h-full',
-        tone === 'warning' ? 'bg-warning' : tone === 'positive' ? 'bg-positive' : 'bg-foreground',
-      )}
-      style={{ width: `${value * 100}%` }}
-    />
-  </div>
 )
 
 // Lo que cambia si no hacés nada. Cada línea nombra el hecho y lleva a donde se resuelve.
@@ -151,10 +140,7 @@ const Line = ({
     <span className="text-sm">{text}</span>
     <span className="flex items-baseline gap-4">
       {amount}
-      <Link
-        to={to}
-        className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-      >
+      <Link to={to} className={cn('text-xs', TEXT_LINK)}>
         {action}
       </Link>
     </span>
@@ -475,12 +461,16 @@ const DashboardScreen = () => {
                           </span>
                         </span>
                       </div>
-                      <div className="mt-1.5">
-                        <Bar
-                          value={ratio(bucket.consumed, bucket.allocated)}
-                          tone={bucket.status === 'OVER' ? 'warning' : 'plain'}
-                        />
-                      </div>
+                      <ProgressBar
+                        className="mt-1.5"
+                        value={ratio(bucket.consumed, bucket.allocated)}
+                        tone={bucket.status === 'OVER' ? 'warning' : 'plain'}
+                        label={budgetCopy.budget.barLabel(
+                          bucket.name,
+                          formatMoney(bucket.consumed),
+                          formatMoney(bucket.allocated),
+                        )}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -515,12 +505,15 @@ const DashboardScreen = () => {
                           {goal.projectedDate ? formatIsoDate(goal.projectedDate) : '—'}
                         </span>
                       </div>
-                      <div className="mt-1.5">
-                        <Bar
-                          value={ratio(goal.contributed, goal.target)}
-                          tone={goal.onTrack ? 'plain' : 'warning'}
-                        />
-                      </div>
+                      <ProgressBar
+                        className="mt-1.5"
+                        value={ratio(goal.contributed, goal.target)}
+                        tone={goal.onTrack ? 'plain' : 'warning'}
+                        label={goalsCopy.goals.progressLabel(
+                          formatMoney(goal.contributed),
+                          formatMoney(goal.target),
+                        )}
+                      />
                       <p className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs text-muted-foreground">
                         <Amount money={goal.contributed} />
                         <span>{copy.overview.goals.of}</span>

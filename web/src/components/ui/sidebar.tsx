@@ -184,7 +184,9 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          // Sin el botón de cerrar, en el teléfono la barra tapa el que la abrió y la única
+          // salida es acertarle al overlay: se deja el que trae Sheet.
+          className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>[data-slot=sheet-close]]:size-8"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,

@@ -160,7 +160,7 @@ const InvestmentDetailScreen = () => {
           className="sm:col-span-2 lg:col-span-4"
           label={copy.investments.columns.rate}
         >
-          <p className="num text-left text-lg">{data.annualRate}%</p>
+          <p className="num text-left text-2xl">{data.annualRate}%</p>
         </StatCard>
       </StatGrid>
 
@@ -242,13 +242,13 @@ const InvestmentDetailScreen = () => {
             <ListOrdered className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             {copy.investments.detail.history}
           </h2>
-          <ul className="mt-2">
+          <ul className="mt-2 divide-y divide-border">
             {[...data.contributions]
               .sort((a, b) => b.date.localeCompare(a.date))
               .map((contribution) => (
                 <li
                   key={contribution.id}
-                  className="flex items-baseline justify-between gap-3 border-b border-border py-2 text-sm"
+                  className="flex items-baseline justify-between gap-3 py-2 text-sm"
                 >
                   <span className="num text-xs text-muted-foreground">
                     {formatIsoDate(contribution.date)}

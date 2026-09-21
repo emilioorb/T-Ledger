@@ -31,6 +31,12 @@ export const StatCard = ({ label, children, hint, icon: Icon, className }: Props
 // La rejilla de arriba: la cifra principal ocupa el ancho que necesite y las de apoyo se
 // acomodan al lado. Nunca es una fila de cuatro tarjetas iguales, que es la plantilla que
 // DESIGN.md prohíbe: acá hay una que manda y las demás la explican.
+//
+// Tres columnas en `lg` y cuatro recién en `xl`: saltar de dos a cuatro a 1024 px dejaba
+// 137 px de interior para montos de ~185 px, y como la tarjeta recorta, la cifra se cortaba
+// sin barra ni aviso. La barra lateral se come 256 px que el breakpoint no ve.
 export const StatGrid = ({ children, className }: { children: ReactNode; className?: string }) => (
-  <div className={cn('grid gap-3 sm:grid-cols-2 lg:grid-cols-4', className)}>{children}</div>
+  <div className={cn('grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4', className)}>
+    {children}
+  </div>
 )

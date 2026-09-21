@@ -19,7 +19,7 @@ const Key = ({ children }: { children: string }) => (
 )
 
 const Row = ({ keys, label }: { keys: string[]; label: string }) => (
-  <li className="flex items-baseline justify-between gap-4 border-b border-border py-2 text-sm">
+  <li className="flex items-baseline justify-between gap-4 py-2 text-sm">
     <span>{label}</span>
     <span className="flex shrink-0 items-baseline gap-1">
       {keys.map((key) => (
@@ -46,7 +46,7 @@ export const ShortcutsSheet = ({ open, onOpenChange }: Props) => {
               {copy.shortcuts.groups.navigation}
             </h3>
             <p className="mt-0.5 text-xs text-muted-foreground">{copy.shortcuts.prefixHint}</p>
-            <ul className="mt-2">
+            <ul className="mt-2 divide-y divide-border">
               {DESTINATIONS.map((destination) => (
                 <Row
                   key={destination.key}
@@ -61,13 +61,11 @@ export const ShortcutsSheet = ({ open, onOpenChange }: Props) => {
             <h3 className="text-xs font-medium tracking-tight text-muted-foreground">
               {copy.shortcuts.groups.actions}
             </h3>
-            <ul className="mt-2">
+            <ul className="mt-2 divide-y divide-border">
               {primary ? (
                 <Row keys={[copy.shortcuts.keys.primary]} label={primary.label} />
               ) : (
-                <li className="border-b border-border py-2 text-sm text-muted-foreground">
-                  {copy.shortcuts.noAction}
-                </li>
+                <li className="py-2 text-sm text-muted-foreground">{copy.shortcuts.noAction}</li>
               )}
               <Row keys={[copy.shortcuts.keys.help]} label={copy.shortcuts.help} />
             </ul>

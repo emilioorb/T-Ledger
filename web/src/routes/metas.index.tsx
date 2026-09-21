@@ -36,6 +36,7 @@ import { useContribute, useDeleteGoal, useGoals, useSaveGoal } from '@/features/
 import { formatIsoDate, today } from '@/lib/dates'
 import { formatMoney, parseMoneyInput, type CurrencyCode } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { ProgressBar } from '@/components/progress-bar'
 
 const CURRENCIES: CurrencyCode[] = ['CRC', 'USD']
 
@@ -268,19 +269,12 @@ const GoalBlock = ({ goal, onEdit, onDelete, onContribute }: CardProps) => {
             <Amount money={goal.target} />
           </span>
         </div>
-        <div
-          className="mt-1.5 h-1 w-full bg-border-strong"
-          role="img"
-          aria-label={copy.goals.progressLabel(
-            formatMoney(goal.contributed),
-            formatMoney(goal.target),
-          )}
-        >
-          <div
-            className={cn('h-full', goal.reached ? 'bg-positive' : 'bg-foreground')}
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
+        <ProgressBar
+          className="mt-1.5"
+          value={progress}
+          tone={goal.reached ? 'positive' : 'plain'}
+          label={copy.goals.progressLabel(formatMoney(goal.contributed), formatMoney(goal.target))}
+        />
       </div>
 
       <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-3">

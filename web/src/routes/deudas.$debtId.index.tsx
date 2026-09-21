@@ -11,7 +11,7 @@ import { formatIsoDate } from '@/lib/dates'
 import { formatMoney } from '@/lib/money'
 
 const Fact = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-baseline justify-between gap-4 border-b border-border py-1.5 sm:block sm:border-0 sm:py-0">
+  <div className="flex items-baseline justify-between gap-4 py-1.5 sm:block sm:py-0">
     <dt className="text-xs tracking-wide text-muted-foreground uppercase">{label}</dt>
     <dd className="num num-right text-sm sm:mt-0.5 sm:text-left">{value}</dd>
   </div>
@@ -49,7 +49,9 @@ const DebtDetail = () => {
       <div className="space-y-3">
         <h1 className="text-xl font-semibold tracking-tight">{data.name}</h1>
 
-        <dl className="grid gap-x-6 sm:grid-cols-3 lg:grid-cols-6">
+        {/* En una sola columna los datos son una lista y van separados por una línea; a
+            partir de sm son columnas y la línea sobra. */}
+        <dl className="grid gap-x-6 divide-y divide-border sm:grid-cols-3 sm:divide-y-0 lg:grid-cols-6">
           <Fact label={copy.detail.counterparty} value={data.counterparty} />
           <Fact label={copy.detail.principal} value={formatMoney(data.principal)} />
           <Fact label={copy.detail.monthlyPayment} value={formatMoney(data.monthlyPayment)} />

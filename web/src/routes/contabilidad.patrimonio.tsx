@@ -108,15 +108,15 @@ const NetWorthScreen = () => {
               {copy.netWorth.identity}
             </p>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <Amount money={report.data.netWorth} emphasis="strong" className="text-lg" />
+              <Amount money={report.data.netWorth} emphasis="strong" className="text-2xl" />
               <span className="text-sm text-muted-foreground">=</span>
-              <Amount money={report.data.equity} className="text-lg" />
+              <Amount money={report.data.equity} className="text-2xl" />
               <span className="text-sm text-muted-foreground">+</span>
               <Hint text={copy.netWorth.exchangeHint}>
                 <Amount
                   money={report.data.exchangeDifference}
                   className={cn(
-                    'text-lg',
+                    'text-2xl',
                     !isZeroMoney(report.data.exchangeDifference) && 'text-warning',
                   )}
                 />

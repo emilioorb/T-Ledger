@@ -6,7 +6,6 @@ import { SortButton } from '@/components/sort-button'
 import { SortSelect } from '@/components/sort-select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatIsoDate } from '@/lib/dates'
-import { formatMoney } from '@/lib/money'
 import { useTableControls, type SortValue } from '@/lib/use-table-controls'
 import { copy } from './copy'
 import { DebtRowActions } from './debt-row-actions'
@@ -14,6 +13,7 @@ import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import type { Debt, DebtDirection } from './types'
 import { useDebts } from './use-debts'
+import { Amount } from '@/features/accounting/amount'
 
 interface Props {
   direction: DebtDirection
@@ -46,10 +46,8 @@ const Row = ({ debt }: { debt: Debt }) => (
     >
       {debt.name}
     </Link>
-    <span className="num num-right text-sm">{formatMoney(debt.principal)}</span>
-    <span className="num num-right hidden text-sm text-muted-foreground sm:block">
-      {formatMoney(debt.monthlyPayment)}
-    </span>
+    <Amount money={debt.principal} className="text-sm" />
+    <Amount money={debt.monthlyPayment} className="hidden text-sm text-muted-foreground sm:block" />
     <span className="num num-right hidden text-xs text-muted-foreground sm:block">
       {formatIsoDate(debt.payoffDate)}
     </span>
@@ -57,7 +55,7 @@ const Row = ({ debt }: { debt: Debt }) => (
     {/* Bajo sm la fila se parte en dos renglones: nombre y saldo arriba, que es lo que
         se viene a mirar, y cuota y fecha debajo como pie. */}
     <span className="col-span-2 text-xs text-muted-foreground sm:hidden">
-      <span className="num num-right">{formatMoney(debt.monthlyPayment)}</span>
+      <Amount money={debt.monthlyPayment} />
       {' · '}
       <span className="num num-right">{formatIsoDate(debt.payoffDate)}</span>
     </span>

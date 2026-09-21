@@ -14,10 +14,13 @@ interface Props {
 // Sirve para las dos familias de tabla del proyecto: la de <table> —a la que le ajusta el
 // encabezado y el respiro de las celdas— y la de grilla, que trae su propio FrameHeader
 // porque las columnas las define cada pantalla.
+//
+// `overflow-x-auto` y no `overflow-hidden`: con el recorte, una tabla más ancha que la
+// pantalla perdía las últimas columnas sin barra ni aviso. Desplazar molesta; recortar miente.
 export const TableFrame = ({ className, children }: Props) => (
   <div
     className={cn(
-      'overflow-hidden rounded-lg border border-border',
+      'overflow-x-auto rounded-lg border border-border',
       '[&_thead_tr]:border-border',
       '[&_th]:h-9 [&_th]:px-3 [&_td]:px-3 [&_td]:py-2.5',
       '[&_tbody_tr]:border-border [&_tbody_tr:last-child]:border-0',

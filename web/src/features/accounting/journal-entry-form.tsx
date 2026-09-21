@@ -206,7 +206,9 @@ export const JournalEntryForm = ({ postable, pending, onSubmit, onCancel }: Prop
           variant="secondary"
           size="sm"
           className="mt-3"
-          onClick={() => setLines((current) => [...current, emptyLine(current[0]?.currency ?? 'CRC')])}
+          onClick={() =>
+            setLines((current) => [...current, emptyLine(current[0]?.currency ?? 'CRC')])
+          }
         >
           {fields.addLine}
         </Button>
@@ -221,7 +223,7 @@ export const JournalEntryForm = ({ postable, pending, onSubmit, onCancel }: Prop
               {balance.difference === 0n ? (
                 <span className="text-positive">{fields.balanced}</span>
               ) : (
-                <span className="text-negative">
+                <span className="num text-negative">
                   {fields.unbalanced(
                     balance.currency,
                     formatMoney({

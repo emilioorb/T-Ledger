@@ -40,7 +40,7 @@ import {
 } from '@/features/investments/use-investments'
 import { formatIsoDate, today } from '@/lib/dates'
 import { formatMoney, parseMoneyInput, type CurrencyCode } from '@/lib/money'
-import { cn } from '@/lib/utils'
+import { ProgressBar } from '@/components/progress-bar'
 
 const CURRENCIES: CurrencyCode[] = ['CRC', 'USD']
 
@@ -346,19 +346,15 @@ const InvestmentCard = ({ investment, onEdit, onDelete, onAddCapital }: CardProp
               <span className="num">{formatIsoDate(investment.openedAt)}</span>
               <span className="num">{formatIsoDate(investment.maturesAt)}</span>
             </div>
-            <div
-              className="mt-1.5 h-1 w-full bg-border-strong"
-              role="img"
-              aria-label={copy.investments.termLabel(
+            <ProgressBar
+              className="mt-1.5"
+              value={progress}
+              tone={investment.matured ? 'positive' : 'plain'}
+              label={copy.investments.termLabel(
                 formatIsoDate(investment.openedAt),
                 formatIsoDate(investment.maturesAt),
               )}
-            >
-              <div
-                className={cn('h-full', investment.matured ? 'bg-positive' : 'bg-foreground')}
-                style={{ width: `${progress * 100}%` }}
-              />
-            </div>
+            />
           </>
         )}
       </div>

@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatIsoDate } from '@/lib/dates'
-import { formatMoney, parseMoneyInput } from '@/lib/money'
+import { parseMoneyInput } from '@/lib/money'
 import { copy } from './copy'
 import type { Debt, Projection, SimulateInput } from './types'
 import { useSimulateExtraPayment } from './use-debts'
+import { Amount } from '@/features/accounting/amount'
 
 interface Props {
   debt: Debt
@@ -135,16 +136,23 @@ export const ExtraPaymentSimulator = ({ debt }: Props) => {
       {projection && !simulate.isPending ? (
         <div className="border-t border-border pt-4">
           <h3 className="text-sm font-medium">{copy.simulator.results.title}</h3>
-          <dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
-            <div className="flex items-baseline justify-between gap-4 border-b border-border pb-1.5">
+          {/* El borde va en el contenedor y se apaga en la última fila: con uno por ítem
+              quedaba una línea colgando bajo el bloque. A dos columnas la última fila son
+              los dos últimos ítems. */}
+          <dl className="mt-3 grid gap-x-6 gap-y-2 [&>div]:border-b [&>div]:border-border [&>div]:pb-1.5 [&>div:last-child]:border-b-0 sm:grid-cols-2 sm:[&>div:nth-last-child(2)]:border-b-0">
+            <div className="flex items-baseline justify-between gap-4">
               <dt className="text-sm text-muted-foreground">
                 {copy.simulator.results.interestSaved}
               </dt>
-              <dd className="num num-right text-sm font-medium text-positive">
-                {formatMoney(projection.interestSaved)}
+              <dd>
+                <Amount
+                  money={projection.interestSaved}
+                  emphasis="strong"
+                  className="block text-sm text-positive"
+                />
               </dd>
             </div>
-            <div className="flex items-baseline justify-between gap-4 border-b border-border pb-1.5">
+            <div className="flex items-baseline justify-between gap-4">
               <dt className="text-sm text-muted-foreground">
                 {copy.simulator.results.monthsSaved}
               </dt>
@@ -152,20 +160,21 @@ export const ExtraPaymentSimulator = ({ debt }: Props) => {
                 {copy.simulator.results.months(projection.monthsSaved)}
               </dd>
             </div>
-            <div className="flex items-baseline justify-between gap-4 border-b border-border pb-1.5">
+            <div className="flex items-baseline justify-between gap-4">
               <dt className="text-sm text-muted-foreground">
                 {copy.simulator.results.newPayoffDate}
               </dt>
               <dd className="num num-right text-sm">{formatIsoDate(lastDueDate(projection))}</dd>
             </div>
-            <div className="flex items-baseline justify-between gap-4 border-b border-border pb-1.5">
+            <div className="flex items-baseline justify-between gap-4">
               <dt className="text-sm text-muted-foreground">{copy.simulator.results.totalPaid}</dt>
-              <dd className="num num-right text-sm">{formatMoney(projection.totalPaidWithExtra)}</dd>
+              <dd>
+                <Amount money={projection.totalPaidWithExtra} className="block text-sm" />
+              </dd>
             </div>
           </dl>
           <p className="mt-2 text-xs text-muted-foreground">
-            {copy.simulator.results.baselineTotal}{' '}
-            <span className="num num-right">{formatMoney(projection.baseline.totalPaid)}</span>
+            {copy.simulator.results.baselineTotal} <Amount money={projection.baseline.totalPaid} />
           </p>
         </div>
       ) : null}

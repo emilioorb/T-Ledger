@@ -20,6 +20,7 @@ import type { PeriodSummary } from '@/features/accounting/types'
 import { useClosePeriod, usePeriods, useReopenPeriod } from '@/features/accounting/use-accounting'
 import { monthEnd, formatIsoMonth } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { TEXT_LINK } from '@/components/text-link'
 
 // El servidor nombra el mes como 2026-08 y la pantalla como 08/2026: convivir las dos
 // formas en la misma frase hace dudar de si hablan del mismo mes.
@@ -63,7 +64,7 @@ const Blockers = ({ summary }: { summary: PeriodSummary }) => {
               <Link
                 to="/contabilidad/movimientos"
                 search={{ from: `${summary.period}-01`, to: monthEnd(`${summary.period}-01`) }}
-                className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                className={TEXT_LINK}
               >
                 {copy.closing.goToUnposted}
               </Link>
@@ -72,10 +73,7 @@ const Blockers = ({ summary }: { summary: PeriodSummary }) => {
           {blocker.code === 'TRIAL_BALANCE_UNBALANCED' ? (
             <>
               {' · '}
-              <Link
-                to="/contabilidad/comprobacion"
-                className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-              >
+              <Link to="/contabilidad/comprobacion" className={TEXT_LINK}>
                 {copy.closing.goToTrialBalance}
               </Link>
             </>

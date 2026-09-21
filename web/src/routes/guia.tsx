@@ -31,6 +31,8 @@ import { copy as projection } from '@/features/projection/copy'
 import { copy as shell } from '@/features/shell/copy'
 import { copy as guideCopy } from '@/features/shell/guide-copy'
 import { filterRows } from '@/lib/use-table-controls'
+import { TEXT_LINK } from '@/components/text-link'
+import { cn } from '@/lib/utils'
 
 const guide = guideCopy.guide
 
@@ -302,7 +304,7 @@ const ModuleSection = ({ module, group }: { module: GuideModule; group?: string 
         <Link
           to={module.to}
           aria-label={guide.openOf(module.title)}
-          className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          className={cn('shrink-0 text-xs', TEXT_LINK)}
         >
           {guide.open}
         </Link>
@@ -351,10 +353,7 @@ const BasicsSection = () => (
               <span className="num text-muted-foreground tabular-nums">{index + 1}.</span>
               <span>
                 {withControls(step.text)}{' '}
-                <a
-                  href={`#${step.to}`}
-                  className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                >
+                <a href={`#${step.to}`} className={cn('text-xs', TEXT_LINK)}>
                   {step.link}
                 </a>
               </span>

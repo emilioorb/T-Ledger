@@ -38,14 +38,17 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
           node.level === 0 && 'border-border-strong',
         )}
       >
-        <div className="flex min-w-0 items-center gap-1.5" style={{ paddingLeft: node.level * INDENT_PER_LEVEL }}>
+        <div
+          className="flex min-w-0 items-center gap-1.5"
+          style={{ paddingLeft: node.level * INDENT_PER_LEVEL }}
+        >
           {hasChildren ? (
             <button
               type="button"
               onClick={() => onToggle(node.code)}
               aria-expanded={isOpen}
               aria-label={copy.accounts.expand(node.name)}
-              className="-ml-1 rounded p-0.5 text-muted-foreground hover:text-foreground"
+              className="-ml-1 flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground pointer-coarse:size-8"
             >
               <ChevronRight
                 className={cn('size-3.5 transition-transform', isOpen && 'rotate-90')}
@@ -53,7 +56,7 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
               />
             </button>
           ) : (
-            <span className="inline-block w-[1.125rem]" aria-hidden="true" />
+            <span className="inline-block w-5 pointer-coarse:w-7" aria-hidden="true" />
           )}
 
           <span className="num num-right shrink-0 text-xs text-muted-foreground">{node.code}</span>
@@ -132,6 +135,8 @@ export const AccountsTree = ({ nodes, accounts, onEdit }: Props) => {
 
   const byCode = new Map(accounts.map((account) => [account.code, account]))
 
+  // El borde va por fila y no con `divide-y`: la raíz se marca con una línea más fuerte, y
+  // el selector de `divide-y` le gana en especificidad al color de la fila.
   return (
     <ul className="[&>li:last-child]:border-b-0">
       {nodes.map((node) => (

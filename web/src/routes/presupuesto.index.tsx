@@ -24,6 +24,8 @@ import { ApiError } from '@/lib/api'
 import { monthEnd, monthStart, today } from '@/lib/dates'
 import { absMoney, formatMoney, parseMoneyInput } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { ProgressBar } from '@/components/progress-bar'
+import { TEXT_LINK } from '@/components/text-link'
 
 const monthOf = (iso: string): string => iso.slice(0, 7)
 
@@ -67,25 +69,20 @@ const BucketRow = ({ bucket, month }: RowProps) => {
         </p>
       </div>
 
-      <div
-        className="h-1 w-full bg-border-strong"
-        role="img"
-        aria-label={copy.budget.barLabel(
+      <ProgressBar
+        value={consumedRatio(bucket)}
+        tone={isOver ? 'warning' : 'plain'}
+        label={copy.budget.barLabel(
           bucket.name,
           formatMoney(bucket.consumed),
           formatMoney(bucket.allocated),
         )}
-      >
-        <div
-          className={cn('h-full', isOver ? 'bg-warning' : 'bg-foreground')}
-          style={{ width: `${consumedRatio(bucket) * 100}%` }}
-        />
-      </div>
+      />
 
       <Link
         to="/contabilidad/movimientos"
         search={{ from: `${month}-01`, to: monthEnd(`${month}-01`) }}
-        className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+        className={cn('text-xs', TEXT_LINK)}
       >
         {copy.budget.viewMovements(bucket.name)}
       </Link>

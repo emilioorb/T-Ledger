@@ -128,12 +128,12 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
         <h3 className="text-sm font-medium tracking-tight">{fields.buckets}</h3>
         <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">{fields.accountsHint}</p>
 
-        <ul className="mt-3 space-y-3">
+        <ul className="mt-3 divide-y divide-border">
           {buckets.map((bucket, index) => (
             // eslint-disable-next-line react/no-array-index-key
             <li
               key={index}
-              className="grid gap-2 border-b border-border pb-3 sm:grid-cols-[1fr_6rem_auto]"
+              className="grid gap-2 py-3 first:pt-0 last:pb-0 sm:grid-cols-[1fr_6rem_auto]"
             >
               <Input
                 value={bucket.name}
