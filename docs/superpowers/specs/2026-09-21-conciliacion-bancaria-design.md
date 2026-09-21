@@ -134,13 +134,17 @@ Todo bajo `/api/v1`:
   descartaron por duplicadas
 - `POST /bank-statements/preview` — lee el archivo con el perfil y devuelve las primeras filas
   sin guardar nada, para verificar el mapeo antes de importar
-- `GET /bank-statements`, `GET /bank-statements/:id`
-- `GET /reconciliation?bankAccountId=&from=&to=` — líneas pendientes, sugerencias y los tres
-  saldos
-- `POST /reconciliation/confirm` — `{ lineId, movementId }`
+- `GET /bank-statements?page=&pageSize=`, `GET /bank-statements/:id`
+- `GET /bank-accounts/:id/reconciliation?from=&to=&page=&pageSize=` — líneas pendientes,
+  sugerencias y los tres saldos
+- `POST /bank-lines/:id/match` — `{ movementId }`
 - `POST /bank-lines/:id/unmatch` — deshace una conciliación confirmada
 - `POST /bank-lines/:id/to-movement` — crea el movimiento y lo concilia con la línea
 - `POST /bank-lines/:id/ignore`
+
+La conciliación cuelga de la cuenta bancaria y no es un recurso propio: sin cuenta no existe, y
+un endpoint con un filtro obligatorio es un sub-recurso disfrazado. Las cuatro acciones sobre una
+línea cuelgan de la línea, igual que `void` cuelga del movimiento en la fase 1.
 
 El archivo viaja como `multipart/form-data`. Es el único endpoint del sistema que no recibe
 JSON, y la razón es que un CSV de banco en base64 dentro de un JSON solo agrega una codificación
