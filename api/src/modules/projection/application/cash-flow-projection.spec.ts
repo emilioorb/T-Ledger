@@ -64,14 +64,17 @@ const inversionQueVenceEnMarzo = () =>
 let debts: { findAll: ReturnType<typeof vi.fn> }
 let goals: { findAll: ReturnType<typeof vi.fn> }
 let investments: { findAll: ReturnType<typeof vi.fn> }
-let incomes: { find: ReturnType<typeof vi.fn> }
+let incomes: { find: ReturnType<typeof vi.fn>; findLatestUpTo: ReturnType<typeof vi.fn> }
 let useCase: CashFlowProjectionUseCase
 
 beforeEach(() => {
   debts = { findAll: vi.fn().mockResolvedValue({ items: [], totalItems: 0 }) }
   goals = { findAll: vi.fn().mockResolvedValue([]) }
   investments = { findAll: vi.fn().mockResolvedValue([]) }
-  incomes = { find: vi.fn().mockResolvedValue(null) }
+  incomes = {
+    find: vi.fn().mockResolvedValue(null),
+    findLatestUpTo: vi.fn().mockResolvedValue(null),
+  }
 
   useCase = new CashFlowProjectionUseCase(
     debts as unknown as DebtRepository,
@@ -162,6 +165,16 @@ describe('CashFlowProjectionUseCase', () => {
     const flow = await useCase.execute(1, utc('2026-02-01'))
 
     expect(flow[0]?.income.minorUnits).toBe(1_000_000_00n)
+  })
+
+  it('arrastra el último ingreso declarado a los meses que todavía no se declararon', async () => {
+    incomes.find.mockResolvedValue(null)
+    incomes.findLatestUpTo.mockResolvedValue({ amount: crc(800_000_00n) })
+
+    const flow = await useCase.execute(3, utc('2026-02-01'))
+
+    expect(flow[2]?.income.minorUnits).toBe(800_000_00n)
+    expect(flow[2]?.incomeDeclared).toBe(false)
   })
 
   it('sin nada cargado proyecta meses en cero, no falla', async () => {

@@ -26,6 +26,7 @@ const toResponse = (flow: MonthlyFlow) => ({
   goalContributions: fromMoney(flow.goalContributions),
   maturingInvestments: fromMoney(flow.maturingInvestments),
   estimatedSpending: fromMoney(flow.estimatedSpending),
+  incomeDeclared: flow.incomeDeclared,
   freed: flow.freed.map((freed) => ({
     debtId: freed.debtId,
     name: freed.name,

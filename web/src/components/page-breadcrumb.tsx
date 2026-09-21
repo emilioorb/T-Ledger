@@ -8,6 +8,10 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { copy as accounting } from '@/features/accounting/copy'
+import { copy as budget } from '@/features/budget/copy'
+import { copy as goals } from '@/features/goals/copy'
+import { copy as investments } from '@/features/investments/copy'
+import { copy as projection } from '@/features/projection/copy'
 import { copy } from '@/features/debts/copy'
 import { useDebt } from '@/features/debts/use-debts'
 
@@ -21,6 +25,13 @@ const ACCOUNTING_LABELS: Record<string, string> = {
   situacion: accounting.nav.financialPosition,
   resultados: accounting.nav.incomeStatement,
   cierre: accounting.nav.closing,
+}
+
+const PLAN_LABELS: Record<string, string> = {
+  presupuesto: budget.nav.budget,
+  metas: goals.goals.title,
+  inversiones: investments.investments.title,
+  proyeccion: projection.projection.title,
 }
 
 const Crumb = ({ to, label }: { to: string; label: string }) => (
@@ -87,7 +98,16 @@ export const PageBreadcrumb = () => {
   return (
     <Breadcrumb>
       <BreadcrumbList className="flex-nowrap whitespace-nowrap">
-        {section === 'contabilidad' ? (
+        {section in PLAN_LABELS ? (
+          second === 'modelos' ? (
+            <>
+              <Crumb to="/presupuesto" label={budget.nav.budget} />
+              {leaf(budget.nav.models)}
+            </>
+          ) : (
+            leaf(PLAN_LABELS[section] ?? section)
+          )
+        ) : section === 'contabilidad' ? (
           <>
             <BreadcrumbItem>{accounting.nav.section}</BreadcrumbItem>
             <BreadcrumbSeparator />

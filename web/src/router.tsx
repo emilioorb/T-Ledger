@@ -8,10 +8,17 @@ const describe = (error: unknown): string =>
   error instanceof ApiError ? error.message : 'No se pudo completar la operación'
 
 // Un QueryCache y un MutationCache con onError cubren todos los errores de una sola vez,
-// sin que cada pantalla tenga que acordarse.
+// sin que cada pantalla tenga que acordarse. La excepción es la consulta que ya explica
+// su propio fallo en pantalla: un toast encima sería decir dos veces lo mismo, y una de
+// ellas como si fuera una falla del servidor.
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
-  queryCache: new QueryCache({ onError: (error) => toast.error(describe(error)) }),
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      if (query.meta?.handlesError === true) return
+      toast.error(describe(error))
+    },
+  }),
   mutationCache: new MutationCache({ onError: (error) => toast.error(describe(error)) }),
 })
 

@@ -469,7 +469,7 @@ git commit -m "✨ feat: modelo de presupuesto por porcentajes con evaluación p
   - `GET /api/v1/budget/evaluation?month=YYYY-MM&currency=CRC`
   - `GET|POST /api/v1/budget-models`, `GET|PATCH /api/v1/budget-models/:id`
 
-- [ ] **Paso 1: Ampliar el esquema**
+- [x] **Paso 1: Ampliar el esquema**
 
 ```prisma
 model BudgetModel {
@@ -517,7 +517,7 @@ model BudgetIncome {
 cd api && npx prisma migrate dev --name add_budget && npx prisma generate
 ```
 
-- [ ] **Paso 2: Escribir el test del proveedor que falla**
+- [x] **Paso 2: Escribir el test del proveedor que falla**
 
 `accounting-spending.provider.spec.ts`:
 
@@ -592,7 +592,7 @@ El caso del reintegro importa: el consumo de una cubeta es el saldo neto de sus 
 
 El último caso también: la contraparte de todo gasto es una cuenta de activo, y si el proveedor sumara todo lo que viene, contaría el gasto dos veces.
 
-- [ ] **Paso 3: Implementar el proveedor**
+- [x] **Paso 3: Implementar el proveedor**
 
 ```ts
 @Injectable()
@@ -625,17 +625,17 @@ export class AccountingSpendingProvider {
 }
 ```
 
-- [ ] **Paso 4: Caso de uso de evaluación**
+- [x] **Paso 4: Caso de uso de evaluación**
 
 `EvaluateMonthUseCase` carga el modelo activo, lee el ingreso estimado del mes, arma el mapeo desde las cubetas del modelo, pide el gasto al proveedor y llama a `evaluate`. Si no hay modelo activo, `SemanticValidationError` con un mensaje que dice qué falta hacer. Si no hay ingreso declarado para el mes, evalúa con ingreso cero y la respuesta lo marca: mostrar un presupuesto sobre un ingreso inventado sería peor que mostrar que falta el dato.
 
-- [ ] **Paso 5: API y test de punta a punta**
+- [x] **Paso 5: API y test de punta a punta**
 
 `GET /budget/evaluation?month=2026-09&currency=CRC` devuelve la evaluación con las cubetas, sus montos y su estado. `GET|POST /budget-models` y `PATCH /budget-models/:id` administran los modelos; activar uno desactiva el resto, en la misma transacción.
 
 Test de punta a punta: cargar el modelo 50/30/20, declarar un ingreso, cargar movimientos de gasto en cuentas mapeadas, y verificar que la evaluación refleja el gasto real. Más el caso de un modelo cuyos porcentajes no suman 100 rechazado con 422.
 
-- [ ] **Paso 6: Verificar y commitear**
+- [x] **Paso 6: Verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -644,11 +644,11 @@ git commit -m "✨ feat: evaluación de presupuesto contra los asientos del per�
 ```
 
 **Acceptance criteria:**
-- [ ] El consumo de cada cubeta es el neto de sus cuentas, con los reintegros restando
-- [ ] Una cubeta sin cuentas mapeadas consume cero sin fallar
-- [ ] Solo se piden los asientos del rango del mes
-- [ ] Sin modelo activo, 422 con un mensaje que dice qué falta
-- [ ] Activar un modelo desactiva el resto
+- [x] El consumo de cada cubeta es el neto de sus cuentas, con los reintegros restando
+- [x] Una cubeta sin cuentas mapeadas consume cero sin fallar
+- [x] Solo se piden los asientos del rango del mes
+- [x] Sin modelo activo, 422 con un mensaje que dice qué falta
+- [x] Activar un modelo desactiva el resto
 
 ---
 
@@ -1065,11 +1065,11 @@ git commit -m "✨ feat: proyección de flujo de caja mes a mes"
 - Create: `web/src/routes/presupuesto.tsx`, `presupuesto.modelos.tsx`, `metas.tsx`, `metas.$goalId.tsx`
 - Create: `web/src/features/budget/*`, `web/src/features/goals/*`
 
-- [ ] **Paso 1: Copy y composición**
+- [x] **Paso 1: Copy y composición**
 
 Regenerar tipos. Cargar las skills de F1. Todo el texto con `copywriting`, en `copy.ts` por módulo. Resolver la composición con `impeccable shape` antes del JSX.
 
-- [ ] **Paso 2: Evaluación del mes**
+- [x] **Paso 2: Evaluación del mes**
 
 Por cubeta: lo asignado, lo consumido y la desviación, con su estado. El gráfico usa el componente `chart` de shadcn, nunca Recharts directo, y va **acompañado** de los números exactos.
 
@@ -1079,11 +1079,11 @@ Cada cubeta enlaza a los movimientos que la componen, filtrados por sus cuentas.
 
 Sin modelo activo o sin ingreso declarado del mes, estados vacíos que dicen qué falta y llevan a hacerlo.
 
-- [ ] **Paso 3: Editor de modelos**
+- [x] **Paso 3: Editor de modelos**
 
 Cubetas con nombre, porcentaje, marca de ahorro y cuentas asociadas. La suma de los porcentajes se muestra **mientras se edita**, y guardar está deshabilitado hasta que dé 100. El backend valida igual, pero que el usuario descubra el error al enviar es una mala interfaz.
 
-- [ ] **Paso 4: Metas**
+- [x] **Paso 4: Metas**
 
 Lista con avance, aporte requerido y fecha proyectada. Lo importante es la relación entre la fecha proyectada y la deseada, no el porcentaje: una barra al 60 % no dice si se llega.
 
@@ -1091,7 +1091,7 @@ Sin aportes, se muestra que todavía no hay ritmo para proyectar, y no una fecha
 
 Detalle con historial de aportes y alta de aporte. Al alcanzarse, la meta lo celebra una vez, con mesura: la regla F6 sigue siendo minimalismo.
 
-- [ ] **Paso 5: Puerta de calidad y commit**
+- [x] **Paso 5: Puerta de calidad y commit**
 
 Aplicar el Paso 9 de la Tarea 11 de la rebanada 1. Capturas en los dos temas y los tres anchos, `impeccable critique`, `audit` y `polish`.
 
@@ -1102,11 +1102,11 @@ git commit -m "✨ feat: pantallas de presupuesto y metas"
 ```
 
 **Acceptance criteria:**
-- [ ] La cubeta pasada se distingue por jerarquía, no por tres barras iguales
-- [ ] Cada cubeta enlaza a los movimientos que la componen
-- [ ] El editor muestra la suma de porcentajes mientras se edita
-- [ ] Una meta sin aportes no muestra fecha proyectada inventada
-- [ ] Los cinco estados de cada pantalla existen
+- [x] La cubeta pasada se distingue por jerarquía, no por tres barras iguales
+- [x] Cada cubeta enlaza a los movimientos que la componen
+- [x] El editor muestra la suma de porcentajes mientras se edita
+- [x] Una meta sin aportes no muestra fecha proyectada inventada
+- [x] Los cinco estados de cada pantalla existen
 
 ---
 
@@ -1120,17 +1120,17 @@ git commit -m "✨ feat: pantallas de presupuesto y metas"
 - Create: `web/src/routes/inversiones.tsx`, `inversiones.$investmentId.tsx`, `proyeccion.tsx`
 - Create: `web/src/features/investments/*`, `web/src/features/projection/*`
 
-- [ ] **Paso 1: Copy y composición**
+- [x] **Paso 1: Copy y composición**
 
 Como en la Tarea 6. En proyección, además, resolver con `impeccable shape` cómo se representan doce a veinticuatro meses sin que sea una tabla de veinticuatro filas iguales.
 
-- [ ] **Paso 2: Inversiones**
+- [x] **Paso 2: Inversiones**
 
 Lista con capital, tasa, valor actual y, para las de plazo, cuánto falta para el vencimiento. Detalle con la curva de capitalización —componente `chart` de shadcn— y el desglose de capital contra interés ganado.
 
 Una inversión vencida se distingue de una vigente: su plata ya está disponible y eso cambia qué hacer con ella.
 
-- [ ] **Paso 3: Proyección**
+- [x] **Paso 3: Proyección**
 
 El selector de horizonte y, por mes: ingreso, egreso comprometido y excedente. Los meses en que se libera una cuota se marcan, porque son el dato que la pantalla existe para mostrar.
 
@@ -1138,17 +1138,17 @@ Un mes con excedente negativo se distingue con claridad: es el mes que no cierra
 
 Bajo 768 px, no es una tabla de veinticuatro filas con desplazamiento: es una lista donde cada mes es una fila con su excedente y las liberaciones destacadas.
 
-- [ ] **Paso 4: Panel general**
+- [x] **Paso 4: Panel general**
 
 La ruta raíz reúne lo que Emilio mira primero: tipo de cambio del día, excedente del mes en curso, la cubeta más pasada del presupuesto, la próxima cuota que se libera y la meta más cercana.
 
 **No es una fila de cuatro tarjetas de métricas.** Esa plantilla está prohibida por la regla F9 y acá es donde más tienta. Resolver la composición con `impeccable shape` y, si el resultado se parece a un tablero de SaaS, rehacerlo.
 
-- [ ] **Paso 5: Puerta de calidad final**
+- [x] **Paso 5: Puerta de calidad final**
 
 Además de la puerta de calidad habitual, pasada completa sobre **todas** las pantallas de la fase 1, no solo las nuevas: `impeccable polish web/src` y una revisión de que las cuatro rebanadas se ven como un mismo producto y no como cuatro proyectos pegados.
 
-- [ ] **Paso 6: Commit**
+- [x] **Paso 6: Commit**
 
 ```bash
 cd web && npm test && npm run typecheck && npm run build
@@ -1157,20 +1157,20 @@ git commit -m "✨ feat: pantallas de inversiones, proyección y panel general"
 ```
 
 **Acceptance criteria:**
-- [ ] Los meses con cuotas liberadas se distinguen en la proyección
-- [ ] Un mes con excedente negativo se ve sin buscarlo
-- [ ] Una inversión vencida se distingue de una vigente
-- [ ] El panel general no es una fila de tarjetas de métricas
-- [ ] Las cuatro rebanadas se ven como un mismo producto
+- [x] Los meses con cuotas liberadas se distinguen en la proyección
+- [x] Un mes con excedente negativo se ve sin buscarlo
+- [x] Una inversión vencida se distingue de una vigente
+- [x] El panel general no es una fila de tarjetas de métricas
+- [x] Las cuatro rebanadas se ven como un mismo producto
 
 ---
 
 ### Checkpoint: fase 1 completa
 
-- [ ] `cd api && npm test` y `cd web && npm test` en verde
-- [ ] Las seis preguntas del propósito del spec tienen respuesta en pantalla
-- [ ] Un gasto cargado como movimiento llega hasta la evaluación de presupuesto
-- [ ] La proyección muestra en qué mes se libera cada cuota
+- [x] `cd api && npm test` y `cd web && npm test` en verde
+- [x] Las seis preguntas del propósito del spec tienen respuesta en pantalla
+- [x] Un gasto cargado como movimiento llega hasta la evaluación de presupuesto — verificado en pantalla el 2026-09-21: un gasto de ₡45.000 en 6100 aparece como consumo de Necesidades
+- [x] La proyección muestra en qué mes se libera cada cuota — cubierto por el test de `CashFlowProjectionUseCase`; con los datos cargados hoy ninguna deuda vence dentro del horizonte
 - [ ] Revisión completa con Emilio
 
 ---

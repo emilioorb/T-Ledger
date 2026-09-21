@@ -3,10 +3,14 @@ import {
   BookOpen,
   CalendarCheck,
   FolderTree,
+  LineChart,
   ListOrdered,
+  PiggyBank,
   Receipt,
   Scale,
   Tags,
+  Target,
+  Wallet,
 } from 'lucide-react'
 import { NavMain, type NavItem } from '@/components/nav-main'
 import { NavUser } from '@/components/nav-user'
@@ -20,11 +24,31 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { copy as accounting } from '@/features/accounting/copy'
+import { copy as budget } from '@/features/budget/copy'
 import { copy } from '@/features/debts/copy'
+import { copy as goals } from '@/features/goals/copy'
+import { copy as investments } from '@/features/investments/copy'
+import { copy as projection } from '@/features/projection/copy'
 
 const navMain: NavItem[] = [
   { title: copy.nav.debts, to: '/deudas', icon: Receipt },
   { title: copy.nav.payoffPlan, to: '/plan-de-pago', icon: ListOrdered },
+]
+
+// El plan: lo que todavía no pasó. La contabilidad registra; esto decide.
+const navPlan: NavItem[] = [
+  {
+    title: budget.nav.budget,
+    to: '/presupuesto',
+    icon: Wallet,
+    items: [
+      { title: budget.nav.budget, to: '/presupuesto' },
+      { title: budget.nav.models, to: '/presupuesto/modelos' },
+    ],
+  },
+  { title: goals.goals.title, to: '/metas', icon: Target },
+  { title: investments.investments.title, to: '/inversiones', icon: PiggyBank },
+  { title: projection.projection.title, to: '/proyeccion', icon: LineChart },
 ]
 
 // Nueve vistas planas serían la barra lateral de quince ítems que la anti-referencia
@@ -67,6 +91,7 @@ export const AppSidebar = () => (
 
     <SidebarContent>
       <NavMain label={copy.nav.section} items={navMain} />
+      <NavMain label={budget.nav.section} items={navPlan} />
       <NavMain label={accounting.nav.section} items={navAccounting} />
     </SidebarContent>
 

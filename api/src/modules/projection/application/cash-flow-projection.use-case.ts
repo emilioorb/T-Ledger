@@ -91,11 +91,15 @@ export class CashFlowProjectionUseCase {
         return unwrap(acc.add(investment.valueAt(investment.maturesAt as Date)))
       }, zero)
 
-      const declared = await this.incomes.find(unwrap(PeriodKey.of(year, month)))
+      const key = unwrap(PeriodKey.of(year, month))
+      const declared = await this.incomes.find(key)
+      // Sin declarar, se arrastra el último conocido: un mes sin el dato no es un mes
+      // sin ingreso, y tratarlo así llenaría la proyección de rojos falsos.
+      const income_ = declared ?? (await this.incomes.findLatestUpTo(key))
       const estimatedSpending = zero
 
       const income = unwrap(
-        unwrap((declared?.amount ?? zero).add(lentCollections)).add(maturingInvestments),
+        unwrap((income_?.amount ?? zero).add(lentCollections)).add(maturingInvestments),
       )
       const committed = unwrap(
         unwrap(debtPayments.add(goalContributions)).add(estimatedSpending),
@@ -112,6 +116,7 @@ export class CashFlowProjectionUseCase {
         goalContributions,
         maturingInvestments,
         estimatedSpending,
+        incomeDeclared: declared !== null,
         freed,
       })
     }

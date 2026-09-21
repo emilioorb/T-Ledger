@@ -1164,6 +1164,691 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/budget/evaluation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evalúa un mes: cuánto se asignó por cubeta y cuánto se consumió de verdad */
+        get: {
+            parameters: {
+                query: {
+                    month: string;
+                    currency: "CRC" | "USD";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Evaluación del mes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BudgetEvaluation"];
+                    };
+                };
+                /** @description No hay modelo de presupuesto activo */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/budget/income/{period}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve el ingreso declarado del mes */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Ingreso del mes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MonthlyIncome"];
+                    };
+                };
+            };
+        };
+        /** Declara el ingreso estimado del mes */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MonthlyIncomeInput"];
+                };
+            };
+            responses: {
+                /** @description Ingreso declarado */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MonthlyIncome"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/budget-models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista los modelos de presupuesto */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Modelos */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BudgetModelResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Crea un modelo de presupuesto; activarlo desactiva el resto */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["BudgetModelInput"];
+                };
+            };
+            responses: {
+                /** @description Modelo creado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BudgetModelResponse"];
+                    };
+                };
+                /** @description Los porcentajes no suman 100 o falta la cubeta de ahorro */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/budget-models/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve un modelo de presupuesto */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Modelo */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BudgetModelResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Modifica un modelo de presupuesto */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["BudgetModelInput"];
+                };
+            };
+            responses: {
+                /** @description Modelo modificado */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BudgetModelResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/goals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista las metas por prioridad, con su avance y su fecha proyectada */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Metas */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Goal"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Crea una meta */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateGoalInput"];
+                };
+            };
+            responses: {
+                /** @description Meta creada */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Goal"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/goals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve una meta */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Meta */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Goal"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Borra una meta y sus aportes */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Borrada */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Modifica una meta */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateGoalInput"];
+                };
+            };
+            responses: {
+                /** @description Meta modificada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Goal"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/goals/{id}/contributions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Registra un aporte a la meta */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateContributionInput"];
+                };
+            };
+            responses: {
+                /** @description Aporte registrado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Goal"];
+                    };
+                };
+                /** @description El aporte es de otra moneda */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/investments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista las inversiones con su valor de hoy */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Inversiones */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Investment"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Registra una inversión, a plazo o abierta */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateInvestmentInput"];
+                };
+            };
+            responses: {
+                /** @description Inversión registrada */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Investment"];
+                    };
+                };
+                /** @description Un plazo fijo necesita vencimiento */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/investments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve una inversión */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Inversión */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Investment"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Borra una inversión y sus aportes */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Borrada */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Modifica una inversión */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateInvestmentInput"];
+                };
+            };
+            responses: {
+                /** @description Inversión modificada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Investment"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/investments/{id}/projection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Valor capitalizado a una fecha; una inversión a plazo no pasa de su vencimiento */
+        get: {
+            parameters: {
+                query: {
+                    at: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Valor proyectado */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Investment"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/investments/{id}/contributions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Agrega capital, que capitaliza desde su propia fecha */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["InvestmentContributionInput"];
+                };
+            };
+            responses: {
+                /** @description Aporte registrado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Investment"];
+                    };
+                };
+                /** @description El aporte es de otra moneda */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Proyecta el flujo mes a mes: ingreso, egreso comprometido, excedente y qué cuotas se liberan */
+        get: {
+            parameters: {
+                query?: {
+                    months?: number;
+                    currency?: "CRC" | "USD";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Flujo proyectado por mes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1300,6 +1985,87 @@ export interface components {
                 /** @enum {string} */
                 side: "DEBIT" | "CREDIT";
             }[];
+        };
+        /** MonthlyIncomeInput */
+        MonthlyIncomeInput: {
+            amount: components["schemas"]["Money"];
+        };
+        /** BudgetModelInput */
+        BudgetModelInput: {
+            name: string;
+            /** @default false */
+            active: boolean;
+            buckets: components["schemas"]["BudgetBucketInput"][];
+        };
+        /** BudgetBucketInput */
+        BudgetBucketInput: {
+            id: string;
+            name: string;
+            percentage: string;
+            /** @default false */
+            isSavings: boolean;
+            /** @default [] */
+            accountCodes: string[];
+        };
+        /** CreateGoalInput */
+        CreateGoalInput: {
+            name: string;
+            target: components["schemas"]["Money"];
+            desiredDate: string;
+            /** @default 0 */
+            priority: number;
+            /** @default null */
+            accountCode: string | null;
+        };
+        /** UpdateGoalInput */
+        UpdateGoalInput: {
+            name?: string;
+            target?: components["schemas"]["Money"];
+            desiredDate?: string;
+            /** @default 0 */
+            priority: number;
+            /** @default null */
+            accountCode: string | null;
+        };
+        /** CreateContributionInput */
+        CreateContributionInput: {
+            date: string;
+            amount: components["schemas"]["Money"];
+        };
+        /** CreateInvestmentInput */
+        CreateInvestmentInput: {
+            name: string;
+            principal: components["schemas"]["Money"];
+            annualRate: string;
+            /** @enum {string} */
+            compounding: "MONTHLY" | "ANNUAL";
+            openedAt: string;
+            /** @enum {string} */
+            kind: "FIXED_TERM" | "OPEN";
+            /** @default null */
+            maturesAt: string | null;
+            /** @default null */
+            accountCode: string | null;
+        };
+        /** UpdateInvestmentInput */
+        UpdateInvestmentInput: {
+            name?: string;
+            principal?: components["schemas"]["Money"];
+            annualRate?: string;
+            /** @enum {string} */
+            compounding?: "MONTHLY" | "ANNUAL";
+            openedAt?: string;
+            /** @enum {string} */
+            kind?: "FIXED_TERM" | "OPEN";
+            /** @default null */
+            maturesAt: string | null;
+            /** @default null */
+            accountCode: string | null;
+        };
+        /** InvestmentContributionInput */
+        InvestmentContributionInput: {
+            date: string;
+            amount: components["schemas"]["Money"];
         };
         /** Debt */
         Debt: {
@@ -1506,6 +2272,88 @@ export interface components {
         /** ReopenedPeriods */
         ReopenedPeriods: {
             reopened: components["schemas"]["AccountingPeriod"][];
+        };
+        /** BudgetEvaluation */
+        BudgetEvaluation: {
+            modelId: string;
+            modelName: string;
+            period: string;
+            income: components["schemas"]["MoneyOutput"];
+            incomeDeclared: boolean;
+            totalConsumed: components["schemas"]["MoneyOutput"];
+            surplus: components["schemas"]["MoneyOutput"];
+            buckets: {
+                bucketId: string;
+                name: string;
+                allocated: components["schemas"]["MoneyOutput"];
+                consumed: components["schemas"]["MoneyOutput"];
+                deviation: components["schemas"]["MoneyOutput"];
+                /** @enum {string} */
+                status: "UNDER" | "ON_TRACK" | "OVER";
+            }[];
+        };
+        /** MonthlyIncome */
+        MonthlyIncome: {
+            period: string;
+            amount: components["schemas"]["MoneyOutput"];
+        };
+        /** BudgetModelResponse */
+        BudgetModelResponse: {
+            id: string;
+            name: string;
+            active: boolean;
+            buckets: {
+                id: string;
+                name: string;
+                percentage: string;
+                isSavings: boolean;
+                accountCodes: string[];
+            }[];
+        };
+        /** Goal */
+        Goal: {
+            id: string;
+            name: string;
+            target: components["schemas"]["MoneyOutput"];
+            desiredDate: string;
+            priority: number;
+            accountCode: string | null;
+            contributed: components["schemas"]["MoneyOutput"];
+            remaining: components["schemas"]["MoneyOutput"];
+            progress: string;
+            reached: boolean;
+            requiredMonthlyContribution: components["schemas"]["MoneyOutput"];
+            observedMonthlyPace: components["schemas"]["MoneyOutput"] | null;
+            projectedDate: string | null;
+            onTrack: boolean;
+            contributions: {
+                id: string;
+                date: string;
+                amount: components["schemas"]["MoneyOutput"];
+            }[];
+        };
+        /** Investment */
+        Investment: {
+            id: string;
+            name: string;
+            principal: components["schemas"]["MoneyOutput"];
+            annualRate: string;
+            /** @enum {string} */
+            compounding: "MONTHLY" | "ANNUAL";
+            openedAt: string;
+            /** @enum {string} */
+            kind: "FIXED_TERM" | "OPEN";
+            maturesAt: string | null;
+            accountCode: string | null;
+            invested: components["schemas"]["MoneyOutput"];
+            value: components["schemas"]["MoneyOutput"];
+            interestEarned: components["schemas"]["MoneyOutput"];
+            matured: boolean;
+            contributions: {
+                id: string;
+                date: string;
+                amount: components["schemas"]["MoneyOutput"];
+            }[];
         };
         /** Money */
         MoneyOutput: {

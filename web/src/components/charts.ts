@@ -10,4 +10,16 @@ export {
   type ChartConfig,
 } from '@/components/ui/chart'
 
-export { Area, AreaChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
+export {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+} from 'recharts'

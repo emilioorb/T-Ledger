@@ -28,4 +28,31 @@ export const queryKeys = {
       ['accounting', 'income-statement', currency, from, to] as const,
     periods: () => ['accounting', 'periods'] as const,
   },
+
+  budget: {
+    all: ['budget'] as const,
+    evaluation: (month: string, currency: string) =>
+      ['budget', 'evaluation', month, currency] as const,
+    income: (month: string) => ['budget', 'income', month] as const,
+    models: () => ['budget', 'models'] as const,
+  },
+
+  goals: {
+    all: ['goals'] as const,
+    list: () => ['goals', 'list'] as const,
+    detail: (id: string) => ['goals', 'detail', id] as const,
+  },
+
+  investments: {
+    all: ['investments'] as const,
+    list: () => ['investments', 'list'] as const,
+    detail: (id: string) => ['investments', 'detail', id] as const,
+    projection: (id: string, at: string) => ['investments', 'projection', id, at] as const,
+  },
+
+  projection: {
+    all: ['projection'] as const,
+    cashFlow: (months: number, currency: string) =>
+      ['projection', 'cash-flow', months, currency] as const,
+  },
 }
