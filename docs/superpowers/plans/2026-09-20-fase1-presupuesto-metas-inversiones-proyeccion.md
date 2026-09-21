@@ -1089,6 +1089,8 @@ Lista con avance, aporte requerido y fecha proyectada. Lo importante es la relac
 
 Sin aportes, se muestra que todavía no hay ritmo para proyectar, y no una fecha inventada.
 
+> Nota (21/09/2026): el paso se dio por hecho sin `metas.$goalId.tsx`. La pantalla de detalle, con el historial de aportes y el formulario para registrar uno, se construyó recién en la puerta de calidad, al descubrir que `copy.goals.history` no lo renderizaba nadie.
+
 Detalle con historial de aportes y alta de aporte. Al alcanzarse, la meta lo celebra una vez, con mesura: la regla F6 sigue siendo minimalismo.
 
 - [x] **Paso 5: Puerta de calidad y commit**
@@ -1129,6 +1131,8 @@ Como en la Tarea 6. En proyección, además, resolver con `impeccable shape` có
 Lista con capital, tasa, valor actual y, para las de plazo, cuánto falta para el vencimiento. Detalle con la curva de capitalización —componente `chart` de shadcn— y el desglose de capital contra interés ganado.
 
 Una inversión vencida se distingue de una vigente: su plata ya está disponible y eso cambia qué hacer con ella.
+
+> Nota (21/09/2026): igual que en la Tarea 6, `inversiones.$investmentId.tsx` faltaba. La curva de capitalización se construyó en la puerta de calidad, armada con doce consultas de proyección al servidor en vez de recalcular el interés compuesto en el navegador.
 
 - [x] **Paso 3: Proyección**
 
