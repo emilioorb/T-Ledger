@@ -2640,7 +2640,7 @@ git commit -m "✨ feat: pantallas de contabilidad, reportes y cierre mensual"
 - [x] Una conversión entre monedas deja la cuenta puente en cero
 - [x] La identidad contable cuadra con datos reales cargados
 - [x] Un mes cerrado rechaza asientos, y reabrirlo arrastra los posteriores
-- [x] Revisión con Emilio antes de la rebanada 4
+- [ ] Revisión con Emilio antes de la rebanada 4
 
 ---
 
