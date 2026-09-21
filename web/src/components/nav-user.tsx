@@ -1,4 +1,5 @@
-import { ChevronsUpDownIcon, MoonIcon, SunIcon } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { ChevronsUpDownIcon, CompassIcon, MoonIcon, ScrollTextIcon, SunIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -16,6 +17,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { copy } from '@/features/debts/copy'
+import { copy as shell } from '@/features/shell/copy'
+import { copy as guide } from '@/features/shell/guide-copy'
 import { applyTheme, readTheme, type Theme } from '@/lib/theme'
 
 interface Props {
@@ -69,14 +72,27 @@ export const NavUser = ({ name, subtitle }: Props) => {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            {/* Una sola fila: la elección es binaria y el rótulo dice a qué se va, no
-                dónde se está. Tres renglones para un sí o no es desperdicio. */}
+            <DropdownMenuItem asChild>
+              <Link to="/guia">
+                <CompassIcon aria-hidden="true" />
+                {guide.guide.title}
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <Link to="/novedades">
+                <ScrollTextIcon aria-hidden="true" />
+                {shell.nav.releases}
+              </Link>
+            </DropdownMenuItem>
+
+            {/* El tema va último y separado: es una preferencia de la aplicación, no un
+                lugar al que se va. Una sola fila, porque la elección es binaria y el rótulo
+                dice a qué se cambia, no dónde se está. */}
+            <DropdownMenuSeparator />
+
             <DropdownMenuItem onSelect={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-              {theme === 'dark' ? (
-                <SunIcon aria-hidden="true" />
-              ) : (
-                <MoonIcon aria-hidden="true" />
-              )}
+              {theme === 'dark' ? <SunIcon aria-hidden="true" /> : <MoonIcon aria-hidden="true" />}
               {theme === 'dark' ? copy.nav.lightTheme : copy.nav.darkTheme}
             </DropdownMenuItem>
           </DropdownMenuContent>

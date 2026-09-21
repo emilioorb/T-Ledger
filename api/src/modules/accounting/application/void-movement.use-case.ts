@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { NotFoundError } from '../../../shared/http/api-error.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { MOVEMENT_REPOSITORY, type MovementRepository } from '../domain/movement-repository.port.js'
 import type { PostedMovement } from './create-movement.use-case.js'
 import { MovementPoster } from './movement-poster.js'
@@ -11,6 +12,7 @@ export class VoidMovementUseCase {
     @Inject(MOVEMENT_REPOSITORY) private readonly movements: MovementRepository,
     private readonly poster: MovementPoster,
     private readonly guard: PeriodGuard,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
   async execute(id: string): Promise<PostedMovement> {
@@ -20,9 +22,13 @@ export class VoidMovementUseCase {
 
     if (movement.isVoided()) return { movement, journalEntryId: null }
 
+    // Anular es marcar el movimiento y revertir sus asientos. A medias queda un movimiento
+    // anulado con sus asientos vivos, que es la peor combinación: el mayor sigue contándolo.
     const voided = movement.void_()
-    await this.movements.save(voided)
-    await this.poster.reverse(id)
+    await this.transaction.withTransaction(async () => {
+      await this.movements.save(voided)
+      await this.poster.reverse(id)
+    })
 
     return { movement: voided, journalEntryId: null }
   }

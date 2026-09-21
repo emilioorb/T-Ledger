@@ -100,6 +100,7 @@ export const copy = {
     retry: 'Reintentar',
     cancel: 'Cancelar',
     save: 'Guardar',
+    edit: 'Editar',
     error: {
       title: 'No se pudieron traer los datos',
       description: 'La API no respondió. Lo registrado sigue en el servidor, no se perdió nada.',

@@ -59,8 +59,9 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
       hash: hashOfLine(statement.bankAccountId, line),
     }))
 
-    return this.prisma.$transaction(async (tx) => {
-      await tx.bankStatement.create({
+    return this.prisma.withTransaction(async () => {
+      const db = this.prisma.client
+      await db.bankStatement.create({
         data: {
           id: statement.id,
           bankAccountId: statement.bankAccountId,
@@ -68,9 +69,9 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
         },
       })
 
-      const { count } = await tx.bankLine.createMany({ data: rows, skipDuplicates: true })
+      const { count } = await db.bankLine.createMany({ data: rows, skipDuplicates: true })
 
-      await tx.bankStatement.update({
+      await db.bankStatement.update({
         where: { id: statement.id },
         data: { lineCount: count, duplicateCount: rows.length - count },
       })
@@ -84,12 +85,12 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
     pageSize: number,
   ): Promise<{ items: StoredStatement[]; totalItems: number }> {
     const [rows, totalItems] = await Promise.all([
-      this.prisma.bankStatement.findMany({
+      this.prisma.client.bankStatement.findMany({
         orderBy: { importedAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      this.prisma.bankStatement.count(),
+      this.prisma.client.bankStatement.count(),
     ])
 
     return { items: rows, totalItems }
@@ -110,13 +111,13 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
     }
 
     const [rows, totalItems] = await Promise.all([
-      this.prisma.bankLine.findMany({
+      this.prisma.client.bankLine.findMany({
         where,
         orderBy: [{ date: 'asc' }, { id: 'asc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      this.prisma.bankLine.count({ where }),
+      this.prisma.client.bankLine.count({ where }),
     ])
 
     return { items: rows.map((row) => toDomain(row as BankLineRow)), totalItems }
@@ -125,7 +126,7 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
   // Todas las del rango, sin paginar: el saldo del extracto es la suma de sus líneas, y una
   // suma parcial daría una diferencia falsa.
   async allLines(bankAccountId: string, range: DateRange): Promise<StoredBankLine[]> {
-    const rows = await this.prisma.bankLine.findMany({
+    const rows = await this.prisma.client.bankLine.findMany({
       where: { bankAccountId, date: { gte: range.from, lte: range.to } },
       orderBy: [{ date: 'asc' }, { id: 'asc' }],
     })
@@ -133,12 +134,12 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
   }
 
   async findLine(id: string): Promise<StoredBankLine | null> {
-    const row = await this.prisma.bankLine.findUnique({ where: { id } })
+    const row = await this.prisma.client.bankLine.findUnique({ where: { id } })
     return row ? toDomain(row as BankLineRow) : null
   }
 
   async isMovementTaken(movementId: string, exceptLineId?: string): Promise<boolean> {
-    const count = await this.prisma.bankLine.count({
+    const count = await this.prisma.client.bankLine.count({
       where: {
         movementId,
         status: 'MATCHED',
@@ -149,21 +150,21 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
   }
 
   async markMatched(lineId: string, movementId: string): Promise<void> {
-    await this.prisma.bankLine.update({
+    await this.prisma.client.bankLine.update({
       where: { id: lineId },
       data: { status: 'MATCHED', movementId },
     })
   }
 
   async markPending(lineId: string): Promise<void> {
-    await this.prisma.bankLine.update({
+    await this.prisma.client.bankLine.update({
       where: { id: lineId },
       data: { status: 'PENDING', movementId: null },
     })
   }
 
   async markIgnored(lineId: string): Promise<void> {
-    await this.prisma.bankLine.update({
+    await this.prisma.client.bankLine.update({
       where: { id: lineId },
       data: { status: 'IGNORED', movementId: null },
     })

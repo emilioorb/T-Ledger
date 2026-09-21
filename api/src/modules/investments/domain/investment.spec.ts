@@ -69,6 +69,16 @@ describe('Investment', () => {
     expect(conAporte.valueAt(utc('2027-01-15')).minorUnits).toBe(esperado)
   })
 
+  it('un aporte futuro no vale ni rinde todavía', () => {
+    const conAporte = inversion({
+      contributions: [{ id: 'c1', date: utc('2026-07-15'), amount: crc(1_000_000n) }],
+    })
+
+    expect(conAporte.valueAt(utc('2026-01-15')).minorUnits).toBe(1_000_000n)
+    expect(conAporte.investedAt(utc('2026-01-15')).minorUnits).toBe(1_000_000n)
+    expect(conAporte.interestEarnedAt(utc('2026-01-15')).isZero()).toBe(true)
+  })
+
   it('reporta el mes en que el capital vuelve a estar disponible', () => {
     expect(inversion().maturityPeriod()).toEqual({ year: 2027, month: 1 })
     expect(inversion({ kind: 'OPEN', maturesAt: null }).maturityPeriod()).toBeNull()

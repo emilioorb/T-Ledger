@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { ArrowRight, Plus } from 'lucide-react'
+import { ArrowRight, Plus, Tags, TriangleAlert } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { FormDialog } from '@/components/form-dialog'
+import { FRAME_ROW, TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import {
   AlertDialog,
@@ -150,7 +151,7 @@ interface RowProps {
 
 // Una categoría es un mapeo, no una fila de tabla: se lee «nombre → cuenta» de un vistazo.
 const CategoryRow = ({ category, accountName, onEdit, onDelete }: RowProps) => (
-  <li className="group flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border py-2.5">
+  <li className={`group flex flex-wrap items-center gap-x-3 gap-y-1 ${FRAME_ROW}`}>
     <span className="min-w-0 flex-1 truncate text-sm">{category.name}</span>
     <span className="w-16 shrink-0 text-xs text-muted-foreground">
       {copy.categories.kinds[category.kind]}
@@ -230,8 +231,11 @@ const CategoriesScreen = () => {
       </header>
 
       <FormDialog
+        icon={Tags}
         open={editing !== null}
-        title={editing?.category ? copy.categories.form.editTitle : copy.categories.form.createTitle}
+        title={
+          editing?.category ? copy.categories.form.editTitle : copy.categories.form.createTitle
+        }
         onOpenChange={(open) => !open && setEditing(null)}
       >
         {editing ? (
@@ -275,35 +279,45 @@ const CategoriesScreen = () => {
               no un error, y por eso no se pinta de rojo. */}
           {unmapped.length > 0 ? (
             <div>
-              <h2 className="text-sm font-medium tracking-tight">{copy.categories.unmapped}</h2>
+              <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+                <TriangleAlert
+                  className="size-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                {copy.categories.unmapped}
+              </h2>
               <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">
                 {copy.categories.unmappedHint}
               </p>
-              <ul className="mt-3">
-                {unmapped.map((category) => (
+              <TableFrame className="mt-3">
+                <ul className="divide-y divide-border">
+                  {unmapped.map((category) => (
+                    <CategoryRow
+                      key={category.id}
+                      category={category}
+                      onEdit={() => setEditing({ category })}
+                      onDelete={() => setDeleting(category)}
+                    />
+                  ))}
+                </ul>
+              </TableFrame>
+            </div>
+          ) : null}
+
+          {mapped.length > 0 ? (
+            <TableFrame>
+              <ul className="divide-y divide-border">
+                {mapped.map((category) => (
                   <CategoryRow
                     key={category.id}
                     category={category}
+                    accountName={nameOf.get(category.accountCode ?? '')}
                     onEdit={() => setEditing({ category })}
                     onDelete={() => setDeleting(category)}
                   />
                 ))}
               </ul>
-            </div>
-          ) : null}
-
-          {mapped.length > 0 ? (
-            <ul>
-              {mapped.map((category) => (
-                <CategoryRow
-                  key={category.id}
-                  category={category}
-                  accountName={nameOf.get(category.accountCode ?? '')}
-                  onEdit={() => setEditing({ category })}
-                  onDelete={() => setDeleting(category)}
-                />
-              ))}
-            </ul>
+            </TableFrame>
           ) : null}
         </div>
       )}

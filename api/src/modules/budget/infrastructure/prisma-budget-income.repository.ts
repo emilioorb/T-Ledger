@@ -12,7 +12,9 @@ export class PrismaBudgetIncomeRepository implements BudgetIncomeRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async find(period: PeriodKey): Promise<MonthlyIncome | null> {
-    const row = await this.prisma.budgetIncome.findUnique({ where: { period: period.toString() } })
+    const row = await this.prisma.client.budgetIncome.findUnique({
+      where: { period: period.toString() },
+    })
     if (!row) return null
 
     return {
@@ -23,7 +25,7 @@ export class PrismaBudgetIncomeRepository implements BudgetIncomeRepository {
 
   // El período es AAAA-MM, así que el orden lexicográfico es el cronológico.
   async findLatestUpTo(period: PeriodKey): Promise<MonthlyIncome | null> {
-    const row = await this.prisma.budgetIncome.findFirst({
+    const row = await this.prisma.client.budgetIncome.findFirst({
       where: { period: { lte: period.toString() } },
       orderBy: { period: 'desc' },
     })
@@ -40,7 +42,7 @@ export class PrismaBudgetIncomeRepository implements BudgetIncomeRepository {
       amountMinor: income.amount.minorUnits,
       currency: income.amount.currency,
     }
-    await this.prisma.budgetIncome.upsert({
+    await this.prisma.client.budgetIncome.upsert({
       where: { period: income.period.toString() },
       create: { period: income.period.toString(), ...data },
       update: data,

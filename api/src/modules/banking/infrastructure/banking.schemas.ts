@@ -1,15 +1,18 @@
 import { z } from 'zod'
+import { nameText } from '../../../shared/http/text.schema.js'
+import { isoDate } from '../../../shared/http/date.schema.js'
 import { CURRENCIES } from '../../../shared/kernel/currency.js'
 import { moneySchema } from '../../../shared/http/money.schema.js'
 import { paginationQuerySchema } from '../../../shared/http/pagination.js'
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: 'La fecha debe ser AAAA-MM-DD' })
-const accountCode = z.string().regex(/^\d{3,10}$/, { error: 'El código de cuenta debe ser numérico' })
+const accountCode = z
+  .string()
+  .regex(/^\d{3,10}$/, { error: 'El código de cuenta debe ser numérico' })
 const columnIndex = z.number().int().min(0)
 
 export const importProfileSchema = z
   .object({
-    name: z.string().trim().min(1),
+    name: nameText,
     delimiter: z.string().length(1),
     encoding: z.enum(['utf-8', 'latin1']),
     headerRows: z.number().int().min(0).default(1),
@@ -27,7 +30,7 @@ export const importProfileSchema = z
 
 export const bankAccountSchema = z
   .object({
-    name: z.string().trim().min(1),
+    name: nameText,
     accountCode,
     currency: z.enum(CURRENCIES),
     profileId: z.string().min(1).nullable().default(null),
@@ -50,7 +53,7 @@ export const matchLineSchema = z
 export const lineToMovementSchema = z
   .object({
     categoryId: z.string().min(1),
-    counterparty: z.string().trim().min(1).optional(),
+    counterparty: nameText.optional(),
   })
   .meta({ id: 'LineToMovementInput', title: 'LineToMovementInput' })
 
@@ -112,8 +115,8 @@ export const suggestionResponseSchema = z
 export const reconciliationResponseSchema = z
   .object({
     bankAccountId: z.string(),
-    ledgerBalance: moneySchema,
-    statementBalance: moneySchema,
+    ledgerMovement: moneySchema,
+    statementMovement: moneySchema,
     difference: moneySchema,
     lines: z.array(bankLineResponseSchema),
     pendingTotal: moneySchema,

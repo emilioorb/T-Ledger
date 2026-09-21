@@ -6,6 +6,7 @@ import {
 } from '../../../shared/http/api-error.js'
 import { toMoney } from '../../../shared/http/money.schema.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { MOVEMENT_REPOSITORY, type MovementRepository } from '../domain/movement-repository.port.js'
 import { Movement } from '../domain/movement.js'
 import type { UpdateMovementInput } from '../infrastructure/accounting.schemas.js'
@@ -21,6 +22,7 @@ export class UpdateMovementUseCase {
     private readonly categories: ManageCategoriesUseCase,
     private readonly poster: MovementPoster,
     private readonly guard: PeriodGuard,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
   // Editar no reescribe el asiento: revierte el vigente y emite uno nuevo, así el mayor
@@ -50,9 +52,12 @@ export class UpdateMovementUseCase {
     if (isErr(movement)) throw new SemanticValidationError(movement.error.message)
 
     const category = await this.categories.find(movement.value.categoryId)
-    await this.poster.reverse(id)
-    await this.movements.save(movement.value)
-    const journalEntryId = await this.poster.post(movement.value, category)
+
+    const journalEntryId = await this.transaction.withTransaction(async () => {
+      await this.poster.reverse(id)
+      await this.movements.save(movement.value)
+      return this.poster.post(movement.value, category)
+    })
 
     return { movement: movement.value, journalEntryId }
   }

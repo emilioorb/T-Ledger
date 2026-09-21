@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { CalendarClock } from 'lucide-react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Hint } from '@/components/hint'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/empty-state'
+import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import { Label } from '@/components/ui/label'
 import {
@@ -45,7 +47,7 @@ const MonthRow = ({ flow, breakdown }: RowProps) => {
   return (
     <li
       className={cn(
-        'grid gap-x-3 gap-y-1 border-b border-border py-2.5 sm:grid-cols-[6rem_1fr_auto] sm:items-baseline',
+        `grid gap-x-3 gap-y-1 ${FRAME_ROW} sm:grid-cols-[6rem_1fr_auto] sm:items-baseline`,
         hasFreed && 'border-border-strong',
       )}
     >
@@ -74,8 +76,7 @@ const MonthRow = ({ flow, breakdown }: RowProps) => {
         ) : null}
         {!isZeroMoney(flow.maturingInvestments) ? (
           <span>
-            {copy.projection.detail.maturingInvestments}{' '}
-            <Amount money={flow.maturingInvestments} />
+            {copy.projection.detail.maturingInvestments} <Amount money={flow.maturingInvestments} />
           </span>
         ) : null}
 
@@ -194,33 +195,36 @@ const ProjectionScreen = () => {
           {/* El primer mes que no cierra, arriba: enterarse con anticipación es el valor
               entero de proyectar. */}
           <StatCard
+            icon={CalendarClock}
             label={copy.projection.horizon.label}
             hint={firstNegative ? copy.projection.negativeHint : undefined}
           >
             {firstNegative ? (
-              <p className="text-lg font-medium tracking-tight text-negative">
+              <p className="text-2xl font-medium tracking-tight text-negative">
                 {copy.projection.firstNegative(monthLabel(firstNegative))}
               </p>
             ) : (
-              <p className="text-lg tracking-tight">{copy.projection.allClear}</p>
+              <p className="text-2xl tracking-tight">{copy.projection.allClear}</p>
             )}
           </StatCard>
 
-          <div className="hidden grid-cols-[6rem_1fr_auto] gap-3 border-b border-border pb-1 text-xs text-muted-foreground sm:grid">
-            <span>{copy.projection.columns.month}</span>
-            <span />
-            <span className="flex gap-4">
-              <span className="w-28 text-right">{copy.projection.columns.income}</span>
-              <span className="w-28 text-right">{copy.projection.columns.committed}</span>
-              <span className="w-32 text-right">{copy.projection.columns.surplus}</span>
-            </span>
-          </div>
+          <TableFrame>
+            <FrameHeader className="hidden grid-cols-[6rem_1fr_auto] gap-3 sm:grid">
+              <span>{copy.projection.columns.month}</span>
+              <span />
+              <span className="flex gap-4">
+                <span className="w-28 text-right">{copy.projection.columns.income}</span>
+                <span className="w-28 text-right">{copy.projection.columns.committed}</span>
+                <span className="w-32 text-right">{copy.projection.columns.surplus}</span>
+              </span>
+            </FrameHeader>
 
-          <ul>
-            {flows.map((flow) => (
-              <MonthRow key={`${flow.year}-${flow.month}`} flow={flow} breakdown={breakdown} />
-            ))}
-          </ul>
+            <ul className="divide-y divide-border">
+              {flows.map((flow) => (
+                <MonthRow key={`${flow.year}-${flow.month}`} flow={flow} breakdown={breakdown} />
+              ))}
+            </ul>
+          </TableFrame>
         </div>
       )}
     </section>

@@ -5,6 +5,30 @@ export const formatIsoDate = (iso: string): string => {
   return year && month && day ? `${day}/${month}/${year}` : iso
 }
 
+// Los meses se escriben acá y no con Intl: Intl necesita un Date, y construir uno desde
+// AAAA-MM-DD desplaza el día según la zona horaria, que es justo lo que este módulo evita.
+const MONTHS = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'setiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+]
+
+export const formatLongDate = (iso: string): string => {
+  const [year, month, day] = iso.split('-')
+  const name = MONTHS[Number(month) - 1]
+  if (!year || !day || !name) return iso
+  return `${Number(day)} de ${name} de ${year}`
+}
+
 export const formatIsoMonth = (iso: string): string => {
   const [year, month] = iso.split('-')
   return year && month ? `${month}/${year}` : iso

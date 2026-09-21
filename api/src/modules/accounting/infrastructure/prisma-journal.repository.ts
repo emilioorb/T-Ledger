@@ -45,8 +45,8 @@ export class PrismaJournalRepository implements JournalRepository {
   ) {}
 
   async save(entry: JournalEntry): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.journalEntry.upsert({
+    await this.prisma.withTransaction(async () => {
+      await this.prisma.client.journalEntry.upsert({
         where: { id: entry.id },
         create: {
           id: entry.id,
@@ -57,9 +57,10 @@ export class PrismaJournalRepository implements JournalRepository {
           reversesEntryId: entry.reversesEntryId,
         },
         update: { description: entry.description, reference: entry.reference },
-      }),
-      this.prisma.journalLine.deleteMany({ where: { entryId: entry.id } }),
-      this.prisma.journalLine.createMany({
+      })
+
+      await this.prisma.client.journalLine.deleteMany({ where: { entryId: entry.id } })
+      await this.prisma.client.journalLine.createMany({
         data: entry.lines.map((line) => ({
           entryId: entry.id,
           accountCode: line.accountCode,
@@ -67,18 +68,21 @@ export class PrismaJournalRepository implements JournalRepository {
           amountMinor: line.amount.minorUnits,
           side: line.side,
         })),
-      }),
-    ])
+      })
+    })
   }
 
   async findById(id: string): Promise<JournalEntry | null> {
-    const row = await this.prisma.journalEntry.findUnique({ where: { id }, include: ENTRY_INCLUDE })
+    const row = await this.prisma.client.journalEntry.findUnique({
+      where: { id },
+      include: ENTRY_INCLUDE,
+    })
     if (!row) return null
     return journalEntryToDomain(row as JournalEntryRow, await this.accounts.loadChart())
   }
 
   async findByMovementId(movementId: string): Promise<JournalEntry[]> {
-    const rows = await this.prisma.journalEntry.findMany({
+    const rows = await this.prisma.client.journalEntry.findMany({
       where: { sourceMovementId: movementId },
       include: ENTRY_INCLUDE,
       orderBy: { date: 'asc' },
@@ -90,23 +94,29 @@ export class PrismaJournalRepository implements JournalRepository {
   async findInRange(range: DateRange, page: number, pageSize: number): Promise<JournalPage> {
     const where = { date: { gte: range.from, lte: range.to } }
     const [rows, totalItems] = await Promise.all([
-      this.prisma.journalEntry.findMany({
+      this.prisma.client.journalEntry.findMany({
         where,
         include: ENTRY_INCLUDE,
         orderBy: [{ date: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      this.prisma.journalEntry.count({ where }),
+      this.prisma.client.journalEntry.count({ where }),
     ])
     const chart = await this.accounts.loadChart()
-    return { items: rows.map((row) => journalEntryToDomain(row as JournalEntryRow, chart)), totalItems }
+    return {
+      items: rows.map((row) => journalEntryToDomain(row as JournalEntryRow, chart)),
+      totalItems,
+    }
   }
 
   // Los reportes agregan en la base. Una comprobación de doce meses sobre miles de
   // asientos no puede traérselos todos para sumarlos en Node.
-  async totalsByAccount(currency: CurrencyCode, range: DateRange): Promise<AccountMovementTotals[]> {
-    const rows = await this.prisma.journalLine.groupBy({
+  async totalsByAccount(
+    currency: CurrencyCode,
+    range: DateRange,
+  ): Promise<AccountMovementTotals[]> {
+    const rows = await this.prisma.client.journalLine.groupBy({
       by: ['accountCode', 'side'],
       where: { currency, entry: { date: { gte: range.from, lte: range.to } } },
       _sum: { amountMinor: true },
@@ -115,7 +125,7 @@ export class PrismaJournalRepository implements JournalRepository {
   }
 
   async totalsUpTo(currency: CurrencyCode, at: Date): Promise<AccountMovementTotals[]> {
-    const rows = await this.prisma.journalLine.groupBy({
+    const rows = await this.prisma.client.journalLine.groupBy({
       by: ['accountCode', 'side'],
       where: { currency, entry: { date: { lte: at } } },
       _sum: { amountMinor: true },
@@ -168,7 +178,7 @@ export class PrismaJournalRepository implements JournalRepository {
     currency: CurrencyCode,
     range: DateRange,
   ): Promise<JournalEntry[]> {
-    const rows = await this.prisma.journalEntry.findMany({
+    const rows = await this.prisma.client.journalEntry.findMany({
       where: {
         date: { gte: range.from, lte: range.to },
         lines: { some: { accountCode, currency } },
@@ -180,8 +190,12 @@ export class PrismaJournalRepository implements JournalRepository {
     return rows.map((row) => journalEntryToDomain(row as JournalEntryRow, chart))
   }
 
+  async hasEntriesFor(accountCode: string): Promise<boolean> {
+    return (await this.prisma.client.journalLine.findFirst({ where: { accountCode } })) !== null
+  }
+
   async monthsWithEntries(): Promise<PeriodKey[]> {
-    const rows = await this.prisma.journalEntry.findMany({
+    const rows = await this.prisma.client.journalEntry.findMany({
       distinct: ['date'],
       select: { date: true },
       orderBy: { date: 'asc' },
@@ -194,7 +208,7 @@ export class PrismaJournalRepository implements JournalRepository {
     currency: CurrencyCode,
     before: Date,
   ): Promise<{ debits: bigint; credits: bigint }> {
-    const rows = await this.prisma.journalLine.groupBy({
+    const rows = await this.prisma.client.journalLine.groupBy({
       by: ['side'],
       where: { accountCode, currency, entry: { date: { lt: before } } },
       _sum: { amountMinor: true },

@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarCheck,
   FolderTree,
+  LayoutDashboard,
   LineChart,
   ListOrdered,
   PiggyBank,
@@ -32,6 +33,11 @@ import { copy } from '@/features/debts/copy'
 import { copy as goals } from '@/features/goals/copy'
 import { copy as investments } from '@/features/investments/copy'
 import { copy as projection } from '@/features/projection/copy'
+import { copy as shell } from '@/features/shell/copy'
+
+// El panel va solo, encima de todo: es la pantalla que responde «¿y ahora qué?», y no
+// pertenece a ninguna de las secciones porque las cruza a todas.
+const navHome: NavItem[] = [{ title: shell.nav.dashboard, to: '/', icon: LayoutDashboard }]
 
 const navMain: NavItem[] = [
   { title: copy.nav.debts, to: '/deudas', icon: Receipt },
@@ -92,9 +98,9 @@ export const AppSidebar = () => (
           <SidebarMenuButton asChild>
             <Link to="/">
               <span className="grid size-6 shrink-0 place-items-center rounded-sm bg-primary text-xs font-semibold text-primary-foreground">
-                F
+                T
               </span>
-              <span className="font-semibold tracking-tight">Finanzas</span>
+              <span className="font-semibold tracking-tight">{shell.app.name}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -102,6 +108,7 @@ export const AppSidebar = () => (
     </SidebarHeader>
 
     <SidebarContent>
+      <NavMain items={navHome} />
       <NavMain label={copy.nav.section} items={navMain} />
       <NavMain label={budget.nav.section} items={navPlan} />
       <NavMain label={accounting.nav.section} items={navAccounting} />

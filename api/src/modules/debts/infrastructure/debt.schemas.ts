@@ -1,25 +1,27 @@
 import { z } from 'zod'
+import { annualRate, nameText, termMonths } from '../../../shared/http/text.schema.js'
+import { isoDate } from '../../../shared/http/date.schema.js'
 import { moneySchema } from '../../../shared/http/money.schema.js'
 import { DEBT_KINDS } from '../domain/debt-kind.js'
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: 'La fecha debe ser AAAA-MM-DD' })
-
 export const createDebtSchema = z
   .object({
-    name: z.string().trim().min(1),
-    counterparty: z.string().trim().min(1),
+    name: nameText,
+    counterparty: nameText,
     principal: moneySchema,
-    annualRate: z.string().regex(/^\d+(\.\d+)?$/, { error: 'La tasa debe ser un decimal no negativo' }),
+    annualRate,
     compounding: z.enum(['MONTHLY', 'ANNUAL']),
-    termMonths: z.number().int().positive(),
+    termMonths,
     startDate: isoDate,
     kind: z.enum(DEBT_KINDS),
     direction: z.enum(['BORROWED', 'LENT']),
-    budgetBucket: z.string().trim().min(1).nullable(),
+    budgetBucket: nameText.nullable(),
   })
   .meta({ id: 'CreateDebtInput', title: 'CreateDebtInput' })
 
-export const updateDebtSchema = createDebtSchema.partial().meta({ id: 'UpdateDebtInput', title: 'UpdateDebtInput' })
+export const updateDebtSchema = createDebtSchema
+  .partial()
+  .meta({ id: 'UpdateDebtInput', title: 'UpdateDebtInput' })
 
 export const listDebtsQuerySchema = z
   .object({

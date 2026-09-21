@@ -7,3 +7,9 @@ coverage/
 web/src/routeTree.gen.ts
 .playwright-mcp/
 web/.tanstack/
+
+# Respaldos de la base: son datos reales, no código.
+.backups/
+
+# Capturas sueltas de las sesiones de diseño.
+/*.png

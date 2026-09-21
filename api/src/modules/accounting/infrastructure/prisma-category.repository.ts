@@ -9,12 +9,14 @@ export class PrismaCategoryRepository implements CategoryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<Category[]> {
-    const rows = await this.prisma.category.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] })
+    const rows = await this.prisma.client.category.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    })
     return rows.map((row) => categoryToDomain(row as CategoryRow))
   }
 
   async findById(id: string): Promise<Category | null> {
-    const row = await this.prisma.category.findUnique({ where: { id } })
+    const row = await this.prisma.client.category.findUnique({ where: { id } })
     return row ? categoryToDomain(row as CategoryRow) : null
   }
 
@@ -26,7 +28,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
       sortOrder: category.sortOrder,
       active: category.active,
     }
-    await this.prisma.category.upsert({
+    await this.prisma.client.category.upsert({
       where: { id: category.id },
       create: { id: category.id, ...data },
       update: data,
@@ -34,7 +36,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    const { count } = await this.prisma.category.deleteMany({ where: { id } })
+    const { count } = await this.prisma.client.category.deleteMany({ where: { id } })
     return count > 0
   }
 }

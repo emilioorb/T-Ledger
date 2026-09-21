@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { FRAME_ROW } from '@/components/table-frame'
 import { cn } from '@/lib/utils'
 import { Amount } from './amount'
 import { copy } from './copy'
@@ -31,8 +32,10 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
     <>
       <li
         className={cn(
-          'group grid grid-cols-[1fr_auto] items-center gap-3 border-b border-border py-1.5 pr-1',
-          node.level === 0 && 'border-border-strong pt-3 first:pt-0',
+          `group grid grid-cols-[1fr_auto] items-center gap-3 border-b border-border ${FRAME_ROW}`,
+          // La raíz se marca con una línea más fuerte, no con más alto: todas las filas
+          // miden lo mismo y la jerarquía se lee por sangría y peso.
+          node.level === 0 && 'border-border-strong',
         )}
       >
         <div className="flex min-w-0 items-center gap-1.5" style={{ paddingLeft: node.level * INDENT_PER_LEVEL }}>
@@ -130,7 +133,7 @@ export const AccountsTree = ({ nodes, accounts, onEdit }: Props) => {
   const byCode = new Map(accounts.map((account) => [account.code, account]))
 
   return (
-    <ul className="mt-2">
+    <ul className="[&>li:last-child]:border-b-0">
       {nodes.map((node) => (
         <AccountRow
           key={node.code}

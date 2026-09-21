@@ -31,12 +31,12 @@ export class PrismaBankAccountRepository implements BankAccountRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<BankAccount[]> {
-    const rows = await this.prisma.bankAccount.findMany({ orderBy: { createdAt: 'asc' } })
+    const rows = await this.prisma.client.bankAccount.findMany({ orderBy: { createdAt: 'asc' } })
     return rows.map((row) => toDomain(row as BankAccountRow))
   }
 
   async findById(id: string): Promise<BankAccount | null> {
-    const row = await this.prisma.bankAccount.findUnique({ where: { id } })
+    const row = await this.prisma.client.bankAccount.findUnique({ where: { id } })
     return row ? toDomain(row as BankAccountRow) : null
   }
 
@@ -48,7 +48,7 @@ export class PrismaBankAccountRepository implements BankAccountRepository {
       profileId: account.profileId,
       active: account.active,
     }
-    await this.prisma.bankAccount.upsert({
+    await this.prisma.client.bankAccount.upsert({
       where: { id: account.id },
       create: { id: account.id, ...data },
       update: data,

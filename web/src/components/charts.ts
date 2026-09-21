@@ -19,6 +19,8 @@ export {
   Cell,
   Line,
   LineChart,
+  Pie,
+  PieChart,
   ReferenceLine,
   XAxis,
   YAxis,

@@ -160,7 +160,7 @@ export const AccountForm = ({ account, accounts, pending, onSubmit, onCancel }: 
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex justify-end gap-2">
         <Button type="submit" size="sm" disabled={pending}>
           {copy.common.save}
         </Button>

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { Plus, Receipt } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { SearchInput } from '@/components/search-input'
+import { FormDialog } from '@/components/form-dialog'
 import { Pager } from '@/components/pager'
+import { TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import {
   AlertDialog,
@@ -41,8 +43,8 @@ import { MovementForm, type MovementFormValues } from '@/features/accounting/mov
 import { ControlBar, RangeFields } from '@/features/accounting/report-controls'
 import type { Category, Movement, MovementFilters } from '@/features/accounting/types'
 import {
-  useAccounts,
   useCategories,
+  usePostableAssets,
   PAGE_SIZE,
   useMovements,
   useSaveMovement,
@@ -197,16 +199,12 @@ const MovementsScreen = () => {
   const [page, setPage] = usePage(JSON.stringify(filters))
   const movements = useMovements(filters, page)
   const categories = useCategories()
-  const accounts = useAccounts()
+  const paymentAccounts = usePostableAssets()
   const save = useSaveMovement()
   const voidMovement = useVoidMovement()
 
-  const all = accounts.data?.data ?? []
-  const parents = new Set(all.map((account) => account.parentCode).filter(Boolean))
-  const paymentAccounts = all.filter(
-    (account) => account.accountClass === 'ASSET' && account.active && !parents.has(account.code),
-  )
   const byId = new Map((categories.data ?? []).map((category) => [category.id, category]))
+
   const items = movements.data?.data ?? []
   const hasFilters = kind !== ALL || status !== ALL || categoryId !== ALL || settledSearch !== ''
 
@@ -233,12 +231,16 @@ const MovementsScreen = () => {
         {newButton}
       </header>
 
-      {editing ? (
-        <div className="border-y border-border py-5">
-          <h2 className="mb-4 text-base font-medium tracking-tight">
-            {editing.movement ? copy.movements.form.editTitle : copy.movements.form.createTitle}
-          </h2>
+      <FormDialog
+        icon={Receipt}
+        open={editing !== null}
+        className="sm:max-w-2xl"
+        title={editing?.movement ? copy.movements.form.editTitle : copy.movements.form.createTitle}
+        onOpenChange={(open) => !open && setEditing(null)}
+      >
+        {editing ? (
           <MovementForm
+            key={editing.movement?.id ?? 'nuevo'}
             movement={editing.movement}
             categories={categories.data ?? []}
             paymentAccounts={paymentAccounts}
@@ -246,10 +248,10 @@ const MovementsScreen = () => {
             onSubmit={submit}
             onCancel={() => setEditing(null)}
           />
-        </div>
-      ) : null}
+        ) : null}
+      </FormDialog>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
 
         <div className="flex flex-col gap-1">
@@ -353,7 +355,7 @@ const MovementsScreen = () => {
         )
       ) : (
         <div className="space-y-4">
-          <div className="hidden md:block">
+          <TableFrame className="hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -377,7 +379,7 @@ const MovementsScreen = () => {
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </TableFrame>
 
           <ul className="md:hidden">
             {items.map((movement) => (

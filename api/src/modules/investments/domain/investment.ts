@@ -97,7 +97,9 @@ export class Investment {
       monthsBetween(this.props.openedAt, until),
     )
 
-    return this.props.contributions.reduce(
+    // Solo los aportes ya hechos a esa fecha. Sumarlos todos hacía que la inversión valiera
+    // más de lo invertido el día que se abrió, y la diferencia se mostraba como interés ganado.
+    return this.contributionsUntil(until).reduce(
       (acc, contribution) =>
         unwrap(
           acc.add(
@@ -118,10 +120,16 @@ export class Investment {
 
   // El capital puesto hasta esa fecha: lo aportado después no se cuenta como invertido.
   investedAt(date: Date): Money {
-    const until = this.cappedAt(date)
-    return this.props.contributions
-      .filter((contribution) => contribution.date.getTime() <= until.getTime())
-      .reduce((acc, contribution) => unwrap(acc.add(contribution.amount)), this.props.principal)
+    return this.contributionsUntil(this.cappedAt(date)).reduce(
+      (acc, contribution) => unwrap(acc.add(contribution.amount)),
+      this.props.principal,
+    )
+  }
+
+  private contributionsUntil(until: Date): readonly InvestmentContribution[] {
+    return this.props.contributions.filter(
+      (contribution) => contribution.date.getTime() <= until.getTime(),
+    )
   }
 
   maturityPeriod(): { year: number; month: number } | null {

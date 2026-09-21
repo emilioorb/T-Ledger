@@ -2,6 +2,10 @@
 // central todavía no publicó. El tono es el mismo del resto, informativo y sin ceremonia.
 export const copy = {
   title: 'Tipo de cambio',
+  // El rótulo del indicador: lo que se compra y se vende es el dólar, y las dos cifras
+  // están en colones. Decirlo así evita repetir «colones» dos veces en la cabecera.
+  unit: 'USD',
+  source: 'Fuente: BCCR.',
   buy: 'Compra',
   sell: 'Venta',
   publishedAt: (date: string) => `Al ${date}`,

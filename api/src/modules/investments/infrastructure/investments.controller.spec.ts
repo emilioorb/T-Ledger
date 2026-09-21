@@ -25,8 +25,15 @@ const certificado = {
   openedAt: '2026-01-15',
   kind: 'FIXED_TERM',
   maturesAt: '2027-01-15',
-  accountCode: null,
+  accountCode: '1300',
 }
+
+// De dónde sale el capital. Agregar capital es un traslado, no una ganancia.
+const capital = (amount: string, date = '2026-07-15') => ({
+  date,
+  amount: { minorUnits: amount, currency: 'CRC' },
+  fromAccountCode: '1101',
+})
 
 const crear = async (overrides: object = {}) =>
   (await post('/investments', { ...certificado, ...overrides }).expect(201)).body as { id: string }
@@ -53,11 +60,37 @@ afterAll(async () => {
 })
 
 beforeEach(async () => {
+  await prisma.journalLine.deleteMany()
+  await prisma.journalEntry.deleteMany()
   await prisma.investmentContribution.deleteMany()
   await prisma.investment.deleteMany()
 })
 
 describe('inversiones', () => {
+  it('agregar capital mueve la plata en el libro, no la inventa', async () => {
+    const inversion = await crear()
+
+    await post(`/investments/${inversion.id}/contributions`, capital('1000000')).expect(201)
+
+    const lineas = await prisma.journalLine.findMany({ include: { entry: true } })
+    const destino = lineas.find((linea) => linea.accountCode === '1300')
+    const origen = lineas.find((linea) => linea.accountCode === '1101')
+
+    expect(destino?.side).toBe('DEBIT')
+    expect(origen?.side).toBe('CREDIT')
+    expect(destino?.amountMinor).toBe(1000000n)
+    expect(destino?.entry.description).toContain('Certificado')
+  })
+
+  it('una inversión sin cuenta no acepta capital', async () => {
+    const inversion = await crear({ accountCode: null })
+
+    const response = await post(`/investments/${inversion.id}/contributions`, capital('1000'))
+
+    expect(response.status).toBe(422)
+    expect(response.body.error.message).toContain('no tiene cuenta')
+  })
+
   it('proyecta el valor a una fecha con el cálculo compuesto', async () => {
     const inversion = await crear()
 
@@ -69,10 +102,7 @@ describe('inversiones', () => {
 
   it('un aporte capitaliza desde su propia fecha', async () => {
     const inversion = await crear()
-    await post(`/investments/${inversion.id}/contributions`, {
-      date: '2026-07-15',
-      amount: { minorUnits: '1000000', currency: 'CRC' },
-    }).expect(201)
+    await post(`/investments/${inversion.id}/contributions`, capital('1000000')).expect(201)
 
     const response = await get(`/investments/${inversion.id}/projection?at=2027-01-15`).expect(200)
 
@@ -99,7 +129,7 @@ describe('inversiones', () => {
     const inversion = await crear()
 
     const response = await post(`/investments/${inversion.id}/contributions`, {
-      date: '2026-07-15',
+      ...capital('1000'),
       amount: { minorUnits: '1000', currency: 'USD' },
     })
 
@@ -118,10 +148,7 @@ describe('inversiones', () => {
 
   it('borrar una inversión se lleva sus aportes', async () => {
     const inversion = await crear()
-    await post(`/investments/${inversion.id}/contributions`, {
-      date: '2026-07-15',
-      amount: { minorUnits: '500000', currency: 'CRC' },
-    }).expect(201)
+    await post(`/investments/${inversion.id}/contributions`, capital('500000')).expect(201)
 
     await request(app.getHttpServer()).delete(`${BASE}/investments/${inversion.id}`).expect(204)
 

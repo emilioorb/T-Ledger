@@ -4,17 +4,23 @@ import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { toMoney } from '../../../shared/http/money.schema.js'
+import { BucketGuard } from '../../budget/application/bucket-guard.js'
 import { Debt } from '../domain/debt.js'
 import { DEBT_REPOSITORY, type DebtRepository } from '../domain/debt-repository.port.js'
 import type { UpdateDebtInput } from '../infrastructure/debt.schemas.js'
 
 @Injectable()
 export class UpdateDebtUseCase {
-  constructor(@Inject(DEBT_REPOSITORY) private readonly debts: DebtRepository) {}
+  constructor(
+    @Inject(DEBT_REPOSITORY) private readonly debts: DebtRepository,
+    private readonly buckets: BucketGuard,
+  ) {}
 
   async execute(id: string, input: UpdateDebtInput): Promise<Debt> {
     const current = await this.debts.findById(id)
     if (!current) throw new NotFoundError(`No existe una deuda con el id ${id}`)
+
+    if (input.budgetBucket !== undefined) await this.buckets.assertExists(input.budgetBucket)
 
     const props = current.toProps()
     const rate =

@@ -9,18 +9,20 @@ export class PrismaPeriodRepository implements PeriodRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async find(key: PeriodKey): Promise<AccountingPeriod | null> {
-    const row = await this.prisma.accountingPeriod.findUnique({ where: { period: key.toString() } })
+    const row = await this.prisma.client.accountingPeriod.findUnique({
+      where: { period: key.toString() },
+    })
     return row ? periodToDomain(row as PeriodRow) : null
   }
 
   async findAll(): Promise<AccountingPeriod[]> {
-    const rows = await this.prisma.accountingPeriod.findMany({ orderBy: { period: 'asc' } })
+    const rows = await this.prisma.client.accountingPeriod.findMany({ orderBy: { period: 'asc' } })
     return rows.map((row) => periodToDomain(row as PeriodRow))
   }
 
   // El identificador es AAAA-MM, que ordena cronológicamente como texto.
   async findClosedAfter(key: PeriodKey): Promise<AccountingPeriod[]> {
-    const rows = await this.prisma.accountingPeriod.findMany({
+    const rows = await this.prisma.client.accountingPeriod.findMany({
       where: { period: { gt: key.toString() }, status: 'CLOSED' },
       orderBy: { period: 'asc' },
     })
@@ -32,15 +34,15 @@ export class PrismaPeriodRepository implements PeriodRepository {
   }
 
   async saveMany(periods: readonly AccountingPeriod[]): Promise<void> {
-    await this.prisma.$transaction(
-      periods.map((period) => {
+    await this.prisma.withTransaction(async () => {
+      for (const period of periods) {
         const data = { status: period.status, closedAt: period.closedAt }
-        return this.prisma.accountingPeriod.upsert({
+        await this.prisma.client.accountingPeriod.upsert({
           where: { period: period.key.toString() },
           create: { period: period.key.toString(), ...data },
           update: data,
         })
-      }),
-    )
+      }
+    })
   }
 }

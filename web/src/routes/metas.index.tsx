@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { Coins, Plus, Target } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { FormDialog } from '@/components/form-dialog'
 import { ErrorState } from '@/components/error-state'
@@ -26,16 +26,21 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Hint } from '@/components/hint'
+import { Card } from '@/components/ui/card'
 import { Amount } from '@/features/accounting/amount'
 import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/goals/copy'
 import type { Goal } from '@/features/goals/types'
+import { usePostableAssets } from '@/features/accounting/use-accounting'
 import { useContribute, useDeleteGoal, useGoals, useSaveGoal } from '@/features/goals/use-goals'
 import { formatIsoDate, today } from '@/lib/dates'
-import { parseMoneyInput, type CurrencyCode } from '@/lib/money'
+import { formatMoney, parseMoneyInput, type CurrencyCode } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
 const CURRENCIES: CurrencyCode[] = ['CRC', 'USD']
+
+// Radix no acepta un item con valor vacío, y «sin cuenta» es una opción real.
+const NO_ACCOUNT = '__ninguna__'
 
 interface GoalFormValues {
   name: string
@@ -60,7 +65,9 @@ const GoalForm = ({ goal, pending, onSubmit, onCancel }: FormProps) => {
   )
   const [desiredDate, setDesiredDate] = useState(goal?.desiredDate ?? today())
   const [priority, setPriority] = useState(goal?.priority ?? 1)
+  const [accountCode, setAccountCode] = useState(goal?.accountCode ?? '')
   const fields = copy.goals.form
+  const savings = usePostableAssets()
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -69,12 +76,12 @@ const GoalForm = ({ goal, pending, onSubmit, onCancel }: FormProps) => {
       target: parseMoneyInput(amount, currency),
       desiredDate,
       priority,
-      accountCode: goal?.accountCode ?? null,
+      accountCode: accountCode === '' ? null : accountCode,
     })
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+    <form onSubmit={submit} className="grid gap-4">
       <div className="space-y-1.5">
         <Label htmlFor="goal-name">{fields.name.label}</Label>
         <Input
@@ -122,26 +129,47 @@ const GoalForm = ({ goal, pending, onSubmit, onCancel }: FormProps) => {
         />
       </div>
 
-      <div className="flex gap-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="goal-priority">{fields.priority.label}</Label>
-          <Input
-            id="goal-priority"
-            type="number"
-            min={0}
-            value={priority}
-            className="w-20"
-            onChange={(event) => setPriority(Number(event.target.value))}
-          />
-        </div>
-        <div className="flex items-end gap-2">
-          <Button type="submit" size="sm" disabled={pending}>
-            {fields.submit}
-          </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
-            {copy.common.cancel}
-          </Button>
-        </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="goal-account">{fields.accountCode.label}</Label>
+        <Select
+          value={accountCode === '' ? NO_ACCOUNT : accountCode}
+          onValueChange={(next) => setAccountCode(next === NO_ACCOUNT ? '' : next)}
+        >
+          <SelectTrigger id="goal-account" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_ACCOUNT}>{fields.noAccount}</SelectItem>
+            {savings.map((account) => (
+              <SelectItem key={account.code} value={account.code}>
+                {account.code} · {account.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">{fields.accountCode.hint}</p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="goal-priority">{fields.priority.label}</Label>
+        <Input
+          id="goal-priority"
+          type="number"
+          min={0}
+          value={priority}
+          className="w-20"
+          onChange={(event) => setPriority(Number(event.target.value))}
+        />
+        <p className="text-xs text-muted-foreground">{fields.priority.hint}</p>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-1">
+        <Button type="submit" size="sm" disabled={pending}>
+          {fields.submit}
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          {copy.common.cancel}
+        </Button>
       </div>
     </form>
   )
@@ -155,90 +183,131 @@ interface CardProps {
 }
 
 // Lo que se lee primero no es el porcentaje sino si llega: la fecha proyectada contra la
-// deseada. Una barra al 60 % no responde esa pregunta.
-const GoalBlock = ({ goal, onEdit, onDelete, onContribute }: CardProps) => (
-  <li className="border-b border-border py-4">
-    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-      <h2 className="text-sm font-medium tracking-tight">
-        <Link
-          to="/metas/$goalId"
-          params={{ goalId: goal.id }}
-          className="underline-offset-2 hover:underline"
-        >
-          {goal.name}
-        </Link>
-      </h2>
+// deseada, arriba y con peso. La barra va debajo porque responde otra pregunta —cuánto
+// llevás— que importa después.
+const progressOf = (goal: Goal): number => {
+  const target = Number(goal.target.minorUnits)
+  if (target <= 0) return 0
+  return Math.min(Math.max(Number(goal.contributed.minorUnits) / target, 0), 1)
+}
 
-      {/* La respuesta va acá, al mismo peso que el nombre: el monto es el dato de apoyo.
-          El color marca el estado, no la fecha: una fecha no es buena ni mala. */}
-      <span className="flex items-baseline gap-2 text-sm">
-        {goal.reached ? (
-          <span className="text-positive">{copy.goals.reached}</span>
-        ) : goal.projectedDate === null ? (
-          <Hint text={copy.goals.noPaceHint}>
-            <span className="text-muted-foreground">{copy.goals.noPace}</span>
-          </Hint>
-        ) : (
-          <>
-            <span className={cn(goal.onTrack ? 'text-positive' : 'text-warning')}>
-              {goal.onTrack ? copy.goals.onTrack : copy.goals.late}
-            </span>
-            <span className="num">{formatIsoDate(goal.projectedDate)}</span>
-          </>
-        )}
-      </span>
-    </div>
+const GoalStatus = ({ goal }: { goal: Goal }) => {
+  if (goal.reached) return <span className="text-positive">{copy.goals.reached}</span>
+  if (goal.projectedDate === null)
+    return (
+      <Hint text={copy.goals.noPaceHint}>
+        <span className="text-muted-foreground">{copy.goals.noPace}</span>
+      </Hint>
+    )
+  return (
+    <span className={cn(goal.onTrack ? 'text-positive' : 'text-warning')}>
+      {goal.onTrack ? copy.goals.onTrack : copy.goals.late}
+    </span>
+  )
+}
 
-    <div className="mt-1.5 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-xs text-muted-foreground">
-      <span className="flex items-baseline gap-1.5">
-        <Amount money={goal.contributed} />
-        <span>de</span>
-        <Amount money={goal.target} />
-      </span>
+interface ActionProps {
+  children: string
+  label?: string
+  onClick: () => void
+}
 
-      <span>
-        {copy.goals.columns.desired} <span className="num">{formatIsoDate(goal.desiredDate)}</span>
-      </span>
-
-      {!goal.reached ? (
-        <Hint text={copy.goals.requiredHint}>
-          <span>
-            {copy.goals.columns.required} <Amount money={goal.requiredMonthlyContribution} />
-          </span>
-        </Hint>
-      ) : null}
-
-      <span className="ml-auto flex gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-          onClick={onContribute}
-        >
-          {copy.goals.contribute}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-          aria-label={copy.goals.edit(goal.name)}
-          onClick={onEdit}
-        >
-          {copy.goals.form.editTitle}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-          aria-label={copy.goals.delete(goal.name)}
-          onClick={onDelete}
-        >
-          {copy.goals.confirmDelete.confirm}
-        </Button>
-      </span>
-    </div>
-  </li>
+const GoalAction = ({ children, label, onClick }: ActionProps) => (
+  <Button
+    variant="ghost"
+    size="sm"
+    aria-label={label}
+    className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+    onClick={onClick}
+  >
+    {children}
+  </Button>
 )
+
+const GoalBlock = ({ goal, onEdit, onDelete, onContribute }: CardProps) => {
+  const progress = progressOf(goal)
+
+  return (
+    <Card size="sm" className="gap-0 px-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="min-w-0 truncate text-base font-medium tracking-tight">
+          <Link
+            to="/metas/$goalId"
+            params={{ goalId: goal.id }}
+            className="underline-offset-2 hover:underline"
+          >
+            {goal.name}
+          </Link>
+        </h2>
+        {/* El color marca el estado, no la fecha: una fecha no es buena ni mala. */}
+        <span className="shrink-0 text-xs">
+          <GoalStatus goal={goal} />
+        </span>
+      </div>
+
+      <div className="mt-4">
+        <p className="text-xs text-muted-foreground">{copy.goals.projected}</p>
+        <p className="num mt-1 text-2xl leading-none tracking-tight">
+          {goal.projectedDate ? formatIsoDate(goal.projectedDate) : '—'}
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {copy.goals.columns.desired}{' '}
+          <span className="num">{formatIsoDate(goal.desiredDate)}</span>
+        </p>
+      </div>
+
+      {/* Los extremos de la barra son los extremos del texto: lo aportado empieza donde
+          empieza la barra y el objetivo termina donde termina. */}
+      <div className="mt-5">
+        <div className="flex items-baseline justify-between gap-3 text-xs">
+          <span className="flex items-baseline gap-1.5">
+            <Amount money={goal.contributed} />
+            <span className="num text-muted-foreground">{Math.round(progress * 100)}%</span>
+          </span>
+          <span className="text-muted-foreground">
+            <Amount money={goal.target} />
+          </span>
+        </div>
+        <div
+          className="mt-1.5 h-1 w-full bg-border-strong"
+          role="img"
+          aria-label={copy.goals.progressLabel(
+            formatMoney(goal.contributed),
+            formatMoney(goal.target),
+          )}
+        >
+          <div
+            className={cn('h-full', goal.reached ? 'bg-positive' : 'bg-foreground')}
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-3">
+        {goal.reached ? (
+          <span className="text-xs text-muted-foreground">{copy.goals.reachedNote}</span>
+        ) : (
+          <Hint text={copy.goals.requiredHint}>
+            <span className="flex items-baseline gap-1.5 text-xs text-muted-foreground">
+              {copy.goals.columns.required}
+              <Amount money={goal.requiredMonthlyContribution} />
+            </span>
+          </Hint>
+        )}
+
+        <div className="-mr-2 flex shrink-0 gap-0.5">
+          <GoalAction onClick={onContribute}>{copy.goals.contribute}</GoalAction>
+          <GoalAction label={copy.goals.edit(goal.name)} onClick={onEdit}>
+            {copy.common.edit}
+          </GoalAction>
+          <GoalAction label={copy.goals.delete(goal.name)} onClick={onDelete}>
+            {copy.goals.deleteShort}
+          </GoalAction>
+        </div>
+      </div>
+    </Card>
+  )
+}
 
 const GoalsScreen = () => {
   const [editing, setEditing] = useState<{ goal?: Goal } | null>(null)
@@ -246,8 +315,14 @@ const GoalsScreen = () => {
   const [contributing, setContributing] = useState<Goal | null>(null)
   const [contributionAmount, setContributionAmount] = useState('')
   const [contributionDate, setContributionDate] = useState(today())
+  const [fromAccountCode, setFromAccountCode] = useState('')
 
   const goals = useGoals()
+
+  // La de ahorro de la meta no puede ser el origen: el traslado sería de ella a ella misma.
+  const origins = usePostableAssets().filter(
+    (account) => account.code !== contributing?.accountCode,
+  )
   usePrimaryAction(copy.goals.new, () => setEditing({}))
   const save = useSaveGoal()
   const contribute = useContribute()
@@ -262,6 +337,7 @@ const GoalsScreen = () => {
         input: {
           date: contributionDate,
           amount: parseMoneyInput(contributionAmount, contributing.target.currency as CurrencyCode),
+          fromAccountCode,
         },
       },
       {
@@ -286,12 +362,15 @@ const GoalsScreen = () => {
         </Button>
       </header>
 
-      {editing ? (
-        <div className="border-y border-border py-5">
-          <h2 className="mb-4 text-base font-medium tracking-tight">
-            {editing.goal ? copy.goals.form.editTitle : copy.goals.form.createTitle}
-          </h2>
+      <FormDialog
+        icon={Target}
+        open={editing !== null}
+        title={editing?.goal ? copy.goals.form.editTitle : copy.goals.form.createTitle}
+        onOpenChange={(open) => !open && setEditing(null)}
+      >
+        {editing ? (
           <GoalForm
+            key={editing.goal?.id ?? 'nueva'}
             goal={editing.goal}
             pending={save.isPending}
             onSubmit={(values) =>
@@ -302,46 +381,89 @@ const GoalsScreen = () => {
             }
             onCancel={() => setEditing(null)}
           />
-        </div>
-      ) : null}
+        ) : null}
+      </FormDialog>
 
       <FormDialog
+        icon={Coins}
         open={contributing !== null}
         title={copy.goals.contributionForm.title}
-        description={copy.goals.contributionForm.amount.hint}
+        description={copy.goals.contributionForm.description}
         onOpenChange={(open) => !open && setContributing(null)}
       >
-        <form onSubmit={submitContribution} className="grid gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="contribution-date">{copy.goals.contributionForm.date.label}</Label>
-            <Input
-              id="contribution-date"
-              type="date"
-              value={contributionDate}
-              required
-              onChange={(event) => setContributionDate(event.target.value)}
-            />
+        {contributing && contributing.accountCode === null ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {copy.goals.contributionForm.needsAccount}
+            </p>
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                onClick={() => {
+                  const goal = contributing
+                  setContributing(null)
+                  setEditing({ goal })
+                }}
+              >
+                {copy.goals.contributionForm.editGoal}
+              </Button>
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="contribution-amount">{copy.goals.contributionForm.amount.label}</Label>
-            <Input
-              id="contribution-amount"
-              value={contributionAmount}
-              inputMode="decimal"
-              required
-              className="num num-right"
-              onChange={(event) => setContributionAmount(event.target.value)}
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="submit" size="sm" disabled={contribute.isPending}>
-              {copy.goals.contributionForm.submit}
-            </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setContributing(null)}>
-              {copy.common.cancel}
-            </Button>
-          </div>
-        </form>
+        ) : (
+          <form onSubmit={submitContribution} className="grid gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="contribution-date">{copy.goals.contributionForm.date.label}</Label>
+              <Input
+                id="contribution-date"
+                type="date"
+                value={contributionDate}
+                required
+                onChange={(event) => setContributionDate(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="contribution-amount">
+                {copy.goals.contributionForm.amount.label}
+              </Label>
+              <Input
+                id="contribution-amount"
+                value={contributionAmount}
+                inputMode="decimal"
+                required
+                className="num num-right"
+                onChange={(event) => setContributionAmount(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="contribution-from">{copy.goals.contributionForm.from.label}</Label>
+              <Select value={fromAccountCode} onValueChange={setFromAccountCode}>
+                <SelectTrigger id="contribution-from" className="w-full">
+                  <SelectValue placeholder={copy.goals.contributionForm.from.label} />
+                </SelectTrigger>
+                <SelectContent>
+                  {origins.map((account) => (
+                    <SelectItem key={account.code} value={account.code}>
+                      {account.code} · {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={contribute.isPending || fromAccountCode === ''}
+              >
+                {copy.goals.contributionForm.submit}
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setContributing(null)}>
+                {copy.common.cancel}
+              </Button>
+            </div>
+          </form>
+        )}
       </FormDialog>
 
       {goals.isPending ? (
@@ -368,7 +490,7 @@ const GoalsScreen = () => {
           }
         />
       ) : (
-        <ul>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {goals.data.map((goal) => (
             <GoalBlock
               key={goal.id}
@@ -378,7 +500,7 @@ const GoalsScreen = () => {
               onContribute={() => setContributing(goal)}
             />
           ))}
-        </ul>
+        </div>
       )}
 
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>

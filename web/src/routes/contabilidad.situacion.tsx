@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Scale } from 'lucide-react'
 import { createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
@@ -31,7 +32,7 @@ interface SectionProps {
 const Section = ({ label, nodes, total, derivedCode, derivedHint }: SectionProps) => (
   <Card size="sm" className="px-4">
     <div className="flex items-baseline justify-between gap-3">
-      <h2 className="text-sm font-medium tracking-tight">{label}</h2>
+      <h2 className="text-base font-medium tracking-tight">{label}</h2>
       {nodes.length === 0 ? <Amount money={total} className="text-sm" /> : null}
     </div>
     {nodes.length > 0 ? (
@@ -81,6 +82,7 @@ const FinancialPositionScreen = () => {
           {/* La identidad entera en una tarjeta: es una sola afirmación, no tres cifras
               sueltas, y partirla en tarjetas perdería el «igual» y el «más». */}
           <StatCard
+            icon={Scale}
             label={copy.financialPosition.identity}
             hint={
               position.data.balances
@@ -92,12 +94,12 @@ const FinancialPositionScreen = () => {
               <Amount
                 money={position.data.assets}
                 emphasis="strong"
-                className="text-2xl tracking-tight"
+                className="text-3xl tracking-tight"
               />
-              <span className="text-lg text-muted-foreground">=</span>
-              <Amount money={position.data.liabilities} className="text-lg" />
-              <span className="text-lg text-muted-foreground">+</span>
-              <Amount money={position.data.equity} className="text-lg" />
+              <span className="text-xl text-muted-foreground">=</span>
+              <Amount money={position.data.liabilities} className="text-xl" />
+              <span className="text-xl text-muted-foreground">+</span>
+              <Amount money={position.data.equity} className="text-xl" />
             </div>
           </StatCard>
 
@@ -108,7 +110,7 @@ const FinancialPositionScreen = () => {
               description={copy.financialPosition.empty.description}
             />
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid items-start gap-4 lg:grid-cols-2">
               <Section
                 label={copy.financialPosition.assets}
                 nodes={position.data.sections.assets}

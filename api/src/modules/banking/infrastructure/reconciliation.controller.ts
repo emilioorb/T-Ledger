@@ -49,8 +49,8 @@ export class ReconciliationController {
 
     return {
       bankAccountId: result.bankAccountId,
-      ledgerBalance: fromMoney(result.ledgerBalance),
-      statementBalance: fromMoney(result.statementBalance),
+      ledgerMovement: fromMoney(result.ledgerMovement),
+      statementMovement: fromMoney(result.statementMovement),
       difference: fromMoney(result.difference),
       lines: result.lines.map(toBankLineResponse),
       pendingTotal: fromMoney(result.pendingTotal),

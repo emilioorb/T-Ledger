@@ -1,22 +1,19 @@
 import { useState, type FormEvent } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Wallet } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { Hint } from '@/components/hint'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/budget/copy'
 import type { BudgetModel } from '@/features/budget/types'
-import {
-  useBudgetModels,
-  useMonthlyIncome,
-  useSaveBudgetModel,
-} from '@/features/budget/use-budget'
+import { useBudgetModels, useMonthlyIncome, useSaveBudgetModel } from '@/features/budget/use-budget'
 import { useAccounts } from '@/features/accounting/use-accounting'
 import { today } from '@/lib/dates'
 import { formatMoney, type MoneyDto } from '@/lib/money'
@@ -52,7 +49,8 @@ const emptyBucket = (): BucketDraft => ({
 })
 
 const shareOf = (income: MoneyDto, percentage: string): MoneyDto => {
-  const share = (BigInt(income.minorUnits) * BigInt(Math.round((Number(percentage) || 0) * 100))) / 10000n
+  const share =
+    (BigInt(income.minorUnits) * BigInt(Math.round((Number(percentage) || 0) * 100))) / 10000n
   return { minorUnits: share.toString(), currency: income.currency }
 }
 
@@ -133,7 +131,10 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
         <ul className="mt-3 space-y-3">
           {buckets.map((bucket, index) => (
             // eslint-disable-next-line react/no-array-index-key
-            <li key={index} className="grid gap-2 border-b border-border pb-3 sm:grid-cols-[1fr_6rem_auto]">
+            <li
+              key={index}
+              className="grid gap-2 border-b border-border pb-3 sm:grid-cols-[1fr_6rem_auto]"
+            >
               <Input
                 value={bucket.name}
                 required
@@ -223,12 +224,8 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
       {/* La suma se ve mientras se edita: descubrir el error al enviar es mala interfaz. */}
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-y border-border py-3 text-sm">
         <span className="text-xs text-muted-foreground">{fields.total}</span>
-        <span className={cn('num', balanced ? 'text-positive' : 'text-negative')}>
-          {total}%
-        </span>
-        {!balanced ? (
-          <span className="text-xs text-negative">{fields.unbalancedHint}</span>
-        ) : null}
+        <span className={cn('num', balanced ? 'text-positive' : 'text-negative')}>{total}%</span>
+        {!balanced ? <span className="text-xs text-negative">{fields.unbalancedHint}</span> : null}
         {balanced && !savings ? (
           <span className="text-xs text-negative">{fields.savingsMissing}</span>
         ) : null}
@@ -245,6 +242,85 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
     </form>
   )
 }
+
+// Un modelo es un reparto del cien por ciento, no una lista de números. La barra lo dice de
+// un vistazo y hace comparables dos modelos puestos uno al lado del otro; los porcentajes
+// quedan debajo para el que quiera el dato exacto.
+//
+// Los tramos se distinguen por luminancia y no por matiz. No se toman de la rampa en orden
+// —dos escalones seguidos casi no se diferencian en una barra tan fina— sino salteados, y
+// entre tramo y tramo queda una hendidura del color de la tarjeta para que el límite se vea
+// aunque los tonos se parezcan.
+// El naranja y el verde que la app ya usa, y ningún rojo: una cubeta no es buena ni mala, y
+// en rojo parecería que algo está mal. El nombre va siempre al lado: el color ordena, no informa.
+const TONES = ['bg-bucket-1', 'bg-bucket-2', 'bg-bucket-3', 'bg-bucket-4', 'bg-bucket-5']
+
+const toneOf = (index: number): string => TONES[index % TONES.length] ?? TONES[0]!
+const ModelCard = ({ model, onEdit }: { model: BudgetModel; onEdit: () => void }) => (
+  // La tarjeta entera abre el editor: con una sola acción posible, un botón aparte es un
+  // blanco más chico para lo mismo. Teclado incluido, que si no queda fuera del alcance.
+  <Card
+    size="sm"
+    role="button"
+    tabIndex={0}
+    aria-label={copy.models.edit(model.name)}
+    onClick={onEdit}
+    onKeyDown={(event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      event.preventDefault()
+      onEdit()
+    }}
+    // El hover avisa que la tarjeta entera se puede tocar. Se nombran las propiedades una por
+    // una: `transition-colors` no incluye la sombra, así que el anillo saltaba de golpe
+    // mientras el fondo se desvanecía, y ese desfase es lo que se veía mal.
+    //
+    // El `active` es el que hace que se sienta apretada. Baja poco —es una superficie grande,
+    // y un 0,97 en algo de este tamaño se bambolea— y vuelve rápido.
+    className="cursor-pointer gap-3 px-4 text-left outline-none transition-[background-color,box-shadow,transform] duration-150 ease-out-quart hover:bg-accent hover:ring-foreground/25 active:scale-[0.995] active:duration-100 focus-visible:ring-3 focus-visible:ring-ring/50"
+  >
+    <div className="flex items-baseline justify-between gap-3">
+      <h2 className={cn('text-base', model.active && 'font-medium')}>{model.name}</h2>
+      {model.active ? <span className="text-xs text-positive">{copy.models.active}</span> : null}
+    </div>
+
+    <div
+      className="flex h-2.5 w-full gap-px overflow-hidden rounded-sm"
+      role="img"
+      aria-label={model.buckets.map((b) => `${b.name} ${b.percentage}%`).join(', ')}
+    >
+      {model.buckets.map((bucket, index) => (
+        <span
+          key={bucket.id}
+          className={cn('first:rounded-l-sm last:rounded-r-sm', toneOf(index))}
+          style={{ width: `${Number(bucket.percentage)}%` }}
+        />
+      ))}
+    </div>
+
+    <ul className="space-y-1">
+      {model.buckets.map((bucket, index) => (
+        <li key={bucket.id} className="flex items-baseline justify-between gap-3 text-xs">
+          <span className="flex min-w-0 items-baseline gap-1.5">
+            <span
+              className={cn(
+                'size-2.5 shrink-0 rounded-[2px] ring-1 ring-foreground/10',
+                toneOf(index),
+              )}
+              aria-hidden="true"
+            />
+            <span className="truncate text-muted-foreground">
+              {bucket.name}
+              {bucket.isSavings && bucket.name !== copy.budget.savingsBucket
+                ? ` · ${copy.budget.savingsBucket}`
+                : ''}
+            </span>
+          </span>
+          <span className="num shrink-0">{bucket.percentage}%</span>
+        </li>
+      ))}
+    </ul>
+  </Card>
+)
 
 const ModelsScreen = () => {
   const [editing, setEditing] = useState<{ model?: BudgetModel } | null>(null)
@@ -263,7 +339,8 @@ const ModelsScreen = () => {
       (account) =>
         account.active &&
         !parents.has(account.code) &&
-        (account.accountClass === 'OPERATING_EXPENSE' || account.accountClass === 'COST_OF_REVENUE'),
+        (account.accountClass === 'OPERATING_EXPENSE' ||
+          account.accountClass === 'COST_OF_REVENUE'),
     )
     .map((account) => ({ code: account.code, name: account.name }))
 
@@ -281,8 +358,9 @@ const ModelsScreen = () => {
       </header>
 
       {editing ? (
-        <div className="border-y border-border py-5">
-          <h2 className="mb-4 text-base font-medium tracking-tight">
+        <Card size="sm" className="gap-4 px-4">
+          <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+            <Wallet className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             {editing.model ? copy.models.form.editTitle : copy.models.form.createTitle}
           </h2>
           <ModelForm
@@ -298,10 +376,12 @@ const ModelsScreen = () => {
             }
             onCancel={() => setEditing(null)}
           />
-        </div>
+        </Card>
       ) : null}
 
-      {models.isPending ? (
+      {/* Con el editor abierto la lista sobra: la tarjeta de abajo repetiría el modelo que
+          se está editando, y ya se sabe cuál es. */}
+      {editing ? null : models.isPending ? (
         <div className="space-y-2" role="status" aria-label={copy.common.loading}>
           {Array.from({ length: 2 }, (_, index) => (
             <Skeleton key={index} className="h-16 w-full" />
@@ -325,41 +405,11 @@ const ModelsScreen = () => {
           }
         />
       ) : (
-        <ul>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {models.data.map((model) => (
-            <li key={model.id} className="border-b border-border py-3">
-              <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <span className="flex items-baseline gap-2">
-                  <span className={cn('text-sm', model.active && 'font-medium')}>{model.name}</span>
-                  {model.active ? (
-                    <span className="text-xs text-positive">{copy.models.active}</span>
-                  ) : null}
-                </span>
-                <span className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => setEditing({ model })}
-                  >
-                    {copy.models.form.editTitle}
-                  </Button>
-                </span>
-              </div>
-
-              <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                {model.buckets.map((bucket) => (
-                  <li key={bucket.id}>
-                    {bucket.name} <span className="num">{bucket.percentage}%</span>
-                    {bucket.isSavings && bucket.name !== copy.budget.savingsBucket
-                      ? ` · ${copy.budget.savingsBucket}`
-                      : ''}
-                  </li>
-                ))}
-              </ul>
-            </li>
+            <ModelCard key={model.id} model={model} onEdit={() => setEditing({ model })} />
           ))}
-        </ul>
+        </div>
       )}
     </section>
   )

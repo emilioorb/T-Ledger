@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Scale } from 'lucide-react'
 import { createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
@@ -8,12 +9,7 @@ import { Amount, isNegativeMoney, isZeroMoney } from '@/features/accounting/amou
 import { copy } from '@/features/accounting/copy'
 import { ControlBar, CurrencyField, RangeFields } from '@/features/accounting/report-controls'
 import { ReportTree } from '@/features/accounting/report-tree'
-import type {
-  CurrencyCode,
-  IncomeStatement,
-  Money,
-  ReportNode,
-} from '@/features/accounting/types'
+import type { CurrencyCode, IncomeStatement, Money, ReportNode } from '@/features/accounting/types'
 import { useIncomeStatement } from '@/features/accounting/use-accounting'
 import { monthEnd, monthStart, today } from '@/lib/dates'
 
@@ -68,7 +64,7 @@ const IncomeStatementScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.incomeStatement.description}</p>
       </header>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <CurrencyField value={currency} onChange={setCurrency} />
         <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </ControlBar>
@@ -92,9 +88,10 @@ const IncomeStatementScreen = () => {
           description={copy.incomeStatement.empty.description}
         />
       ) : (
-        // La cascada entera va en una tarjeta: es una sola cuenta, no tres secciones. Y
-        // acotada y centrada, porque una fila de nombre y cifra deja de leerse si se estira.
-        <Card size="sm" className="mx-auto max-w-3xl gap-4 px-4">
+        // La cascada entera va en una tarjeta: es una sola cuenta, no tres secciones. Acotada,
+        // porque una fila de nombre y cifra deja de leerse si se estira, y alineada a la
+        // izquierda como el título y los filtros: centrarla la dejaba flotando sola.
+        <Card size="sm" className="max-w-3xl gap-4 px-4">
           <Block
             label={copy.incomeStatement.income}
             total={statement.data.income}
@@ -115,7 +112,8 @@ const IncomeStatementScreen = () => {
 
           <div className="flex items-baseline justify-between gap-3 border-t-2 border-border-strong pt-4">
             <div>
-              <h2 className="text-base font-medium tracking-tight">
+              <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+                <Scale className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 {copy.incomeStatement.result}
               </h2>
               <p className="max-w-[60ch] text-xs text-muted-foreground">

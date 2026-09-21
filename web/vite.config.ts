@@ -3,8 +3,14 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 import { defineConfig } from 'vitest/config'
+import pkg from './package.json' with { type: 'json' }
 
 export default defineConfig({
+  // La versión y el año, para que el pie de página no los repita a mano.
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __BUILD_YEAR__: JSON.stringify(String(new Date().getFullYear())),
+  },
   // tanstackRouter() va antes que react(): al revés, la generación del árbol de rutas
   // y el code splitting fallan en silencio.
   plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss()],

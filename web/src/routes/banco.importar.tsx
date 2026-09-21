@@ -1,6 +1,9 @@
 import { useState, type ChangeEvent } from 'react'
+import { CircleCheck, TableProperties, Upload } from 'lucide-react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
+import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
+import { Card } from '@/components/ui/card'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -89,59 +92,74 @@ const ImportScreen = () => {
         />
       ) : (
         <>
-          <div className="grid gap-4 border-y border-border py-5 sm:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="account">{copy.import.account.label}</Label>
-              <Select value={bankAccountId} onValueChange={chooseAccount}>
-                <SelectTrigger id="account" className="w-full">
-                  <SelectValue placeholder={copy.import.account.label} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(accounts.data ?? []).map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      {account.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <Card className="px-5">
+            <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+              <Upload className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              {copy.import.formTitle}
+            </h2>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="account">{copy.import.account.label}</Label>
+                <Select value={bankAccountId} onValueChange={chooseAccount}>
+                  <SelectTrigger id="account" className="w-full">
+                    <SelectValue placeholder={copy.import.account.label} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(accounts.data ?? []).map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="profile">{copy.import.profile.label}</Label>
+                <Select value={profileId} onValueChange={setProfileId}>
+                  <SelectTrigger id="profile" className="w-full">
+                    <SelectValue placeholder={copy.import.profile.label} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(profiles.data ?? []).map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="file">{copy.import.file.label}</Label>
+                <Input
+                  id="file"
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="file:mr-2 file:text-muted-foreground"
+                  onChange={chooseFile}
+                />
+                <p className="text-xs text-muted-foreground">{copy.import.file.hint}</p>
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="profile">{copy.import.profile.label}</Label>
-              <Select value={profileId} onValueChange={setProfileId}>
-                <SelectTrigger id="profile" className="w-full">
-                  <SelectValue placeholder={copy.import.profile.label} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(profiles.data ?? []).map((profile) => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                disabled={!ready || preview.isPending}
+                onClick={() => {
+                  if (!file) return
+                  preview.mutate(
+                    { file, bankAccountId, profileId },
+                    { onSuccess: (data) => setLines(data.lines) },
+                  )
+                }}
+              >
+                {copy.import.preview}
+              </Button>
             </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="file">{copy.import.file.label}</Label>
-              <Input id="file" type="file" accept=".csv,text/csv" onChange={chooseFile} />
-              <p className="text-xs text-muted-foreground">{copy.import.file.hint}</p>
-            </div>
-          </div>
-
-          <Button
-            size="sm"
-            disabled={!ready || preview.isPending}
-            onClick={() => {
-              if (!file) return
-              preview.mutate(
-                { file, bankAccountId, profileId },
-                { onSuccess: (data) => setLines(data.lines) },
-              )
-            }}
-          >
-            {copy.import.preview}
-          </Button>
+          </Card>
 
           {/* El botón de importar aparece recién después de la vista previa: un perfil mal
               mapeado mete cien líneas torcidas, y revisarlo cuesta menos que deshacerlo. */}
@@ -152,7 +170,13 @@ const ImportScreen = () => {
           {lines && lines.length > 0 ? (
             <div className="space-y-3">
               <div>
-                <h2 className="text-base font-medium tracking-tight">{copy.import.previewTitle}</h2>
+                <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+                  <TableProperties
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  {copy.import.previewTitle}
+                </h2>
                 <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">
                   {copy.import.previewHint}
                 </p>
@@ -161,20 +185,20 @@ const ImportScreen = () => {
                 </p>
               </div>
 
-              <div>
-                <div className="hidden grid-cols-[6rem_1fr_8rem_8rem] gap-2 border-b border-border pb-1 text-xs text-muted-foreground sm:grid">
+              <TableFrame>
+                <FrameHeader className="hidden grid-cols-[6rem_1fr_8rem_8rem] gap-2 sm:grid">
                   <span>{copy.import.columns.date}</span>
                   <span>{copy.import.columns.description}</span>
                   <span>{copy.import.columns.reference}</span>
                   <span className="text-right">{copy.import.columns.amount}</span>
-                </div>
+                </FrameHeader>
 
-                <ul>
+                <ul className="divide-y divide-border">
                   {lines.slice(0, PREVIEW_ROWS).map((line, index) => (
                     <li
                       // eslint-disable-next-line react/no-array-index-key
                       key={index}
-                      className="grid gap-x-2 gap-y-1 border-b border-border py-2 text-sm sm:grid-cols-[6rem_1fr_8rem_8rem] sm:items-baseline"
+                      className={`grid gap-x-2 gap-y-1 ${FRAME_ROW} text-sm sm:grid-cols-[6rem_1fr_8rem_8rem] sm:items-baseline`}
                     >
                       <span className="num text-xs text-muted-foreground">
                         {formatIsoDate(line.date)}
@@ -187,7 +211,7 @@ const ImportScreen = () => {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </TableFrame>
 
               <Button
                 size="sm"
@@ -211,11 +235,16 @@ const ImportScreen = () => {
           ) : null}
 
           {result ? (
-            <div className="border-y border-border py-5">
-              <h2 className="text-base font-medium tracking-tight">{copy.import.result.title}</h2>
+            <Card className="px-5">
+              <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+                <CircleCheck className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                {copy.import.result.title}
+              </h2>
               <p className="mt-1 text-sm">
                 {copy.import.result.imported(result.imported)}
-                {result.duplicated > 0 ? ` · ${copy.import.result.duplicated(result.duplicated)}` : ''}
+                {result.duplicated > 0
+                  ? ` · ${copy.import.result.duplicated(result.duplicated)}`
+                  : ''}
               </p>
               {result.imported === 0 && result.duplicated > 0 ? (
                 <p className="mt-1 max-w-[65ch] text-xs text-muted-foreground">
@@ -226,7 +255,7 @@ const ImportScreen = () => {
               <Button variant="secondary" size="sm" className="mt-3" asChild>
                 <Link to="/banco/conciliacion">{copy.import.result.goToReconciliation}</Link>
               </Button>
-            </div>
+            </Card>
           ) : null}
         </>
       )}

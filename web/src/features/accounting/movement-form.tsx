@@ -79,7 +79,7 @@ export const MovementForm = ({
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="date">{fields.date.label}</Label>
           <Input
@@ -198,7 +198,7 @@ export const MovementForm = ({
 
       {movement ? <p className="text-xs text-muted-foreground">{fields.editNote}</p> : null}
 
-      <div className="flex gap-2">
+      <div className="flex justify-end gap-2">
         <Button type="submit" size="sm" disabled={pending || categoryId === ''}>
           {copy.common.save}
         </Button>

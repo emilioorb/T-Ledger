@@ -37,7 +37,10 @@ const toDomain = (row: GoalRow): Goal =>
       contributions: row.contributions.map((contribution) => ({
         id: contribution.id,
         date: contribution.date,
-        amount: Money.fromMinorUnits(contribution.amountMinor, contribution.currency as CurrencyCode),
+        amount: Money.fromMinorUnits(
+          contribution.amountMinor,
+          contribution.currency as CurrencyCode,
+        ),
       })),
     }),
   )
@@ -49,7 +52,7 @@ export class PrismaGoalRepository implements GoalRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<Goal[]> {
-    const rows = await this.prisma.goal.findMany({
+    const rows = await this.prisma.client.goal.findMany({
       include: WITH_CONTRIBUTIONS,
       orderBy: [{ priority: 'asc' }, { createdAt: 'asc' }],
     })
@@ -57,7 +60,10 @@ export class PrismaGoalRepository implements GoalRepository {
   }
 
   async findById(id: string): Promise<Goal | null> {
-    const row = await this.prisma.goal.findUnique({ where: { id }, include: WITH_CONTRIBUTIONS })
+    const row = await this.prisma.client.goal.findUnique({
+      where: { id },
+      include: WITH_CONTRIBUTIONS,
+    })
     return row ? toDomain(row as GoalRow) : null
   }
 
@@ -72,7 +78,7 @@ export class PrismaGoalRepository implements GoalRepository {
       priority: goal.priority,
       accountCode: goal.accountCode,
     }
-    await this.prisma.goal.upsert({
+    await this.prisma.client.goal.upsert({
       where: { id: goal.id },
       create: { id: goal.id, ...data },
       update: data,
@@ -80,7 +86,7 @@ export class PrismaGoalRepository implements GoalRepository {
   }
 
   async addContribution(goalId: string, contribution: Contribution): Promise<void> {
-    await this.prisma.goalContribution.create({
+    await this.prisma.client.goalContribution.create({
       data: {
         id: contribution.id,
         goalId,
@@ -92,7 +98,7 @@ export class PrismaGoalRepository implements GoalRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    const { count } = await this.prisma.goal.deleteMany({ where: { id } })
+    const { count } = await this.prisma.client.goal.deleteMany({ where: { id } })
     return count > 0
   }
 }

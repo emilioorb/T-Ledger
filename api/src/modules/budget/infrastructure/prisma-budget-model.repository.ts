@@ -48,7 +48,7 @@ export class PrismaBudgetModelRepository implements BudgetModelRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<BudgetModel[]> {
-    const rows = await this.prisma.budgetModel.findMany({
+    const rows = await this.prisma.client.budgetModel.findMany({
       include: WITH_BUCKETS,
       orderBy: { createdAt: 'asc' },
     })
@@ -56,12 +56,15 @@ export class PrismaBudgetModelRepository implements BudgetModelRepository {
   }
 
   async findById(id: string): Promise<BudgetModel | null> {
-    const row = await this.prisma.budgetModel.findUnique({ where: { id }, include: WITH_BUCKETS })
+    const row = await this.prisma.client.budgetModel.findUnique({
+      where: { id },
+      include: WITH_BUCKETS,
+    })
     return row ? toDomain(row as ModelRow) : null
   }
 
   async findActive(): Promise<BudgetModel | null> {
-    const row = await this.prisma.budgetModel.findFirst({
+    const row = await this.prisma.client.budgetModel.findFirst({
       where: { active: true },
       include: WITH_BUCKETS,
     })
@@ -77,19 +80,20 @@ export class PrismaBudgetModelRepository implements BudgetModelRepository {
   ): Promise<void> {
     const codesOf = new Map(mapping.map((entry) => [entry.bucketId, [...entry.accountCodes]]))
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.withTransaction(async () => {
+      const db = this.prisma.client
       if (active) {
-        await tx.budgetModel.updateMany({ where: { active: true }, data: { active: false } })
+        await db.budgetModel.updateMany({ where: { active: true }, data: { active: false } })
       }
 
-      await tx.budgetModel.upsert({
+      await db.budgetModel.upsert({
         where: { id: model.id },
         create: { id: model.id, name: model.name, active },
         update: { name: model.name, active },
       })
 
-      await tx.budgetBucket.deleteMany({ where: { modelId: model.id } })
-      await tx.budgetBucket.createMany({
+      await db.budgetBucket.deleteMany({ where: { modelId: model.id } })
+      await db.budgetBucket.createMany({
         data: model.buckets.map((bucket, index) => ({
           modelId: model.id,
           bucketKey: bucket.id,
@@ -104,7 +108,7 @@ export class PrismaBudgetModelRepository implements BudgetModelRepository {
   }
 
   async mappingFor(modelId: string): Promise<BucketAccountCodes[]> {
-    const rows = await this.prisma.budgetBucket.findMany({
+    const rows = await this.prisma.client.budgetBucket.findMany({
       where: { modelId },
       orderBy: { sortOrder: 'asc' },
     })

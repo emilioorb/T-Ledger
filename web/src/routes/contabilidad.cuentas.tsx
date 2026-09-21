@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { FolderTree, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { FormDialog } from '@/components/form-dialog'
+import { TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -45,22 +47,26 @@ const AccountsScreen = () => {
         </Button>
       </header>
 
-      {editing ? (
-        <div className="border-y border-border py-5">
-          <h2 className="mb-4 text-base font-medium tracking-tight">
-            {editing.account ? copy.accounts.form.editTitle : copy.accounts.form.createTitle}
-          </h2>
+      <FormDialog
+        icon={FolderTree}
+        open={editing !== null}
+        className="sm:max-w-2xl"
+        title={editing?.account ? copy.accounts.form.editTitle : copy.accounts.form.createTitle}
+        onOpenChange={(open) => !open && setEditing(null)}
+      >
+        {editing ? (
           <AccountForm
+            key={editing.account?.code ?? 'nueva'}
             account={editing.account}
             accounts={accounts.data?.data ?? []}
             pending={save.isPending}
             onSubmit={submit}
             onCancel={() => setEditing(null)}
           />
-        </div>
-      ) : null}
+        ) : null}
+      </FormDialog>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <CurrencyField value={currency} onChange={setCurrency} />
         <DateField id="at" label={copy.common.at} value={at} onChange={setAt} />
       </ControlBar>
@@ -87,11 +93,13 @@ const AccountsScreen = () => {
           description={copy.accounts.empty.description}
         />
       ) : (
-        <AccountsTree
-          nodes={tree.data}
-          accounts={accounts.data.data}
-          onEdit={(account) => setEditing({ account })}
-        />
+        <TableFrame>
+          <AccountsTree
+            nodes={tree.data}
+            accounts={accounts.data.data}
+            onEdit={(account) => setEditing({ account })}
+          />
+        </TableFrame>
       )}
     </section>
   )

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
+import { FrameHeader, TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import {
   AlertDialog,
@@ -25,9 +26,7 @@ import { cn } from '@/lib/utils'
 const previousOf = (period: string): string => {
   const [year, month] = period.split('-').map(Number)
   if (!year || !month) return period
-  return month === 1
-    ? `${year - 1}-12`
-    : `${year}-${String(month - 1).padStart(2, '0')}`
+  return month === 1 ? `${year - 1}-12` : `${year}-${String(month - 1).padStart(2, '0')}`
 }
 
 const blockerLabel = (code: string): string =>
@@ -41,109 +40,109 @@ interface RowProps {
   onReopen: () => void
 }
 
-// Cada mes es un bloque, no una fila de celdas: lo que importa de un mes es qué le falta
-// para cerrar, y eso es una lista, no un valor.
-const PeriodBlock = ({ summary, onClose, onReopen }: RowProps) => {
-  const isClosed = summary.status === 'CLOSED'
+// Encabezado y filas comparten la plantilla. Bajo lg la fila se parte en bloques y cada
+// celda lleva su etiqueta: una tabla de siete columnas no cabe en un teléfono.
+const COLS = 'lg:grid-cols-[5.5rem_6rem_5rem_9rem_7rem_1fr_auto] lg:items-baseline lg:gap-x-4'
+
+// Qué falta para cerrar, escrito: es la columna que decide si el botón sirve, y decirlo
+// «nada» es tan informativo como decir qué bloquea.
+const Blockers = ({ summary }: { summary: PeriodSummary }) => {
   const blockers = summary.blockers.filter((blocker) => blocker.code !== 'ALREADY_CLOSED')
+  if (blockers.length === 0) {
+    return <span className="text-muted-foreground">{copy.closing.nothingBlocking}</span>
+  }
+
+  return (
+    <ul className="space-y-1">
+      {blockers.map((blocker) => (
+        <li key={blocker.code}>
+          <span className="text-warning">{blockerLabel(blocker.code)}</span>
+          {blocker.code === 'UNPOSTED_MOVEMENTS' ? (
+            <>
+              {' · '}
+              <Link
+                to="/contabilidad/movimientos"
+                search={{ from: `${summary.period}-01`, to: monthEnd(`${summary.period}-01`) }}
+                className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
+                {copy.closing.goToUnposted}
+              </Link>
+            </>
+          ) : null}
+          {blocker.code === 'TRIAL_BALANCE_UNBALANCED' ? (
+            <>
+              {' · '}
+              <Link
+                to="/contabilidad/comprobacion"
+                className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
+                {copy.closing.goToTrialBalance}
+              </Link>
+            </>
+          ) : null}
+          {blocker.code === 'PREVIOUS_PERIOD_OPEN' ? (
+            <span className="text-muted-foreground">
+              {' · '}
+              {copy.closing.closePreviousFirst(formatIsoMonth(previousOf(summary.period)))}
+            </span>
+          ) : null}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// La etiqueta solo existe bajo lg: con las columnas a la vista, repetirla sería ruido.
+const Cell = ({ label, children }: { label: string; children: ReactNode }) => (
+  <span className="flex items-baseline justify-between gap-3 lg:contents">
+    <span className="text-xs text-muted-foreground lg:hidden">{label}</span>
+    {children}
+  </span>
+)
+
+const PeriodRow = ({ summary, onClose, onReopen }: RowProps) => {
+  const isClosed = summary.status === 'CLOSED'
   const canClose = !isClosed && summary.blockers.length === 0
 
   return (
-    <li className="grid gap-3 border-b border-border py-4 sm:grid-cols-[8rem_1fr_auto] sm:items-start">
-      <div>
-        <p className="num text-sm font-medium">{formatIsoMonth(summary.period)}</p>
-        <p
-          className={cn(
-            'mt-0.5 text-xs',
-            isClosed ? 'text-muted-foreground' : canClose ? 'text-positive' : 'text-muted-foreground',
-          )}
-        >
-          {isClosed
-            ? copy.closing.statuses.CLOSED
-            : canClose
-              ? copy.closing.ready
-              : copy.closing.statuses.OPEN}
-        </p>
-      </div>
+    <li className={cn('grid gap-x-4 gap-y-1.5 px-3 py-2.5 text-sm', COLS)}>
+      <span className="num font-medium">{formatIsoMonth(summary.period)}</span>
 
-      <div className="min-w-0 space-y-1.5">
-        <dl className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-          <div className="flex gap-1.5">
-            <dt>{copy.closing.columns.entries}</dt>
-            <dd className="num text-foreground">{summary.entryCount}</dd>
-          </div>
-          <div className="flex gap-1.5">
-            <dt>{copy.closing.columns.unposted}</dt>
-            <dd
-              className={cn(
-                'num',
-                summary.unpostedMovementCount > 0 ? 'text-warning' : 'text-foreground',
-              )}
-            >
-              {summary.unpostedMovementCount}
-            </dd>
-          </div>
-          <div className="flex gap-1.5">
-            <dt>{copy.closing.columns.balanced}</dt>
-            <dd className={summary.trialBalanceBalances ? 'text-foreground' : 'text-negative'}>
-              {summary.trialBalanceBalances ? copy.closing.balanced : copy.closing.unbalanced}
-            </dd>
-          </div>
-        </dl>
+      <span className={isClosed ? 'text-muted-foreground' : 'text-foreground'}>
+        {isClosed ? copy.closing.statuses.CLOSED : copy.closing.statuses.OPEN}
+      </span>
 
-        {/* Todos los bloqueos, no solo el primero: descubrirlos de a uno es tres viajes
-            en vez de uno. */}
-        {blockers.length > 0 ? (
-          <ul className="space-y-1">
-            {blockers.map((blocker) => (
-              <li key={blocker.code} className="text-sm">
-                <span className="text-warning">{blockerLabel(blocker.code)}</span>
-                {blocker.code === 'UNPOSTED_MOVEMENTS' ? (
-                  <>
-                    {' · '}
-                    <Link
-                      to="/contabilidad/movimientos"
-                      search={{ from: `${summary.period}-01`, to: monthEnd(`${summary.period}-01`) }}
-                      className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                    >
-                      {copy.closing.goToUnposted}
-                    </Link>
-                  </>
-                ) : null}
-                {blocker.code === 'TRIAL_BALANCE_UNBALANCED' ? (
-                  <>
-                    {' · '}
-                    <Link
-                      to="/contabilidad/comprobacion"
-                      className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                    >
-                      {copy.closing.goToTrialBalance}
-                    </Link>
-                  </>
-                ) : null}
-                {blocker.code === 'PREVIOUS_PERIOD_OPEN' ? (
-                  <span className="text-muted-foreground">
-                    {' · '}
-                    {copy.closing.closePreviousFirst(formatIsoMonth(previousOf(summary.period)))}
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
+      <Cell label={copy.closing.columns.entries}>
+        <span className="num">{summary.entryCount}</span>
+      </Cell>
 
-      <div className="flex gap-2">
+      <Cell label={copy.closing.columns.unposted}>
+        <span className={cn('num', summary.unpostedMovementCount > 0 && 'text-warning')}>
+          {summary.unpostedMovementCount}
+        </span>
+      </Cell>
+
+      <Cell label={copy.closing.columns.balanced}>
+        <span className={summary.trialBalanceBalances ? undefined : 'text-negative'}>
+          {summary.trialBalanceBalances ? copy.closing.balanced : copy.closing.unbalanced}
+        </span>
+      </Cell>
+
+      <span className="min-w-0 text-xs lg:text-sm">
+        <Blockers summary={summary} />
+      </span>
+
+      <span className="justify-self-end">
         {isClosed ? (
-          <Button variant="secondary" size="sm" onClick={onReopen}>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onReopen}>
             {copy.closing.reopen(formatIsoMonth(summary.period))}
           </Button>
         ) : (
-          <Button size="sm" disabled={!canClose} onClick={onClose}>
+          <Button size="sm" className="h-7 px-2 text-xs" disabled={!canClose} onClick={onClose}>
             {copy.closing.close(formatIsoMonth(summary.period))}
           </Button>
         )}
-      </div>
+      </span>
     </li>
   )
 }
@@ -188,16 +187,28 @@ const ClosingScreen = () => {
       ) : items.length === 0 ? (
         <EmptyState title={copy.closing.empty.title} description={copy.closing.empty.description} />
       ) : (
-        <ul>
-          {items.map((summary) => (
-            <PeriodBlock
-              key={summary.period}
-              summary={summary}
-              onClose={() => setClosing(summary)}
-              onReopen={() => setReopening(summary)}
-            />
-          ))}
-        </ul>
+        <TableFrame>
+          <FrameHeader className={cn('hidden gap-x-4 lg:grid', COLS)}>
+            <span>{copy.closing.columns.period}</span>
+            <span>{copy.closing.columns.status}</span>
+            <span>{copy.closing.columns.entries}</span>
+            <span>{copy.closing.columns.unposted}</span>
+            <span>{copy.closing.columns.balanced}</span>
+            <span>{copy.closing.columns.blockers}</span>
+            <span />
+          </FrameHeader>
+
+          <ul className="divide-y divide-border">
+            {items.map((summary) => (
+              <PeriodRow
+                key={summary.period}
+                summary={summary}
+                onClose={() => setClosing(summary)}
+                onReopen={() => setReopening(summary)}
+              />
+            ))}
+          </ul>
+        </TableFrame>
       )}
 
       <AlertDialog open={closing !== null} onOpenChange={(open) => !open && setClosing(null)}>

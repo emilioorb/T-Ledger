@@ -1,50 +1,78 @@
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatIsoDate } from '@/lib/dates'
+import { formatLongDate } from '@/lib/dates'
 import { copy } from './copy'
 import { useLatestRates } from './use-exchange-rates'
 
-const Par = ({ label, value }: { label: string; value: string }) => (
-  <span className="whitespace-nowrap">
-    <span className="text-muted-foreground">{label} </span>
-    <span className="num num-right font-medium">{value}</span>
-  </span>
-)
-
-// Va en la cabecera, no en una tarjeta de métrica: la fila de tarjetas está prohibida.
+// En la cabecera compiten cuatro cosas por el mismo renglón: la miga, los atajos y esto. Por
+// eso el indicador se reduce a lo único que se mira de reojo —las dos cifras del día— y todo
+// lo que las explica vive en el tooltip: qué es cada una, de cuándo es y de dónde salió.
 export const ExchangeRateIndicator = () => {
   const { data, isPending } = useLatestRates()
 
   if (isPending) {
-    return <Skeleton className="h-5 w-44" aria-label={copy.loading} />
+    return <Skeleton className="h-6 w-28" aria-label={copy.loading} />
   }
 
   if (!data || (!data.buy && !data.sell)) {
     return <span className="text-xs text-muted-foreground">{copy.empty}</span>
   }
 
-  return (
-    <div className="flex items-baseline gap-3 text-xs">
-      <span className="hidden text-muted-foreground sm:inline">{copy.title}</span>
-      {data.buy ? <Par label={copy.buy} value={data.buy.value} /> : null}
-      {data.sell ? <Par label={copy.sell} value={data.sell.value} /> : null}
+  const publishedAt = data.buy?.publishedAt ?? data.sell?.publishedAt ?? ''
+  // Las dos cifras en un renglón y la fecha en el suyo: juntas, «· Al» quedaba colgando al
+  // final de la línea y la fecha empezaba sola abajo.
+  const rates = [
+    data.buy ? `${copy.buy} ₡${data.buy.value}` : null,
+    data.sell ? `${copy.sell} ₡${data.sell.value}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  const when = publishedAt ? copy.publishedAt(formatLongDate(publishedAt)) : ''
 
-      {data.stale ? (
-        // Advertencia, no error: el sistema funciona, el dato es el que está viejo.
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge variant="outline" className="border-warning text-warning">
-              {copy.stale}
-            </Badge>
-          </TooltipTrigger>
-          <TooltipContent>{copy.staleHint}</TooltipContent>
-        </Tooltip>
-      ) : (
-        <span className="num num-right hidden text-muted-foreground md:inline">
-          {copy.publishedAt(formatIsoDate(data.buy?.publishedAt ?? data.sell?.publishedAt ?? ''))}
-        </span>
-      )}
-    </div>
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors duration-150 ease-out hover:bg-accent"
+          aria-label={`${copy.title}. ${rates}. ${when}`}
+        >
+          <span className="text-muted-foreground">{copy.unit}</span>
+          {data.buy ? <span className="num">{data.buy.value}</span> : null}
+          {data.buy && data.sell ? (
+            <span className="h-3 w-px shrink-0 bg-border" aria-hidden="true" />
+          ) : null}
+          {data.sell ? <span className="num text-muted-foreground">{data.sell.value}</span> : null}
+
+          {/* El punto reemplaza a la etiqueta «Sin actualizar»: ocupa lo que ocupa un punto y
+              dice lo mismo, porque lo que explica el estado es el tooltip. */}
+          {data.stale ? (
+            <span className="size-1.5 shrink-0 rounded-full bg-warning" aria-hidden="true" />
+          ) : null}
+        </div>
+      </TooltipTrigger>
+      {/* El tooltip es una fila por defecto: acá son dos párrafos y un pie, así que se
+          endereza. La fuente va separada por una línea porque no es parte del dato, es
+          de dónde salió. */}
+      <TooltipContent
+        sideOffset={8}
+        collisionPadding={12}
+        className="max-w-60 flex-col items-stretch gap-0 px-0 py-0"
+      >
+        <p className="px-3 py-2">{rates}</p>
+
+        {when ? (
+          <p className="border-t border-background/20 px-3 py-1.5 text-center text-background/70">
+            {when}
+          </p>
+        ) : null}
+
+        {data.stale ? (
+          <p className="border-t border-background/20 px-3 py-1.5 font-medium">{copy.staleHint}</p>
+        ) : null}
+        <p className="border-t border-background/20 px-3 py-1.5 text-center text-background/70">
+          {copy.source}
+        </p>
+      </TooltipContent>
+    </Tooltip>
   )
 }

@@ -5,15 +5,21 @@ import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { SemanticValidationError } from '../../../shared/http/api-error.js'
 import { toMoney } from '../../../shared/http/money.schema.js'
+import { BucketGuard } from '../../budget/application/bucket-guard.js'
 import { Debt } from '../domain/debt.js'
 import { DEBT_REPOSITORY, type DebtRepository } from '../domain/debt-repository.port.js'
 import type { CreateDebtInput } from '../infrastructure/debt.schemas.js'
 
 @Injectable()
 export class CreateDebtUseCase {
-  constructor(@Inject(DEBT_REPOSITORY) private readonly debts: DebtRepository) {}
+  constructor(
+    @Inject(DEBT_REPOSITORY) private readonly debts: DebtRepository,
+    private readonly buckets: BucketGuard,
+  ) {}
 
   async execute(input: CreateDebtInput): Promise<Debt> {
+    await this.buckets.assertExists(input.budgetBucket)
+
     const rate = InterestRate.create(new Decimal(input.annualRate), input.compounding)
     if (isErr(rate)) throw new SemanticValidationError(rate.error.message)
 

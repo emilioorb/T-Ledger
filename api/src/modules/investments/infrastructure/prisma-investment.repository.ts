@@ -5,7 +5,11 @@ import { InterestRate, type Compounding } from '../../../shared/kernel/interest-
 import { Money } from '../../../shared/kernel/money.js'
 import { unwrap } from '../../../shared/kernel/result.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
-import { Investment, type InvestmentContribution, type InvestmentKind } from '../domain/investment.js'
+import {
+  Investment,
+  type InvestmentContribution,
+  type InvestmentKind,
+} from '../domain/investment.js'
 import type { InvestmentRepository } from '../domain/investment-repository.port.js'
 
 interface ContributionRow {
@@ -45,7 +49,10 @@ const toDomain = (row: InvestmentRow): Investment =>
       contributions: row.contributions.map((contribution) => ({
         id: contribution.id,
         date: contribution.date,
-        amount: Money.fromMinorUnits(contribution.amountMinor, contribution.currency as CurrencyCode),
+        amount: Money.fromMinorUnits(
+          contribution.amountMinor,
+          contribution.currency as CurrencyCode,
+        ),
       })),
     }),
   )
@@ -57,7 +64,7 @@ export class PrismaInvestmentRepository implements InvestmentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<Investment[]> {
-    const rows = await this.prisma.investment.findMany({
+    const rows = await this.prisma.client.investment.findMany({
       include: WITH_CONTRIBUTIONS,
       orderBy: { createdAt: 'asc' },
     })
@@ -65,7 +72,7 @@ export class PrismaInvestmentRepository implements InvestmentRepository {
   }
 
   async findById(id: string): Promise<Investment | null> {
-    const row = await this.prisma.investment.findUnique({
+    const row = await this.prisma.client.investment.findUnique({
       where: { id },
       include: WITH_CONTRIBUTIONS,
     })
@@ -84,18 +91,15 @@ export class PrismaInvestmentRepository implements InvestmentRepository {
       maturesAt: investment.maturesAt,
       accountCode: investment.accountCode,
     }
-    await this.prisma.investment.upsert({
+    await this.prisma.client.investment.upsert({
       where: { id: investment.id },
       create: { id: investment.id, ...data },
       update: data,
     })
   }
 
-  async addContribution(
-    investmentId: string,
-    contribution: InvestmentContribution,
-  ): Promise<void> {
-    await this.prisma.investmentContribution.create({
+  async addContribution(investmentId: string, contribution: InvestmentContribution): Promise<void> {
+    await this.prisma.client.investmentContribution.create({
       data: {
         id: contribution.id,
         investmentId,
@@ -107,7 +111,7 @@ export class PrismaInvestmentRepository implements InvestmentRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    const { count } = await this.prisma.investment.deleteMany({ where: { id } })
+    const { count } = await this.prisma.client.investment.deleteMany({ where: { id } })
     return count > 0
   }
 }

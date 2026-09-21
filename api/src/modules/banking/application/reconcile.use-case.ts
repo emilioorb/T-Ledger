@@ -20,10 +20,14 @@ import { ManageBankAccountsUseCase } from './manage-bank-accounts.use-case.js'
 
 export interface Reconciliation {
   readonly bankAccountId: string
-  // El saldo de la cuenta contable a la fecha final del rango.
-  readonly ledgerBalance: Money
-  // La suma de las líneas importadas del rango.
-  readonly statementBalance: Money
+  // Lo que se movió en la cuenta contable dentro del rango: débitos menos créditos.
+  readonly ledgerMovement: Money
+  // Lo que el banco reportó dentro del mismo rango.
+  readonly statementMovement: Money
+  // Las dos cosas miden el mismo período. Antes el saldo contable venía acumulado desde el
+  // inicio de los tiempos y el del extracto acotado al rango: conciliar octubre con todo
+  // perfecto daba como diferencia el saldo de setiembre, y no había saldo inicial que lo
+  // compensara. El único test corría sobre una base recién creada, el caso donde no se ve.
   readonly difference: Money
   readonly lines: StoredBankLine[]
   // La suma de TODAS las pendientes del rango, no solo las de la página: es lo que permite
@@ -34,8 +38,6 @@ export interface Reconciliation {
   readonly suggestions: MatchSuggestion[]
   readonly totalItems: number
 }
-
-const ALL = 1000
 
 @Injectable()
 export class ReconcileUseCase {
@@ -55,40 +57,38 @@ export class ReconcileUseCase {
     const account = await this.accounts.find(bankAccountId)
     const currency = account.currency
 
-    const [pending, allLines, totals, movementPage] = await Promise.all([
+    const [pending, allLines, totals, movementsOfAccount] = await Promise.all([
       this.statements.pendingLines(bankAccountId, range, page, pageSize),
       this.statements.allLines(bankAccountId, range),
-      this.journal.totalsUpTo(currency, range.to),
-      this.movements.findAll({ status: 'ACTIVE', range }, 1, ALL),
+      this.journal.totalsByAccount(currency, range),
+      this.movements.findByPaymentAccount(account.accountCode, range),
     ])
 
-    // El saldo contable de una cuenta de activo es débitos menos créditos.
+    // Lo que entró menos lo que salió de una cuenta de activo son sus débitos menos sus créditos.
     const account_ = totals.find((total) => total.accountCode === account.accountCode)
-    const ledgerBalance = Money.fromMinorUnits(
+    const ledgerMovement = Money.fromMinorUnits(
       account_ ? account_.debits - account_.credits : 0n,
       currency,
     )
 
-    const statementBalance = allLines.reduce(
+    const statementMovement = allLines.reduce(
       (acc, line) => unwrap(acc.add(line.amount)),
       Money.zero(currency),
     )
 
-    const candidates = movementPage.items
-      .filter((movement) => movement.paymentAccountCode === account.accountCode)
-      .map((movement) => ({
-        id: movement.id,
-        date: movement.date,
-        amount: movement.amount,
-        receiptUrl: movement.receiptUrl,
-        kind: movement.kind,
-      }))
+    const candidates = movementsOfAccount.map((movement) => ({
+      id: movement.id,
+      date: movement.date,
+      amount: movement.amount,
+      receiptUrl: movement.receiptUrl,
+      kind: movement.kind,
+    }))
 
     return {
       bankAccountId,
-      ledgerBalance,
-      statementBalance,
-      difference: unwrap(ledgerBalance.subtract(statementBalance)),
+      ledgerMovement,
+      statementMovement,
+      difference: unwrap(ledgerMovement.subtract(statementMovement)),
       lines: pending.items,
       pendingTotal: allLines
         .filter((line) => line.status === 'PENDING')

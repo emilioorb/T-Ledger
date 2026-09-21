@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Receipt } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { copy } from '@/features/debts/copy'
 import { DebtForm } from '@/features/debts/debt-form'
@@ -23,7 +24,8 @@ const EditDebtScreen = () => {
     )
   }
 
-  if (debt.isError || !debt.data) return (
+  if (debt.isError || !debt.data)
+    return (
       <ErrorState
         title={copy.error.title}
         description={copy.error.description}
@@ -37,7 +39,10 @@ const EditDebtScreen = () => {
   return (
     <section className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">{copy.form.editTitle}</h1>
+        <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+          <Receipt className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+          {copy.form.editTitle}
+        </h1>
         <p className="mt-0.5 text-sm text-muted-foreground">{data.name}</p>
       </div>
 

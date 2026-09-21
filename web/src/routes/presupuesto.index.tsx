@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { Coins, PiggyBank, Receipt, Wallet } from 'lucide-react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { FormDialog } from '@/components/form-dialog'
@@ -180,6 +181,7 @@ const BudgetScreen = () => {
               Cuando la respuesta es un estado, el héroe es la frase; cuando es un monto, la cifra. */}
           <StatGrid className="lg:grid-cols-3">
             <StatCard
+              icon={Wallet}
               className="sm:col-span-2 lg:col-span-3"
               label={
                 overBucket ? (
@@ -198,17 +200,18 @@ const BudgetScreen = () => {
                   className="block text-left text-3xl tracking-tight"
                 />
               ) : (
-                <p className="text-2xl tracking-tight">{copy.budget.noOverBucket}</p>
+                <p className="text-3xl tracking-tight">{copy.budget.noOverBucket}</p>
               )}
             </StatCard>
 
-            <StatCard label={copy.budget.income}>
-              <Amount money={evaluation.data.income} className="block text-left text-lg" />
+            <StatCard icon={Coins} label={copy.budget.income}>
+              <Amount money={evaluation.data.income} className="block text-left text-2xl" />
             </StatCard>
-            <StatCard label={copy.budget.consumed}>
-              <Amount money={evaluation.data.totalConsumed} className="block text-left text-lg" />
+            <StatCard icon={Receipt} label={copy.budget.consumed}>
+              <Amount money={evaluation.data.totalConsumed} className="block text-left text-2xl" />
             </StatCard>
             <StatCard
+              icon={PiggyBank}
               label={
                 <Hint text={copy.budget.surplusHint}>
                   <span>{copy.budget.surplus}</span>
@@ -218,7 +221,7 @@ const BudgetScreen = () => {
               <Amount
                 money={evaluation.data.surplus}
                 tone={evaluation.data.surplus.minorUnits.startsWith('-') ? 'alert' : 'plain'}
-                className="block text-left text-lg"
+                className="block text-left text-2xl"
               />
             </StatCard>
           </StatGrid>
@@ -236,6 +239,7 @@ const BudgetScreen = () => {
           ) : null}
 
           <FormDialog
+            icon={Wallet}
             open={editingIncome}
             title={copy.budget.editIncome}
             description={copy.budget.incomeHint}

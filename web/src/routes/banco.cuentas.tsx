@@ -1,7 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { Banknote, FileSpreadsheet, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { FormDialog } from '@/components/form-dialog'
+import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,6 +32,18 @@ import { cn } from '@/lib/utils'
 
 const CURRENCIES: CurrencyCode[] = ['CRC', 'USD']
 const NO_PROFILE = 'none'
+
+// Encabezado y filas comparten la plantilla. Bajo sm cada celda recupera su etiqueta y la
+// fila se lee como bloque.
+const ACCOUNT_COLS = 'sm:grid-cols-[1fr_14rem_5rem_10rem_4.5rem] sm:items-baseline'
+const PROFILE_COLS = 'sm:grid-cols-[1fr_7rem_11rem_7rem_4.5rem] sm:items-baseline'
+
+const Cell = ({ label, children }: { label: string; children: ReactNode }) => (
+  <span className="flex items-baseline justify-between gap-3 sm:contents">
+    <span className="text-xs text-muted-foreground sm:hidden">{label}</span>
+    {children}
+  </span>
+)
 
 interface AccountFormProps {
   account?: BankAccount
@@ -69,7 +84,7 @@ const AccountForm = ({
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="ba-name">{fields.name.label}</Label>
           <Input id="ba-name" value={name} required onChange={(e) => setName(e.target.value)} />
@@ -130,17 +145,16 @@ const AccountForm = ({
         </div>
       </div>
 
-      <Label className="flex items-center gap-2 text-sm font-normal">
-        <input
-          type="checkbox"
+      <Label htmlFor="ba-active" className="flex items-center gap-2 text-sm font-normal">
+        <Checkbox
+          id="ba-active"
           checked={active}
-          onChange={(e) => setActive(e.target.checked)}
-          className="size-4 accent-foreground"
+          onCheckedChange={(next) => setActive(next === true)}
         />
         {fields.active.label}
       </Label>
 
-      <div className="flex gap-2">
+      <div className="flex justify-end gap-2">
         <Button type="submit" size="sm" disabled={pending || accountCode === ''}>
           {fields.submit}
         </Button>
@@ -181,13 +195,17 @@ const ProfileForm = ({
   onSubmit: (values: ImportProfileInput) => void
   onCancel: () => void
 }) => {
-  const [values, setValues] = useState<ImportProfileInput>(
-    profile ? { ...profile } : emptyProfile,
-  )
+  const [values, setValues] = useState<ImportProfileInput>(profile ? { ...profile } : emptyProfile)
   const fields = copy.profiles.form
 
   const column = (
-    key: 'dateColumn' | 'descriptionColumn' | 'referenceColumn' | 'amountColumn' | 'debitColumn' | 'creditColumn',
+    key:
+      | 'dateColumn'
+      | 'descriptionColumn'
+      | 'referenceColumn'
+      | 'amountColumn'
+      | 'debitColumn'
+      | 'creditColumn',
     label: string,
   ) => (
     <div className="space-y-1.5">
@@ -201,9 +219,10 @@ const ProfileForm = ({
         onChange={(e) =>
           setValues({
             ...values,
-            [key]: key === 'dateColumn' || key === 'descriptionColumn'
-              ? Number(e.target.value)
-              : numberOrNull(e.target.value),
+            [key]:
+              key === 'dateColumn' || key === 'descriptionColumn'
+                ? Number(e.target.value)
+                : numberOrNull(e.target.value),
           })
         }
       />
@@ -220,7 +239,7 @@ const ProfileForm = ({
     >
       <p className="max-w-[65ch] text-xs text-muted-foreground">{fields.columnsHint}</p>
 
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label htmlFor="profile-name">{fields.name.label}</Label>
           <Input
@@ -325,14 +344,12 @@ const ProfileForm = ({
             id="profile-thousands"
             value={values.thousandsSeparator ?? ''}
             maxLength={1}
-            onChange={(e) =>
-              setValues({ ...values, thousandsSeparator: e.target.value || null })
-            }
+            onChange={(e) => setValues({ ...values, thousandsSeparator: e.target.value || null })}
           />
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex justify-end gap-2">
         <Button type="submit" size="sm" disabled={pending}>
           {fields.submit}
         </Button>
@@ -359,9 +376,12 @@ const BankAccountsScreen = () => {
   const all = accounts.data?.data ?? []
   const parents = new Set(all.map((account) => account.parentCode).filter(Boolean))
   const postable = all
-    .filter((account) => account.active && !parents.has(account.code) && account.accountClass === 'ASSET')
+    .filter(
+      (account) => account.active && !parents.has(account.code) && account.accountClass === 'ASSET',
+    )
     .map((account) => ({ code: account.code, name: account.name }))
   const profileName = new Map((profiles.data ?? []).map((profile) => [profile.id, profile.name]))
+  const accountName = new Map(postable.map((account) => [account.code, account.name]))
 
   return (
     <section className="space-y-8">
@@ -377,12 +397,18 @@ const BankAccountsScreen = () => {
           </Button>
         </header>
 
-        {editingAccount ? (
-          <div className="border-y border-border py-5">
-            <h2 className="mb-4 text-base font-medium tracking-tight">
-              {editingAccount.account ? copy.accounts.form.editTitle : copy.accounts.form.createTitle}
-            </h2>
+        <FormDialog
+          icon={Banknote}
+          open={editingAccount !== null}
+          className="sm:max-w-2xl"
+          title={
+            editingAccount?.account ? copy.accounts.form.editTitle : copy.accounts.form.createTitle
+          }
+          onOpenChange={(open) => !open && setEditingAccount(null)}
+        >
+          {editingAccount ? (
             <AccountForm
+              key={editingAccount.account?.id ?? 'nueva'}
               account={editingAccount.account}
               profiles={profiles.data ?? []}
               postable={postable}
@@ -395,8 +421,8 @@ const BankAccountsScreen = () => {
               }
               onCancel={() => setEditingAccount(null)}
             />
-          </div>
-        ) : null}
+          ) : null}
+        </FormDialog>
 
         {bankAccounts.isPending ? (
           <div className="space-y-2" role="status" aria-label={copy.common.loading}>
@@ -422,41 +448,76 @@ const BankAccountsScreen = () => {
             }
           />
         ) : (
-          <ul>
-            {bankAccounts.data.map((account) => (
-              <li
-                key={account.id}
-                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border py-3"
-              >
-                <span className={cn('text-sm', !account.active && 'text-muted-foreground')}>
-                  {account.name}
-                  {!account.active ? ` · ${copy.accounts.inactive}` : ''}
-                </span>
-                <span className="flex items-baseline gap-4 text-xs text-muted-foreground">
-                  <span>
-                    <span className="num">{account.accountCode}</span> · {account.currency}
+          <TableFrame>
+            <FrameHeader className={cn('hidden gap-x-4 sm:grid', ACCOUNT_COLS)}>
+              <span>{copy.accounts.columns.name}</span>
+              <span>{copy.accounts.columns.account}</span>
+              <span>{copy.accounts.columns.currency}</span>
+              <span>{copy.accounts.columns.profile}</span>
+              <span />
+            </FrameHeader>
+
+            <ul className="divide-y divide-border">
+              {bankAccounts.data.map((account) => (
+                <li
+                  key={account.id}
+                  className={cn('grid gap-x-4 gap-y-1.5 text-sm', FRAME_ROW, ACCOUNT_COLS)}
+                >
+                  <span className={cn(!account.active && 'text-muted-foreground')}>
+                    {account.name}
+                    {!account.active ? ` · ${copy.accounts.inactive}` : ''}
                   </span>
-                  <span>{account.profileId ? profileName.get(account.profileId) : copy.accounts.noProfile}</span>
+
+                  <Cell label={copy.accounts.columns.account}>
+                    <span className="min-w-0 truncate text-xs sm:text-sm">
+                      <span className="num text-muted-foreground">{account.accountCode}</span>{' '}
+                      {accountName.get(account.accountCode)}
+                    </span>
+                  </Cell>
+
+                  <Cell label={copy.accounts.columns.currency}>
+                    <span className="num text-xs sm:text-sm">{account.currency}</span>
+                  </Cell>
+
+                  <Cell label={copy.accounts.columns.profile}>
+                    <span
+                      className={cn(
+                        'truncate text-xs sm:text-sm',
+                        account.profileId ? undefined : 'text-muted-foreground',
+                      )}
+                    >
+                      {account.profileId
+                        ? profileName.get(account.profileId)
+                        : copy.accounts.noProfile}
+                    </span>
+                  </Cell>
+
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    className="-mr-2 h-7 justify-self-end px-2 text-xs text-muted-foreground hover:text-foreground"
                     aria-label={copy.accounts.edit(account.name)}
                     onClick={() => setEditingAccount({ account })}
                   >
-                    {copy.accounts.form.editTitle}
+                    {copy.common.edit}
                   </Button>
-                </span>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </TableFrame>
         )}
       </div>
 
       <div className="space-y-5">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-[60ch]">
-            <h2 className="text-base font-medium tracking-tight">{copy.profiles.title}</h2>
+            <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+              <FileSpreadsheet
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+              {copy.profiles.title}
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">{copy.profiles.description}</p>
           </div>
           <Button variant="secondary" size="sm" onClick={() => setEditingProfile({})}>
@@ -464,11 +525,16 @@ const BankAccountsScreen = () => {
           </Button>
         </header>
 
-        {editingProfile ? (
-          <div className="border-y border-border py-5">
-            <h3 className="mb-4 text-sm font-medium tracking-tight">
-              {editingProfile.profile ? copy.profiles.form.editTitle : copy.profiles.form.createTitle}
-            </h3>
+        <FormDialog
+          icon={FileSpreadsheet}
+          open={editingProfile !== null}
+          className="sm:max-w-3xl"
+          title={
+            editingProfile?.profile ? copy.profiles.form.editTitle : copy.profiles.form.createTitle
+          }
+          onOpenChange={(open) => !open && setEditingProfile(null)}
+        >
+          {editingProfile ? (
             <ProfileForm
               key={editingProfile.profile?.id ?? 'nuevo'}
               profile={editingProfile.profile}
@@ -481,34 +547,52 @@ const BankAccountsScreen = () => {
               }
               onCancel={() => setEditingProfile(null)}
             />
-          </div>
-        ) : null}
+          ) : null}
+        </FormDialog>
 
         {profiles.data && profiles.data.length > 0 ? (
-          <ul>
-            {profiles.data.map((profile) => (
-              <li
-                key={profile.id}
-                className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border py-2.5 text-sm"
-              >
-                <span>{profile.name}</span>
-                <span className="flex items-baseline gap-3">
-                  <span className="text-xs text-muted-foreground">
-                    «{profile.delimiter}» · {profile.dateFormat} · {profile.encoding}
-                  </span>
+          <TableFrame>
+            <FrameHeader className={cn('hidden gap-x-4 sm:grid', PROFILE_COLS)}>
+              <span>{copy.profiles.columns.name}</span>
+              <span>{copy.profiles.columns.delimiter}</span>
+              <span>{copy.profiles.columns.dateFormat}</span>
+              <span>{copy.profiles.columns.encoding}</span>
+              <span />
+            </FrameHeader>
+
+            <ul className="divide-y divide-border">
+              {profiles.data.map((profile) => (
+                <li
+                  key={profile.id}
+                  className={cn('grid gap-x-4 gap-y-1.5 text-sm', FRAME_ROW, PROFILE_COLS)}
+                >
+                  <span>{profile.name}</span>
+
+                  <Cell label={copy.profiles.columns.delimiter}>
+                    <span className="num text-xs sm:text-sm">«{profile.delimiter}»</span>
+                  </Cell>
+
+                  <Cell label={copy.profiles.columns.dateFormat}>
+                    <span className="num text-xs sm:text-sm">{profile.dateFormat}</span>
+                  </Cell>
+
+                  <Cell label={copy.profiles.columns.encoding}>
+                    <span className="num text-xs sm:text-sm">{profile.encoding}</span>
+                  </Cell>
+
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    className="-mr-2 h-7 justify-self-end px-2 text-xs text-muted-foreground hover:text-foreground"
                     aria-label={copy.profiles.edit(profile.name)}
                     onClick={() => setEditingProfile({ profile })}
                   >
                     {copy.common.edit}
                   </Button>
-                </span>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </TableFrame>
         ) : (
           <EmptyState
             title={copy.profiles.empty.title}

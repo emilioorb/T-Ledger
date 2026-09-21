@@ -26,20 +26,32 @@ export class PrismaMovementRepository implements MovementRepository {
     }
 
     const [rows, totalItems] = await Promise.all([
-      this.prisma.movement.findMany({
+      this.prisma.client.movement.findMany({
         where,
         orderBy: [{ date: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      this.prisma.movement.count({ where }),
+      this.prisma.client.movement.count({ where }),
     ])
 
     return { items: rows.map((row) => movementToDomain(row as MovementRow)), totalItems }
   }
 
+  async findByPaymentAccount(accountCode: string, range: DateRange): Promise<Movement[]> {
+    const rows = await this.prisma.client.movement.findMany({
+      where: {
+        status: 'ACTIVE',
+        paymentAccountCode: accountCode,
+        date: { gte: range.from, lte: range.to },
+      },
+      orderBy: [{ date: 'asc' }, { id: 'asc' }],
+    })
+    return rows.map((row) => movementToDomain(row as MovementRow))
+  }
+
   async findById(id: string): Promise<Movement | null> {
-    const row = await this.prisma.movement.findUnique({ where: { id } })
+    const row = await this.prisma.client.movement.findUnique({ where: { id } })
     return row ? movementToDomain(row as MovementRow) : null
   }
 
@@ -55,7 +67,7 @@ export class PrismaMovementRepository implements MovementRepository {
       receiptUrl: movement.receiptUrl,
       status: movement.status,
     }
-    await this.prisma.movement.upsert({
+    await this.prisma.client.movement.upsert({
       where: { id: movement.id },
       create: { id: movement.id, ...data },
       update: data,
@@ -64,13 +76,13 @@ export class PrismaMovementRepository implements MovementRepository {
 
   // Un movimiento anulado no cuenta: su falta de asiento es el estado esperado.
   async countUnposted(range: DateRange): Promise<number> {
-    const candidates = await this.prisma.movement.findMany({
+    const candidates = await this.prisma.client.movement.findMany({
       where: { status: 'ACTIVE', date: { gte: range.from, lte: range.to } },
       select: { id: true },
     })
     if (candidates.length === 0) return 0
 
-    const posted = await this.prisma.journalEntry.findMany({
+    const posted = await this.prisma.client.journalEntry.findMany({
       where: { sourceMovementId: { in: candidates.map((row) => row.id) } },
       select: { sourceMovementId: true },
     })
@@ -80,7 +92,7 @@ export class PrismaMovementRepository implements MovementRepository {
   }
 
   async monthsWithMovements(): Promise<PeriodKey[]> {
-    const rows = await this.prisma.movement.findMany({
+    const rows = await this.prisma.client.movement.findMany({
       distinct: ['date'],
       select: { date: true },
       orderBy: { date: 'asc' },

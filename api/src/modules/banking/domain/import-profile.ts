@@ -33,6 +33,11 @@ export class ImportProfile {
     if (props.headerRows < 0) {
       return err(new RangeError('Las filas de encabezado no pueden ser negativas'))
     }
+    // Si el separador de miles es el mismo que el decimal, «1,234,56» se lee como 123.456:
+    // el monto queda multiplicado por cien y el extracto importa sin una sola queja.
+    if (props.thousandsSeparator === props.decimalSeparator) {
+      return err(new RangeError('El separador de miles no puede ser el mismo que el decimal'))
+    }
 
     const hasAmount = props.amountColumn !== null
     const hasPair = props.debitColumn !== null && props.creditColumn !== null

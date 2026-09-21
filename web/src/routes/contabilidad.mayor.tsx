@@ -1,5 +1,6 @@
 import { Link, createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
+import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import { Label } from '@/components/ui/label'
 import {
@@ -57,7 +58,7 @@ const LedgerScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.ledger.description}</p>
       </header>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <div className="flex flex-col gap-1">
           <Label htmlFor="account" className="text-xs font-normal text-muted-foreground">
             {copy.ledger.account.label}
@@ -99,10 +100,10 @@ const LedgerScreen = () => {
           onRetry={() => void ledger.refetch()}
         />
       ) : (
-        <div className="space-y-5">
+        <TableFrame>
           {/* Los dos saldos son el marco del extracto: el inicial arriba, el final abajo,
               y entre ellos la corrida que los une. */}
-          <div className="flex items-baseline justify-between border-b border-border-strong pb-2">
+          <div className="flex items-baseline justify-between gap-3 border-b border-border-strong px-3 py-3">
             <div>
               <p className="text-xs text-muted-foreground">{copy.ledger.openingBalance}</p>
               <p className="mt-0.5 text-[0.6875rem] text-muted-foreground">
@@ -113,25 +114,29 @@ const LedgerScreen = () => {
           </div>
 
           {ledger.data.rows.length === 0 ? (
-            <EmptyState title={copy.ledger.empty.title} description={copy.ledger.empty.description} />
+            <EmptyState
+              className="border-y-0 px-3 py-8"
+              title={copy.ledger.empty.title}
+              description={copy.ledger.empty.description}
+            />
           ) : (
-            <div>
+            <>
               {/* La cabecera de columnas solo existe cuando hay columnas: bajo 768 px
                   cada asiento se lee como un bloque, no como una fila con desplazamiento. */}
-              <div className="hidden grid-cols-[5.5rem_1fr_7rem_7rem_8rem] gap-2 border-b border-border pb-1 text-xs text-muted-foreground lg:grid">
+              <FrameHeader className="hidden grid-cols-[5.5rem_1fr_7rem_7rem_8rem] gap-2 lg:grid">
                 <span>{copy.ledger.columns.date}</span>
                 <span>{copy.ledger.columns.description}</span>
                 <span className="text-right">{copy.ledger.columns.debit}</span>
                 <span className="text-right">{copy.ledger.columns.credit}</span>
                 <span className="text-right">{copy.ledger.columns.balance}</span>
-              </div>
+              </FrameHeader>
 
-              <ul>
+              <ul className="divide-y divide-border">
                 {ledger.data.rows.map((row, index) => (
                   <li
                     // eslint-disable-next-line react/no-array-index-key
                     key={`${row.entryId}-${index}`}
-                    className="grid gap-x-2 gap-y-1 border-b border-border py-2 text-sm lg:grid-cols-[5.5rem_1fr_7rem_7rem_8rem] lg:items-baseline lg:py-1.5"
+                    className={`grid gap-x-2 gap-y-1 ${FRAME_ROW} text-sm lg:grid-cols-[5.5rem_1fr_7rem_7rem_8rem] lg:items-baseline`}
                   >
                     <span className="num text-xs text-muted-foreground lg:text-right">
                       {formatIsoDate(row.date)}
@@ -164,14 +169,14 @@ const LedgerScreen = () => {
                   </li>
                 ))}
               </ul>
-            </div>
+            </>
           )}
 
-          <div className="flex items-baseline justify-between border-t border-border-strong pt-2">
+          <div className="flex items-baseline justify-between gap-3 border-t border-border-strong px-3 py-3">
             <p className="text-base font-medium tracking-tight">{copy.ledger.closingBalance}</p>
             <Amount money={ledger.data.closingBalance} emphasis="strong" className="text-xl" />
           </div>
-        </div>
+        </TableFrame>
       )}
     </section>
   )

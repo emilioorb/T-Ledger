@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { PrismaModule } from '../../shared/prisma/prisma.module.js'
 import { ExchangeRateStoreModule } from '../money/exchange-rate-store.module.js'
+import { AccountGuard } from './application/account-guard.js'
 import { ClosePeriodUseCase } from './application/close-period.use-case.js'
 import { CreateJournalEntryUseCase } from './application/create-journal-entry.use-case.js'
 import { CreateMovementUseCase } from './application/create-movement.use-case.js'
@@ -64,6 +65,7 @@ import { ReportsController } from './infrastructure/reports.controller.js'
     { provide: JOURNAL_REPOSITORY, useClass: PrismaJournalRepository },
     { provide: MOVEMENT_REPOSITORY, useClass: PrismaMovementRepository },
     { provide: PERIOD_REPOSITORY, useClass: PrismaPeriodRepository },
+    AccountGuard,
     PeriodGuard,
     PeriodSnapshots,
     MovementPoster,
@@ -91,6 +93,17 @@ import { ReportsController } from './infrastructure/reports.controller.js'
   ],
   // El presupuesto lee el gasto del libro diario. Se exporta el puerto, no el repositorio:
   // quien lo consuma depende de la interfaz, no de Prisma.
-  exports: [JOURNAL_REPOSITORY, ACCOUNT_REPOSITORY, MOVEMENT_REPOSITORY, CreateMovementUseCase],
+  //
+  // El asiento manual se exporta porque metas lo usa para registrar el traslado de un aporte:
+  // así hereda la validación contra el plan y el guardián de período, en vez de escribir
+  // asientos por su cuenta.
+  exports: [
+    JOURNAL_REPOSITORY,
+    ACCOUNT_REPOSITORY,
+    MOVEMENT_REPOSITORY,
+    AccountGuard,
+    CreateMovementUseCase,
+    CreateJournalEntryUseCase,
+  ],
 })
 export class AccountingModule {}

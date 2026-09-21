@@ -48,6 +48,17 @@ export const useAccounts = () =>
     queryFn: () => apiFetch<Paginated<Account>>(`/accounts?${query({ pageSize: ALL })}`),
   })
 
+// La plata solo vive en las hojas del activo: una cuenta con hijas es un total, no un lugar.
+// Metas e inversiones preguntan lo mismo —de dónde sale, dónde queda— y preguntan acá.
+export const usePostableAssets = () => {
+  const accounts = useAccounts()
+  const all = accounts.data?.data ?? []
+  const parents = new Set(all.map((account) => account.parentCode).filter(Boolean))
+  return all.filter(
+    (account) => account.accountClass === 'ASSET' && account.active && !parents.has(account.code),
+  )
+}
+
 export const useAccountsTree = (currency: CurrencyCode, at: string) =>
   useQuery({
     queryKey: queryKeys.accounting.accountsTree(currency, at),
@@ -104,7 +115,8 @@ export const useDeleteCategory = () => {
 export const useMovements = (filters: MovementFilters, page = 1, pageSize = PAGE_SIZE) =>
   useQuery({
     queryKey: queryKeys.accounting.movements({ ...filters, page, pageSize }),
-    queryFn: () => apiFetch<Paginated<Movement>>(`/movements?${query({ page, pageSize, ...filters })}`),
+    queryFn: () =>
+      apiFetch<Paginated<Movement>>(`/movements?${query({ page, pageSize, ...filters })}`),
   })
 
 export const useSaveMovement = () => {
@@ -168,7 +180,8 @@ export const useLedger = (account: string, currency: CurrencyCode, from: string,
 export const useTrialBalance = (currency: CurrencyCode, from: string, to: string) =>
   useQuery({
     queryKey: queryKeys.accounting.trialBalance(currency, from, to),
-    queryFn: () => apiFetch<TrialBalance>(`/reports/trial-balance?${query({ currency, from, to })}`),
+    queryFn: () =>
+      apiFetch<TrialBalance>(`/reports/trial-balance?${query({ currency, from, to })}`),
   })
 
 export const useFinancialPosition = (currency: CurrencyCode, at: string) =>

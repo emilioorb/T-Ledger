@@ -4,6 +4,7 @@ import { Decimal } from 'decimal.js'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { Percentage } from '../../../shared/kernel/percentage.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { AccountGuard } from '../../accounting/application/account-guard.js'
 import type { BudgetModel } from '../domain/budget-model.js'
 import {
   BUDGET_MODEL_REPOSITORY,
@@ -21,7 +22,10 @@ export interface StoredBudgetModel {
 
 @Injectable()
 export class ManageBudgetModelsUseCase {
-  constructor(@Inject(BUDGET_MODEL_REPOSITORY) private readonly models: BudgetModelRepository) {}
+  constructor(
+    @Inject(BUDGET_MODEL_REPOSITORY) private readonly models: BudgetModelRepository,
+    private readonly accounts: AccountGuard,
+  ) {}
 
   async list(): Promise<{ models: BudgetModel[]; activeId: string | null }> {
     const [models, active] = await Promise.all([this.models.findAll(), this.models.findActive()])
@@ -48,6 +52,10 @@ export class ManageBudgetModelsUseCase {
   }
 
   private async save(id: string, input: BudgetModelInput): Promise<BudgetModel> {
+    // Una cubeta que apunta a una cuenta agrupadora o inexistente consume siempre cero: el
+    // presupuesto se ve sano y nadie lo nota hasta cerrar el mes.
+    await this.accounts.assertAllPostable(input.buckets.flatMap((bucket) => bucket.accountCodes))
+
     const buckets = input.buckets.map((bucket) => {
       const percentage = Percentage.create(new Decimal(bucket.percentage))
       if (isErr(percentage)) throw new SemanticValidationError(percentage.error.message)

@@ -168,7 +168,11 @@ describe('flujo completo de contabilidad', () => {
   })
 
   it('un movimiento de categoría sin cuenta se guarda y se marca como no contabilizado', async () => {
-    const categoria = await crearCategoria({ name: 'Sin mapear', kind: 'EXPENSE', accountCode: null })
+    const categoria = await crearCategoria({
+      name: 'Sin mapear',
+      kind: 'EXPENSE',
+      accountCode: null,
+    })
 
     const response = await crearMovimientoRaw({ categoryId: categoria.id })
 
@@ -180,7 +184,9 @@ describe('flujo completo de contabilidad', () => {
   it('el estado de situación cuadra', async () => {
     await crearMovimientoSimple()
 
-    const situacion = await get('/reports/financial-position?currency=CRC&at=2026-09-30').expect(200)
+    const situacion = await get('/reports/financial-position?currency=CRC&at=2026-09-30').expect(
+      200,
+    )
 
     expect(situacion.body.balances).toBe(true)
   })
@@ -207,7 +213,8 @@ describe('flujo completo de contabilidad', () => {
 
   it('cerrar un mes con el anterior abierto responde 422 con la razón', async () => {
     await crearMovimientoRaw({
-      categoryId: (await crearCategoria({ name: 'Agosto', kind: 'EXPENSE', accountCode: '6100' })).id,
+      categoryId: (await crearCategoria({ name: 'Agosto', kind: 'EXPENSE', accountCode: '6100' }))
+        .id,
       date: '2026-08-15',
     }).expect(201)
     await crearMovimientoSimple()
@@ -223,7 +230,8 @@ describe('flujo completo de contabilidad', () => {
     await cerrarHasta('2026-08')
 
     const response = await crearMovimientoRaw({
-      categoryId: (await crearCategoria({ name: 'Software', kind: 'EXPENSE', accountCode: '6100' })).id,
+      categoryId: (await crearCategoria({ name: 'Software', kind: 'EXPENSE', accountCode: '6100' }))
+        .id,
       date: '2026-08-15',
     })
 
@@ -232,7 +240,11 @@ describe('flujo completo de contabilidad', () => {
   })
 
   it('anular un movimiento de un período cerrado también responde 409', async () => {
-    const categoria = await crearCategoria({ name: 'Software', kind: 'EXPENSE', accountCode: '6100' })
+    const categoria = await crearCategoria({
+      name: 'Software',
+      kind: 'EXPENSE',
+      accountCode: '6100',
+    })
     const movimiento = await crearMovimientoRaw({
       categoryId: categoria.id,
       date: '2026-08-15',
@@ -274,7 +286,11 @@ describe('flujo completo de contabilidad', () => {
       description: 'Compra de dólares',
       lines: [
         { accountCode: '1190', amount: { minorUnits: '50800000', currency: 'CRC' }, side: 'DEBIT' },
-        { accountCode: '1101', amount: { minorUnits: '50800000', currency: 'CRC' }, side: 'CREDIT' },
+        {
+          accountCode: '1101',
+          amount: { minorUnits: '50800000', currency: 'CRC' },
+          side: 'CREDIT',
+        },
         { accountCode: '1102', amount: { minorUnits: '100000', currency: 'USD' }, side: 'DEBIT' },
         { accountCode: '1190', amount: { minorUnits: '100000', currency: 'USD' }, side: 'CREDIT' },
       ],
@@ -332,6 +348,33 @@ describe('flujo completo de contabilidad', () => {
 
     expect(response.status).toBe(422)
     expect(response.body.error.message).toContain('2026-09-30')
+  })
+
+  it('crear una cuenta con un código que ya existe responde 409 y no la pisa', async () => {
+    const response = await post('/accounts', {
+      code: '1101',
+      name: 'Otra cosa',
+      accountClass: 'ASSET',
+    })
+
+    expect(response.status).toBe(409)
+    expect((await get('/accounts/1101').expect(200)).body.name).not.toBe('Otra cosa')
+  })
+
+  // Colgarle una hija la vuelve agrupadora y le deja el saldo adentro: el árbol lo cuenta
+  // dos veces y nadie se entera hasta cuadrar a mano.
+  it('no se le puede colgar una hija a una cuenta que ya tiene asientos', async () => {
+    await crearMovimientoSimple()
+
+    const response = await post('/accounts', {
+      code: '110101',
+      name: 'Caja chica',
+      accountClass: 'ASSET',
+      parentCode: '1101',
+    })
+
+    expect(response.status).toBe(422)
+    expect(response.body.error.message).toContain('1101')
   })
 
   it('no existe forma de borrar un asiento', async () => {

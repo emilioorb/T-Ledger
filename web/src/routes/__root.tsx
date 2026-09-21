@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { Keyboard } from 'lucide-react'
+import { AppFooter } from '@/components/app-footer'
 import { AppSidebar } from '@/components/app-sidebar'
 import { PageBreadcrumb } from '@/components/page-breadcrumb'
 import { ExchangeRateIndicator } from '@/features/money/exchange-rate-indicator'
@@ -22,11 +23,12 @@ const Shell = () => {
   useShortcuts(openHelp)
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh overflow-hidden">
       <AppSidebar />
       {/* min-w-0: sin esto el inset no puede encogerse por debajo del ancho mínimo de
           su contenido, y a 768 px el contenido empuja la página al desplazamiento lateral. */}
-      <SidebarInset className="min-w-0">
+      {/* min-h-0: sin esto el inset se estira al alto de su contenido y el pie se va con él. */}
+      <SidebarInset className="min-h-0 min-w-0 overflow-hidden">
         <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
           <SidebarTrigger className="-ml-1" aria-label="Alternar la barra lateral" />
           <Separator
@@ -61,9 +63,11 @@ const Shell = () => {
             <ExchangeRateIndicator />
           </div>
         </header>
-        <main className="w-full min-w-0 px-4 py-6 md:px-6">
+        <div className="w-full min-w-0 flex-1 overflow-y-auto px-4 py-6 md:px-6">
           <Outlet />
-        </main>
+        </div>
+
+        <AppFooter />
       </SidebarInset>
 
       <ShortcutsSheet open={helpOpen} onOpenChange={setHelpOpen} />

@@ -24,8 +24,15 @@ const nuevaMeta = {
   target: { minorUnits: '500000000', currency: 'CRC' },
   desiredDate: '2027-09-01',
   priority: 1,
-  accountCode: null,
+  accountCode: '1111',
 }
+
+// De dónde sale la plata del aporte. Un aporte es un traslado, no un gasto.
+const aporte = (amount: string, date = '2026-09-15') => ({
+  date,
+  amount: { minorUnits: amount, currency: 'CRC' },
+  fromAccountCode: '1101',
+})
 
 const crearMeta = async (overrides: object = {}) =>
   (await post('/goals', { ...nuevaMeta, ...overrides }).expect(201)).body as { id: string }
@@ -53,11 +60,37 @@ afterAll(async () => {
 })
 
 beforeEach(async () => {
+  await prisma.journalLine.deleteMany()
+  await prisma.journalEntry.deleteMany()
   await prisma.goalContribution.deleteMany()
   await prisma.goal.deleteMany()
 })
 
 describe('metas', () => {
+  it('un aporte mueve la plata en el libro, no la inventa', async () => {
+    const meta = await crearMeta()
+
+    await post(`/goals/${meta.id}/contributions`, aporte('200000000')).expect(201)
+
+    const lineas = await prisma.journalLine.findMany({ include: { entry: true } })
+    const ahorro = lineas.find((linea) => linea.accountCode === '1111')
+    const origen = lineas.find((linea) => linea.accountCode === '1101')
+
+    expect(ahorro?.side).toBe('DEBIT')
+    expect(origen?.side).toBe('CREDIT')
+    expect(ahorro?.amountMinor).toBe(200000000n)
+    expect(ahorro?.entry.description).toContain('Europa')
+  })
+
+  it('una meta sin cuenta de ahorro no acepta aportes', async () => {
+    const meta = await crearMeta({ accountCode: null })
+
+    const response = await post(`/goals/${meta.id}/contributions`, aporte('100000'))
+
+    expect(response.status).toBe(422)
+    expect(response.body.error.message).toContain('cuenta de ahorro')
+  })
+
   it('una meta recién creada no tiene fecha proyectada', async () => {
     const response = await post('/goals', nuevaMeta).expect(201)
 
@@ -70,10 +103,7 @@ describe('metas', () => {
     const meta = await crearMeta()
 
     const antes = await get(`/goals/${meta.id}`).expect(200)
-    await post(`/goals/${meta.id}/contributions`, {
-      date: '2026-09-15',
-      amount: { minorUnits: '200000000', currency: 'CRC' },
-    }).expect(201)
+    await post(`/goals/${meta.id}/contributions`, aporte('200000000')).expect(201)
     const despues = await get(`/goals/${meta.id}`).expect(200)
 
     expect(BigInt(despues.body.requiredMonthlyContribution.minorUnits)).toBeLessThan(
@@ -86,7 +116,7 @@ describe('metas', () => {
     const meta = await crearMeta()
 
     const response = await post(`/goals/${meta.id}/contributions`, {
-      date: '2026-09-15',
+      ...aporte('1000'),
       amount: { minorUnits: '1000', currency: 'USD' },
     })
 
@@ -98,14 +128,8 @@ describe('metas', () => {
     events.on(GOAL_REACHED, listener)
     const meta = await crearMeta()
 
-    await post(`/goals/${meta.id}/contributions`, {
-      date: '2026-09-15',
-      amount: { minorUnits: '500000000', currency: 'CRC' },
-    }).expect(201)
-    await post(`/goals/${meta.id}/contributions`, {
-      date: '2026-10-15',
-      amount: { minorUnits: '100', currency: 'CRC' },
-    }).expect(201)
+    await post(`/goals/${meta.id}/contributions`, aporte('500000000')).expect(201)
+    await post(`/goals/${meta.id}/contributions`, aporte('100', '2026-10-15')).expect(201)
 
     expect(listener).toHaveBeenCalledTimes(1)
     events.off(GOAL_REACHED, listener)
@@ -114,8 +138,7 @@ describe('metas', () => {
   it('una meta alcanzada no pide más aportes', async () => {
     const meta = await crearMeta()
     await post(`/goals/${meta.id}/contributions`, {
-      date: '2026-09-15',
-      amount: { minorUnits: '500000000', currency: 'CRC' },
+      ...aporte('500000000'),
     }).expect(201)
 
     const response = await get(`/goals/${meta.id}`).expect(200)
@@ -139,10 +162,7 @@ describe('metas', () => {
 
   it('borrar una meta se lleva sus aportes', async () => {
     const meta = await crearMeta()
-    await post(`/goals/${meta.id}/contributions`, {
-      date: '2026-09-15',
-      amount: { minorUnits: '100000', currency: 'CRC' },
-    }).expect(201)
+    await post(`/goals/${meta.id}/contributions`, aporte('100000')).expect(201)
 
     await request(app.getHttpServer()).delete(`${BASE}/goals/${meta.id}`).expect(204)
 

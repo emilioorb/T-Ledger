@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { PrismaModule } from '../../shared/prisma/prisma.module.js'
+import { BudgetModule } from '../budget/budget.module.js'
 import { CreateDebtUseCase } from './application/create-debt.use-case.js'
 import { DeleteDebtUseCase } from './application/delete-debt.use-case.js'
 import { GetDebtUseCase } from './application/get-debt.use-case.js'
@@ -13,7 +14,9 @@ import { DebtsController } from './infrastructure/debts.controller.js'
 import { PrismaDebtRepository } from './infrastructure/prisma-debt.repository.js'
 
 @Module({
-  imports: [PrismaModule],
+  // Una deuda declara a qué cubeta del presupuesto pertenece: depende del guardián que
+  // sabe cuáles existen, no de las tablas del presupuesto.
+  imports: [PrismaModule, BudgetModule],
   controllers: [DebtsController],
   providers: [
     { provide: DEBT_REPOSITORY, useClass: PrismaDebtRepository },

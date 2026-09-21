@@ -12,6 +12,7 @@ export const copy = {
       required: 'Por mes',
       desired: 'La querés en',
     },
+    projected: 'Al ritmo de hoy llega',
     onTrack: 'Llega a tiempo',
     late: 'Llega tarde',
     noPace: 'Sin ritmo todavía',
@@ -21,11 +22,15 @@ export const copy = {
     requiredHint: 'Lo que falta, repartido en los meses que quedan hasta la fecha deseada.',
     paceHint: 'El promedio mensual desde el primer aporte.',
     lateBy: (months: number) =>
-      months === 1 ? 'Un mes después de la fecha deseada' : `${months} meses después de la fecha deseada`,
+      months === 1
+        ? 'Un mes después de la fecha deseada'
+        : `${months} meses después de la fecha deseada`,
     new: 'Nueva meta',
     edit: (name: string) => `Editar ${name}`,
     delete: (name: string) => `Borrar ${name}`,
     contribute: 'Aportar',
+    deleteShort: 'Borrar',
+    progressLabel: (contributed: string, target: string) => `${contributed} aportados de ${target}`,
     detail: {
       missing: 'Faltan',
       missingSuffix: 'para el objetivo.',
@@ -37,15 +42,25 @@ export const copy = {
       target: { label: 'Objetivo' },
       desiredDate: { label: 'Fecha deseada', hint: 'Cuándo querés tenerlo.' },
       priority: { label: 'Prioridad', hint: 'Menor número, primero en la lista.' },
-      accountCode: { label: 'Cuenta de ahorro', hint: 'Dónde se guarda la plata. Opcional.' },
+      accountCode: {
+        label: 'Cuenta de ahorro',
+        hint: 'Dónde se guarda la plata. Sin ella no se pueden registrar aportes.',
+      },
       noAccount: 'Sin cuenta',
       submit: 'Guardar meta',
     },
     contributionForm: {
       title: 'Nuevo aporte',
+      // Aportar no es gastar: la plata cambia de cuenta y el patrimonio queda igual. Por eso
+      // el formulario pregunta de dónde sale, y por eso el asiento lo dice.
+      description: 'Aportar mueve la plata de una cuenta a la de la meta. No es un gasto.',
       date: { label: 'Fecha' },
       amount: { label: 'Monto', hint: 'En la misma moneda del objetivo.' },
+      from: { label: 'De qué cuenta sale' },
       submit: 'Registrar aporte',
+      needsAccount:
+        'Esta meta no tiene cuenta de ahorro. Elegí una al editarla y después registrá el aporte: si no, la meta diría que ya ahorraste y los libros que la plata sigue en caja.',
+      editGoal: 'Editar la meta',
     },
     history: {
       title: 'Aportes',
@@ -60,7 +75,8 @@ export const copy = {
     },
     confirmDelete: {
       title: '¿Borrar esta meta?',
-      description: (name: string) => `Se borra «${name}» con todos sus aportes. No se puede deshacer.`,
+      description: (name: string) =>
+        `Se borra «${name}» con todos sus aportes. No se puede deshacer.`,
       confirm: 'Borrar',
     },
     toast: {
@@ -74,6 +90,7 @@ export const copy = {
   },
 
   common: {
+    edit: 'Editar',
     loading: 'Cargando',
     retry: 'Reintentar',
     cancel: 'Cancelar',

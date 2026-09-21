@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { Download } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Download, Scale } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -62,6 +63,7 @@ const TrialBalanceScreen = () => {
             {/* La cifra se alinea con su etiqueta, no al ancho de la tarjeta: `.num num-right`
                 trae alineación a la derecha y en un bloque suelto la dejaba flotando. */}
             <StatCard
+              icon={Scale}
               className="sm:col-span-2"
               label={copy.trialBalance.difference}
               hint={
@@ -77,11 +79,11 @@ const TrialBalanceScreen = () => {
                 className="block text-left text-3xl tracking-tight"
               />
             </StatCard>
-            <StatCard label={copy.trialBalance.columns.debits}>
-              <Amount money={balance.data.totalDebits} className="block text-left text-lg" />
+            <StatCard icon={ArrowDownLeft} label={copy.trialBalance.columns.debits}>
+              <Amount money={balance.data.totalDebits} className="block text-left text-2xl" />
             </StatCard>
-            <StatCard label={copy.trialBalance.columns.credits}>
-              <Amount money={balance.data.totalCredits} className="block text-left text-lg" />
+            <StatCard icon={ArrowUpRight} label={copy.trialBalance.columns.credits}>
+              <Amount money={balance.data.totalCredits} className="block text-left text-2xl" />
             </StatCard>
           </StatGrid>
 
@@ -91,19 +93,19 @@ const TrialBalanceScreen = () => {
               description={copy.trialBalance.empty.description}
             />
           ) : (
-            <div>
-              <div className="hidden grid-cols-[1fr_7rem_7rem_8rem] gap-2 border-b border-border pb-1 text-xs text-muted-foreground lg:grid">
+            <TableFrame>
+              <FrameHeader className="hidden grid-cols-[1fr_7rem_7rem_8rem] gap-2 lg:grid">
                 <span>{copy.trialBalance.columns.account}</span>
                 <span className="text-right">{copy.trialBalance.columns.debits}</span>
                 <span className="text-right">{copy.trialBalance.columns.credits}</span>
                 <span className="text-right">{copy.trialBalance.columns.balance}</span>
-              </div>
+              </FrameHeader>
 
-              <ul>
+              <ul className="divide-y divide-border">
                 {balance.data.rows.map((row) => (
                   <li
                     key={row.accountCode}
-                    className="grid gap-x-2 gap-y-1 border-b border-border py-2 text-sm lg:grid-cols-[1fr_7rem_7rem_8rem] lg:items-baseline lg:py-1.5"
+                    className={`grid gap-x-2 gap-y-1 ${FRAME_ROW} text-sm lg:grid-cols-[1fr_7rem_7rem_8rem] lg:items-baseline`}
                   >
                     <Link
                       to="/contabilidad/mayor"
@@ -111,7 +113,9 @@ const TrialBalanceScreen = () => {
                       className="min-w-0 truncate underline-offset-2 hover:underline"
                       aria-label={copy.trialBalance.viewLedger(row.accountName)}
                     >
-                      <span className="num num-right text-xs text-muted-foreground">{row.accountCode}</span>{' '}
+                      <span className="num num-right text-xs text-muted-foreground">
+                        {row.accountCode}
+                      </span>{' '}
                       {row.accountName}
                     </Link>
                     <span className="flex justify-between gap-3 lg:contents">
@@ -135,7 +139,7 @@ const TrialBalanceScreen = () => {
                   </li>
                 ))}
               </ul>
-            </div>
+            </TableFrame>
           )}
         </div>
       )}

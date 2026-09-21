@@ -13,12 +13,12 @@ export class PrismaAccountRepository implements AccountRepository {
   // El árbol se valida al construirse: un plan incoherente en la base se detecta
   // al cargarlo, no al intentar asentar contra él.
   async loadChart(): Promise<ChartOfAccounts> {
-    const rows = await this.prisma.account.findMany({ orderBy: { code: 'asc' } })
+    const rows = await this.prisma.client.account.findMany({ orderBy: { code: 'asc' } })
     return unwrap(ChartOfAccounts.create(rows.map((row) => accountToDomain(row as AccountRow))))
   }
 
   async findByCode(code: string): Promise<Account | null> {
-    const row = await this.prisma.account.findUnique({ where: { code } })
+    const row = await this.prisma.client.account.findUnique({ where: { code } })
     return row ? accountToDomain(row as AccountRow) : null
   }
 
@@ -44,7 +44,7 @@ export class PrismaAccountRepository implements AccountRepository {
         sortOrder: account.sortOrder,
         isCurrencyBridge: account.isCurrencyBridge,
       }
-      await this.prisma.account.upsert({
+      await this.prisma.client.account.upsert({
         where: { code: account.code },
         create: { code: account.code, ...data },
         update: data,

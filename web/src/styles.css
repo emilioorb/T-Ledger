@@ -24,6 +24,15 @@
   --positive: oklch(0.47 0.095 165);
   --warning: oklch(0.4 0.09 65);
 
+  /* Reparto de cubetas: el naranja y el verde que la app ya usa, más matices que completan
+     la familia. Sin rojo: acá el color identifica una cubeta, y una cubeta en rojo diría que
+     está mal cuando ahorrar no lo está. El nombre va siempre al lado del cuadrito. */
+  --bucket-1: oklch(0.72 0.16 65);
+  --bucket-2: oklch(0.7 0.13 165);
+  --bucket-3: oklch(0.62 0.17 305);
+  --bucket-4: oklch(0.63 0.15 250);
+  --bucket-5: oklch(0.7 0.11 195);
+
   /* Series de gráfico: rampa de luminancia, no de matiz. La Regla del Gráfico. */
   --chart-1: oklch(0.215 0.01 65);
   --chart-2: oklch(0.4 0.014 65);
@@ -46,6 +55,12 @@
   --negative: oklch(0.705 0.165 25);
   --positive: oklch(0.76 0.11 165);
   --warning: oklch(0.78 0.166 65);
+
+  --bucket-1: oklch(0.78 0.166 65);
+  --bucket-2: oklch(0.76 0.11 165);
+  --bucket-3: oklch(0.735 0.13 305);
+  --bucket-4: oklch(0.74 0.12 250);
+  --bucket-5: oklch(0.76 0.1 195);
 
   --chart-1: oklch(0.955 0.005 65);
   --chart-2: oklch(0.8 0.008 65);
@@ -89,6 +104,12 @@
   --color-sidebar-accent-foreground: var(--text);
   --color-sidebar-border: var(--border-subtle);
   --color-sidebar-ring: var(--text-secondary);
+
+  --color-bucket-1: var(--bucket-1);
+  --color-bucket-2: var(--bucket-2);
+  --color-bucket-3: var(--bucket-3);
+  --color-bucket-4: var(--bucket-4);
+  --color-bucket-5: var(--bucket-5);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);

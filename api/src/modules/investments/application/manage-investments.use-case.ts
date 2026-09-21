@@ -3,9 +3,12 @@ import { Inject, Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Decimal } from 'decimal.js'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
+import { AccountGuard } from '../../accounting/application/account-guard.js'
+import { CreateJournalEntryUseCase } from '../../accounting/application/create-journal-entry.use-case.js'
 import { toMoney } from '../../../shared/http/money.schema.js'
 import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { INVESTMENT_MATURED, type InvestmentMatured } from '../domain/investment-events.js'
 import { Investment } from '../domain/investment.js'
 import {
@@ -24,7 +27,10 @@ const utc = (date: string): Date => new Date(`${date}T00:00:00.000Z`)
 export class ManageInvestmentsUseCase {
   constructor(
     @Inject(INVESTMENT_REPOSITORY) private readonly investments: InvestmentRepository,
+    private readonly journal: CreateJournalEntryUseCase,
+    private readonly accounts: AccountGuard,
     private readonly events: EventEmitter2,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
   async list(): Promise<Investment[]> {
@@ -38,6 +44,7 @@ export class ManageInvestmentsUseCase {
   }
 
   async create(input: CreateInvestmentInput): Promise<Investment> {
+    await this.accounts.assertPostable(input.accountCode)
     const rate = InterestRate.create(new Decimal(input.annualRate), input.compounding)
     if (isErr(rate)) throw new SemanticValidationError(rate.error.message)
 
@@ -60,6 +67,7 @@ export class ManageInvestmentsUseCase {
 
   async update(id: string, input: UpdateInvestmentInput): Promise<Investment> {
     const props = (await this.find(id)).toProps()
+    if (input.accountCode !== undefined) await this.accounts.assertPostable(input.accountCode)
 
     const rate = InterestRate.create(
       new Decimal(input.annualRate ?? props.rate.annualPercentage),
@@ -85,6 +93,15 @@ export class ManageInvestmentsUseCase {
 
   async contribute(id: string, input: InvestmentContributionInput): Promise<Investment> {
     const investment = await this.find(id)
+
+    // Sin cuenta no hay dónde asentar el capital, y una inversión que crece sin que el libro
+    // lo vea deja el patrimonio contando esa plata dos veces: en la cuenta de origen y acá.
+    if (investment.accountCode === null) {
+      throw new SemanticValidationError(
+        `La inversión «${investment.name}» no tiene cuenta. Elegí una antes de agregar capital.`,
+      )
+    }
+
     const contribution = {
       id: randomUUID(),
       date: utc(input.date),
@@ -94,7 +111,23 @@ export class ManageInvestmentsUseCase {
     const updated = investment.addContribution(contribution)
     if (isErr(updated)) throw new SemanticValidationError(updated.error.message)
 
-    await this.investments.addContribution(id, contribution)
+    // El asiento primero: si el período está cerrado, el capital no se agrega. Y los dos en
+    // la misma transacción: si la segunda escritura falla queda un asiento huérfano.
+    const accountCode = investment.accountCode
+    await this.transaction.withTransaction(async () => {
+      await this.journal.execute({
+        date: input.date,
+        description: `Capital a ${investment.name}`,
+        reference: null,
+        lines: [
+          { accountCode, amount: input.amount, side: 'DEBIT' },
+          { accountCode: input.fromAccountCode, amount: input.amount, side: 'CREDIT' },
+        ],
+      })
+
+      await this.investments.addContribution(id, contribution)
+    })
+
     return updated.value
   }
 

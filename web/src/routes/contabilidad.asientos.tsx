@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { createFileRoute, useSearch } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { BookOpen, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { FormDialog } from '@/components/form-dialog'
 import { Pager } from '@/components/pager'
+import { FrameHeader, TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -51,19 +53,11 @@ interface EntryProps {
 // La unidad de esta vista es el asiento, no la línea: cabecera con su fecha y descripción,
 // y debajo sus líneas en dos columnas. Una tabla plana perdería esa agrupación.
 const EntryBlock = ({ entry, nameOf, highlighted }: EntryProps) => (
-  <article
-    id={entry.id}
-    className={cn(
-      'border-b border-border py-4',
-      highlighted && '-mx-3 rounded-sm bg-accent px-3',
-    )}
-  >
+  <article id={entry.id} className={cn('px-3 py-4', highlighted && 'bg-accent')}>
     {/* La cabecera vive fuera de la rejilla de columnas: dentro, «Reversión» caía en la
         columna Debe y se leía como un importe. */}
     <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pr-[14rem]">
-      <span className="num text-xs text-muted-foreground">
-        {formatIsoDate(entry.date)}
-      </span>
+      <span className="num text-xs text-muted-foreground">{formatIsoDate(entry.date)}</span>
       <h3 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
         {entry.description}
       </h3>
@@ -86,16 +80,8 @@ const EntryBlock = ({ entry, nameOf, highlighted }: EntryProps) => (
             <span className="num num-right text-xs text-muted-foreground">{line.accountCode}</span>{' '}
             {nameOf.get(line.accountCode)}
           </span>
-          {line.side === 'DEBIT' ? (
-            <Amount money={line.amount} />
-          ) : (
-            <span aria-hidden="true" />
-          )}
-          {line.side === 'CREDIT' ? (
-            <Amount money={line.amount} />
-          ) : (
-            <span aria-hidden="true" />
-          )}
+          {line.side === 'DEBIT' ? <Amount money={line.amount} /> : <span aria-hidden="true" />}
+          {line.side === 'CREDIT' ? <Amount money={line.amount} /> : <span aria-hidden="true" />}
         </li>
       ))}
     </ul>
@@ -108,7 +94,10 @@ const EntryBlock = ({ entry, nameOf, highlighted }: EntryProps) => (
         >
           <span>{currency}</span>
           <span className="num num-right">
-            {formatMoney({ minorUnits: total.debit.toString(), currency: currency as MoneyCurrency })}
+            {formatMoney({
+              minorUnits: total.debit.toString(),
+              currency: currency as MoneyCurrency,
+            })}
           </span>
           <span className="num num-right">
             {formatMoney({
@@ -154,21 +143,24 @@ const JournalScreen = () => {
         </Button>
       </header>
 
-      {composing ? (
-        <div className="border-y border-border py-5">
-          <h2 className="mb-4 text-base font-medium tracking-tight">{copy.journal.form.title}</h2>
+      <FormDialog
+        icon={BookOpen}
+        open={composing}
+        className="sm:max-w-3xl"
+        title={copy.journal.form.title}
+        onOpenChange={setComposing}
+      >
+        {composing ? (
           <JournalEntryForm
             postable={postable}
             pending={create.isPending}
-            onSubmit={(input) =>
-              create.mutate(input, { onSuccess: () => setComposing(false) })
-            }
+            onSubmit={(input) => create.mutate(input, { onSuccess: () => setComposing(false) })}
             onCancel={() => setComposing(false)}
           />
-        </div>
-      ) : null}
+        ) : null}
+      </FormDialog>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </ControlBar>
 
@@ -188,20 +180,25 @@ const JournalScreen = () => {
       ) : items.length === 0 ? (
         <EmptyState title={copy.journal.empty.title} description={copy.journal.empty.description} />
       ) : (
-        <div>
-          <div className="hidden grid-cols-[1fr_7rem_7rem] gap-2 border-b border-border-strong pb-1 text-xs text-muted-foreground md:grid">
-            <span>{copy.journal.columns.account}</span>
-            <span className="text-right">{copy.journal.columns.debit}</span>
-            <span className="text-right">{copy.journal.columns.credit}</span>
-          </div>
-          {items.map((entry) => (
-            <EntryBlock
-              key={entry.id}
-              entry={entry}
-              nameOf={nameOf}
-              highlighted={entry.id === search.entry}
-            />
-          ))}
+        <div className="space-y-4">
+          <TableFrame>
+            <FrameHeader className="hidden grid-cols-[1fr_7rem_7rem] gap-2 md:grid">
+              <span>{copy.journal.columns.account}</span>
+              <span className="text-right">{copy.journal.columns.debit}</span>
+              <span className="text-right">{copy.journal.columns.credit}</span>
+            </FrameHeader>
+
+            <div className="divide-y divide-border">
+              {items.map((entry) => (
+                <EntryBlock
+                  key={entry.id}
+                  entry={entry}
+                  nameOf={nameOf}
+                  highlighted={entry.id === search.entry}
+                />
+              ))}
+            </div>
+          </TableFrame>
 
           <Pager
             page={page}

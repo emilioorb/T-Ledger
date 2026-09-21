@@ -41,7 +41,11 @@ const importar = () =>
 const lineasPendientes = async (): Promise<{ id: string; amount: { minorUnits: string } }[]> =>
   (await get(`/bank-accounts/${cuentaId}/reconciliation?${RANGO}`).expect(200)).body.lines
 
-const crearMovimiento = async (minorUnits: string, date = '2026-09-15') =>
+const crearMovimiento = async (
+  minorUnits: string,
+  date = '2026-09-15',
+  paymentAccountCode = '1111',
+) =>
   (
     await post('/movements', {
       date,
@@ -49,7 +53,7 @@ const crearMovimiento = async (minorUnits: string, date = '2026-09-15') =>
       categoryId: categoriaId,
       counterparty: 'SUPERMERCADO',
       amount: { minorUnits, currency: 'CRC' },
-      paymentAccountCode: '1111',
+      paymentAccountCode,
     }).expect(201)
   ).body as { id: string }
 
@@ -232,7 +236,52 @@ describe('conciliación', () => {
     expect(segunda.status).toBe(409)
   })
 
-  it('con todo conciliado la diferencia entre saldo contable y extracto es cero', async () => {
+  it('confirmar contra un movimiento que no existe responde 404', async () => {
+    await importar()
+    const [linea] = await lineasPendientes()
+
+    const respuesta = await post(`/bank-lines/${linea!.id}/match`, {
+      movementId: '00000000-0000-0000-0000-000000000000',
+    })
+
+    expect(respuesta.status).toBe(404)
+    expect((await lineasPendientes()).length).toBe(2)
+  })
+
+  it('confirmar contra un movimiento de otro monto responde 422', async () => {
+    await importar()
+    const movimiento = await crearMovimiento('9900000')
+    const [linea] = await lineasPendientes()
+
+    const respuesta = await post(`/bank-lines/${linea!.id}/match`, { movementId: movimiento.id })
+
+    expect(respuesta.status).toBe(422)
+    expect((await lineasPendientes()).length).toBe(2)
+  })
+
+  it('confirmar contra un movimiento pagado con otra cuenta responde 422', async () => {
+    await importar()
+    const movimiento = await crearMovimiento('4500000', '2026-09-15', '1101')
+    const [linea] = await lineasPendientes()
+
+    const respuesta = await post(`/bank-lines/${linea!.id}/match`, { movementId: movimiento.id })
+
+    expect(respuesta.status).toBe(422)
+    expect(respuesta.body.error.message).toContain('1101')
+  })
+
+  it('confirmar contra un movimiento anulado responde 422', async () => {
+    await importar()
+    const movimiento = await crearMovimiento('4500000')
+    await post(`/movements/${movimiento.id}/void`).expect(200)
+    const [linea] = await lineasPendientes()
+
+    const respuesta = await post(`/bank-lines/${linea!.id}/match`, { movementId: movimiento.id })
+
+    expect(respuesta.status).toBe(422)
+  })
+
+  it('con todo conciliado la diferencia entre libros y extracto es cero', async () => {
     await importar()
     for (const linea of await lineasPendientes()) {
       await post(`/bank-lines/${linea.id}/to-movement`, { categoryId: categoriaId }).expect(201)
@@ -242,5 +291,22 @@ describe('conciliación', () => {
 
     expect(response.body.difference.minorUnits).toBe('0')
     expect(response.body.lines).toHaveLength(0)
+  })
+
+  // El mes siguiente es donde se veía: el saldo contable venía acumulado desde el inicio y
+  // el del extracto acotado al rango, así que octubre arrancaba debiendo el saldo de setiembre.
+  it('un mes sin movimiento tampoco arrastra la diferencia del mes anterior', async () => {
+    await importar()
+    for (const linea of await lineasPendientes()) {
+      await post(`/bank-lines/${linea.id}/to-movement`, { categoryId: categoriaId }).expect(201)
+    }
+
+    const octubre = await get(
+      `/bank-accounts/${cuentaId}/reconciliation?from=2026-10-01&to=2026-10-31`,
+    ).expect(200)
+
+    expect(octubre.body.difference.minorUnits).toBe('0')
+    expect(octubre.body.ledgerMovement.minorUnits).toBe('0')
+    expect(octubre.body.statementMovement.minorUnits).toBe('0')
   })
 })

@@ -1,7 +1,11 @@
 import { Decimal } from 'decimal.js'
 import { describe, expect, it } from 'vitest'
 import { unwrap } from '../../../shared/kernel/result.js'
-import { ExchangeRate, RATE_INDICATORS, type RateIndicator } from '../../money/domain/exchange-rate.js'
+import {
+  ExchangeRate,
+  RATE_INDICATORS,
+  type RateIndicator,
+} from '../../money/domain/exchange-rate.js'
 import type { ExchangeRateRepository } from '../../money/domain/exchange-rate-repository.port.js'
 import { rateKey } from '../domain/valuation-rate.port.js'
 import { BccrValuationRateAdapter } from './bccr-valuation-rate.adapter.js'
@@ -24,6 +28,10 @@ const repositoryWith = (published: ExchangeRate[]): ExchangeRateRepository => ({
     published
       .filter((r) => r.indicator === indicator && r.publishedAt <= date)
       .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())[0] ?? null,
+  findPublishedUpTo: async (indicator: RateIndicator, at: Date) =>
+    published
+      .filter((r) => r.indicator === indicator && r.publishedAt <= at)
+      .sort((a, b) => a.publishedAt.getTime() - b.publishedAt.getTime()),
   findLatest: async () => null,
   findInRange: async () => [],
   saveMany: async () => 0,
@@ -58,23 +66,26 @@ describe('BccrValuationRateAdapter', () => {
     expect(rates.get('2026-09-19')?.toString()).toBe('508')
   })
 
-  it('una fecha repetida se consulta una sola vez', async () => {
+  // El patrimonio pide la tasa de cada día con asientos: con tres años de historia eran
+  // ~2.000 consultas en el endpoint del tablero.
+  it('cualquier cantidad de fechas cuesta una sola consulta', async () => {
     let calls = 0
     const repository = repositoryWith([rate('508', '2026-09-18')])
     const counting: ExchangeRateRepository = {
       ...repository,
-      findEffectiveAt: async (indicator, date) => {
+      findPublishedUpTo: async (indicator, at) => {
         calls += 1
-        return repository.findEffectiveAt(indicator, date)
+        return repository.findPublishedUpTo(indicator, at)
       },
     }
 
-    await new BccrValuationRateAdapter(counting).ratesFor(
-      [utc('2026-09-19'), utc('2026-09-19'), utc('2026-09-19')],
+    const rates = await new BccrValuationRateAdapter(counting).ratesFor(
+      [utc('2026-09-19'), utc('2026-09-19'), utc('2026-09-20'), utc('2026-09-21')],
       'USD',
     )
 
     expect(calls).toBe(1)
+    expect(rates.size).toBe(3)
   })
 
   it('la clave del mapa es la fecha en AAAA-MM-DD', () => {

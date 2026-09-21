@@ -73,6 +73,23 @@ describe('parseStatement', () => {
     expect(lines[0]?.date.toISOString().slice(0, 10)).toBe('2026-09-15')
   })
 
+  it('una celda de monto vacía es un error, no un cero', () => {
+    const csv = 'Fecha,Descripcion,Referencia,Monto\n15/09/2026,SUPERMERCADO,REF1,\n'
+
+    const resultado = parseStatement(csv, perfil(), 'CRC')
+
+    expect(isErr(resultado)).toBe(true)
+  })
+
+  // Un día 31 de febrero delata además el archivo que viene en mm/dd cuando el perfil dice DD/MM.
+  it('una fecha que no existe en el calendario es un error', () => {
+    const csv = 'Fecha,Descripcion,Referencia,Monto\n31/02/2026,SUPERMERCADO,REF1,-100\n'
+
+    const resultado = parseStatement(csv, perfil(), 'CRC')
+
+    expect(isErr(resultado)).toBe(true)
+  })
+
   it('el error dice qué fila y qué columna, no solo que el archivo está mal', () => {
     const csv = 'Fecha,Desc,Ref,Monto\n15/09/2026,X,,no-es-un-monto\n'
 
@@ -105,7 +122,12 @@ describe('ImportProfile', () => {
   it('rechaza un perfil sin columna de monto y sin el par débito/crédito', () => {
     expect(
       isErr(
-        ImportProfile.create({ ...base, amountColumn: null, debitColumn: null, creditColumn: null }),
+        ImportProfile.create({
+          ...base,
+          amountColumn: null,
+          debitColumn: null,
+          creditColumn: null,
+        }),
       ),
     ).toBe(true)
   })
@@ -132,5 +154,12 @@ describe('ImportProfile', () => {
 
   it('rechaza un delimitador que no sea un solo carácter', () => {
     expect(isErr(ImportProfile.create({ ...base, delimiter: ';;' }))).toBe(true)
+  })
+
+  // Con los dos en coma, «1,234,56» se lee como 123.456: el monto queda por cien.
+  it('rechaza un separador de miles igual al decimal', () => {
+    expect(
+      isErr(ImportProfile.create({ ...base, decimalSeparator: ',', thousandsSeparator: ',' })),
+    ).toBe(true)
   })
 })

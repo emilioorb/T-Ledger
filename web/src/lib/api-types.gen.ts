@@ -2505,12 +2505,9 @@ export interface components {
             name?: string;
             /** @enum {string} */
             accountClass?: "ASSET" | "LIABILITY" | "EQUITY" | "INCOME" | "COST_OF_REVENUE" | "OPERATING_EXPENSE";
-            /** @default null */
-            parentCode: string | null;
-            /** @default true */
-            active: boolean;
-            /** @default 0 */
-            sortOrder: number;
+            parentCode?: string | null;
+            active?: boolean;
+            sortOrder?: number;
         };
         /** CreateCategoryInput */
         CreateCategoryInput: {
@@ -2529,12 +2526,9 @@ export interface components {
             name?: string;
             /** @enum {string} */
             kind?: "EXPENSE" | "INCOME";
-            /** @default null */
-            accountCode: string | null;
-            /** @default 0 */
-            sortOrder: number;
-            /** @default true */
-            active: boolean;
+            accountCode?: string | null;
+            sortOrder?: number;
+            active?: boolean;
         };
         /** CreateMovementInput */
         CreateMovementInput: {
@@ -2557,10 +2551,8 @@ export interface components {
             categoryId?: string;
             counterparty?: string;
             amount?: components["schemas"]["Money"];
-            /** @default null */
-            paymentAccountCode: string | null;
-            /** @default null */
-            receiptUrl: string | null;
+            paymentAccountCode?: string | null;
+            receiptUrl?: string | null;
         };
         /** CreateJournalEntryInput */
         CreateJournalEntryInput: {
@@ -2577,8 +2569,10 @@ export interface components {
         };
         /** MonthlyIncomeInput */
         MonthlyIncomeInput: {
-            amount: components["schemas"]["Money"];
+            amount: components["schemas"]["NonNegativeMoney"];
         };
+        /** NonNegativeMoney */
+        NonNegativeMoney: components["schemas"]["Money"];
         /** BudgetModelInput */
         BudgetModelInput: {
             name: string;
@@ -2611,15 +2605,14 @@ export interface components {
             name?: string;
             target?: components["schemas"]["Money"];
             desiredDate?: string;
-            /** @default 0 */
-            priority: number;
-            /** @default null */
-            accountCode: string | null;
+            priority?: number;
+            accountCode?: string | null;
         };
         /** CreateContributionInput */
         CreateContributionInput: {
             date: string;
             amount: components["schemas"]["Money"];
+            fromAccountCode: string;
         };
         /** CreateInvestmentInput */
         CreateInvestmentInput: {
@@ -2646,15 +2639,14 @@ export interface components {
             openedAt?: string;
             /** @enum {string} */
             kind?: "FIXED_TERM" | "OPEN";
-            /** @default null */
-            maturesAt: string | null;
-            /** @default null */
-            accountCode: string | null;
+            maturesAt?: string | null;
+            accountCode?: string | null;
         };
         /** InvestmentContributionInput */
         InvestmentContributionInput: {
             date: string;
             amount: components["schemas"]["Money"];
+            fromAccountCode: string;
         };
         /** BankAccountInput */
         BankAccountInput: {
@@ -3059,8 +3051,8 @@ export interface components {
         /** Reconciliation */
         Reconciliation: {
             bankAccountId: string;
-            ledgerBalance: components["schemas"]["MoneyOutput"];
-            statementBalance: components["schemas"]["MoneyOutput"];
+            ledgerMovement: components["schemas"]["MoneyOutput"];
+            statementMovement: components["schemas"]["MoneyOutput"];
             difference: components["schemas"]["MoneyOutput"];
             lines: components["schemas"]["BankLine"][];
             pendingTotal: components["schemas"]["MoneyOutput"];

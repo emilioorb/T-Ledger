@@ -17,7 +17,7 @@ const Row = ({ node, derivedCode, derivedHint }: { node: ReportNode } & Omit<Pro
     <>
       <li
         className={cn(
-          'flex items-baseline justify-between gap-3 border-b border-border py-1.5 text-sm',
+          'flex items-baseline justify-between gap-3 py-1.5 text-sm',
           node.level === 0 && 'font-medium',
         )}
       >
@@ -34,7 +34,7 @@ const Row = ({ node, derivedCode, derivedHint }: { node: ReportNode } & Omit<Pro
       </li>
 
       {isDerived && derivedHint ? (
-        <li className="border-b border-border py-1.5 text-xs text-muted-foreground">
+        <li className="py-1.5 text-xs text-muted-foreground">
           <span style={{ paddingLeft: (node.level + 1) * INDENT_PER_LEVEL }}>{derivedHint}</span>
         </li>
       ) : null}
@@ -47,7 +47,7 @@ const Row = ({ node, derivedCode, derivedHint }: { node: ReportNode } & Omit<Pro
 }
 
 export const ReportTree = ({ nodes, derivedCode, derivedHint }: Props) => (
-  <ul>
+  <ul className="divide-y divide-border">
     {nodes.map((node) => (
       <Row key={node.code} node={node} derivedCode={derivedCode} derivedHint={derivedHint} />
     ))}

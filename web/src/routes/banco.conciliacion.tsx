@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { Banknote, BookOpen, CircleCheck, ListTodo, Scale } from 'lucide-react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { Hint } from '@/components/hint'
 import { Pager } from '@/components/pager'
+import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -44,9 +46,11 @@ interface PairProps {
   onCreate: (categoryId: string) => void
 }
 
-// La unidad de esta pantalla es la pareja, no la línea: banco a la izquierda, movimiento
-// sugerido a la derecha, y la razón entre los dos. Una tabla de líneas obligaría a buscar el
-// movimiento en otra parte, que es el trabajo que la pantalla existe para evitar.
+// Encabezado y filas comparten la plantilla: lo que trajo el banco a la izquierda y qué
+// hacer con eso a la derecha. La explicación de por qué no hay movimiento vive arriba de
+// la lista, no repetida en cada fila.
+const COLS = 'lg:grid-cols-[6.5rem_1fr_9rem_22rem] lg:items-baseline'
+
 const Pair = ({
   line,
   suggestions,
@@ -60,19 +64,19 @@ const Pair = ({
   const ambiguous = suggestions.length > 1
 
   return (
-    <li className="grid gap-x-6 gap-y-3 border-b border-border py-4 lg:grid-cols-2">
-      <div>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="min-w-0 truncate text-sm">{line.description}</span>
-          <Amount money={line.amount} emphasis="strong" className="shrink-0 text-sm" />
-        </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          <span className="num">{formatIsoDate(line.date)}</span>
-          {line.reference ? ` · ${line.reference}` : ''}
-        </p>
-      </div>
+    <li className={cn('grid gap-x-4 gap-y-2 px-3 py-3 text-sm', COLS)}>
+      <span className="num text-xs text-muted-foreground">{formatIsoDate(line.date)}</span>
 
-      <div>
+      <span className="min-w-0">
+        <span className="block truncate">{line.description}</span>
+        {line.reference ? (
+          <span className="num block text-xs text-muted-foreground">{line.reference}</span>
+        ) : null}
+      </span>
+
+      <Amount money={line.amount} emphasis="strong" className="lg:text-right" />
+
+      <div className="min-w-0">
         {suggestions.length > 0 ? (
           <>
             {ambiguous ? (
@@ -86,13 +90,14 @@ const Pair = ({
                   className="flex flex-wrap items-baseline justify-between gap-2"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="truncate text-sm">{movementLabel(suggestion.movementId)}</span>
+                    <span className="truncate">{movementLabel(suggestion.movementId)}</span>
                     <span className="block text-xs text-muted-foreground">
                       {copy.reconciliation.reasons[suggestion.reason]}
                     </span>
                   </span>
                   <Button
                     size="sm"
+                    className="h-7 px-2 text-xs"
                     aria-label={copy.reconciliation.confirmOf(line.description)}
                     onClick={() => onMatch(suggestion.movementId)}
                   >
@@ -103,38 +108,32 @@ const Pair = ({
             </ul>
           </>
         ) : (
-          <div>
-            <p className="text-sm">{copy.reconciliation.noSuggestion}</p>
-            <p className="mt-0.5 max-w-[60ch] text-xs text-muted-foreground">
-              {copy.reconciliation.noSuggestionHint}
-            </p>
-
-            <div className="mt-2 flex flex-wrap items-end gap-2">
-              <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger
-                  size="sm"
-                  className="w-48"
-                  aria-label={copy.reconciliation.categoryOf(line.description)}
-                >
-                  <SelectValue placeholder={copy.reconciliation.category.label} />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={categoryId} onValueChange={setCategoryId}>
+              <SelectTrigger
                 size="sm"
-                disabled={categoryId === ''}
-                aria-label={copy.reconciliation.toMovementOf(line.description)}
-                onClick={() => onCreate(categoryId)}
+                className="w-44"
+                aria-label={copy.reconciliation.categoryOf(line.description)}
               >
-                {copy.reconciliation.toMovement}
-              </Button>
-            </div>
+                <SelectValue placeholder={copy.reconciliation.category.label} />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              className="h-7 px-2 text-xs"
+              disabled={categoryId === ''}
+              aria-label={copy.reconciliation.toMovementOf(line.description)}
+              onClick={() => onCreate(categoryId)}
+            >
+              {copy.reconciliation.toMovement}
+            </Button>
           </div>
         )}
 
@@ -144,7 +143,7 @@ const Pair = ({
           <Button
             variant="ghost"
             size="sm"
-            className="mt-2 h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+            className="mt-1 -ml-2 h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
             aria-label={copy.reconciliation.ignoreOf(line.description)}
             onClick={onIgnore}
           >
@@ -162,7 +161,7 @@ interface ResolvedProps {
 }
 
 const ResolvedLine = ({ line, onUndo }: ResolvedProps) => (
-  <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border py-2">
+  <li className={`flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 ${FRAME_ROW}`}>
     <span className="flex min-w-0 items-baseline gap-2">
       <span className="min-w-0 truncate text-sm text-muted-foreground">{line.description}</span>
       <span className="shrink-0 text-xs text-muted-foreground">
@@ -306,6 +305,7 @@ const ReconciliationScreen = () => {
           {/* Los tres saldos, siempre a la vista: la diferencia es la pregunta de la pantalla. */}
           <StatGrid>
             <StatCard
+              icon={Scale}
               className="sm:col-span-2"
               label={copy.reconciliation.difference}
               hint={
@@ -330,16 +330,16 @@ const ReconciliationScreen = () => {
                 className="block text-left text-3xl tracking-tight"
               />
             </StatCard>
-            <StatCard label={copy.reconciliation.ledgerBalance}>
+            <StatCard icon={BookOpen} label={copy.reconciliation.ledgerMovement}>
               <Amount
-                money={reconciliation.data.ledgerBalance}
-                className="block text-left text-lg"
+                money={reconciliation.data.ledgerMovement}
+                className="block text-left text-2xl"
               />
             </StatCard>
-            <StatCard label={copy.reconciliation.statementBalance}>
+            <StatCard icon={Banknote} label={copy.reconciliation.statementMovement}>
               <Amount
-                money={reconciliation.data.statementBalance}
-                className="block text-left text-lg"
+                money={reconciliation.data.statementMovement}
+                className="block text-left text-2xl"
               />
             </StatCard>
           </StatGrid>
@@ -356,27 +356,41 @@ const ReconciliationScreen = () => {
             />
           ) : (
             <div>
-              <h2 className={cn('text-sm font-medium tracking-tight')}>
+              <h2 className={cn('flex items-center gap-2 text-base font-medium tracking-tight')}>
+                <ListTodo className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 {copy.reconciliation.pending}{' '}
                 <span className="num text-muted-foreground">
                   {reconciliation.data.pagination.totalItems}
                 </span>
               </h2>
 
-              <ul className="mt-2">
-                {reconciliation.data.lines.map((line) => (
-                  <Pair
-                    key={line.id}
-                    line={line}
-                    suggestions={suggestionsFor(line.id)}
-                    movementLabel={(movementId) => movementById.get(movementId) ?? movementId}
-                    categories={categoryOptions}
-                    onMatch={(movementId) => match.mutate({ lineId: line.id, movementId })}
-                    onIgnore={() => ignore.mutate(line.id)}
-                    onCreate={(categoryId) => toMovement.mutate({ lineId: line.id, categoryId })}
-                  />
-                ))}
-              </ul>
+              <p className="mt-0.5 max-w-[75ch] text-xs text-muted-foreground">
+                {copy.reconciliation.noSuggestionHint}
+              </p>
+
+              <TableFrame className="mt-2">
+                <FrameHeader className={cn('hidden gap-x-4 lg:grid', COLS)}>
+                  <span>{copy.reconciliation.columns.date}</span>
+                  <span>{copy.reconciliation.columns.description}</span>
+                  <span className="text-right">{copy.reconciliation.columns.amount}</span>
+                  <span>{copy.reconciliation.columns.action}</span>
+                </FrameHeader>
+
+                <ul className="divide-y divide-border">
+                  {reconciliation.data.lines.map((line) => (
+                    <Pair
+                      key={line.id}
+                      line={line}
+                      suggestions={suggestionsFor(line.id)}
+                      movementLabel={(movementId) => movementById.get(movementId) ?? movementId}
+                      categories={categoryOptions}
+                      onMatch={(movementId) => match.mutate({ lineId: line.id, movementId })}
+                      onIgnore={() => ignore.mutate(line.id)}
+                      onCreate={(categoryId) => toMovement.mutate({ lineId: line.id, categoryId })}
+                    />
+                  ))}
+                </ul>
+              </TableFrame>
 
               <Pager
                 page={page}
@@ -390,7 +404,8 @@ const ReconciliationScreen = () => {
 
           {reconciliation.data.resolved.length > 0 ? (
             <div>
-              <h2 className="text-sm font-medium tracking-tight">
+              <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+                <CircleCheck className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 {copy.reconciliation.resolved.title}{' '}
                 <span className="num text-muted-foreground">
                   {reconciliation.data.resolved.length}
@@ -400,15 +415,17 @@ const ReconciliationScreen = () => {
                 {copy.reconciliation.resolved.hint}
               </p>
 
-              <ul className="mt-2">
-                {reconciliation.data.resolved.map((line) => (
-                  <ResolvedLine
-                    key={line.id}
-                    line={line}
-                    onUndo={() => unmatch.mutate(line.id)}
-                  />
-                ))}
-              </ul>
+              <TableFrame className="mt-2">
+                <ul className="divide-y divide-border">
+                  {reconciliation.data.resolved.map((line) => (
+                    <ResolvedLine
+                      key={line.id}
+                      line={line}
+                      onUndo={() => unmatch.mutate(line.id)}
+                    />
+                  ))}
+                </ul>
+              </TableFrame>
             </div>
           ) : null}
         </div>

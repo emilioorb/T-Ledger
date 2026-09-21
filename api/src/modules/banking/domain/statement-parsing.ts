@@ -1,3 +1,4 @@
+import { toUtcDate } from '../../../shared/kernel/calendar.js'
 import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import { Money } from '../../../shared/kernel/money.js'
 import { err, ok, type Result } from '../../../shared/kernel/result.js'
@@ -7,16 +8,16 @@ import type { CsvDateFormat, ImportProfile } from './import-profile.js'
 
 const cellAt = (row: readonly string[], index: number): string => (row[index] ?? '').trim()
 
+// `toUtcDate` devuelve null si la fecha no existe. Es lo que delata el archivo que viene en
+// mm/dd cuando el perfil dice DD/MM: 02/14/2026 deja de importarse como 2 de febrero.
 const parseDate = (value: string, format: CsvDateFormat): Date | null => {
   if (format === 'DD/MM/YYYY') {
     const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value)
-    return match
-      ? new Date(Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1])))
-      : null
+    return match ? toUtcDate(Number(match[3]), Number(match[2]), Number(match[1])) : null
   }
 
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-  return match ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))) : null
+  return match ? toUtcDate(Number(match[1]), Number(match[2]), Number(match[3])) : null
 }
 
 const parseAmount = (
@@ -24,8 +25,6 @@ const parseAmount = (
   profile: ImportProfile,
   currency: CurrencyCode,
 ): Money | null => {
-  if (value === '') return Money.zero(currency)
-
   const withoutThousands = profile.thousandsSeparator
     ? value.split(profile.thousandsSeparator).join('')
     : value
@@ -47,8 +46,13 @@ const amountOf = (
   }
   if (profile.debitColumn === null || profile.creditColumn === null) return null
 
-  const debit = parseAmount(cellAt(row, profile.debitColumn), profile, currency)
-  const credit = parseAmount(cellAt(row, profile.creditColumn), profile, currency)
+  // En el par débito/crédito la celda vacía es la columna que no aplica, y ahí sí vale cero.
+  // En la columna única de monto no: vacía significa que la fila no se pudo leer.
+  const zeroIfBlank = (cell: string): Money | null =>
+    cell === '' ? Money.zero(currency) : parseAmount(cell, profile, currency)
+
+  const debit = zeroIfBlank(cellAt(row, profile.debitColumn))
+  const credit = zeroIfBlank(cellAt(row, profile.creditColumn))
   if (!debit || !credit) return null
 
   return credit.isZero() ? debit.negate() : credit
@@ -70,7 +74,10 @@ export const parseStatement = (
   profile: ImportProfile,
   currency: CurrencyCode,
 ): Result<ParsedLine[], RangeError> => {
-  const rows = parseCsv(text, profile.delimiter).slice(profile.headerRows)
+  const parsed = parseCsv(text, profile.delimiter)
+  if (!parsed.ok) return parsed
+
+  const rows = parsed.value.slice(profile.headerRows)
   const needed = columnsNeeded(profile)
   const lines: ParsedLine[] = []
 

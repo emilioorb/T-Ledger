@@ -1,6 +1,5 @@
 import { z } from 'zod'
-
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: 'La fecha debe ser AAAA-MM-DD' })
+import { isoDate } from '../../../shared/http/date.schema.js'
 
 export const listRatesQuerySchema = z
   .object({ indicator: z.enum(['317', '318']).default('317'), from: isoDate, to: isoDate })

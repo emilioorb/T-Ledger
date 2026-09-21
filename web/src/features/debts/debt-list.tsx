@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { SearchInput } from '@/components/search-input'
+import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
 import { SortButton } from '@/components/sort-button'
 import { SortSelect } from '@/components/sort-select'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -36,7 +37,7 @@ type ColumnKey = keyof typeof columns
 
 const Row = ({ debt }: { debt: Debt }) => (
   <li
-    className={`group grid ${COLS} items-baseline px-1 py-2 transition-colors hover:bg-accent/40`}
+    className={`group grid ${COLS} ${FRAME_ROW} items-baseline transition-colors hover:bg-accent/40`}
   >
     <Link
       to="/deudas/$debtId"
@@ -85,12 +86,15 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
     )
   }
 
-  if (isError) return <ErrorState
+  if (isError)
+    return (
+      <ErrorState
         title={copy.error.title}
         description={copy.error.description}
         retryLabel={copy.error.retry}
         onRetry={() => void refetch()}
       />
+    )
 
   if (!data || data.data.length === 0) {
     return <EmptyState title={empty.title} description={empty.description} action={emptyAction} />
@@ -100,7 +104,6 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
     <SortButton
       label={label}
       align={align}
-      className="uppercase"
       active={table.sort.key === key}
       direction={table.sort.direction}
       onClick={() => table.toggle(key)}
@@ -131,19 +134,19 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
         />
       </div>
 
-      <div>
-        <div
-          className={`hidden ${COLS} border-b border-border px-1 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase sm:grid`}
-        >
+      <TableFrame>
+        <FrameHeader className={`hidden ${COLS} sm:grid`}>
           {header('name', labels.name, 'left')}
           {header('balance', copy.list.columns.balance)}
           {header('payment', copy.list.columns.payment)}
           {header('payoffDate', copy.list.columns.payoffDate)}
           <span className="inline-flex min-h-6 items-center justify-end">{copy.list.actions}</span>
-        </div>
+        </FrameHeader>
 
         {table.rows.length === 0 ? (
-          <p className="py-6 text-sm text-muted-foreground">{copy.list.noMatches(table.query)}</p>
+          <p className="px-3 py-6 text-sm text-muted-foreground">
+            {copy.list.noMatches(table.query)}
+          </p>
         ) : (
           <ul className="divide-y divide-border">
             {table.rows.map((debt) => (
@@ -151,14 +154,14 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
             ))}
           </ul>
         )}
+      </TableFrame>
 
-        {/* Truncar en silencio sería mentir sobre cuántas deudas hay. */}
-        {data.pagination.totalItems > data.data.length ? (
-          <p className="mt-3 text-xs text-muted-foreground">
-            {copy.list.truncated(data.data.length, data.pagination.totalItems)}
-          </p>
-        ) : null}
-      </div>
+      {/* Truncar en silencio sería mentir sobre cuántas deudas hay. */}
+      {data.pagination.totalItems > data.data.length ? (
+        <p className="text-xs text-muted-foreground">
+          {copy.list.truncated(data.data.length, data.pagination.totalItems)}
+        </p>
+      ) : null}
     </div>
   )
 }

@@ -14,6 +14,8 @@ import { copy as goals } from '@/features/goals/copy'
 import { copy as investments } from '@/features/investments/copy'
 import { copy as projection } from '@/features/projection/copy'
 import { copy as overview } from '@/features/projection/overview-copy'
+import { copy as shell } from '@/features/shell/copy'
+import { copy as guide } from '@/features/shell/guide-copy'
 import { copy } from '@/features/debts/copy'
 import { useDebt } from '@/features/debts/use-debts'
 import { useGoal } from '@/features/goals/use-goals'
@@ -167,6 +169,10 @@ export const PageBreadcrumb = () => {
           </>
         ) : section === 'plan-de-pago' ? (
           leaf(copy.nav.payoffPlan)
+        ) : section === 'novedades' ? (
+          leaf(shell.nav.releases)
+        ) : section === 'guia' ? (
+          leaf(guide.guide.title)
         ) : section !== 'deudas' ? null : second === 'nueva' ? (
           <>
             <Crumb to="/deudas" label={copy.nav.debts} />

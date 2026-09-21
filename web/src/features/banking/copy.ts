@@ -42,7 +42,12 @@ export const copy = {
       'Cómo leer el CSV de cada banco: qué columna es la fecha, con qué formato, dónde está el monto. Es dato, no código.',
     new: 'Nuevo perfil',
     edit: (name: string) => `Editar ${name}`,
-    columns: { name: 'Perfil', delimiter: 'Separador', dateFormat: 'Formato de fecha' },
+    columns: {
+      name: 'Perfil',
+      delimiter: 'Separador',
+      dateFormat: 'Formato de fecha',
+      encoding: 'Codificación',
+    },
     form: {
       createTitle: 'Nuevo perfil',
       editTitle: 'Editar perfil',
@@ -54,7 +59,10 @@ export const copy = {
       dateFormat: { label: 'Formato de fecha' },
       descriptionColumn: { label: 'Columna de descripción' },
       referenceColumn: { label: 'Columna de referencia', hint: 'Opcional.' },
-      amountColumn: { label: 'Columna de monto', hint: 'Con signo. Dejala vacía si hay dos columnas.' },
+      amountColumn: {
+        label: 'Columna de monto',
+        hint: 'Con signo. Dejala vacía si hay dos columnas.',
+      },
       debitColumn: { label: 'Columna de débito' },
       creditColumn: { label: 'Columna de crédito' },
       decimalSeparator: { label: 'Separador decimal' },
@@ -65,13 +73,15 @@ export const copy = {
     },
     empty: {
       title: 'Todavía no hay perfiles',
-      description: 'Un perfil por banco. Después se ajusta viendo la vista previa, sin tocar código.',
+      description:
+        'Un perfil por banco. Después se ajusta viendo la vista previa, sin tocar código.',
       action: 'Crear el primero',
     },
     toast: { created: 'Perfil creado', updated: 'Cambios guardados' },
   },
 
   import: {
+    formTitle: 'El archivo del banco',
     title: 'Importar extracto',
     description: 'Subí el CSV del banco, revisá cómo quedó interpretado y recién ahí importalo.',
     account: { label: 'Cuenta bancaria' },
@@ -83,37 +93,50 @@ export const copy = {
       'Si la fecha o el monto quedaron en el lugar equivocado, el perfil está mal mapeado. Ajustalo antes de importar.',
     previewCount: (shown: number, total: number) =>
       total > shown ? `Primeras ${shown} de ${total} líneas` : `${total} líneas`,
-    columns: { date: 'Fecha', description: 'Descripción', reference: 'Referencia', amount: 'Monto' },
+    columns: {
+      date: 'Fecha',
+      description: 'Descripción',
+      reference: 'Referencia',
+      amount: 'Monto',
+    },
     submit: 'Importar',
     emptyPreview:
       'El archivo no produjo ninguna línea. O está vacío, o el perfil tiene el separador equivocado.',
     result: {
       title: 'Importación terminada',
       imported: (n: number) => (n === 1 ? '1 línea nueva' : `${n} líneas nuevas`),
-      duplicated: (n: number) =>
-        n === 1 ? '1 línea ya estaba' : `${n} líneas ya estaban`,
-      allDuplicated: 'Ese archivo ya estaba importado completo. No es un error: no había nada nuevo.',
+      duplicated: (n: number) => (n === 1 ? '1 línea ya estaba' : `${n} líneas ya estaban`),
+      allDuplicated:
+        'Ese archivo ya estaba importado completo. No es un error: no había nada nuevo.',
       goToReconciliation: 'Ir a conciliar',
     },
     needsAccount: {
       title: 'Primero registrá una cuenta bancaria',
-      description: 'Un extracto se importa contra una cuenta, que a su vez apunta al plan contable.',
+      description:
+        'Un extracto se importa contra una cuenta, que a su vez apunta al plan contable.',
       action: 'Crear una cuenta',
     },
   },
 
   reconciliation: {
+    columns: {
+      date: 'Fecha',
+      description: 'Lo que trajo el banco',
+      amount: 'Monto',
+      action: 'Qué hacer',
+    },
     title: 'Conciliación',
-    description: 'Lo que el banco vio contra lo que anotaste. La diferencia es lo que falta explicar.',
+    description:
+      'Lo que el banco vio contra lo que anotaste. La diferencia es lo que falta explicar.',
     account: { label: 'Cuenta' },
     pickAccount: {
       title: 'Elegí contra qué cuenta conciliar',
       description: 'Cada cuenta bancaria tiene su propio extracto y su propio saldo contable.',
     },
-    ledgerBalance: 'Saldo contable',
-    statementBalance: 'Saldo del banco',
+    ledgerMovement: 'Movimiento en tus libros',
+    statementMovement: 'Movimiento en el banco',
     difference: 'Diferencia',
-    balanced: 'Todo conciliado: el saldo contable coincide con el del banco.',
+    balanced: 'Todo conciliado: lo que anotaste en el período coincide con lo que reportó el banco.',
     // Una diferencia sin dirección no es un dato: hay que decir de qué lado sobra.
     ledgerHigher: (amount: string) => `Tu contabilidad muestra ${amount} más que el banco.`,
     statementHigher: (amount: string) => `El banco muestra ${amount} más que tu contabilidad.`,
@@ -130,7 +153,8 @@ export const copy = {
     },
     ambiguous: 'Hay más de un candidato con la misma confianza: elegí cuál.',
     noSuggestion: 'Sin movimiento que le corresponda',
-    noSuggestionHint: 'Es un gasto que no anotaste. Convertilo en movimiento eligiendo su categoría.',
+    noSuggestionHint:
+      'Es un gasto que no anotaste. Convertilo en movimiento eligiendo su categoría.',
     confirm: 'Es este',
     confirmOf: (description: string) => `Conciliar «${description}» con este movimiento`,
     ignoreOf: (description: string) => `Ignorar «${description}»`,

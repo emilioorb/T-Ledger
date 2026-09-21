@@ -70,6 +70,15 @@ export const suggestMatches = (
 
   pairs.sort((a, b) => b.score - a.score || a.line.id.localeCompare(b.line.id))
 
+  // Los pares agrupados por línea, una vez. Buscar los empates recorriendo la lista entera
+  // dentro del bucle hacía el trabajo al cuadrado sobre cada página de conciliación.
+  const byLine = new Map<string, typeof pairs>()
+  for (const pair of pairs) {
+    const group = byLine.get(pair.line.id)
+    if (group) group.push(pair)
+    else byLine.set(pair.line.id, [pair])
+  }
+
   const takenLines = new Set<string>()
   const takenMovements = new Set<string>()
   const suggestions: MatchSuggestion[] = []
@@ -77,9 +86,8 @@ export const suggestMatches = (
   for (const pair of pairs) {
     if (takenLines.has(pair.line.id) || takenMovements.has(pair.candidate.id)) continue
 
-    const tied = pairs.filter(
+    const tied = (byLine.get(pair.line.id) ?? []).filter(
       (other) =>
-        other.line.id === pair.line.id &&
         other.score === pair.score &&
         other.candidate.id !== pair.candidate.id &&
         !takenMovements.has(other.candidate.id),

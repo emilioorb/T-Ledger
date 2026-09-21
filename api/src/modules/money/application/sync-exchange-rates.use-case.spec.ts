@@ -10,10 +10,17 @@ const utc = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
 const HOY = utc('2026-09-18')
 
 const rate = (publishedAt: string) =>
-  unwrap(ExchangeRate.create({ indicator: '317', value: new Decimal('508'), publishedAt: utc(publishedAt) }))
+  unwrap(
+    ExchangeRate.create({
+      indicator: '317',
+      value: new Decimal('508'),
+      publishedAt: utc(publishedAt),
+    }),
+  )
 
 const repositoryStub = (latest: ExchangeRate | null): ExchangeRateRepository => ({
   findEffectiveAt: vi.fn(),
+  findPublishedUpTo: vi.fn().mockResolvedValue([]),
   findLatest: vi.fn().mockResolvedValue(latest),
   findInRange: vi.fn(),
   saveMany: vi.fn().mockResolvedValue(3),

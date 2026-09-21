@@ -25,13 +25,13 @@ export interface NavItem {
 }
 
 interface Props {
-  label: string
+  label?: string
   items: NavItem[]
 }
 
 export const NavMain = ({ label, items }: Props) => (
   <SidebarGroup>
-    <SidebarGroupLabel>{label}</SidebarGroupLabel>
+    {label ? <SidebarGroupLabel>{label}</SidebarGroupLabel> : null}
     <SidebarMenu>
       {items.map((item) => (
         <Collapsible key={item.to} asChild defaultOpen>

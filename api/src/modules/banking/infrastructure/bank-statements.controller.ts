@@ -21,6 +21,10 @@ import { toParsedLineResponse } from './banking.presenters.js'
 import { importStatementSchema, type ImportStatementInput } from './banking.schemas.js'
 import type { UploadedFile } from './uploaded-file.js'
 
+// Sin límite, multer acepta el archivo entero en memoria: un CSV de un giga tumba el
+// proceso antes de que ninguna validación llegue a mirarlo. Diez megas son ~150.000 líneas.
+const CSV_UPLOAD = { limits: { fileSize: 10 * 1024 * 1024, files: 1 } }
+
 type ParsedLineResponse = ReturnType<typeof toParsedLineResponse>
 
 interface StatementResponse {
@@ -60,7 +64,7 @@ export class BankStatementsController {
 
   @Post('preview')
   @HttpCode(200)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', CSV_UPLOAD))
   async preview(
     @UploadedFileDecorator() file: UploadedFile,
     @Body(new ZodValidationPipe(importStatementSchema)) input: ImportStatementInput,
@@ -70,7 +74,7 @@ export class BankStatementsController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', CSV_UPLOAD))
   async import(
     @UploadedFileDecorator() file: UploadedFile,
     @Body(new ZodValidationPipe(importStatementSchema)) input: ImportStatementInput,

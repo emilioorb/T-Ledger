@@ -1,7 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
+import {
+  ConflictError,
+  NotFoundError,
+  SemanticValidationError,
+} from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { ACCOUNT_REPOSITORY, type AccountRepository } from '../domain/account-repository.port.js'
+import { JOURNAL_REPOSITORY, type JournalRepository } from '../domain/journal-repository.port.js'
 import { Account, type AccountProps } from '../domain/account.js'
 import { ChartOfAccounts } from '../domain/chart-of-accounts.js'
 import type {
@@ -11,9 +16,17 @@ import type {
 
 @Injectable()
 export class SaveAccountUseCase {
-  constructor(@Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository) {}
+  constructor(
+    @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
+    @Inject(JOURNAL_REPOSITORY) private readonly journal: JournalRepository,
+  ) {}
 
+  // `save` del repositorio es un upsert: sin esta guarda, crear un código que ya existe
+  // renombraba la cuenta vieja y respondía 201, como si fuera una cuenta nueva.
   async create(input: CreateAccountInput): Promise<Account> {
+    if (await this.accounts.findByCode(input.code)) {
+      throw new ConflictError(`La cuenta ${input.code} ya existe en el plan.`)
+    }
     return this.save(input)
   }
 
@@ -42,6 +55,14 @@ export class SaveAccountUseCase {
     const others = chart.all().filter((existing) => existing.code !== props.code)
     const validated = ChartOfAccounts.create([...others, account.value])
     if (isErr(validated)) throw new SemanticValidationError(validated.error.message)
+
+    // Colgar una hija de una cuenta que ya tiene asientos la vuelve agrupadora y le deja el
+    // saldo adentro: el árbol lo cuenta dos veces y nadie se entera hasta cuadrar a mano.
+    if (props.parentCode !== null && (await this.journal.hasEntriesFor(props.parentCode))) {
+      throw new SemanticValidationError(
+        `La cuenta ${props.parentCode} ya tiene asientos: no puede tener cuentas hijas.`,
+      )
+    }
 
     await this.accounts.save(account.value)
     return account.value

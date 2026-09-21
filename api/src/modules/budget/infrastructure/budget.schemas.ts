@@ -1,17 +1,20 @@
 import { z } from 'zod'
+import { periodParam } from '../../../shared/http/date.schema.js'
+import { nameText } from '../../../shared/http/text.schema.js'
 import { CURRENCIES } from '../../../shared/kernel/currency.js'
-import { moneySchema } from '../../../shared/http/money.schema.js'
+import { moneySchema, nonNegativeMoneySchema } from '../../../shared/http/money.schema.js'
 
-const periodParam = z.string().regex(/^\d{4}-\d{2}$/, { error: 'El período debe ser AAAA-MM' })
-const accountCode = z.string().regex(/^\d{3,10}$/, { error: 'El código de cuenta debe ser numérico' })
+const accountCode = z
+  .string()
+  .regex(/^\d{3,10}$/, { error: 'El código de cuenta debe ser numérico' })
 const percentage = z
   .string()
   .regex(/^\d+(\.\d+)?$/, { error: 'El porcentaje debe ser un decimal no negativo' })
 
 export const budgetBucketSchema = z
   .object({
-    id: z.string().trim().min(1),
-    name: z.string().trim().min(1),
+    id: nameText,
+    name: nameText,
     percentage,
     isSavings: z.boolean().default(false),
     accountCodes: z.array(accountCode).default([]),
@@ -20,7 +23,7 @@ export const budgetBucketSchema = z
 
 export const budgetModelSchema = z
   .object({
-    name: z.string().trim().min(1),
+    name: nameText,
     active: z.boolean().default(false),
     buckets: z.array(budgetBucketSchema).min(1),
   })
@@ -31,7 +34,7 @@ export const evaluationQuerySchema = z
   .meta({ id: 'BudgetEvaluationQuery', title: 'BudgetEvaluationQuery' })
 
 export const monthlyIncomeSchema = z
-  .object({ amount: moneySchema })
+  .object({ amount: nonNegativeMoneySchema })
   .meta({ id: 'MonthlyIncomeInput', title: 'MonthlyIncomeInput' })
 
 export const budgetModelResponseSchema = z

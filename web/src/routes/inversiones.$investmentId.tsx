@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { ChartLine, Coins, ListOrdered, Percent, PiggyBank, TrendingUp } from 'lucide-react'
 import { useQueries } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { ErrorState } from '@/components/error-state'
@@ -7,6 +8,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount } from '@/features/accounting/amount'
+import { usePostableAssets } from '@/features/accounting/use-accounting'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { copy } from '@/features/investments/copy'
 import { GrowthChart, type GrowthPoint } from '@/features/investments/growth-chart'
@@ -32,10 +41,16 @@ const monthsAhead = (count: number): string[] =>
 const InvestmentDetailScreen = () => {
   const { investmentId } = Route.useParams()
   const [amount, setAmount] = useState('')
+  const [fromAccountCode, setFromAccountCode] = useState('')
   const [date, setDate] = useState(today())
   const investment = useInvestmentProjection(investmentId, today())
   const addCapital = useAddCapital()
   const dates = monthsAhead(POINTS)
+
+  // La cuenta de la inversión no puede ser el origen: el traslado sería de ella a ella misma.
+  const origins = usePostableAssets().filter(
+    (account) => account.code !== investment.data?.accountCode,
+  )
 
   const curve = useQueries({
     queries: dates.map((at) => ({
@@ -71,7 +86,11 @@ const InvestmentDetailScreen = () => {
     addCapital.mutate(
       {
         id: investmentId,
-        input: { date, amount: parseMoneyInput(amount, data.value.currency as CurrencyCode) },
+        input: {
+          date,
+          amount: parseMoneyInput(amount, data.value.currency as CurrencyCode),
+          fromAccountCode,
+        },
       },
       { onSuccess: () => setAmount('') },
     )
@@ -106,6 +125,7 @@ const InvestmentDetailScreen = () => {
       {/* El desglose es la respuesta: cuánto pusiste y cuánto de lo que ves es rendimiento. */}
       <StatGrid>
         <StatCard
+          icon={PiggyBank}
           className="sm:col-span-2"
           label={copy.investments.columns.value}
           hint={
@@ -125,24 +145,31 @@ const InvestmentDetailScreen = () => {
           />
         </StatCard>
 
-        <StatCard label={copy.investments.columns.invested}>
-          <Amount money={data.invested} className="block text-left text-lg" />
+        <StatCard icon={Coins} label={copy.investments.columns.invested}>
+          <Amount money={data.invested} className="block text-left text-2xl" />
         </StatCard>
-        <StatCard label={copy.investments.columns.interest}>
+        <StatCard icon={TrendingUp} label={copy.investments.columns.interest}>
           <Amount
             money={data.interestEarned}
             emphasis="strong"
-            className="block text-left text-lg"
+            className="block text-left text-2xl"
           />
         </StatCard>
-        <StatCard className="sm:col-span-2 lg:col-span-4" label={copy.investments.columns.rate}>
+        <StatCard
+          icon={Percent}
+          className="sm:col-span-2 lg:col-span-4"
+          label={copy.investments.columns.rate}
+        >
           <p className="num text-left text-lg">{data.annualRate}%</p>
         </StatCard>
       </StatGrid>
 
       {points.length > 1 ? (
         <div>
-          <h2 className="text-sm font-medium tracking-tight">{copy.investments.detail.curve}</h2>
+          <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+            <ChartLine className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            {copy.investments.detail.curve}
+          </h2>
           <p className="mt-1 max-w-[60ch] text-xs text-muted-foreground">
             {copy.investments.detail.curveHint}
           </p>
@@ -150,7 +177,11 @@ const InvestmentDetailScreen = () => {
         </div>
       ) : null}
 
-      {!data.matured ? (
+      {data.matured ? null : data.accountCode === null ? (
+        <p className="max-w-[65ch] text-sm text-muted-foreground">
+          {copy.investments.contributionForm.needsAccount}
+        </p>
+      ) : (
         <form onSubmit={submit} className="space-y-1.5">
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1.5">
@@ -164,7 +195,9 @@ const InvestmentDetailScreen = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="capital-amount">{copy.investments.contributionForm.amount.label}</Label>
+              <Label htmlFor="capital-amount">
+                {copy.investments.contributionForm.amount.label}
+              </Label>
               <Input
                 id="capital-amount"
                 value={amount}
@@ -174,7 +207,26 @@ const InvestmentDetailScreen = () => {
                 onChange={(event) => setAmount(event.target.value)}
               />
             </div>
-            <Button type="submit" size="sm" disabled={addCapital.isPending}>
+            <div className="space-y-1.5">
+              <Label htmlFor="capital-from">{copy.investments.contributionForm.from.label}</Label>
+              <Select value={fromAccountCode} onValueChange={setFromAccountCode}>
+                <SelectTrigger id="capital-from" className="h-8 w-56">
+                  <SelectValue placeholder={copy.investments.contributionForm.from.label} />
+                </SelectTrigger>
+                <SelectContent>
+                  {origins.map((account) => (
+                    <SelectItem key={account.code} value={account.code}>
+                      {account.code} · {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={addCapital.isPending || fromAccountCode === ''}
+            >
               {copy.investments.contributionForm.submit}
             </Button>
           </div>
@@ -182,11 +234,12 @@ const InvestmentDetailScreen = () => {
             {copy.investments.contributionForm.date.hint}
           </p>
         </form>
-      ) : null}
+      )}
 
       {data.contributions.length > 0 ? (
         <div>
-          <h2 className="text-sm font-medium tracking-tight">
+          <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+            <ListOrdered className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             {copy.investments.detail.history}
           </h2>
           <ul className="mt-2">

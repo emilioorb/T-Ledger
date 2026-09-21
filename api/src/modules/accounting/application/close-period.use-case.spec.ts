@@ -54,6 +54,7 @@ const journalStub = ({
   save: vi.fn(),
   findById: vi.fn(),
   findByMovementId: vi.fn(),
+  hasEntriesFor: vi.fn().mockResolvedValue(false),
   findInRange: vi.fn().mockResolvedValue({ items: [], totalItems: entryCount }),
   totalsByAccountPerDay: vi.fn().mockResolvedValue([]),
   totalsByAccount: vi
@@ -74,6 +75,7 @@ const journalStub = ({
 const movementsStub = (unposted = 0, months: PeriodKey[] = []): MovementRepository => ({
   findAll: vi.fn(),
   findById: vi.fn(),
+  findByPaymentAccount: vi.fn().mockResolvedValue([]),
   save: vi.fn(),
   countUnposted: vi.fn().mockResolvedValue(unposted),
   monthsWithMovements: vi.fn().mockResolvedValue(months),
@@ -82,8 +84,8 @@ const movementsStub = (unposted = 0, months: PeriodKey[] = []): MovementReposito
 const periodsStub = (stored: AccountingPeriod[] = []): PeriodRepository => ({
   find: vi
     .fn()
-    .mockImplementation(async (key: PeriodKey) =>
-      stored.find((period) => period.key.compareTo(key) === 0) ?? null,
+    .mockImplementation(
+      async (key: PeriodKey) => stored.find((period) => period.key.compareTo(key) === 0) ?? null,
     ),
   findAll: vi.fn().mockResolvedValue(stored),
   findClosedAfter: vi

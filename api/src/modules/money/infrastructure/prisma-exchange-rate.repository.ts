@@ -11,15 +11,23 @@ export class PrismaExchangeRateRepository implements ExchangeRateRepository {
 
   // «Vigente en X» es la última publicación con fecha menor o igual a X.
   async findEffectiveAt(indicator: RateIndicator, date: Date): Promise<ExchangeRate | null> {
-    const row = await this.prisma.exchangeRate.findFirst({
+    const row = await this.prisma.client.exchangeRate.findFirst({
       where: { indicator, publishedAt: { lte: date } },
       orderBy: { publishedAt: 'desc' },
     })
     return row ? toDomain(row as ExchangeRateRow) : null
   }
 
+  async findPublishedUpTo(indicator: RateIndicator, at: Date): Promise<ExchangeRate[]> {
+    const rows = await this.prisma.client.exchangeRate.findMany({
+      where: { indicator, publishedAt: { lte: at } },
+      orderBy: { publishedAt: 'asc' },
+    })
+    return rows.map((row) => toDomain(row as ExchangeRateRow))
+  }
+
   async findLatest(indicator: RateIndicator): Promise<ExchangeRate | null> {
-    const row = await this.prisma.exchangeRate.findFirst({
+    const row = await this.prisma.client.exchangeRate.findFirst({
       where: { indicator },
       orderBy: { publishedAt: 'desc' },
     })
@@ -27,7 +35,7 @@ export class PrismaExchangeRateRepository implements ExchangeRateRepository {
   }
 
   async findInRange(indicator: RateIndicator, range: DateRange): Promise<ExchangeRate[]> {
-    const rows = await this.prisma.exchangeRate.findMany({
+    const rows = await this.prisma.client.exchangeRate.findMany({
       where: { indicator, publishedAt: { gte: range.from, lte: range.to } },
       orderBy: { publishedAt: 'asc' },
     })
@@ -36,18 +44,21 @@ export class PrismaExchangeRateRepository implements ExchangeRateRepository {
 
   // El índice único sobre (indicator, publishedAt) es lo que hace idempotente al backfill.
   async saveMany(rates: readonly ExchangeRate[]): Promise<number> {
-    const writes = rates.map((rate) =>
-      this.prisma.exchangeRate.upsert({
-        where: { indicator_publishedAt: { indicator: rate.indicator, publishedAt: rate.publishedAt } },
-        create: {
-          indicator: rate.indicator,
-          publishedAt: rate.publishedAt,
-          value: rate.value.toFixed(6),
-        },
-        update: { value: rate.value.toFixed(6) },
-      }),
-    )
-    const results = await this.prisma.$transaction(writes)
-    return results.length
+    return this.prisma.withTransaction(async () => {
+      for (const rate of rates) {
+        await this.prisma.client.exchangeRate.upsert({
+          where: {
+            indicator_publishedAt: { indicator: rate.indicator, publishedAt: rate.publishedAt },
+          },
+          create: {
+            indicator: rate.indicator,
+            publishedAt: rate.publishedAt,
+            value: rate.value.toFixed(6),
+          },
+          update: { value: rate.value.toFixed(6) },
+        })
+      }
+      return rates.length
+    })
   }
 }

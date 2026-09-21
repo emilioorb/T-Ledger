@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { TableProperties } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AmortizationTable } from '@/features/debts/amortization-table'
 import { BalanceChart } from '@/features/debts/balance-chart'
@@ -31,7 +32,8 @@ const DebtDetail = () => {
     )
   }
 
-  if (debt.isError || !debt.data) return (
+  if (debt.isError || !debt.data)
+    return (
       <ErrorState
         title={copy.error.title}
         description={copy.error.description}
@@ -58,7 +60,8 @@ const DebtDetail = () => {
       </div>
 
       <section aria-labelledby="tabla" className="space-y-3">
-        <h2 id="tabla" className="text-base font-medium tracking-tight">
+        <h2 id="tabla" className="flex items-center gap-2 text-base font-medium tracking-tight">
+          <TableProperties className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           {copy.schedule.title}
         </h2>
 
@@ -77,11 +80,15 @@ const DebtDetail = () => {
             <div className="flex flex-wrap gap-x-8 gap-y-1 border-y border-border py-2">
               <p className="text-sm">
                 <span className="text-muted-foreground">{copy.schedule.totalInterest} </span>
-                <span className="num num-right font-medium">{formatMoney(schedule.data.totalInterest)}</span>
+                <span className="num num-right font-medium">
+                  {formatMoney(schedule.data.totalInterest)}
+                </span>
               </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">{copy.schedule.totalPaid} </span>
-                <span className="num num-right font-medium">{formatMoney(schedule.data.totalPaid)}</span>
+                <span className="num num-right font-medium">
+                  {formatMoney(schedule.data.totalPaid)}
+                </span>
               </p>
             </div>
             <AmortizationTable installments={schedule.data.installments} />

@@ -1,8 +1,11 @@
 import { useState } from 'react'
+import { Coins, CreditCard, Landmark, Scale } from 'lucide-react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Hint } from '@/components/hint'
+import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isZeroMoney } from '@/features/accounting/amount'
@@ -16,7 +19,9 @@ import { today } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 
 const CurrencyRow = ({ row }: { row: CurrencyBreakdown }) => (
-  <li className="grid grid-cols-[4rem_1fr_auto] items-baseline gap-x-4 gap-y-1 border-b border-border py-2.5 text-sm">
+  <li
+    className={`grid grid-cols-[4rem_1fr_auto] items-baseline gap-x-4 gap-y-1 ${FRAME_ROW} text-sm`}
+  >
     <span className="num">{row.currency}</span>
     <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
       <Amount money={row.netWorthNative} className="text-sm" />
@@ -76,6 +81,7 @@ const NetWorthScreen = () => {
               monedas sin decir a cuánto las sumó no es verificable. */}
           <StatGrid>
             <StatCard
+              icon={Landmark}
               className="sm:col-span-2"
               label={copy.netWorth.total}
               hint={foreign ? copy.netWorth.rateNote(foreign.rate) : copy.netWorth.description}
@@ -87,17 +93,20 @@ const NetWorthScreen = () => {
                 className="block text-left text-3xl tracking-tight"
               />
             </StatCard>
-            <StatCard label={copy.netWorth.assets}>
-              <Amount money={report.data.assets} className="block text-left text-lg" />
+            <StatCard icon={Coins} label={copy.netWorth.assets}>
+              <Amount money={report.data.assets} className="block text-left text-2xl" />
             </StatCard>
-            <StatCard label={copy.netWorth.liabilities}>
-              <Amount money={report.data.liabilities} className="block text-left text-lg" />
+            <StatCard icon={CreditCard} label={copy.netWorth.liabilities}>
+              <Amount money={report.data.liabilities} className="block text-left text-2xl" />
             </StatCard>
           </StatGrid>
 
           {/* Cuánto del patrimonio es lo que hiciste y cuánto es lo que hizo la tasa. */}
-          <div>
-            <p className="text-xs text-muted-foreground">{copy.netWorth.identity}</p>
+          <Card size="sm" className="px-4">
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Scale className="size-3.5 shrink-0" aria-hidden="true" />
+              {copy.netWorth.identity}
+            </p>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <Amount money={report.data.netWorth} emphasis="strong" className="text-lg" />
               <span className="text-sm text-muted-foreground">=</span>
@@ -116,7 +125,7 @@ const NetWorthScreen = () => {
             <p className="mt-2 text-xs text-muted-foreground">
               {report.data.balances ? copy.netWorth.balanced : copy.netWorth.unbalanced}
             </p>
-          </div>
+          </Card>
 
           {report.data.byCurrency.length === 0 ? (
             <EmptyState
@@ -125,22 +134,27 @@ const NetWorthScreen = () => {
             />
           ) : (
             <div>
-              <h2 className="text-sm font-medium tracking-tight">{copy.netWorth.byCurrency}</h2>
+              <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+                <Coins className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                {copy.netWorth.byCurrency}
+              </h2>
               <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">
                 {copy.netWorth.bridgeNote}
               </p>
 
-              <div className="mt-2 grid grid-cols-[4rem_1fr_auto] gap-x-4 border-b border-border pb-1 text-xs text-muted-foreground">
-                <span>{copy.netWorth.columns.currency}</span>
-                <span>{copy.netWorth.columns.native}</span>
-                <span className="text-right">{copy.netWorth.columns.translated}</span>
-              </div>
+              <TableFrame className="mt-3">
+                <FrameHeader className="grid grid-cols-[4rem_1fr_auto] gap-x-4">
+                  <span>{copy.netWorth.columns.currency}</span>
+                  <span>{copy.netWorth.columns.native}</span>
+                  <span className="text-right">{copy.netWorth.columns.translated}</span>
+                </FrameHeader>
 
-              <ul>
-                {report.data.byCurrency.map((row) => (
-                  <CurrencyRow key={row.currency} row={row} />
-                ))}
-              </ul>
+                <ul className="divide-y divide-border">
+                  {report.data.byCurrency.map((row) => (
+                    <CurrencyRow key={row.currency} row={row} />
+                  ))}
+                </ul>
+              </TableFrame>
 
               {/* El árbol de cuentas vive en Situación, que ya lo hace por moneda: repetirlo
                   acá sería una tabla más diciendo lo mismo. */}

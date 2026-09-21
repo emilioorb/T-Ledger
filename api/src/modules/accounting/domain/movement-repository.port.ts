@@ -24,6 +24,11 @@ export interface MovementPage {
 export interface MovementRepository {
   findAll(filters: MovementFilters, page: number, pageSize: number): Promise<MovementPage>
   findById(id: string): Promise<Movement | null>
+
+  // Los candidatos a conciliar de una cuenta y un rango, sin paginar. Conciliar traía la
+  // primera página de mil movimientos de TODAS las cuentas y filtraba en memoria: pasado el
+  // millar, el movimiento que explicaba la línea simplemente no aparecía y nadie lo decía.
+  findByPaymentAccount(accountCode: string, range: DateRange): Promise<Movement[]>
   save(movement: Movement): Promise<void>
 
   // Un movimiento activo sin asiento es lo que impide cerrar el mes. Se cuenta en la

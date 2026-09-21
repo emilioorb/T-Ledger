@@ -46,12 +46,12 @@ export class PrismaImportProfileRepository implements ImportProfileRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<ImportProfile[]> {
-    const rows = await this.prisma.importProfile.findMany({ orderBy: { createdAt: 'asc' } })
+    const rows = await this.prisma.client.importProfile.findMany({ orderBy: { createdAt: 'asc' } })
     return rows.map((row) => toDomain(row as ImportProfileRow))
   }
 
   async findById(id: string): Promise<ImportProfile | null> {
-    const row = await this.prisma.importProfile.findUnique({ where: { id } })
+    const row = await this.prisma.client.importProfile.findUnique({ where: { id } })
     return row ? toDomain(row as ImportProfileRow) : null
   }
 
@@ -72,7 +72,7 @@ export class PrismaImportProfileRepository implements ImportProfileRepository {
       decimalSeparator: props.decimalSeparator,
       thousandsSeparator: props.thousandsSeparator,
     }
-    await this.prisma.importProfile.upsert({
+    await this.prisma.client.importProfile.upsert({
       where: { id: props.id },
       create: { id: props.id, ...data },
       update: data,

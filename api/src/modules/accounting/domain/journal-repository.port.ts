@@ -35,6 +35,10 @@ export interface JournalRepository {
   totalsUpTo(currency: CurrencyCode, at: Date): Promise<AccountMovementTotals[]>
   totalsByAccountPerDay(currency: CurrencyCode, at: Date): Promise<DailyAccountTotals[]>
   ledgerFor(accountCode: string, currency: CurrencyCode, range: DateRange): Promise<JournalEntry[]>
+
+  // Si una cuenta ya tiene asientos no se le pueden colgar hijas: quedaría con saldo propio
+  // dentro de una agrupadora, y el árbol dejaría de sumar.
+  hasEntriesFor(accountCode: string): Promise<boolean>
   monthsWithEntries(): Promise<PeriodKey[]>
   openingBalanceFor(
     accountCode: string,

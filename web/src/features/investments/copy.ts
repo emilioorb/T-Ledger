@@ -13,6 +13,11 @@ export const copy = {
       matures: 'Vence',
     },
     kinds: { FIXED_TERM: 'A plazo', OPEN: 'Abierta' },
+    valueToday: 'Valor de hoy',
+    investedShort: 'Pusiste',
+    earnedShort: 'ganados',
+    noMaturity: 'Sin vencimiento',
+    termLabel: (opened: string, matures: string) => `Plazo del ${opened} al ${matures}`,
     matured: 'Vencida',
     maturedHint: 'El capital ya está disponible: decidir qué hacer con él es el siguiente paso.',
     openHint: 'Sin vencimiento: sigue capitalizando mientras no la retires.',
@@ -34,17 +39,33 @@ export const copy = {
       name: { label: 'Nombre' },
       principal: { label: 'Capital' },
       annualRate: { label: 'Tasa anual', hint: 'En porcentaje. Cero es válido.' },
-      compounding: { label: 'Capitalización', monthly: 'Nominal mensual', annual: 'Efectiva anual' },
+      compounding: {
+        label: 'Capitalización',
+        monthly: 'Nominal mensual',
+        annual: 'Efectiva anual',
+      },
       openedAt: { label: 'Apertura' },
       kind: { label: 'Tipo', fixedTerm: 'A plazo', open: 'Abierta' },
       maturesAt: { label: 'Vencimiento', hint: 'Obligatorio para una inversión a plazo.' },
+      accountCode: {
+        label: 'Cuenta',
+        hint: 'Dónde queda el capital. Sin ella no se puede agregar capital.',
+      },
+      noAccount: 'Sin cuenta',
       submit: 'Guardar inversión',
     },
     contributionForm: {
       title: 'Agregar capital',
+      // Agregar capital no es ganar plata: sale de una cuenta y entra a la inversión. El
+      // formulario pregunta de dónde sale, y el asiento lo deja escrito.
+      description: 'El capital sale de una cuenta y entra a la inversión. No es una ganancia.',
       date: { label: 'Fecha', hint: 'El aporte capitaliza desde este día, no desde la apertura.' },
       amount: { label: 'Monto' },
+      from: { label: 'De qué cuenta sale' },
       submit: 'Registrar aporte',
+      needsAccount:
+        'Esta inversión no tiene cuenta. Elegí una al editarla y después agregá el capital: si no, la inversión diría que creció y los libros que la plata sigue en el banco.',
+      editInvestment: 'Editar la inversión',
     },
     empty: {
       title: 'Todavía no hay inversiones',
@@ -66,6 +87,7 @@ export const copy = {
   },
 
   common: {
+    edit: 'Editar',
     loading: 'Cargando',
     retry: 'Reintentar',
     cancel: 'Cancelar',

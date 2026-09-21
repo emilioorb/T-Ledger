@@ -11,26 +11,26 @@ export class PrismaDebtRepository implements DebtRepository {
   async findAll(page: number, pageSize: number, direction?: DebtDirection): Promise<DebtPage> {
     const where = direction ? { direction } : {}
     const [rows, totalItems] = await Promise.all([
-      this.prisma.debt.findMany({
+      this.prisma.client.debt.findMany({
         where,
         orderBy: { createdAt: 'asc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      this.prisma.debt.count({ where }),
+      this.prisma.client.debt.count({ where }),
     ])
     return { items: rows.map((row) => toDomain(row as DebtRow)), totalItems }
   }
 
   async findById(id: string): Promise<Debt | null> {
-    const row = await this.prisma.debt.findUnique({ where: { id } })
+    const row = await this.prisma.client.debt.findUnique({ where: { id } })
     return row ? toDomain(row as DebtRow) : null
   }
 
   async save(debt: Debt): Promise<void> {
     const row = toRow(debt)
     const { id, ...rest } = row
-    await this.prisma.debt.upsert({
+    await this.prisma.client.debt.upsert({
       where: { id },
       create: { id, ...rest },
       update: rest,
@@ -38,7 +38,7 @@ export class PrismaDebtRepository implements DebtRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    const { count } = await this.prisma.debt.deleteMany({ where: { id } })
+    const { count } = await this.prisma.client.debt.deleteMany({ where: { id } })
     return count > 0
   }
 }
