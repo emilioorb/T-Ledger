@@ -4,6 +4,15 @@ import type { ChartOfAccounts } from './chart-of-accounts.js'
 import { JournalEntry, type JournalLine } from './journal-entry.js'
 import type { Movement } from './movement.js'
 
+// Los asientos vigentes de un movimiento: los que nadie revirtió. Un movimiento editado
+// varias veces acumula original, reversión y nuevo asiento, y solo el último está vivo.
+export const activeEntriesOf = (entries: readonly JournalEntry[]): JournalEntry[] => {
+  const reversed = new Set(
+    entries.map((entry) => entry.reversesEntryId).filter((id): id is string => id !== null),
+  )
+  return entries.filter((entry) => entry.reversesEntryId === null && !reversed.has(entry.id))
+}
+
 // Devuelve null cuando el movimiento es válido pero no contabilizable: categoría sin
 // cuenta, sin cuenta de pago, o movimiento anulado. No es un error, es un estado.
 export const postingFor = (
