@@ -207,3 +207,32 @@ model BudgetIncome {
 
   @@map("budget_income")
 }
+
+model Goal {
+  id          String             @id @default(uuid(7))
+  name        String
+  targetMinor BigInt
+  currency    String             @db.Char(3)
+  desiredDate DateTime           @db.Date
+  priority    Int                @default(0)
+  accountCode String?
+  createdAt   DateTime           @default(now()) @db.Timestamptz(3)
+
+  contributions GoalContribution[]
+
+  @@index([priority])
+  @@map("goals")
+}
+
+model GoalContribution {
+  id          String   @id @default(uuid(7))
+  goalId      String
+  date        DateTime @db.Date
+  amountMinor BigInt
+  currency    String   @db.Char(3)
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@map("goal_contributions")
+}

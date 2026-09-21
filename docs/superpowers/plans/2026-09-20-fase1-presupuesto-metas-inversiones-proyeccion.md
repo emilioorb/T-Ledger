@@ -16,7 +16,7 @@
 
 ## Global Constraints
 
-Valen todas las restricciones de la rebanada 1: versiones pineadas, reglas de backend 1–11 y reglas de frontend F1–F12. Sin paquetes nuevos.
+Valen todas las restricciones de la rebanada 1: versiones pineadas, reglas de backend 1–11 y reglas de frontend F1–F12. Sin paquetes nuevos, con una excepción autorizada el 2026-09-21: `@nestjs/event-emitter`, para el evento `GoalReached` de la Tarea 3. La alternativa sin dependencia era el `EventEmitter` de Node envuelto en un provider; Emilio prefirió el paquete de Nest.
 
 ### Decisiones de diseño que este plan fija
 
@@ -669,7 +669,7 @@ git commit -m "✨ feat: evaluación de presupuesto contra los asientos del per�
   - `interface Contribution { id: string; date: Date; amount: Money }`
   - `class Goal`: `static create(props): Result<Goal, RangeError>` · `readonly id, name, target: Money, desiredDate, priority, contributions, accountCode: string | null` · `contributed(): Money` · `remaining(): Money` · `progress(): Percentage` · `isReached(): boolean` · `requiredMonthlyContribution(from: Date): Money` · `observedMonthlyPace(from: Date): Money` · `projectedDate(from: Date): Date | null` · `addContribution(c): Result<Goal, RangeError>`
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 ```ts
 const meta = (contributions: Contribution[] = []) =>
@@ -748,13 +748,13 @@ describe('Goal', () => {
 
 Que sin aportes no haya fecha proyectada es deliberado: proyectar desde cero exigiría inventar un ritmo, y una fecha inventada es peor que decir que todavía no se sabe.
 
-- [ ] **Paso 2: Implementar, correr y persistir**
+- [x] **Paso 2: Implementar, correr y persistir**
 
 El esquema agrega `goals` y `goal_contributions`, con montos en `BigInt` y fechas en `@db.Date`. La API expone `GET|POST /goals`, `GET|PATCH|DELETE /goals/:id` y `POST /goals/:id/contributions`.
 
 Al alcanzarse una meta, el caso de uso de aporte emite `GoalReached` con el emisor de eventos de Nest. Sin bus, sin CQRS: un emisor en proceso, como dice el spec.
 
-- [ ] **Paso 3: Verificar y commitear**
+- [x] **Paso 3: Verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -763,11 +763,11 @@ git commit -m "✨ feat: metas con aporte requerido y fecha proyectada"
 ```
 
 **Acceptance criteria:**
-- [ ] El aporte requerido baja a medida que se aporta
-- [ ] La fecha proyectada sale del ritmo observado, no del deseado
-- [ ] Sin aportes no hay fecha proyectada
-- [ ] Una fecha deseada pasada exige el saldo completo
-- [ ] Un aporte en otra moneda es rechazado
+- [x] El aporte requerido baja a medida que se aporta
+- [x] La fecha proyectada sale del ritmo observado, no del deseado
+- [x] Sin aportes no hay fecha proyectada
+- [x] Una fecha deseada pasada exige el saldo completo
+- [x] Un aporte en otra moneda es rechazado
 
 ---
 
