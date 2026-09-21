@@ -8,6 +8,11 @@ const envSchema = z.object({
   // falta la telemetría sería cambiar un problema chico por uno grande.
   SENTRY_DSN: z.string().optional(),
   SENTRY_ENVIRONMENT: z.string().default('development'),
+  // Obligatoria, al revés que el DSN de Sentry: sin telemetría la app funciona, pero una
+  // sesión firmada con un secreto ausente o adivinable no es una sesión. El mínimo de 32 es
+  // el que pide Better Auth para su derivación de claves.
+  AUTH_SECRET: z.string().min(32, { error: 'AUTH_SECRET tiene que medir al menos 32 caracteres' }),
+  AUTH_BASE_URL: z.string().default('http://localhost:3000'),
 })
 
 export type Env = z.infer<typeof envSchema>

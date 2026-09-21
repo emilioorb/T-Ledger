@@ -1,6 +1,7 @@
+
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "esm"
 }
 
@@ -86,17 +87,17 @@ enum PeriodStatus {
 }
 
 model Account {
-  code         String       @id
-  name         String
-  accountClass AccountClass
-  parentCode   String?
-  active       Boolean      @default(true)
-  sortOrder    Int          @default(0)
+  code             String       @id
+  name             String
+  accountClass     AccountClass
+  parentCode       String?
+  active           Boolean      @default(true)
+  sortOrder        Int          @default(0)
   // Una cuenta puente no guarda plata: registra el tránsito de una moneda a otra. Sus dos
   // lados son el mismo hecho contado en dos monedas, y por eso se valúan a la tasa del día
   // en que ocurrió y no a la de hoy.
-  isCurrencyBridge Boolean  @default(false)
-  createdAt    DateTime     @default(now()) @db.Timestamptz(3)
+  isCurrencyBridge Boolean      @default(false)
+  createdAt        DateTime     @default(now()) @db.Timestamptz(3)
 
   parent   Account?      @relation("AccountTree", fields: [parentCode], references: [code])
   children Account[]     @relation("AccountTree")
@@ -213,14 +214,14 @@ model BudgetIncome {
 }
 
 model Goal {
-  id          String             @id @default(uuid(7))
+  id          String   @id @default(uuid(7))
   name        String
   targetMinor BigInt
-  currency    String             @db.Char(3)
-  desiredDate DateTime           @db.Date
-  priority    Int                @default(0)
+  currency    String   @db.Char(3)
+  desiredDate DateTime @db.Date
+  priority    Int      @default(0)
   accountCode String?
-  createdAt   DateTime           @default(now()) @db.Timestamptz(3)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
 
   contributions GoalContribution[]
 
@@ -357,4 +358,115 @@ model BankLine {
   @@index([bankAccountId, status])
   @@index([date])
   @@map("bank_lines")
+}
+
+model AuthUser {
+  id              String           @id
+  name            String
+  email           String
+  emailVerified   Boolean          @default(false)
+  image           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  authsessions    AuthSession[]
+  authaccounts    AuthAccount[]
+  bookmembers     BookMember[]
+  bookinvitations BookInvitation[]
+
+  @@unique([email])
+  @@map("AuthUser")
+}
+
+model AuthSession {
+  id                   String   @id
+  expiresAt            DateTime
+  token                String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  authuser             AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganizationId String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("AuthSession")
+}
+
+model AuthAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  authuser              AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("AuthAccount")
+}
+
+model AuthVerification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("AuthVerification")
+}
+
+model Book {
+  id              String           @id
+  name            String
+  slug            String
+  logo            String?
+  createdAt       DateTime
+  metadata        String?
+  bookmembers     BookMember[]
+  bookinvitations BookInvitation[]
+
+  @@unique([slug])
+  @@map("Book")
+}
+
+model BookMember {
+  id             String   @id
+  organizationId String
+  book           Book     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  authuser       AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String   @default("member")
+  createdAt      DateTime
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("BookMember")
+}
+
+model BookInvitation {
+  id             String   @id
+  organizationId String
+  book           Book     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String   @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  inviterId      String
+  authuser       AuthUser @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("BookInvitation")
 }
