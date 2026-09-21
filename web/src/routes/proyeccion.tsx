@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Hint } from '@/components/hint'
+import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Label } from '@/components/ui/label'
@@ -28,11 +29,15 @@ const monthLabel = (flow: MonthlyFlow): string =>
 
 interface RowProps {
   flow: MonthlyFlow
+  breakdown: boolean
 }
 
 // Cada mes es una fila con su excedente; los dos datos que la pantalla existe para
 // mostrar —el mes que no cierra y el mes en que se libera una cuota— tienen peso propio.
-const MonthRow = ({ flow }: RowProps) => {
+//
+// El desglose de lo comprometido es casi el mismo todos los meses: repetirlo doce veces
+// enterraba los dos eventos que sí cambian. Va detrás de un solo interruptor, apagado.
+const MonthRow = ({ flow, breakdown }: RowProps) => {
   const negative = isNegativeMoney(flow.surplus)
   const hasFreed = flow.freed.length > 0
 
@@ -51,17 +56,17 @@ const MonthRow = ({ flow }: RowProps) => {
             <span className="text-negative">{copy.projection.negative}</span>
           </Hint>
         ) : null}
-        {!isZeroMoney(flow.debtPayments) ? (
+        {breakdown && !isZeroMoney(flow.debtPayments) ? (
           <span>
             {copy.projection.detail.debtPayments} <Amount money={flow.debtPayments} />
           </span>
         ) : null}
-        {!isZeroMoney(flow.goalContributions) ? (
+        {breakdown && !isZeroMoney(flow.goalContributions) ? (
           <span>
             {copy.projection.detail.goalContributions} <Amount money={flow.goalContributions} />
           </span>
         ) : null}
-        {!isZeroMoney(flow.lentCollections) ? (
+        {breakdown && !isZeroMoney(flow.lentCollections) ? (
           <span>
             {copy.projection.detail.lentCollections} <Amount money={flow.lentCollections} />
           </span>
@@ -119,6 +124,7 @@ const MonthRow = ({ flow }: RowProps) => {
 const ProjectionScreen = () => {
   const [months, setMonths] = useState(12)
   const [currency, setCurrency] = useState<CurrencyCode>('CRC')
+  const [breakdown, setBreakdown] = useState(false)
 
   const projection = useCashFlowProjection(months, currency)
   const flows = projection.data ?? []
@@ -150,6 +156,18 @@ const ProjectionScreen = () => {
           </Select>
         </div>
         <CurrencyField value={currency} onChange={setCurrency} />
+
+        <Hint text={copy.projection.breakdown.hint}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+            aria-pressed={breakdown}
+            onClick={() => setBreakdown((current) => !current)}
+          >
+            {breakdown ? copy.projection.breakdown.hide : copy.projection.breakdown.show}
+          </Button>
+        </Hint>
       </ControlBar>
 
       {projection.isPending ? (
@@ -201,7 +219,7 @@ const ProjectionScreen = () => {
 
           <ul>
             {flows.map((flow) => (
-              <MonthRow key={`${flow.year}-${flow.month}`} flow={flow} />
+              <MonthRow key={`${flow.year}-${flow.month}`} flow={flow} breakdown={breakdown} />
             ))}
           </ul>
         </div>

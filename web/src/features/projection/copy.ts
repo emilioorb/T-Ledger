@@ -12,6 +12,11 @@ export const copy = {
       committed: 'Comprometido',
       surplus: 'Queda',
     },
+    breakdown: {
+      show: 'Ver el desglose',
+      hide: 'Ocultar el desglose',
+      hint: 'De qué se compone lo comprometido de cada mes. Casi no cambia de un mes al otro.',
+    },
     detail: {
       debtPayments: 'Cuotas de deudas',
       lentCollections: 'Cobros de préstamos',

@@ -122,8 +122,6 @@ export const copy = {
         ? 'La línea pendiente explica la diferencia completa.'
         : `Las ${count} pendientes explican la diferencia completa.`,
     explainedPartly: (amount: string) => `Quedan ${amount} sin explicar por las pendientes.`,
-    truncated: (shown: number, total: number) =>
-      `Se muestran ${shown} de ${total}: acotá el rango de fechas para ver el resto.`,
     pending: 'Pendientes',
     reasons: {
       EXACT: 'Mismo monto y misma fecha',
@@ -164,6 +162,11 @@ export const copy = {
   },
 
   common: {
+    pager: {
+      previous: 'Anteriores',
+      next: 'Siguientes',
+      range: (from: number, to: number, total: number) => `${from}–${to} de ${total}`,
+    },
     loading: 'Cargando',
     retry: 'Reintentar',
     cancel: 'Cancelar',

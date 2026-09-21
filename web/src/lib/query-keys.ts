@@ -17,7 +17,8 @@ export const queryKeys = {
       ['accounting', 'accounts-tree', currency, at] as const,
     categories: () => ['accounting', 'categories'] as const,
     movements: (filters: object) => ['accounting', 'movements', filters] as const,
-    journal: (from: string, to: string) => ['accounting', 'journal', from, to] as const,
+    journal: (from: string, to: string, page: number) =>
+      ['accounting', 'journal', from, to, page] as const,
     ledger: (account: string, currency: string, from: string, to: string) =>
       ['accounting', 'ledger', account, currency, from, to] as const,
     trialBalance: (currency: string, from: string, to: string) =>
@@ -55,8 +56,8 @@ export const queryKeys = {
     accounts: () => ['banking', 'accounts'] as const,
     profiles: () => ['banking', 'profiles'] as const,
     statements: () => ['banking', 'statements'] as const,
-    reconciliation: (bankAccountId: string, from: string, to: string) =>
-      ['banking', 'reconciliation', bankAccountId, from, to] as const,
+    reconciliation: (bankAccountId: string, from: string, to: string, page: number) =>
+      ['banking', 'reconciliation', bankAccountId, from, to, page] as const,
   },
 
   projection: {

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { Pager } from '@/components/pager'
 import { ErrorState } from '@/components/error-state'
 import {
   AlertDialog,
@@ -25,6 +26,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
+import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/accounting/copy'
 import { MovementForm, type MovementFormValues } from '@/features/accounting/movement-form'
 import { ControlBar, DateField } from '@/features/accounting/report-controls'
@@ -32,11 +34,13 @@ import type { Category, Movement, MovementFilters } from '@/features/accounting/
 import {
   useAccounts,
   useCategories,
+  PAGE_SIZE,
   useMovements,
   useSaveMovement,
   useVoidMovement,
 } from '@/features/accounting/use-accounting'
 import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
+import { usePage } from '@/lib/use-page'
 import { cn } from '@/lib/utils'
 
 const ALL = 'all'
@@ -148,7 +152,10 @@ const MovementsScreen = () => {
     ...(categoryId === ALL ? {} : { categoryId }),
   }
 
-  const movements = useMovements(filters)
+  usePrimaryAction(copy.movements.new, () => setEditing({}))
+
+  const [page, setPage] = usePage(JSON.stringify(filters))
+  const movements = useMovements(filters, page)
   const categories = useCategories()
   const accounts = useAccounts()
   const save = useSaveMovement()
@@ -317,6 +324,14 @@ const MovementsScreen = () => {
               </ul>
             </div>
           ))}
+
+          <Pager
+            page={page}
+            pageSize={PAGE_SIZE}
+            totalItems={movements.data.pagination.totalItems}
+            labels={copy.common.pager}
+            onPage={setPage}
+          />
         </div>
       )}
 

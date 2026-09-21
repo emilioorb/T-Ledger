@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
+import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/budget/copy'
 import type { BudgetModel } from '@/features/budget/types'
 import {
@@ -247,6 +248,8 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
 
 const ModelsScreen = () => {
   const [editing, setEditing] = useState<{ model?: BudgetModel } | null>(null)
+
+  usePrimaryAction(copy.models.new, () => setEditing({}))
 
   const models = useBudgetModels()
   const accounts = useAccounts()

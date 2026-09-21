@@ -32,6 +32,9 @@ import type {
 // El tope de la API. Con un solo usuario, el plan de cuentas entero entra de un tirón.
 const ALL = 100
 
+// Una página cabe en una pantalla sin desplazar el encabezado fuera de vista.
+export const PAGE_SIZE = 25
+
 const query = (params: Record<string, string | number | undefined>): string =>
   Object.entries(params)
     .filter(([, value]) => value !== undefined && value !== '')
@@ -95,11 +98,12 @@ export const useDeleteCategory = () => {
   })
 }
 
-export const useMovements = (filters: MovementFilters) =>
+// La conciliación no lista movimientos: los usa para nombrar sus candidatos, y un candidato
+// de la página dos quedaría sin nombre. Por eso el tamaño de página se puede pedir.
+export const useMovements = (filters: MovementFilters, page = 1, pageSize = PAGE_SIZE) =>
   useQuery({
-    queryKey: queryKeys.accounting.movements(filters),
-    queryFn: () =>
-      apiFetch<Paginated<Movement>>(`/movements?${query({ pageSize: ALL, ...filters })}`),
+    queryKey: queryKeys.accounting.movements({ ...filters, page, pageSize }),
+    queryFn: () => apiFetch<Paginated<Movement>>(`/movements?${query({ page, pageSize, ...filters })}`),
   })
 
 export const useSaveMovement = () => {
@@ -131,11 +135,13 @@ export const useVoidMovement = () => {
   })
 }
 
-export const useJournalEntries = (from: string, to: string) =>
+export const useJournalEntries = (from: string, to: string, page = 1) =>
   useQuery({
-    queryKey: queryKeys.accounting.journal(from, to),
+    queryKey: queryKeys.accounting.journal(from, to, page),
     queryFn: () =>
-      apiFetch<Paginated<JournalEntry>>(`/journal-entries?${query({ from, to, pageSize: ALL })}`),
+      apiFetch<Paginated<JournalEntry>>(
+        `/journal-entries?${query({ from, to, page, pageSize: PAGE_SIZE })}`,
+      ),
   })
 
 export const useCreateJournalEntry = () => {

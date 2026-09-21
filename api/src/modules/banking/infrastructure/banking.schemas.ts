@@ -116,6 +116,7 @@ export const reconciliationResponseSchema = z
     statementBalance: moneySchema,
     difference: moneySchema,
     lines: z.array(bankLineResponseSchema),
+    pendingTotal: moneySchema,
     resolved: z.array(bankLineResponseSchema),
     suggestions: z.array(suggestionResponseSchema),
     pagination: z.object({

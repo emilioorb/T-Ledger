@@ -3007,6 +3007,7 @@ export interface components {
             statementBalance: components["schemas"]["MoneyOutput"];
             difference: components["schemas"]["MoneyOutput"];
             lines: components["schemas"]["BankLine"][];
+            pendingTotal: components["schemas"]["MoneyOutput"];
             resolved: components["schemas"]["BankLine"][];
             suggestions: components["schemas"]["MatchSuggestion"][];
             pagination: {

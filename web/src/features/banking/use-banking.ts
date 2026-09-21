@@ -115,12 +115,20 @@ export const useImportStatement = () => {
   })
 }
 
-export const useReconciliation = (bankAccountId: string, from: string, to: string) =>
+// Veinte parejas es lo que se puede revisar de una sentada sin perder el hilo.
+export const PAGE_SIZE = 20
+
+export const useReconciliation = (
+  bankAccountId: string,
+  from: string,
+  to: string,
+  page = 1,
+) =>
   useQuery({
-    queryKey: queryKeys.banking.reconciliation(bankAccountId, from, to),
+    queryKey: queryKeys.banking.reconciliation(bankAccountId, from, to, page),
     queryFn: () =>
       apiFetch<Reconciliation>(
-        `/bank-accounts/${bankAccountId}/reconciliation?from=${from}&to=${to}&pageSize=100`,
+        `/bank-accounts/${bankAccountId}/reconciliation?from=${from}&to=${to}&page=${page}&pageSize=${PAGE_SIZE}`,
       ),
     enabled: bankAccountId !== '',
   })

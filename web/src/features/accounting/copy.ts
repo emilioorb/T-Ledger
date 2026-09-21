@@ -16,6 +16,11 @@ export const copy = {
   },
 
   common: {
+    pager: {
+      previous: 'Anteriores',
+      next: 'Siguientes',
+      range: (from: number, to: number, total: number) => `${from}–${to} de ${total}`,
+    },
     currency: { label: 'Moneda', hint: 'Los saldos se leen de a una moneda por vez.' },
     from: 'Desde',
     to: 'Hasta',

@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { createFileRoute, useSearch } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { Pager } from '@/components/pager'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount } from '@/features/accounting/amount'
+import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/accounting/copy'
 import { JournalEntryForm } from '@/features/accounting/journal-entry-form'
 import { ControlBar, RangeFields } from '@/features/accounting/report-controls'
@@ -13,10 +15,12 @@ import type { JournalEntry } from '@/features/accounting/types'
 import {
   useAccounts,
   useCreateJournalEntry,
+  PAGE_SIZE,
   useJournalEntries,
 } from '@/features/accounting/use-accounting'
 import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
 import { formatMoney, type CurrencyCode as MoneyCurrency } from '@/lib/money'
+import { usePage } from '@/lib/use-page'
 import { cn } from '@/lib/utils'
 
 interface JournalSearch {
@@ -124,7 +128,10 @@ const JournalScreen = () => {
   const [to, setTo] = useState(monthEnd(today()))
   const [composing, setComposing] = useState(false)
 
-  const entries = useJournalEntries(from, to)
+  usePrimaryAction(copy.journal.new, () => setComposing(true))
+
+  const [page, setPage] = usePage(`${from}|${to}`)
+  const entries = useJournalEntries(from, to, page)
   const accounts = useAccounts()
   const create = useCreateJournalEntry()
 
@@ -195,6 +202,14 @@ const JournalScreen = () => {
               highlighted={entry.id === search.entry}
             />
           ))}
+
+          <Pager
+            page={page}
+            pageSize={PAGE_SIZE}
+            totalItems={entries.data.pagination.totalItems}
+            labels={copy.common.pager}
+            onPage={setPage}
+          />
         </div>
       )}
     </section>

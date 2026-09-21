@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { Hint } from '@/components/hint'
+import { Pager } from '@/components/pager'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -22,11 +23,13 @@ import {
   useBankAccounts,
   useIgnoreLine,
   useLineToMovement,
+  PAGE_SIZE,
   useMatchLine,
   useReconciliation,
   useUnmatchLine,
 } from '@/features/banking/use-banking'
 import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
+import { usePage } from '@/lib/use-page'
 import { absMoney, formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
@@ -182,15 +185,19 @@ const ResolvedLine = ({ line, onUndo }: ResolvedProps) => (
   </li>
 )
 
+// El máximo que la API acepta por página: los candidatos de un rango caben de sobra.
+const CANDIDATES = 100
+
 const ReconciliationScreen = () => {
   const [bankAccountId, setBankAccountId] = useState('')
   const [from, setFrom] = useState(monthStart(today()))
   const [to, setTo] = useState(monthEnd(today()))
 
   const accounts = useBankAccounts()
-  const reconciliation = useReconciliation(bankAccountId, from, to)
+  const [page, setPage] = usePage(`${bankAccountId}|${from}|${to}`)
+  const reconciliation = useReconciliation(bankAccountId, from, to, page)
   const categories = useCategories()
-  const movements = useMovements({ from, to, status: 'ACTIVE' })
+  const movements = useMovements({ from, to, status: 'ACTIVE' }, 1, CANDIDATES)
   const match = useMatchLine()
   const unmatch = useUnmatchLine()
   const ignore = useIgnoreLine()
@@ -214,13 +221,11 @@ const ReconciliationScreen = () => {
   }))
 
   // Si las pendientes suman lo mismo que la diferencia con signo opuesto, la explican entera.
-  // Con la lista truncada no se puede afirmar nada, y entonces no se dice nada.
+  // El total llega del servidor y cubre todas las del rango, no solo las de esta página.
   const explanationOf = (data: NonNullable<typeof reconciliation.data>): string | null => {
     if (isZeroMoney(data.difference)) return null
-    if (data.lines.length < data.pagination.totalItems) return null
-    const pending = data.lines.reduce((acc, line) => acc + BigInt(line.amount.minorUnits), 0n)
-    const rest = BigInt(data.difference.minorUnits) + pending
-    if (rest === 0n) return copy.reconciliation.explainedAll(data.lines.length)
+    const rest = BigInt(data.difference.minorUnits) + BigInt(data.pendingTotal.minorUnits)
+    if (rest === 0n) return copy.reconciliation.explainedAll(data.pagination.totalItems)
     return copy.reconciliation.explainedPartly(
       formatMoney(absMoney({ minorUnits: rest.toString(), currency: data.difference.currency })),
     )
@@ -362,15 +367,6 @@ const ReconciliationScreen = () => {
                 </span>
               </h2>
 
-              {reconciliation.data.lines.length < reconciliation.data.pagination.totalItems ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {copy.reconciliation.truncated(
-                    reconciliation.data.lines.length,
-                    reconciliation.data.pagination.totalItems,
-                  )}
-                </p>
-              ) : null}
-
               <ul className="mt-2">
                 {reconciliation.data.lines.map((line) => (
                   <Pair
@@ -385,6 +381,14 @@ const ReconciliationScreen = () => {
                   />
                 ))}
               </ul>
+
+              <Pager
+                page={page}
+                pageSize={PAGE_SIZE}
+                totalItems={reconciliation.data.pagination.totalItems}
+                labels={copy.common.pager}
+                onPage={setPage}
+              />
             </div>
           )}
 
