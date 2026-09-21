@@ -82,7 +82,7 @@ web/src/
   - `const FIFTY_THIRTY_TWENTY: BudgetModelProps` y `const SEVENTY_TWENTY_TEN: BudgetModelProps` como semillas
   - `const BUDGET_MODEL_REPOSITORY: unique symbol` e `interface BudgetModelRepository`
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 `api/src/modules/budget/domain/percentage-budget-model.spec.ts`:
 
@@ -206,13 +206,13 @@ describe('PercentageBudgetModel', () => {
 })
 ```
 
-- [ ] **Paso 2: Correr y confirmar que falla**
+- [x] **Paso 2: Correr y confirmar que falla**
 
 ```bash
 cd api && npm test -- percentage-budget-model
 ```
 
-- [ ] **Paso 3: Implementar los tipos de apoyo**
+- [x] **Paso 3: Implementar los tipos de apoyo**
 
 `api/src/modules/budget/domain/budget-bucket.ts`:
 
@@ -282,7 +282,7 @@ export interface BudgetModel {
 }
 ```
 
-- [ ] **Paso 4: Implementar el modelo por porcentajes**
+- [x] **Paso 4: Implementar el modelo por porcentajes**
 
 `api/src/modules/budget/domain/percentage-budget-model.ts`:
 
@@ -413,7 +413,7 @@ export const SEVENTY_TWENTY_TEN: BudgetModelProps = {
 
 Las dos constantes son datos. Agregar un modelo nuevo es agregar un objeto, no una clase.
 
-- [ ] **Paso 5: Puerto del repositorio**
+- [x] **Paso 5: Puerto del repositorio**
 
 `api/src/modules/budget/domain/budget-model-repository.port.ts`:
 
@@ -430,7 +430,7 @@ export interface BudgetModelRepository {
 export const BUDGET_MODEL_REPOSITORY = Symbol('BUDGET_MODEL_REPOSITORY')
 ```
 
-- [ ] **Paso 6: Correr, verificar y commitear**
+- [x] **Paso 6: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -439,11 +439,11 @@ git commit -m "✨ feat: modelo de presupuesto por porcentajes con evaluación p
 ```
 
 **Acceptance criteria:**
-- [ ] Un modelo cuyos porcentajes no suman 100 es rechazado
-- [ ] El reparto cuadra al céntimo sobre un ingreso no divisible
-- [ ] Un reparto propio que suma 100 se acepta sin tocar código
-- [ ] Un modelo sin cubeta de ahorro es rechazado
-- [ ] La desviación se reporta con signo y con estado
+- [x] Un modelo cuyos porcentajes no suman 100 es rechazado
+- [x] El reparto cuadra al céntimo sobre un ingreso no divisible
+- [x] Un reparto propio que suma 100 se acepta sin tocar código
+- [x] Un modelo sin cubeta de ahorro es rechazado
+- [x] La desviación se reporta con signo y con estado
 
 ---
 
