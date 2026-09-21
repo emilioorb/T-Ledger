@@ -22,6 +22,12 @@ export const copy = {
     edit: (name: string) => `Editar ${name}`,
     delete: (name: string) => `Borrar ${name}`,
     contribute: 'Agregar capital',
+    detail: {
+      fixedTermHint: 'Capitaliza hasta el vencimiento; ahí el capital vuelve a estar disponible.',
+      history: 'Aportes de capital',
+      curve: 'Cómo crece',
+      curveHint: 'El valor proyectado mes a mes. La distancia con el capital es el interés.',
+    },
     form: {
       createTitle: 'Nueva inversión',
       editTitle: 'Editar inversión',

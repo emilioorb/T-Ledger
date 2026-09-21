@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
 import { copy } from '@/features/investments/copy'
 import type { Investment } from '@/features/investments/types'
@@ -108,7 +109,7 @@ const InvestmentForm = ({ investment, pending, onSubmit, onCancel }: FormProps) 
               value={amount}
               inputMode="decimal"
               required
-              className="num"
+              className="num num-right"
               onChange={(event) => setAmount(event.target.value)}
             />
             <Select value={currency} onValueChange={(next) => setCurrency(next as CurrencyCode)}>
@@ -133,7 +134,7 @@ const InvestmentForm = ({ investment, pending, onSubmit, onCancel }: FormProps) 
             value={annualRate}
             inputMode="decimal"
             required
-            className="num"
+            className="num num-right"
             onChange={(event) => setAnnualRate(event.target.value)}
           />
           <p className="text-xs text-muted-foreground">{fields.annualRate.hint}</p>
@@ -219,7 +220,15 @@ const InvestmentRow = ({ investment, onEdit, onDelete, onAddCapital }: RowProps)
   <li className="border-b border-border py-4">
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
       <span className="flex items-baseline gap-2">
-        <h2 className={cn('text-sm', investment.matured ? 'font-medium' : '')}>{investment.name}</h2>
+        <h2 className={cn('text-sm', investment.matured ? 'font-medium' : '')}>
+          <Link
+            to="/inversiones/$investmentId"
+            params={{ investmentId: investment.id }}
+            className="underline-offset-2 hover:underline"
+          >
+            {investment.name}
+          </Link>
+        </h2>
         {investment.matured ? (
           <span className="text-xs text-positive">{copy.investments.matured}</span>
         ) : null}
@@ -235,16 +244,22 @@ const InvestmentRow = ({ investment, onEdit, onDelete, onAddCapital }: RowProps)
         {copy.investments.columns.interest} <Amount money={investment.interestEarned} />
       </span>
       <span>
-        {copy.investments.columns.rate} <span className="num text-left">{investment.annualRate}%</span>
+        {copy.investments.columns.rate} <span className="num">{investment.annualRate}%</span>
       </span>
       {investment.maturesAt ? (
-        <span title={investment.matured ? copy.investments.maturedHint : undefined}>
-          {investment.matured
-            ? `${copy.investments.columns.matures} ${formatIsoDate(investment.maturesAt)}`
-            : copy.investments.monthsLeft(Math.max(monthsUntil(investment.maturesAt), 1))}
-        </span>
+        investment.matured ? (
+          <Hint text={copy.investments.maturedHint}>
+            <span>
+              {copy.investments.columns.matures} {formatIsoDate(investment.maturesAt)}
+            </span>
+          </Hint>
+        ) : (
+          <span>{copy.investments.monthsLeft(Math.max(monthsUntil(investment.maturesAt), 1))}</span>
+        )
       ) : (
-        <span title={copy.investments.openHint}>{copy.investments.kinds.OPEN}</span>
+        <Hint text={copy.investments.openHint}>
+          <span>{copy.investments.kinds.OPEN}</span>
+        </Hint>
       )}
 
       <span className="ml-auto flex gap-1">
@@ -365,7 +380,7 @@ const InvestmentsScreen = () => {
               value={capitalAmount}
               inputMode="decimal"
               required
-              className="num w-40"
+              className="num num-right w-40"
               onChange={(event) => setCapitalAmount(event.target.value)}
             />
           </div>
@@ -440,4 +455,4 @@ const InvestmentsScreen = () => {
   )
 }
 
-export const Route = createFileRoute('/inversiones')({ component: InvestmentsScreen })
+export const Route = createFileRoute('/inversiones/')({ component: InvestmentsScreen })

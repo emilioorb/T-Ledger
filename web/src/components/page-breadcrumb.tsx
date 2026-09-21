@@ -13,8 +13,12 @@ import { copy as budget } from '@/features/budget/copy'
 import { copy as goals } from '@/features/goals/copy'
 import { copy as investments } from '@/features/investments/copy'
 import { copy as projection } from '@/features/projection/copy'
+import { copy as overview } from '@/features/projection/overview-copy'
 import { copy } from '@/features/debts/copy'
 import { useDebt } from '@/features/debts/use-debts'
+import { useGoal } from '@/features/goals/use-goals'
+import { today } from '@/lib/dates'
+import { useInvestmentProjection } from '@/features/investments/use-investments'
 
 const ACCOUNTING_LABELS: Record<string, string> = {
   movimientos: accounting.nav.movements,
@@ -88,19 +92,51 @@ const DebtCrumbs = ({ id, leaf }: { id: string; leaf?: string }) => {
   )
 }
 
+const GoalCrumbs = ({ id }: { id: string }) => {
+  const goal = useGoal(id)
+  return (
+    <>
+      <Crumb to="/metas" label={goals.goals.title} />
+      <BreadcrumbItem>
+        <BreadcrumbPage>{goal.data?.name ?? '…'}</BreadcrumbPage>
+      </BreadcrumbItem>
+    </>
+  )
+}
+
+const InvestmentCrumbs = ({ id }: { id: string }) => {
+  const investment = useInvestmentProjection(id, today())
+  return (
+    <>
+      <Crumb to="/inversiones" label={investments.investments.title} />
+      <BreadcrumbItem>
+        <BreadcrumbPage>{investment.data?.name ?? '…'}</BreadcrumbPage>
+      </BreadcrumbItem>
+    </>
+  )
+}
+
 // La miga se deriva de la ruta, no la declara cada pantalla: una pantalla que se olvide
 // de declararla dejaría el encabezado mintiendo sobre dónde estás.
 export const PageBreadcrumb = () => {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [section, second, third] = pathname.split('/').filter(Boolean)
 
-  if (!section) return null
-
   const leaf = (label: string) => (
     <BreadcrumbItem>
       <BreadcrumbPage>{label}</BreadcrumbPage>
     </BreadcrumbItem>
   )
+
+  // Una ruta que no conocemos no hereda la miga de otra pantalla: se queda sin miga, y la
+  // pantalla de «no existe» dice lo suyo.
+  if (!section) {
+    return (
+      <Breadcrumb>
+        <BreadcrumbList>{leaf(overview.overview.title)}</BreadcrumbList>
+      </Breadcrumb>
+    )
+  }
 
   return (
     <Breadcrumb>
@@ -111,24 +147,26 @@ export const PageBreadcrumb = () => {
             <BreadcrumbSeparator />
             {leaf(BANKING_LABELS[second ?? ''] ?? banking.nav.section)}
           </>
+        ) : section === 'presupuesto' && second === 'modelos' ? (
+          <>
+            <Crumb to="/presupuesto" label={budget.nav.budget} />
+            {leaf(budget.nav.models)}
+          </>
+        ) : section === 'metas' && second ? (
+          <GoalCrumbs id={second} />
+        ) : section === 'inversiones' && second ? (
+          <InvestmentCrumbs id={second} />
         ) : section in PLAN_LABELS ? (
-          second === 'modelos' ? (
-            <>
-              <Crumb to="/presupuesto" label={budget.nav.budget} />
-              {leaf(budget.nav.models)}
-            </>
-          ) : (
-            leaf(PLAN_LABELS[section] ?? section)
-          )
+          leaf(PLAN_LABELS[section] ?? section)
         ) : section === 'contabilidad' ? (
           <>
             <BreadcrumbItem>{accounting.nav.section}</BreadcrumbItem>
             <BreadcrumbSeparator />
             {leaf(ACCOUNTING_LABELS[second ?? ''] ?? accounting.nav.section)}
           </>
-        ) : section !== 'deudas' ? (
+        ) : section === 'plan-de-pago' ? (
           leaf(copy.nav.payoffPlan)
-        ) : second === 'nueva' ? (
+        ) : section !== 'deudas' ? null : second === 'nueva' ? (
           <>
             <Crumb to="/deudas" label={copy.nav.debts} />
             {leaf(copy.form.createTitle)}

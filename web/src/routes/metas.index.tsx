@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
 import { copy } from '@/features/goals/copy'
 import type { Goal } from '@/features/goals/types'
@@ -90,7 +91,7 @@ const GoalForm = ({ goal, pending, onSubmit, onCancel }: FormProps) => {
             value={amount}
             inputMode="decimal"
             required
-            className="num"
+            className="num num-right"
             onChange={(event) => setAmount(event.target.value)}
           />
           <Select value={currency} onValueChange={(next) => setCurrency(next as CurrencyCode)}>
@@ -156,37 +157,50 @@ interface CardProps {
 const GoalBlock = ({ goal, onEdit, onDelete, onContribute }: CardProps) => (
   <li className="border-b border-border py-4">
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-      <h2 className="text-sm font-medium tracking-tight">{goal.name}</h2>
-      <span className="flex items-baseline gap-3">
-        <Amount money={goal.contributed} className="text-sm" />
-        <span className="text-xs text-muted-foreground">de</span>
-        <Amount money={goal.target} className="text-sm text-muted-foreground" />
+      <h2 className="text-sm font-medium tracking-tight">
+        <Link to="/metas/$goalId" params={{ goalId: goal.id }} className="underline-offset-2 hover:underline">
+          {goal.name}
+        </Link>
+      </h2>
+
+      {/* La respuesta va acá, al mismo peso que el nombre: el monto es el dato de apoyo.
+          El color marca el estado, no la fecha: una fecha no es buena ni mala. */}
+      <span className="flex items-baseline gap-2 text-sm">
+        {goal.reached ? (
+          <span className="text-positive">{copy.goals.reached}</span>
+        ) : goal.projectedDate === null ? (
+          <Hint text={copy.goals.noPaceHint}>
+            <span className="text-muted-foreground">{copy.goals.noPace}</span>
+          </Hint>
+        ) : (
+          <>
+            <span className={cn(goal.onTrack ? 'text-positive' : 'text-warning')}>
+              {goal.onTrack ? copy.goals.onTrack : copy.goals.late}
+            </span>
+            <span className="num">{formatIsoDate(goal.projectedDate)}</span>
+          </>
+        )}
       </span>
     </div>
 
-    <div className="mt-1.5 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-xs">
-      {goal.reached ? (
-        <span className="text-positive">{copy.goals.reached}</span>
-      ) : goal.projectedDate === null ? (
-        <span className="text-muted-foreground" title={copy.goals.noPaceHint}>
-          {copy.goals.noPace}
-        </span>
-      ) : (
-        <span className={cn(goal.onTrack ? 'text-positive' : 'text-warning')}>
-          {goal.onTrack ? copy.goals.onTrack : copy.goals.late} ·{' '}
-          <span className="num text-left">{formatIsoDate(goal.projectedDate)}</span>
-        </span>
-      )}
+    <div className="mt-1.5 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-xs text-muted-foreground">
+      <span className="flex items-baseline gap-1.5">
+        <Amount money={goal.contributed} />
+        <span>de</span>
+        <Amount money={goal.target} />
+      </span>
 
-      <span className="text-muted-foreground">
+      <span>
         {copy.goals.columns.desired}{' '}
-        <span className="num text-left">{formatIsoDate(goal.desiredDate)}</span>
+        <span className="num">{formatIsoDate(goal.desiredDate)}</span>
       </span>
 
       {!goal.reached ? (
-        <span className="text-muted-foreground" title={copy.goals.requiredHint}>
-          {copy.goals.columns.required} <Amount money={goal.requiredMonthlyContribution} />
-        </span>
+        <Hint text={copy.goals.requiredHint}>
+          <span>
+            {copy.goals.columns.required} <Amount money={goal.requiredMonthlyContribution} />
+          </span>
+        </Hint>
       ) : null}
 
       <span className="ml-auto flex gap-1">
@@ -307,7 +321,7 @@ const GoalsScreen = () => {
               value={contributionAmount}
               inputMode="decimal"
               required
-              className="num w-40"
+              className="num num-right w-40"
               onChange={(event) => setContributionAmount(event.target.value)}
             />
             <p className="text-xs text-muted-foreground">
@@ -385,4 +399,4 @@ const GoalsScreen = () => {
   )
 }
 
-export const Route = createFileRoute('/metas')({ component: GoalsScreen })
+export const Route = createFileRoute('/metas/')({ component: GoalsScreen })

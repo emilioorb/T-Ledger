@@ -7,9 +7,9 @@ export const copy = {
     columns: {
       name: 'Meta',
       target: 'Objetivo',
+      pace: 'Ritmo',
       contributed: 'Aportado',
       required: 'Por mes',
-      projected: 'Llega en',
       desired: 'La querés en',
     },
     onTrack: 'Llega a tiempo',
@@ -26,6 +26,10 @@ export const copy = {
     edit: (name: string) => `Editar ${name}`,
     delete: (name: string) => `Borrar ${name}`,
     contribute: 'Aportar',
+    detail: {
+      missing: 'Faltan',
+      missingSuffix: 'para el objetivo.',
+    },
     form: {
       createTitle: 'Nueva meta',
       editTitle: 'Editar meta',
