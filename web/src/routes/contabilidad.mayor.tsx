@@ -1,4 +1,5 @@
 import { Link, createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
+import { Landmark, Wallet } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
@@ -10,13 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Amount } from '@/features/accounting/amount'
 import { copy } from '@/features/accounting/copy'
+import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { ControlBar, CurrencyField, RangeFields } from '@/features/accounting/report-controls'
 import type { CurrencyCode } from '@/features/accounting/types'
 import { useAccounts, useLedger } from '@/features/accounting/use-accounting'
 import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 interface LedgerSearch {
   account?: string
@@ -58,7 +60,7 @@ const LedgerScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.ledger.description}</p>
       </header>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <div className="flex flex-col gap-1">
           <Label htmlFor="account" className="text-xs font-normal text-muted-foreground">
             {copy.ledger.account.label}
@@ -87,11 +89,7 @@ const LedgerScreen = () => {
           description={copy.ledger.needsAccount.description}
         />
       ) : ledger.isPending ? (
-        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-8 w-full" />
-          ))}
-        </div>
+        <TableSkeleton rows={6} label={copy.common.loading} />
       ) : ledger.isError ? (
         <ErrorState
           title={copy.common.error.title}
@@ -100,83 +98,94 @@ const LedgerScreen = () => {
           onRetry={() => void ledger.refetch()}
         />
       ) : (
-        <TableFrame>
-          {/* Los dos saldos son el marco del extracto: el inicial arriba, el final abajo,
-              y entre ellos la corrida que los une. */}
-          <div className="flex items-baseline justify-between gap-3 border-b border-border-strong px-3 py-3">
-            <div>
-              <p className="text-xs text-muted-foreground">{copy.ledger.openingBalance}</p>
-              <p className="mt-0.5 text-[0.6875rem] text-muted-foreground">
-                {copy.ledger.openingHint}
-              </p>
-            </div>
-            <Amount money={ledger.data.openingBalance} emphasis="strong" className="text-xl" />
-          </div>
+        <>
+          {/* Los dos saldos abren la pantalla como en el resto de los reportes: el final es
+              la respuesta y el inicial explica de dónde salió. Antes vivían dentro del marco,
+              en `text-xl`, empatados con el título de la pantalla. */}
+          <StatGrid className="mb-5">
+            <StatCard icon={Landmark} className="sm:col-span-2" label={copy.ledger.closingBalance}>
+              <Amount
+                money={ledger.data.closingBalance}
+                emphasis="strong"
+                className="block text-left text-3xl tracking-tight"
+              />
+            </StatCard>
 
-          {ledger.data.rows.length === 0 ? (
-            <EmptyState
-              className="border-y-0 px-3 py-8"
-              title={copy.ledger.empty.title}
-              description={copy.ledger.empty.description}
-            />
-          ) : (
-            <>
-              {/* La cabecera de columnas solo existe cuando hay columnas: bajo 768 px
+            <StatCard
+              icon={Wallet}
+              label={copy.ledger.openingBalance}
+              hint={copy.ledger.openingHint}
+            >
+              <Amount money={ledger.data.openingBalance} className="block text-left text-2xl" />
+            </StatCard>
+          </StatGrid>
+
+          <TableFrame>
+            {ledger.data.rows.length === 0 ? (
+              <EmptyState
+                className="border-y-0 px-3 py-8"
+                title={copy.ledger.empty.title}
+                description={copy.ledger.empty.description}
+              />
+            ) : (
+              <>
+                {/* La cabecera de columnas solo existe cuando hay columnas: bajo 768 px
                   cada asiento se lee como un bloque, no como una fila con desplazamiento. */}
-              <FrameHeader className="hidden grid-cols-[5.5rem_1fr_7rem_7rem_8rem] gap-2 lg:grid">
-                <span>{copy.ledger.columns.date}</span>
-                <span>{copy.ledger.columns.description}</span>
-                <span className="text-right">{copy.ledger.columns.debit}</span>
-                <span className="text-right">{copy.ledger.columns.credit}</span>
-                <span className="text-right">{copy.ledger.columns.balance}</span>
-              </FrameHeader>
+                <FrameHeader className="hidden grid-cols-[5.5rem_1fr_7rem_7rem_8rem] gap-2 lg:grid">
+                  <span>{copy.ledger.columns.date}</span>
+                  <span>{copy.ledger.columns.description}</span>
+                  <span className="text-right">{copy.ledger.columns.debit}</span>
+                  <span className="text-right">{copy.ledger.columns.credit}</span>
+                  <span className="text-right">{copy.ledger.columns.balance}</span>
+                </FrameHeader>
 
-              <ul className="divide-y divide-border">
-                {ledger.data.rows.map((row, index) => (
-                  <li
-                    // eslint-disable-next-line react/no-array-index-key
-                    key={`${row.entryId}-${index}`}
-                    className={`grid gap-x-2 gap-y-1 ${FRAME_ROW} text-sm lg:grid-cols-[5.5rem_1fr_7rem_7rem_8rem] lg:items-baseline`}
-                  >
-                    <span className="num text-xs text-muted-foreground lg:text-right">
-                      {formatIsoDate(row.date)}
-                    </span>
-                    <Link
-                      to="/contabilidad/asientos"
-                      search={{ entry: row.entryId }}
-                      className="min-w-0 truncate underline-offset-2 hover:underline"
+                <ul className="divide-y divide-border">
+                  {ledger.data.rows.map((row, index) => (
+                    <li
+                      // eslint-disable-next-line react/no-array-index-key
+                      key={`${row.entryId}-${index}`}
+                      className={`grid gap-x-2 gap-y-1 ${FRAME_ROW} text-sm lg:grid-cols-[5.5rem_1fr_7rem_7rem_8rem] lg:items-baseline`}
                     >
-                      {row.description}
-                    </Link>
-                    <span className="flex justify-between gap-3 lg:contents">
-                      <span className="text-xs text-muted-foreground lg:hidden">
-                        {copy.ledger.columns.debit}
+                      <span className="num text-xs text-muted-foreground lg:text-right">
+                        {formatIsoDate(row.date)}
                       </span>
-                      <Amount money={row.debit} />
-                    </span>
-                    <span className="flex justify-between gap-3 lg:contents">
-                      <span className="text-xs text-muted-foreground lg:hidden">
-                        {copy.ledger.columns.credit}
+                      <Link
+                        to="/contabilidad/asientos"
+                        search={{ entry: row.entryId }}
+                        className="min-w-0 truncate underline-offset-2 hover:underline"
+                      >
+                        {row.description}
+                      </Link>
+                      <span className="flex justify-between gap-3 lg:contents">
+                        <span className="text-xs text-muted-foreground lg:hidden">
+                          {copy.ledger.columns.debit}
+                        </span>
+                        <Amount money={row.debit} />
                       </span>
-                      <Amount money={row.credit} />
-                    </span>
-                    <span className="flex justify-between gap-3 lg:contents">
-                      <span className="text-xs text-muted-foreground lg:hidden">
-                        {copy.ledger.columns.balance}
+                      <span className="flex justify-between gap-3 lg:contents">
+                        <span className="text-xs text-muted-foreground lg:hidden">
+                          {copy.ledger.columns.credit}
+                        </span>
+                        <Amount money={row.credit} />
                       </span>
-                      <Amount money={row.runningBalance} emphasis="strong" />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+                      <span className="flex justify-between gap-3 lg:contents">
+                        <span className="text-xs text-muted-foreground lg:hidden">
+                          {copy.ledger.columns.balance}
+                        </span>
+                        <Amount money={row.runningBalance} emphasis="strong" />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
-          <div className="flex items-baseline justify-between gap-3 border-t border-border-strong px-3 py-3">
-            <p className="text-base font-medium tracking-tight">{copy.ledger.closingBalance}</p>
-            <Amount money={ledger.data.closingBalance} emphasis="strong" className="text-xl" />
-          </div>
-        </TableFrame>
+            <div className="flex items-baseline justify-between gap-3 border-t border-border-strong px-3 py-3">
+              <p className="text-base font-medium tracking-tight">{copy.ledger.closingBalance}</p>
+              <Amount money={ledger.data.closingBalance} emphasis="strong" className="text-sm" />
+            </div>
+          </TableFrame>
+        </>
       )}
     </section>
   )

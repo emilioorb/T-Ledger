@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { copy } from '@/features/shell/copy'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -28,7 +29,7 @@ export const SearchInput = ({ value, onChange, placeholder, label, className }: 
       <button
         type="button"
         onClick={() => onChange('')}
-        aria-label="Limpiar la búsqueda"
+        aria-label={copy.controls.clearSearch}
         className="absolute top-1/2 right-1 grid size-6 -translate-y-1/2 place-items-center rounded-sm text-muted-foreground hover:text-foreground"
       >
         <X className="size-3.5" aria-hidden="true" />

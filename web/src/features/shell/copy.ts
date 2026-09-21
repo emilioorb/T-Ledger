@@ -8,6 +8,25 @@ export const copy = {
   nav: {
     dashboard: 'Dashboard',
     releases: 'Novedades',
+    toggleSidebar: 'Alternar la barra lateral',
+    expand: (section: string) => `Desplegar ${section}`,
+  },
+  // Lo que dice un control sin texto visible es copy igual: vive acá para poder revisarlo
+  // junto al resto y no escondido en un atributo.
+  controls: {
+    clearSearch: 'Limpiar la búsqueda',
+    sort: {
+      label: (column: string, state: string) => `Ordenar por ${column}, ${state}`,
+      ascending: 'ascendente',
+      descending: 'descendente',
+      unsorted: 'sin ordenar',
+    },
+  },
+  notFound: {
+    title: 'Esta dirección no existe',
+    description:
+      'El enlace quedó viejo o tiene un error de tipeo. Nada se perdió: lo registrado sigue donde estaba.',
+    action: 'Ir al panel',
   },
   releases: {
     title: 'Novedades',

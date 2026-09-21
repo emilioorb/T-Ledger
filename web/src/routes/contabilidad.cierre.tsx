@@ -14,13 +14,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { copy } from '@/features/accounting/copy'
 import type { PeriodSummary } from '@/features/accounting/types'
 import { useClosePeriod, usePeriods, useReopenPeriod } from '@/features/accounting/use-accounting'
 import { monthEnd, formatIsoMonth } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { TEXT_LINK } from '@/components/text-link'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 // El servidor nombra el mes como 2026-08 y la pantalla como 08/2026: convivir las dos
 // formas en la misma frase hace dudar de si hablan del mismo mes.
@@ -46,8 +46,10 @@ interface RowProps {
 // Las pistas de monto quedan fijas —un monto no se parte— y la de texto cede. La fila mide
 // el contenedor: con la barra lateral abierta, `lg` encendía siete columnas cuando el
 // contenido tenía 745 px.
+// La última pista es fija y no `auto`: con `auto` la resuelve cada grilla por su cuenta y
+// el encabezado deja de coincidir con las filas en el borde derecho.
 const COLS =
-  '@4xl:grid-cols-[5.5rem_6rem_5rem_9rem_7rem_minmax(0,1fr)_auto] @4xl:items-baseline @4xl:gap-x-4'
+  '@4xl:grid-cols-[5.5rem_6rem_5rem_9rem_7rem_minmax(0,1fr)_6rem] @4xl:items-baseline @4xl:gap-x-4'
 
 // Qué falta para cerrar, escrito: es la columna que decide si el botón sirve, y decirlo
 // «nada» es tan informativo como decir qué bloquea.
@@ -174,11 +176,7 @@ const ClosingScreen = () => {
       </header>
 
       {periods.isPending ? (
-        <div className="space-y-3" role="status" aria-label={copy.common.loading}>
-          {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton key={index} className="h-20 w-full" />
-          ))}
-        </div>
+        <TableSkeleton rows={3} label={copy.common.loading} />
       ) : periods.isError ? (
         <ErrorState
           title={copy.common.error.title}
@@ -197,7 +195,7 @@ const ClosingScreen = () => {
             <span>{copy.closing.columns.unposted}</span>
             <span>{copy.closing.columns.balanced}</span>
             <span>{copy.closing.columns.blockers}</span>
-            <span />
+            <span className="text-right">{copy.closing.columns.action}</span>
           </FrameHeader>
 
           <ul className="divide-y divide-border">

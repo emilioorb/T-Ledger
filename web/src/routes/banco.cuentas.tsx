@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useAccounts } from '@/features/accounting/use-accounting'
 import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/banking/copy'
@@ -29,6 +28,7 @@ import {
 } from '@/features/banking/use-banking'
 import type { CurrencyCode } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 const CURRENCIES: CurrencyCode[] = ['CRC', 'USD']
 const NO_PROFILE = 'none'
@@ -340,8 +340,8 @@ const ProfileForm = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value=".">punto</SelectItem>
-              <SelectItem value=",">coma</SelectItem>
+              <SelectItem value=".">{fields.decimalSeparator.options.dot}</SelectItem>
+              <SelectItem value=",">{fields.decimalSeparator.options.comma}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -433,11 +433,7 @@ const BankAccountsScreen = () => {
         </FormDialog>
 
         {bankAccounts.isPending ? (
-          <div className="space-y-2" role="status" aria-label={copy.common.loading}>
-            {Array.from({ length: 2 }, (_, index) => (
-              <Skeleton key={index} className="h-12 w-full" />
-            ))}
-          </div>
+          <TableSkeleton rows={2} label={copy.common.loading} />
         ) : bankAccounts.isError ? (
           <ErrorState
             title={copy.common.error.title}

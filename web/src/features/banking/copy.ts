@@ -65,7 +65,11 @@ export const copy = {
       },
       debitColumn: { label: 'Columna de débito' },
       creditColumn: { label: 'Columna de crédito' },
-      decimalSeparator: { label: 'Separador decimal' },
+      decimalSeparator: {
+        label: 'Separador decimal',
+        // Los nombres de los separadores son texto que se lee: van con el resto del copy.
+        options: { dot: 'punto', comma: 'coma' },
+      },
       thousandsSeparator: { label: 'Separador de miles', hint: 'Opcional.' },
       columnsHint:
         'Las columnas se cuentan desde cero: la primera del archivo es la 0. Se usa una columna de monto con signo, o el par débito y crédito, nunca los dos.',
@@ -136,7 +140,8 @@ export const copy = {
     ledgerMovement: 'Movimiento en tus libros',
     statementMovement: 'Movimiento en el banco',
     difference: 'Diferencia',
-    balanced: 'Todo conciliado: lo que anotaste en el período coincide con lo que reportó el banco.',
+    balanced:
+      'Todo conciliado: lo que anotaste en el período coincide con lo que reportó el banco.',
     // Una diferencia sin dirección no es un dato: hay que decir de qué lado sobra.
     ledgerHigher: (amount: string) => `Tu contabilidad muestra ${amount} más que el banco.`,
     statementHigher: (amount: string) => `El banco muestra ${amount} más que tu contabilidad.`,

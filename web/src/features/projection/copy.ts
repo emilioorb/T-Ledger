@@ -5,6 +5,9 @@ export const copy = {
     title: 'Proyección',
     description: 'Mes a mes: lo que entra, lo que ya está comprometido y lo que queda libre.',
     horizon: { label: 'Horizonte', months: (n: number) => `${n} meses` },
+    // El rótulo de la tarjeta no puede ser la misma palabra que el filtro de arriba: el
+    // filtro elige cuántos meses se proyectan y la tarjeta dice qué pasa en ellos.
+    outlook: 'El primer mes que no cierra',
     currency: 'Moneda',
     columns: {
       month: 'Mes',
@@ -29,7 +32,8 @@ export const copy = {
     freed: 'Se libera',
     freedNote: (name: string) => `Termina la cuota de ${name}`,
     negative: 'El mes no cierra',
-    negativeHint: 'Lo comprometido pasa lo que entra. Enterarse con meses de anticipación es el punto.',
+    negativeHint:
+      'Lo comprometido pasa lo que entra. Enterarse con meses de anticipación es el punto.',
     firstNegative: (month: string) => `El primer mes que no cierra es ${month}`,
     allClear: 'Ningún mes queda en negativo en este horizonte',
     empty: {

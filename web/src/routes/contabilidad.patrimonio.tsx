@@ -5,7 +5,6 @@ import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Hint } from '@/components/hint'
 import { FRAME_ROW, FrameHeader, TableFrame } from '@/components/table-frame'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isZeroMoney } from '@/features/accounting/amount'
@@ -49,7 +48,7 @@ const NetWorthScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.netWorth.description}</p>
       </header>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <DateField id="at" label={copy.netWorth.at} value={at} onChange={setAt} />
       </ControlBar>
 
@@ -101,17 +100,23 @@ const NetWorthScreen = () => {
             </StatCard>
           </StatGrid>
 
-          {/* Cuánto del patrimonio es lo que hiciste y cuánto es lo que hizo la tasa. */}
-          <Card size="sm" className="px-4">
-            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Scale className="size-3.5 shrink-0" aria-hidden="true" />
-              {copy.netWorth.identity}
-            </p>
-            <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <Amount money={report.data.netWorth} emphasis="strong" className="text-2xl" />
-              <span className="text-sm text-muted-foreground">=</span>
+          {/* Cuánto del patrimonio es lo que hiciste y cuánto es lo que hizo la tasa.
+              Misma ecuación que Situación: mismo contenedor y misma escala —el resultado en
+              la cifra principal y los sumandos en la de apoyo—, porque son la misma idea. */}
+          <StatCard
+            icon={Scale}
+            label={copy.netWorth.identity}
+            hint={report.data.balances ? copy.netWorth.balanced : copy.netWorth.unbalanced}
+          >
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <Amount
+                money={report.data.netWorth}
+                emphasis="strong"
+                className="text-3xl tracking-tight"
+              />
+              <span className="text-2xl text-muted-foreground">=</span>
               <Amount money={report.data.equity} className="text-2xl" />
-              <span className="text-sm text-muted-foreground">+</span>
+              <span className="text-2xl text-muted-foreground">+</span>
               <Hint text={copy.netWorth.exchangeHint}>
                 <Amount
                   money={report.data.exchangeDifference}
@@ -122,10 +127,7 @@ const NetWorthScreen = () => {
                 />
               </Hint>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {report.data.balances ? copy.netWorth.balanced : copy.netWorth.unbalanced}
-            </p>
-          </Card>
+          </StatCard>
 
           {report.data.byCurrency.length === 0 ? (
             <EmptyState

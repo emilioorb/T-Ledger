@@ -53,7 +53,8 @@ export const copy = {
     },
     payoffPlan: {
       title: 'No hay deudas que ordenar',
-      description: 'El plan de pago necesita al menos una deuda vigente para decidir a cuál mandar el excedente.',
+      description:
+        'El plan de pago necesita al menos una deuda vigente para decidir a cuál mandar el excedente.',
       action: 'Cargar una deuda',
     },
   },
@@ -68,7 +69,11 @@ export const copy = {
       principal: { label: 'Capital', hint: 'El monto original, no el saldo de hoy.' },
       currency: { label: 'Moneda' },
       annualRate: { label: 'Tasa anual', hint: 'En porcentaje. Cero es válido.' },
-      compounding: { label: 'Capitalización', monthly: 'Nominal mensual', annual: 'Efectiva anual' },
+      compounding: {
+        label: 'Capitalización',
+        monthly: 'Nominal mensual',
+        annual: 'Efectiva anual',
+      },
       termMonths: { label: 'Plazo', hint: 'En meses.' },
       startDate: { label: 'Inicio', hint: 'La primera cuota vence un mes después.' },
       kind: {
@@ -86,7 +91,8 @@ export const copy = {
 
   schedule: {
     title: 'Tabla de amortización',
-    caption: 'Cada cuota con su desglose entre capital e interés, y el saldo que queda después de pagarla.',
+    caption:
+      'Cada cuota con su desglose entre capital e interés, y el saldo que queda después de pagarla.',
     columns: {
       number: 'Cuota',
       dueDate: 'Vence',
@@ -106,7 +112,10 @@ export const copy = {
     title: 'Abonar de más',
     description: 'Cuánto interés se ahorra y cuántos meses se ganan poniendo un monto extra.',
     amount: { label: 'Monto del abono' },
-    afterInstallment: { label: 'Después de la cuota', hint: 'El número de cuota tras la cual entra el abono.' },
+    afterInstallment: {
+      label: 'Después de la cuota',
+      hint: 'El número de cuota tras la cual entra el abono.',
+    },
     mode: {
       label: 'Qué hacer con el ahorro',
       reduceTerm: 'Acortar el plazo',
@@ -157,6 +166,7 @@ export const copy = {
     term: 'Plazo',
     payoffDate: 'Libre en',
     monthlyPayment: 'Cuota',
+    paymentHint: 'Lo mismo todos los meses hasta la última.',
     budgetBucket: 'Cubeta',
     edit: 'Editar',
   },

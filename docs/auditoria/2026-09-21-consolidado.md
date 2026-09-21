@@ -289,7 +289,16 @@ documentarlo como constante de diseño: ninguna pista que aloje un `Amount` pued
 
 ---
 
-## Fase 3 — Jerarquía y consistencia
+## Fase 3 — Jerarquía y consistencia ✅ cerrada el 21/09/2026
+
+Los once puntos quedaron cerrados. Lo que salió de acá y se puede reusar:
+`ProgressBar` ya existía de la fase 1, y ahora se suman `TableSkeleton` —una fila de carga que
+mide lo que una fila real y vive dentro del marco— y el bloque `controls` del copy del armazón,
+donde viven los textos de los controles sin etiqueta visible.
+
+Barrido de control tras los cambios: **84 combinaciones limpias de 84** (catorce pantallas por
+seis anchos), así que la fase 2 sigue en pie.
+
 
 - **Detalle de deuda** (`deudas.$debtId.index.tsx:50-59`): seis datos en `text-sm`, ninguna cifra
   abre la pantalla. Es la única que no usa `StatCard`. Además rótulos en versalitas —el único

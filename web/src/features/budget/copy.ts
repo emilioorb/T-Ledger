@@ -20,7 +20,8 @@ export const copy = {
     saveIncome: 'Guardar ingreso',
     consumed: 'Consumido',
     surplus: 'Sin gastar',
-    surplusHint: 'El ingreso menos lo que ya se fue. No es plata sin asignar: el modelo reparte el 100 %.',
+    surplusHint:
+      'El ingreso menos lo que ya se fue. No es plata sin asignar: el modelo reparte el 100 %.',
     monthState: 'El mes',
     noOverBucket: 'Ninguna cubeta se pasó',
     noOverHint: 'Todo lo consumido cabe dentro de lo que el modelo asignó.',
@@ -75,9 +76,12 @@ export const copy = {
       addBucket: 'Agregar cubeta',
       removeBucket: (name: string) => `Quitar ${name}`,
       bucketName: 'Nombre',
+      // El ejemplo vive con el resto del copy: es texto que el usuario lee.
+      bucketNamePlaceholder: 'Necesidades',
       percentage: 'Porcentaje',
       isSavings: 'Es la cubeta de ahorro',
-      isSavingsHint: 'Los abonos extraordinarios a deudas caen acá. Tiene que haber exactamente una.',
+      isSavingsHint:
+        'Los abonos extraordinarios a deudas caen acá. Tiene que haber exactamente una.',
       accounts: 'Cuentas de gasto',
       accountsHint: 'De estas cuentas sale el consumo de la cubeta. Sin cuentas, consume cero.',
       total: 'Suma',
@@ -89,7 +93,8 @@ export const copy = {
     },
     empty: {
       title: 'Todavía no hay modelos',
-      description: 'El primero define cómo se reparte tu ingreso. Después se cambia cuando quieras.',
+      description:
+        'El primero define cómo se reparte tu ingreso. Después se cambia cuando quieras.',
       action: 'Crear el primero',
     },
     toast: { created: 'Modelo creado', updated: 'Cambios guardados' },

@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
+import { copy } from '@/features/shell/copy'
 import type { SortDirection } from '@/lib/use-table-controls'
 import { cn } from 'cn'
 
@@ -22,13 +23,14 @@ export const SortButton = ({
   onClick,
 }: Props) => {
   const Icon = !active ? ChevronsUpDown : direction === 'asc' ? ArrowUp : ArrowDown
-  const estado = active ? (direction === 'asc' ? 'ascendente' : 'descendente') : 'sin ordenar'
+  const { sort } = copy.controls
+  const estado = active ? (direction === 'asc' ? sort.ascending : sort.descending) : sort.unsorted
 
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Ordenar por ${label}, ${estado}`}
+      aria-label={sort.label(label, estado)}
       className={cn(
         'inline-flex min-h-6 items-center gap-1 rounded-sm transition-colors hover:text-foreground',
         active && 'text-foreground',

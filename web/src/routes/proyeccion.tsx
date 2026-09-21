@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isNegativeMoney, isZeroMoney } from '@/features/accounting/amount'
 import { ControlBar, CurrencyField } from '@/features/accounting/report-controls'
 import type { CurrencyCode } from '@/features/accounting/types'
@@ -24,6 +23,7 @@ import type { MonthlyFlow } from '@/features/projection/types'
 import { useCashFlowProjection } from '@/features/projection/use-projection'
 import { formatIsoMonth } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 const HORIZONS = [6, 12, 24]
 
@@ -139,7 +139,7 @@ const ProjectionScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.projection.description}</p>
       </header>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <div className="flex flex-col gap-1">
           <Label htmlFor="horizon" className="text-xs font-normal text-muted-foreground">
             {copy.projection.horizon.label}
@@ -173,11 +173,7 @@ const ProjectionScreen = () => {
       </ControlBar>
 
       {projection.isPending ? (
-        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-10 w-full" />
-          ))}
-        </div>
+        <TableSkeleton rows={6} label={copy.common.loading} />
       ) : projection.isError ? (
         <ErrorState
           title={copy.common.error.title}
@@ -196,15 +192,15 @@ const ProjectionScreen = () => {
               entero de proyectar. */}
           <StatCard
             icon={CalendarClock}
-            label={copy.projection.horizon.label}
+            label={copy.projection.outlook}
             hint={firstNegative ? copy.projection.negativeHint : undefined}
           >
             {firstNegative ? (
-              <p className="text-2xl font-medium tracking-tight text-negative">
+              <p className="text-3xl font-medium tracking-tight text-negative">
                 {copy.projection.firstNegative(monthLabel(firstNegative))}
               </p>
             ) : (
-              <p className="text-2xl tracking-tight">{copy.projection.allClear}</p>
+              <p className="text-3xl tracking-tight">{copy.projection.allClear}</p>
             )}
           </StatCard>
 

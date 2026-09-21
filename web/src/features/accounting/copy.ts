@@ -77,7 +77,10 @@ export const copy = {
       code: { label: 'Código', hint: 'Numérico. Define el orden y no se cambia después.' },
       name: { label: 'Nombre' },
       accountClass: { label: 'Clase', hint: 'Decide de qué lado suma y en qué reporte aparece.' },
-      parentCode: { label: 'Cuelga de', hint: 'Debe ser de la misma clase. Vacío la deja como raíz.' },
+      parentCode: {
+        label: 'Cuelga de',
+        hint: 'Debe ser de la misma clase. Vacío la deja como raíz.',
+      },
       noParent: 'Ninguna, es raíz',
       active: { label: 'Activa', hint: 'Una cuenta inactiva deja de aceptar asientos nuevos.' },
       sortOrder: { label: 'Orden' },
@@ -96,7 +99,10 @@ export const copy = {
     columns: { name: 'Categoría', kind: 'Tipo', account: 'Cuenta contable', status: 'Estado' },
     kinds: { EXPENSE: 'Gasto', INCOME: 'Ingreso' },
     unmapped: 'Sin cuenta',
-    unmappedHint: 'Sus movimientos quedan registrados, pero fuera de los reportes hasta que le asignes una cuenta.',
+    mapped: 'Con cuenta contable',
+    mappedHint: 'Sus movimientos entran a los reportes por la cuenta que tienen asignada.',
+    unmappedHint:
+      'Sus movimientos quedan registrados, pero fuera de los reportes hasta que le asignes una cuenta.',
     new: 'Nueva categoría',
     edit: (name: string) => `Editar ${name}`,
     form: {
@@ -119,7 +125,11 @@ export const copy = {
         `Se borra «${name}». Los movimientos que la usaban quedan sin categoría y sin asiento nuevo.`,
       confirm: 'Borrar',
     },
-    toast: { created: 'Categoría creada', updated: 'Cambios guardados', deleted: 'Categoría borrada' },
+    toast: {
+      created: 'Categoría creada',
+      updated: 'Cambios guardados',
+      deleted: 'Categoría borrada',
+    },
   },
 
   movements: {
@@ -146,7 +156,8 @@ export const copy = {
     kinds: { EXPENSE: 'Gasto', INCOME: 'Ingreso' },
     statuses: { ACTIVE: 'Vigente', VOIDED: 'Anulado' },
     unposted: 'Sin contabilizar',
-    unpostedHint: 'Su categoría no tiene cuenta contable. Asignale una y el asiento se genera al guardar.',
+    unpostedHint:
+      'Su categoría no tiene cuenta contable. Asignale una y el asiento se genera al guardar.',
     fixUnposted: 'Asignar cuenta a la categoría',
     viewEntry: 'Ver asiento',
     new: 'Nuevo movimiento',
@@ -162,7 +173,10 @@ export const copy = {
       categoryId: { label: 'Categoría' },
       counterparty: { label: 'Quién', hint: 'El proveedor si es gasto, la fuente si es ingreso.' },
       amount: { label: 'Monto' },
-      paymentAccountCode: { label: 'Cuenta de pago', hint: 'De dónde salió o a dónde entró la plata.' },
+      paymentAccountCode: {
+        label: 'Cuenta de pago',
+        hint: 'De dónde salió o a dónde entró la plata.',
+      },
       receiptUrl: { label: 'Comprobante', hint: 'Enlace a la factura o al recibo. Opcional.' },
       editNote: 'Editar no reescribe el asiento: revierte el vigente y emite uno nuevo.',
     },
@@ -196,7 +210,13 @@ export const copy = {
     title: 'Asientos',
     description:
       'El libro diario. La mayoría los genera un movimiento; el asiento manual es para lo que no es un gasto ni un ingreso simple, como una conversión entre monedas.',
-    columns: { date: 'Fecha', description: 'Descripción', account: 'Cuenta', debit: 'Debe', credit: 'Haber' },
+    columns: {
+      date: 'Fecha',
+      description: 'Descripción',
+      account: 'Cuenta',
+      debit: 'Debe',
+      credit: 'Haber',
+    },
     fromMovement: 'De un movimiento',
     reversal: 'Reversión',
     new: 'Asiento manual',
@@ -205,7 +225,10 @@ export const copy = {
       title: 'Asiento manual',
       date: { label: 'Fecha' },
       description: { label: 'Descripción', hint: 'Qué se registra y por qué.' },
-      reference: { label: 'Referencia', hint: 'Número de factura, enlace o comprobante. Opcional.' },
+      reference: {
+        label: 'Referencia',
+        hint: 'Número de factura, enlace o comprobante. Opcional.',
+      },
       lines: 'Líneas',
       addLine: 'Agregar línea',
       removeLine: (index: number) => `Quitar la línea ${index}`,
@@ -223,7 +246,8 @@ export const copy = {
     },
     empty: {
       title: 'Ningún asiento en este rango',
-      description: 'Los asientos aparecen solos al registrar movimientos. También podés cargar uno a mano.',
+      description:
+        'Los asientos aparecen solos al registrar movimientos. También podés cargar uno a mano.',
     },
     toast: { created: 'Asiento registrado', unbalanced: 'El asiento no cuadra' },
   },
@@ -244,7 +268,8 @@ export const copy = {
     openingHint: 'Lo que traía la cuenta antes del primer día del rango.',
     needsAccount: {
       title: 'Elegí una cuenta para ver su mayor',
-      description: 'El mayor es siempre una cuenta en una moneda. Sin esas dos cosas no hay nada que mostrar.',
+      description:
+        'El mayor es siempre una cuenta en una moneda. Sin esas dos cosas no hay nada que mostrar.',
     },
     empty: {
       title: 'Esta cuenta no se movió en el rango',
@@ -254,7 +279,8 @@ export const copy = {
 
   trialBalance: {
     title: 'Comprobación',
-    description: 'Débitos contra créditos, cuenta por cuenta. Si no coinciden, la diferencia sale acá.',
+    description:
+      'Débitos contra créditos, cuenta por cuenta. Si no coinciden, la diferencia sale acá.',
     columns: {
       code: 'Código',
       account: 'Cuenta',
@@ -354,6 +380,7 @@ export const copy = {
       unposted: 'Sin contabilizar',
       balanced: 'Comprobación',
       blockers: 'Qué falta para cerrar',
+      action: 'Acción',
     },
     statuses: { OPEN: 'Abierto', CLOSED: 'Cerrado' },
     ready: 'Listo para cerrar',
@@ -391,6 +418,10 @@ export const copy = {
       title: 'Todavía no hay meses con actividad',
       description: 'La lista se arma sola con los meses que tienen movimientos o asientos.',
     },
-    toast: { closed: 'Mes cerrado', reopened: 'Mes reabierto', blocked: 'El mes todavía no se puede cerrar' },
+    toast: {
+      closed: 'Mes cerrado',
+      reopened: 'Mes reabierto',
+      blocked: 'El mes todavía no se puede cerrar',
+    },
   },
 } as const

@@ -6,7 +6,6 @@ import { FormDialog } from '@/components/form-dialog'
 import { TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { AccountForm, type AccountFormValues } from '@/features/accounting/account-form'
 import { AccountsTree } from '@/features/accounting/accounts-tree'
 import { copy } from '@/features/accounting/copy'
@@ -14,6 +13,7 @@ import { CurrencyField, ControlBar, DateField } from '@/features/accounting/repo
 import { useAccounts, useAccountsTree, useSaveAccount } from '@/features/accounting/use-accounting'
 import type { Account, CurrencyCode } from '@/features/accounting/types'
 import { today } from '@/lib/dates'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 type Editing = { account?: Account } | null
 
@@ -66,17 +66,13 @@ const AccountsScreen = () => {
         ) : null}
       </FormDialog>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <CurrencyField value={currency} onChange={setCurrency} />
         <DateField id="at" label={copy.common.at} value={at} onChange={setAt} />
       </ControlBar>
 
       {tree.isPending || accounts.isPending ? (
-        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
-          {Array.from({ length: 8 }, (_, index) => (
-            <Skeleton key={index} className="h-7 w-full" />
-          ))}
-        </div>
+        <TableSkeleton rows={8} label={copy.common.loading} />
       ) : tree.isError || accounts.isError ? (
         <ErrorState
           title={copy.common.error.title}

@@ -112,7 +112,7 @@ export const DebtForm = ({ onSubmit, onCancel, pending, defaults, submitLabel }:
         </RadioGroup>
       </fieldset>
 
-      <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="name">{fields.name.label}</Label>
           <Input id="name" aria-invalid={Boolean(error('name'))} {...form.register('name')} />
@@ -240,12 +240,14 @@ export const DebtForm = ({ onSubmit, onCancel, pending, defaults, submitLabel }:
         ) : null}
       </div>
 
-      <div className="flex gap-2">
-        <Button type="submit" disabled={pending}>
+      {/* El mismo pie que el resto de los formularios del sistema: al final de la fila y
+          con los botones en la escala chica. */}
+      <div className="flex justify-end gap-2">
+        <Button type="submit" size="sm" disabled={pending}>
           {submitLabel ?? copy.form.submitCreate}
         </Button>
         {onCancel ? (
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
             {copy.form.cancel}
           </Button>
         ) : null}

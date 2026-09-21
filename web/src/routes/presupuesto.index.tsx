@@ -145,7 +145,7 @@ const BudgetScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.budget.description}</p>
       </header>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <CurrencyField value={currency} onChange={setCurrency} />
         <MonthField id="month" label={copy.budget.month} value={at} onChange={setAt} />
       </ControlBar>

@@ -6,6 +6,7 @@ import { AppFooter } from '@/components/app-footer'
 import { AppSidebar } from '@/components/app-sidebar'
 import { PageBreadcrumb } from '@/components/page-breadcrumb'
 import { ExchangeRateIndicator } from '@/features/money/exchange-rate-indicator'
+import { copy as shell } from '@/features/shell/copy'
 import { copy as shortcuts } from '@/features/shortcuts/copy'
 import { PrimaryActionProvider } from '@/features/shortcuts/primary-action'
 import { ShortcutsSheet } from '@/features/shortcuts/shortcuts-sheet'
@@ -30,7 +31,7 @@ const Shell = () => {
       {/* min-h-0: sin esto el inset se estira al alto de su contenido y el pie se va con él. */}
       <SidebarInset className="min-h-0 min-w-0 overflow-hidden">
         <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
-          <SidebarTrigger className="-ml-1" aria-label="Alternar la barra lateral" />
+          <SidebarTrigger className="-ml-1" aria-label={shell.nav.toggleSidebar} />
           <Separator
             orientation="vertical"
             className="mr-1 data-vertical:h-4 data-vertical:self-auto"

@@ -13,6 +13,7 @@ import { ReportTree } from '@/features/accounting/report-tree'
 import type { CurrencyCode, Money, ReportNode } from '@/features/accounting/types'
 import { useFinancialPosition } from '@/features/accounting/use-accounting'
 import { today } from '@/lib/dates'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 const PERIOD_RESULT_CODE = 'RESULTADO-DEL-PERIODO'
 
@@ -56,17 +57,15 @@ const FinancialPositionScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.financialPosition.description}</p>
       </header>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <CurrencyField value={currency} onChange={setCurrency} />
         <DateField id="at" label={copy.common.at} value={at} onChange={setAt} />
       </ControlBar>
 
       {position.isPending ? (
-        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
-          <Skeleton className="h-20 w-full" />
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-8 w-full" />
-          ))}
+        <div className="space-y-5">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <TableSkeleton rows={6} label={copy.common.loading} />
         </div>
       ) : position.isError ? (
         <ErrorState
@@ -96,10 +95,10 @@ const FinancialPositionScreen = () => {
                 emphasis="strong"
                 className="text-3xl tracking-tight"
               />
-              <span className="text-xl text-muted-foreground">=</span>
-              <Amount money={position.data.liabilities} className="text-xl" />
-              <span className="text-xl text-muted-foreground">+</span>
-              <Amount money={position.data.equity} className="text-xl" />
+              <span className="text-2xl text-muted-foreground">=</span>
+              <Amount money={position.data.liabilities} className="text-2xl" />
+              <span className="text-2xl text-muted-foreground">+</span>
+              <Amount money={position.data.equity} className="text-2xl" />
             </div>
           </StatCard>
 

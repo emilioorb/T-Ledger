@@ -4,7 +4,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Card } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isNegativeMoney, isZeroMoney } from '@/features/accounting/amount'
 import { copy } from '@/features/accounting/copy'
 import { ControlBar, CurrencyField, RangeFields } from '@/features/accounting/report-controls'
@@ -12,6 +11,7 @@ import { ReportTree } from '@/features/accounting/report-tree'
 import type { CurrencyCode, IncomeStatement, Money, ReportNode } from '@/features/accounting/types'
 import { useIncomeStatement } from '@/features/accounting/use-accounting'
 import { monthEnd, monthStart, today } from '@/lib/dates'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 interface BlockProps {
   label: string
@@ -26,10 +26,11 @@ interface BlockProps {
 const Block = ({ label, total, nodes, sign }: BlockProps) => (
   <section>
     <header className="flex items-baseline justify-between gap-3 border-b border-border-strong pb-1.5">
-      <h2 className="text-sm font-medium tracking-tight">
+      <h2 className="text-base font-medium tracking-tight">
         {sign ? <span className="mr-1 text-muted-foreground">{sign}</span> : null}
         {label}
       </h2>
+      {/* El total acompaña al título de su bloque, no lo tapa: los dos al mismo tamaño. */}
       <Amount money={total} emphasis="strong" className="text-base" />
     </header>
     {nodes.length > 0 ? (
@@ -64,17 +65,13 @@ const IncomeStatementScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.incomeStatement.description}</p>
       </header>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <CurrencyField value={currency} onChange={setCurrency} />
         <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </ControlBar>
 
       {statement.isPending ? (
-        <div className="space-y-3" role="status" aria-label={copy.common.loading}>
-          {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-14 w-full" />
-          ))}
-        </div>
+        <TableSkeleton rows={4} label={copy.common.loading} />
       ) : statement.isError ? (
         <ErrorState
           title={copy.common.error.title}
@@ -110,7 +107,9 @@ const IncomeStatementScreen = () => {
             sign="−"
           />
 
-          <div className="flex items-baseline justify-between gap-3 border-t-2 border-border-strong pt-4">
+          {/* La línea de cierre es más fuerte por color, no por grosor: `border-t-2` era el
+              único del repo y no hay ninguna otra regla de dos píxeles con la que rime. */}
+          <div className="flex items-baseline justify-between gap-3 border-t border-border-strong pt-4">
             <div>
               <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
                 <Scale className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />

@@ -25,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
 import { copy } from '@/features/accounting/copy'
 import type { Account, Category, CategoryKind } from '@/features/accounting/types'
 import {
@@ -34,6 +33,7 @@ import {
   useDeleteCategory,
   useSaveCategory,
 } from '@/features/accounting/use-accounting'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 const NO_ACCOUNT = 'none'
 
@@ -251,11 +251,7 @@ const CategoriesScreen = () => {
       </FormDialog>
 
       {categories.isPending ? (
-        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
-          {Array.from({ length: 5 }, (_, index) => (
-            <Skeleton key={index} className="h-9 w-full" />
-          ))}
-        </div>
+        <TableSkeleton rows={5} label={copy.common.loading} />
       ) : categories.isError ? (
         <ErrorState
           title={copy.common.error.title}
@@ -304,20 +300,31 @@ const CategoriesScreen = () => {
             </div>
           ) : null}
 
+          {/* La tabla de mapeadas también lleva su título: sin él, cuando no hay ninguna
+              sin cuenta la pantalla abría con una tabla anónima. */}
           {mapped.length > 0 ? (
-            <TableFrame>
-              <ul className="divide-y divide-border">
-                {mapped.map((category) => (
-                  <CategoryRow
-                    key={category.id}
-                    category={category}
-                    accountName={nameOf.get(category.accountCode ?? '')}
-                    onEdit={() => setEditing({ category })}
-                    onDelete={() => setDeleting(category)}
-                  />
-                ))}
-              </ul>
-            </TableFrame>
+            <div>
+              <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
+                <Tags className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                {copy.categories.mapped}
+              </h2>
+              <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">
+                {copy.categories.mappedHint}
+              </p>
+              <TableFrame className="mt-3">
+                <ul className="divide-y divide-border">
+                  {mapped.map((category) => (
+                    <CategoryRow
+                      key={category.id}
+                      category={category}
+                      accountName={nameOf.get(category.accountCode ?? '')}
+                      onEdit={() => setEditing({ category })}
+                      onDelete={() => setDeleting(category)}
+                    />
+                  ))}
+                </ul>
+              </TableFrame>
+            </div>
           ) : null}
         </div>
       )}

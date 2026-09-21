@@ -139,7 +139,7 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
                 value={bucket.name}
                 required
                 aria-label={fields.bucketName}
-                placeholder="Necesidades"
+                placeholder={fields.bucketNamePlaceholder}
                 onChange={(event) =>
                   update(index, {
                     name: event.target.value,

@@ -1,6 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { TableProperties } from 'lucide-react'
+import {
+  Building2,
+  CalendarCheck,
+  Coins,
+  Percent,
+  TableProperties,
+  Timer,
+  Wallet,
+} from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Amount } from '@/features/accounting/amount'
+import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { AmortizationTable } from '@/features/debts/amortization-table'
 import { BalanceChart } from '@/features/debts/balance-chart'
 import { copy } from '@/features/debts/copy'
@@ -8,14 +18,6 @@ import { ErrorState } from '@/components/error-state'
 import { ExtraPaymentSimulator } from '@/features/debts/extra-payment-simulator'
 import { useDebt, useSchedule } from '@/features/debts/use-debts'
 import { formatIsoDate } from '@/lib/dates'
-import { formatMoney } from '@/lib/money'
-
-const Fact = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-baseline justify-between gap-4 py-1.5 sm:block sm:py-0">
-    <dt className="text-xs tracking-wide text-muted-foreground uppercase">{label}</dt>
-    <dd className="num num-right text-sm sm:mt-0.5 sm:text-left">{value}</dd>
-  </div>
-)
 
 const DebtDetail = () => {
   const { debtId } = Route.useParams()
@@ -49,16 +51,47 @@ const DebtDetail = () => {
       <div className="space-y-3">
         <h1 className="text-xl font-semibold tracking-tight">{data.name}</h1>
 
-        {/* En una sola columna los datos son una lista y van separados por una línea; a
-            partir de sm son columnas y la línea sobra. */}
-        <dl className="grid gap-x-6 divide-y divide-border sm:grid-cols-3 sm:divide-y-0 lg:grid-cols-6">
-          <Fact label={copy.detail.counterparty} value={data.counterparty} />
-          <Fact label={copy.detail.principal} value={formatMoney(data.principal)} />
-          <Fact label={copy.detail.monthlyPayment} value={formatMoney(data.monthlyPayment)} />
-          <Fact label={copy.detail.rate} value={`${data.annualRate} %`} />
-          <Fact label={copy.detail.term} value={copy.simulator.results.months(data.termMonths)} />
-          <Fact label={copy.detail.payoffDate} value={formatIsoDate(data.payoffDate)} />
-        </dl>
+        {/* La cuota es lo que se paga todos los meses: esa abre la pantalla, y la fecha en
+            que la deuda deja de existir va al lado. El resto son datos de apoyo. */}
+        <StatGrid>
+          <StatCard
+            icon={Coins}
+            className="sm:col-span-2"
+            label={copy.detail.monthlyPayment}
+            hint={copy.detail.paymentHint}
+          >
+            <Amount
+              money={data.monthlyPayment}
+              emphasis="strong"
+              className="block text-left text-3xl tracking-tight"
+            />
+          </StatCard>
+
+          <StatCard icon={CalendarCheck} label={copy.detail.payoffDate}>
+            <p className="num block text-left text-2xl tracking-tight">
+              {formatIsoDate(data.payoffDate)}
+            </p>
+          </StatCard>
+
+          <StatCard icon={Wallet} label={copy.detail.principal}>
+            <Amount money={data.principal} className="block text-left text-2xl" />
+          </StatCard>
+
+          <StatCard icon={Percent} label={copy.detail.rate}>
+            <p className="num block text-left text-2xl">{data.annualRate} %</p>
+          </StatCard>
+
+          <StatCard icon={Timer} label={copy.detail.term}>
+            <p className="num block text-left text-2xl">
+              {copy.simulator.results.months(data.termMonths)}
+            </p>
+          </StatCard>
+
+          {/* Un nombre propio no es una cifra: sin `num` ni alineación a la derecha. */}
+          <StatCard icon={Building2} label={copy.detail.counterparty}>
+            <p className="block truncate text-left text-2xl tracking-tight">{data.counterparty}</p>
+          </StatCard>
+        </StatGrid>
       </div>
 
       <section aria-labelledby="tabla" className="space-y-3">
@@ -82,15 +115,11 @@ const DebtDetail = () => {
             <div className="flex flex-wrap gap-x-8 gap-y-1 border-y border-border py-2">
               <p className="text-sm">
                 <span className="text-muted-foreground">{copy.schedule.totalInterest} </span>
-                <span className="num num-right font-medium">
-                  {formatMoney(schedule.data.totalInterest)}
-                </span>
+                <Amount money={schedule.data.totalInterest} emphasis="strong" />
               </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">{copy.schedule.totalPaid} </span>
-                <span className="num num-right font-medium">
-                  {formatMoney(schedule.data.totalPaid)}
-                </span>
+                <Amount money={schedule.data.totalPaid} emphasis="strong" />
               </p>
             </div>
             <AmortizationTable installments={schedule.data.installments} />

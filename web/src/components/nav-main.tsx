@@ -1,10 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { ChevronRightIcon, type LucideIcon } from 'lucide-react'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -16,6 +12,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
+import { copy } from '@/features/shell/copy'
 
 export interface NavItem {
   title: string
@@ -50,7 +47,7 @@ export const NavMain = ({ label, items }: Props) => (
                 <CollapsibleTrigger asChild>
                   <SidebarMenuAction className="data-[state=open]:rotate-90">
                     <ChevronRightIcon aria-hidden="true" />
-                    <span className="sr-only">Desplegar {item.title}</span>
+                    <span className="sr-only">{copy.nav.expand(item.title)}</span>
                   </SidebarMenuAction>
                 </CollapsibleTrigger>
                 <CollapsibleContent>

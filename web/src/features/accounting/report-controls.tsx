@@ -211,21 +211,9 @@ export const SelectField = ({ id, label, value, options, onChange }: SelectField
 // La línea de abajo separa los controles del contenido. Cuando lo que sigue ya abre con su
 // propia línea —el bloque de la cifra principal, que la lleva más gruesa— sobra: quedan dos
 // reglas a dos centímetros una de otra diciendo lo mismo.
-export const ControlBar = ({
-  children,
-  separated = true,
-}: {
-  children: ReactNode
-  separated?: boolean
-}) => (
-  <div
-    className={cn(
-      'flex flex-wrap items-end gap-x-4 gap-y-3',
-      // El relleno de abajo existe para despegar los controles de su propia línea. Sin línea
-      // no separa nada: deja los controles flotando sobre un hueco.
-      separated && 'border-b border-border pb-4',
-    )}
-  >
-    {children}
-  </div>
+export const ControlBar = ({ children }: { children: ReactNode }) => (
+  // Sin línea ni relleno inferior: las once pantallas que usan esta barra pasaban
+  // `separated={false}`, y la rama que dibujaba la línea era código muerto que invitaba a
+  // reintroducirla. Los controles se despegan con el espaciado de la pantalla.
+  <div className="flex flex-wrap items-end gap-x-4 gap-y-3">{children}</div>
 )

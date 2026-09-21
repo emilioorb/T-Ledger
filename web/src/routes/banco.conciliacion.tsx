@@ -35,6 +35,7 @@ import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
 import { usePage } from '@/lib/use-page'
 import { absMoney, formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 interface PairProps {
   line: BankLine
@@ -246,7 +247,7 @@ const ReconciliationScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.reconciliation.description}</p>
       </header>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <div className="flex flex-col gap-1">
           <Label htmlFor="bank-account" className="text-xs font-normal text-muted-foreground">
             {copy.reconciliation.account.label}
@@ -290,11 +291,9 @@ const ReconciliationScreen = () => {
           />
         )
       ) : reconciliation.isPending ? (
-        <div className="space-y-3" role="status" aria-label={copy.common.loading}>
-          <Skeleton className="h-20 w-full" />
-          {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-16 w-full" />
-          ))}
+        <div className="space-y-5">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <TableSkeleton rows={4} label={copy.common.loading} />
         </div>
       ) : reconciliation.isError ? (
         <ErrorState

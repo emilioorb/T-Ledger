@@ -26,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -55,6 +54,7 @@ import { useDebounced } from '@/lib/use-debounced'
 import { usePage } from '@/lib/use-page'
 import { cn } from '@/lib/utils'
 import { TEXT_LINK } from '@/components/text-link'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 const ALL = 'all'
 
@@ -252,7 +252,7 @@ const MovementsScreen = () => {
         ) : null}
       </FormDialog>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
 
         <div className="flex flex-col gap-1">
@@ -315,11 +315,7 @@ const MovementsScreen = () => {
       </ControlBar>
 
       {movements.isPending ? (
-        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-9 w-full" />
-          ))}
-        </div>
+        <TableSkeleton rows={6} label={copy.common.loading} />
       ) : movements.isError ? (
         <ErrorState
           title={copy.common.error.title}

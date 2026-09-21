@@ -13,6 +13,7 @@ import { ControlBar, CurrencyField, RangeFields } from '@/features/accounting/re
 import type { CurrencyCode } from '@/features/accounting/types'
 import { trialBalanceCsvUrl, useTrialBalance } from '@/features/accounting/use-accounting'
 import { monthEnd, monthStart, today } from '@/lib/dates'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 const TrialBalanceScreen = () => {
   const [currency, setCurrency] = useState<CurrencyCode>('CRC')
@@ -36,17 +37,15 @@ const TrialBalanceScreen = () => {
         </Button>
       </header>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <CurrencyField value={currency} onChange={setCurrency} />
         <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </ControlBar>
 
       {balance.isPending ? (
-        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
-          <Skeleton className="h-16 w-64" />
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-8 w-full" />
-          ))}
+        <div className="space-y-5">
+          <Skeleton className="h-24 w-64 rounded-xl" />
+          <TableSkeleton rows={6} label={copy.common.loading} />
         </div>
       ) : balance.isError ? (
         <ErrorState

@@ -7,7 +7,6 @@ import { Pager } from '@/components/pager'
 import { FrameHeader, TableFrame } from '@/components/table-frame'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Amount } from '@/features/accounting/amount'
 import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/accounting/copy'
@@ -24,6 +23,7 @@ import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
 import { formatMoney, type CurrencyCode as MoneyCurrency } from '@/lib/money'
 import { usePage } from '@/lib/use-page'
 import { cn } from '@/lib/utils'
+import { TableSkeleton } from '@/components/table-skeleton'
 
 interface JournalSearch {
   entry?: string
@@ -160,16 +160,12 @@ const JournalScreen = () => {
         ) : null}
       </FormDialog>
 
-      <ControlBar separated={false}>
+      <ControlBar>
         <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </ControlBar>
 
       {entries.isPending ? (
-        <div className="space-y-4" role="status" aria-label={copy.common.loading}>
-          {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-20 w-full" />
-          ))}
-        </div>
+        <TableSkeleton rows={4} label={copy.common.loading} />
       ) : entries.isError ? (
         <ErrorState
           title={copy.common.error.title}
