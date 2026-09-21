@@ -8,6 +8,7 @@ import {
   type CreateCategoryInput,
   type UpdateCategoryInput,
 } from './accounting.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type CategoryResponse = ReturnType<typeof toCategoryResponse>
 
@@ -27,6 +28,7 @@ export class CategoriesController {
     return toCategoryResponse(await this.categories.find(id))
   }
 
+  @Permiso('categoria', 'write')
   @Post()
   async create(
     @Body(new ZodValidationPipe(createCategorySchema)) input: CreateCategoryInput,
@@ -34,6 +36,7 @@ export class CategoriesController {
     return toCategoryResponse(await this.categories.create(input))
   }
 
+  @Permiso('categoria', 'write')
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -42,6 +45,7 @@ export class CategoriesController {
     return toCategoryResponse(await this.categories.update(id, input))
   }
 
+  @Permiso('categoria', 'write')
   @Delete(':id')
   @HttpCode(204)
   async delete(@Param('id') id: string): Promise<void> {

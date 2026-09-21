@@ -13,6 +13,7 @@ import {
   type CreateJournalEntryInput,
   type ListJournalEntriesQuery,
 } from './accounting.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type JournalEntryResponse = ReturnType<typeof toJournalEntryResponse>
 
@@ -47,6 +48,7 @@ export class JournalEntriesController {
     return toJournalEntryResponse(await this.listEntries.byId(id))
   }
 
+  @Permiso('asiento', 'write')
   @Post()
   async create(
     @Body(new ZodValidationPipe(createJournalEntrySchema)) input: CreateJournalEntryInput,

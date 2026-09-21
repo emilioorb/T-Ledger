@@ -7,6 +7,7 @@ import { ListPeriodsUseCase } from '../application/list-periods.use-case.js'
 import { ReopenPeriodUseCase } from '../application/reopen-period.use-case.js'
 import { PeriodKey } from '../domain/accounting-period.js'
 import { toPeriodResponse, toPeriodSummaryResponse } from './accounting.presenters.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type PeriodSummaryResponse = ReturnType<typeof toPeriodSummaryResponse>
 type PeriodResponse = ReturnType<typeof toPeriodResponse>
@@ -35,12 +36,14 @@ export class PeriodsController {
   }
 
   // 200 y no 201: cerrar un mes no crea un recurso nuevo, cambia el estado de uno.
+  @Permiso('periodo', 'close')
   @Post(':period/close')
   @HttpCode(200)
   async close(@Param('period') period: string): Promise<PeriodResponse> {
     return toPeriodResponse(await this.closePeriod.execute(keyOf(period)))
   }
 
+  @Permiso('periodo', 'reopen')
   @Post(':period/reopen')
   @HttpCode(200)
   async reopen(@Param('period') period: string): Promise<{ reopened: PeriodResponse[] }> {

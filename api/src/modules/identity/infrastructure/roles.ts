@@ -16,6 +16,10 @@ const statements = {
   deuda: ['read', 'write'],
   meta: ['read', 'write'],
   inversion: ['read', 'write'],
+  cuenta: ['read', 'write'],
+  categoria: ['read', 'write'],
+  asiento: ['read', 'write'],
+  banco: ['read', 'write'],
 } as const
 
 export const ac = createAccessControl(statements)
@@ -28,6 +32,10 @@ export const viewer = ac.newRole({
   deuda: ['read'],
   meta: ['read'],
   inversion: ['read'],
+  cuenta: ['read'],
+  categoria: ['read'],
+  asiento: ['read'],
+  banco: ['read'],
 })
 
 // Toda la contabilidad y nada de la gente. Es el reparto de una pareja real, donde los dos
@@ -39,6 +47,10 @@ export const editor = ac.newRole({
   deuda: ['read', 'write'],
   meta: ['read', 'write'],
   inversion: ['read', 'write'],
+  cuenta: ['read', 'write'],
+  categoria: ['read', 'write'],
+  asiento: ['read', 'write'],
+  banco: ['read', 'write'],
 })
 
 // Lo del editor más la gente y el libro mismo.

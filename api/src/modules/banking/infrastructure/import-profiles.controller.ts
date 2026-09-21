@@ -3,6 +3,7 @@ import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { ManageImportProfilesUseCase } from '../application/manage-import-profiles.use-case.js'
 import { toImportProfileResponse } from './banking.presenters.js'
 import { importProfileSchema, type ImportProfileInput } from './banking.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type ImportProfileResponse = ReturnType<typeof toImportProfileResponse>
 
@@ -20,6 +21,7 @@ export class ImportProfilesController {
     return toImportProfileResponse(await this.profiles.find(id))
   }
 
+  @Permiso('banco', 'write')
   @Post()
   async create(
     @Body(new ZodValidationPipe(importProfileSchema)) input: ImportProfileInput,
@@ -27,6 +29,7 @@ export class ImportProfilesController {
     return toImportProfileResponse(await this.profiles.create(input))
   }
 
+  @Permiso('banco', 'write')
   @Patch(':id')
   async update(
     @Param('id') id: string,

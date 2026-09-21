@@ -23,6 +23,7 @@ import { PeriodSnapshots } from './application/period-snapshots.js'
 import { ReopenPeriodUseCase } from './application/reopen-period.use-case.js'
 import { SaveAccountUseCase } from './application/save-account.use-case.js'
 import { SeedChartUseCase } from './application/seed-chart.use-case.js'
+import { SembrarAlCrearLibro } from './application/sembrar-al-crear-libro.listener.js'
 import { UpdateMovementUseCase } from './application/update-movement.use-case.js'
 import { VoidMovementUseCase } from './application/void-movement.use-case.js'
 import { ACCOUNT_REPOSITORY } from './domain/account-repository.port.js'
@@ -70,6 +71,7 @@ import { ReportsController } from './infrastructure/reports.controller.js'
     PeriodSnapshots,
     MovementPoster,
     SeedChartUseCase,
+    SembrarAlCrearLibro,
     ListAccountsUseCase,
     GetAccountUseCase,
     SaveAccountUseCase,

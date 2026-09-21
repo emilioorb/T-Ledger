@@ -20,6 +20,7 @@ import { ImportStatementUseCase } from '../application/import-statement.use-case
 import { toParsedLineResponse } from './banking.presenters.js'
 import { importStatementSchema, type ImportStatementInput } from './banking.schemas.js'
 import type { UploadedFile } from './uploaded-file.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 // Sin límite, multer acepta el archivo entero en memoria: un CSV de un giga tumba el
 // proceso antes de que ninguna validación llegue a mirarlo. Diez megas son ~150.000 líneas.
@@ -62,6 +63,7 @@ export class BankStatementsController {
     )
   }
 
+  @Permiso('banco', 'write')
   @Post('preview')
   @HttpCode(200)
   @UseInterceptors(FileInterceptor('file', CSV_UPLOAD))
@@ -73,6 +75,7 @@ export class BankStatementsController {
     return { lines: lines.map(toParsedLineResponse) }
   }
 
+  @Permiso('banco', 'write')
   @Post()
   @UseInterceptors(FileInterceptor('file', CSV_UPLOAD))
   async import(

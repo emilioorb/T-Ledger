@@ -4,6 +4,7 @@ import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testconta
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../generated/prisma/client.js'
 import { LIBRO_DE_PRUEBA } from '../shared/libro/libro-de-prueba.js'
+import { CHART_SEED } from '../modules/accounting/infrastructure/chart-seed.js'
 
 export interface RunningPostgres {
   url: string
@@ -30,6 +31,16 @@ export const startPostgres = async (): Promise<RunningPostgres> => {
   await prisma.book.create({
     data: { id: LIBRO_DE_PRUEBA.bookId, name: 'Pruebas', slug: 'pruebas', createdAt: new Date() },
   })
+
+  // Y nace con su plan de cuentas, como cualquier libro real: al crear uno de verdad lo
+  // siembra el evento `libro.creado`. Sin esto, todo caso de uso que valide contra una cuenta
+  // contable falla en los tests con un 422 que no tiene nada que ver con lo que se prueba.
+  // Se inserta por niveles porque la llave foránea del árbol exige que la madre exista antes.
+  const porNivel = [...CHART_SEED].sort((a, b) => a.code.localeCompare(b.code))
+  for (const cuenta of porNivel) {
+    await prisma.account.create({ data: { ...cuenta, bookId: LIBRO_DE_PRUEBA.bookId } })
+  }
+
   await prisma.$disconnect()
 
   return {

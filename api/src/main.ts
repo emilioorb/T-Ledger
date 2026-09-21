@@ -25,7 +25,10 @@ import { AllExceptionsFilter } from './shared/http/all-exceptions.filter.js'
 
 const bootstrap = async (): Promise<void> => {
   const env = loadEnv(process.env)
-  const app = await NestFactory.create(AppModule)
+  // `bodyParser: false` lo exige la integración de Better Auth, que necesita el cuerpo crudo
+  // para sus propias rutas y repone los parsers para todas las demás. Verificado: los pipes de
+  // Zod siguen viendo el cuerpo (ver ADR-001).
+  const app = await NestFactory.create(AppModule, { bodyParser: false })
   app.setGlobalPrefix('api/v1')
   app.enableCors({ origin: env.CORS_ORIGIN })
   app.useGlobalFilters(new AllExceptionsFilter())

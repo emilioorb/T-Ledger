@@ -30,6 +30,7 @@ import {
   type ScheduleResponse,
   type SimulateExtraPaymentInput,
 } from './schedule.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 const utc = (date: string): Date => new Date(`${date}T00:00:00.000Z`)
 
@@ -64,6 +65,7 @@ export class DebtsController {
     )
   }
 
+  @Permiso('deuda', 'write')
   @Post()
   async create(
     @Body(new ZodValidationPipe(createDebtSchema)) input: CreateDebtInput,
@@ -103,6 +105,7 @@ export class DebtsController {
   }
 
   // 200 y no 201: simular no crea nada.
+  @Permiso('deuda', 'write')
   @Post(':id/simulate')
   @HttpCode(200)
   async simulate(
@@ -112,6 +115,7 @@ export class DebtsController {
     return toProjectionResponse(await this.simulateExtraPayment.execute(id, input))
   }
 
+  @Permiso('deuda', 'write')
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -120,6 +124,7 @@ export class DebtsController {
     return toDebtResponse(await this.updateDebt.execute(id, input), new Date())
   }
 
+  @Permiso('deuda', 'write')
   @Delete(':id')
   @HttpCode(204)
   async remove(@Param('id') id: string): Promise<void> {

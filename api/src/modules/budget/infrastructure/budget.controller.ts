@@ -16,6 +16,7 @@ import {
   type EvaluationQuery,
   type MonthlyIncomeInput,
 } from './budget.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 const keyOf = (period: string): PeriodKey => {
   const key = PeriodKey.parse(period)
@@ -48,6 +49,7 @@ export class BudgetController {
 
   // PUT y no POST: el ingreso de un mes es uno solo, y declararlo dos veces lo corrige,
   // no lo duplica.
+  @Permiso('presupuesto', 'write')
   @Put('income/:period')
   async setIncome(
     @Param('period') period: string,

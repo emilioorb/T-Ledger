@@ -50,13 +50,15 @@ por endpoint.
 |---|---|
 | `api/src/modules/identity/` | Módulo nuevo. Todo lo de cuentas, libros y membresías. |
 | `api/src/modules/identity/infrastructure/auth.config.ts` | La instancia de Better Auth y los roles. |
-| `api/src/modules/identity/infrastructure/libro-context.ts` | El `AsyncLocalStorage` del libro activo. |
-| `api/src/modules/identity/infrastructure/libro.guard.ts` | Puebla el contexto desde la sesión. |
-| `api/src/modules/identity/infrastructure/rol.guard.ts` | La guardia de rol por endpoint. |
-| `api/src/modules/identity/infrastructure/libros.controller.ts` | Listar libros y cambiar el activo. |
+| `api/src/shared/libro/libro-context.ts` | El `AsyncLocalStorage` del libro activo. Vive en `shared` y no en `identity`: lo usan los quince repositorios, y al revés la dependencia iría hacia adentro de otro módulo. |
+| `api/src/modules/identity/identity.tokens.ts` | Los tokens, aparte para no cerrar un ciclo con el middleware. |
+| `api/src/modules/identity/infrastructure/libro.middleware.ts` | Abre el contexto. Middleware y no guard: un guard termina antes que el handler. |
+| `api/src/modules/identity/infrastructure/permiso.guard.ts` | El decorador `@Permiso` y la guardia que lo aplica. |
+| `api/src/modules/identity/infrastructure/permisos.ts` | `puede(rol, recurso, acción)`, sobre los mismos roles que usa Better Auth. |
+| `api/src/modules/accounting/application/sembrar-al-crear-libro.listener.ts` | Siembra el plan al nacer un libro. |
 | `api/src/shared/prisma/libro-filter.extension.ts` | La extensión que filtra por `bookId`. |
 | `api/src/shared/prisma/prisma.service.ts` | El getter `client` devuelve el cliente extendido. |
-| `api/prisma/schema.prisma` | Tablas de Better Auth, `Book`, y `bookId` en las 19. |
+| `api/prisma/schema.prisma` | Tablas de Better Auth en camelCase, `book`, y `bookId` en 18 modelos. |
 | `web/src/features/identity/` | Login, selector de libro, cliente de auth tipado a mano. |
 
 ---
@@ -834,6 +836,41 @@ cd api && npm test
 git add api/src
 git commit -m "✅ test: los 59 specs corren dentro de un libro"
 ```
+
+---
+
+### Tareas 4, 5, 6 y 7 — ✅ HECHAS el 21/09/2026
+
+Cinco cosas salieron al ejecutarlas y ninguna estaba en el plan:
+
+**1. Middleware, no guard.** Un guard de Nest devuelve `true` y termina, así que el contexto
+que abriera muere ahí y el handler corre afuera. Con `AsyncLocalStorage` el contexto se abre
+en un middleware, que llama a `next()` **adentro** del `run`.
+
+**2. El middleware le pide la sesión a Better Auth, no la lee de la petición.** En Nest el
+orden es middleware → guards → handler, y quien deja la sesión en la petición es el guard de
+Better Auth: para cuando corre, el middleware ya pasó. Preguntándole directamente con
+`auth.api.getSession()`, el orden deja de importar.
+
+**3. Los `modelName` de Better Auth van en camelCase.** Su adaptador lee el modelo de datos de
+Prisma y convierte `AuthUser` en `authUser` —la propiedad del cliente— antes de comparar. Con
+PascalCase arranca diciendo que faltan tablas que sí existen y toda operación de sesión
+responde 500. Por eso sus modelos quedan en camelCase mientras los del dominio siguen en
+PascalCase: la inconsistencia se ve a propósito.
+
+**4. Los tokens van en su propio archivo.** El módulo importa el middleware y el middleware
+necesita el token de la instancia de auth. En ESM ese ciclo no falla al compilar sino al
+arrancar, con un «Cannot access before initialization» que no dice de dónde viene.
+
+**5. El plan de cuentas ya no se siembra al arrancar.** Un plan pertenece a un libro y en el
+arranque no hay ninguno: ahora lo siembra el evento `libro.creado`, y contabilidad se suscribe
+en vez de que identidad la importe. Efecto que no anticipé: el libro de los tests dejó de
+tener cuentas y 74 tests empezaron a dar 422 de validación, no 403 de permiso. El síntoma
+apuntaba al lugar equivocado. `startPostgres` ahora siembra el libro de prueba igual que nace
+uno real.
+
+Verificado contra el servidor, con dos usuarios en el mismo libro: sin sesión 401, libro ajeno
+403, mirón leyendo 200, mirón escribiendo 403, dueño escribiendo 201.
 
 ---
 

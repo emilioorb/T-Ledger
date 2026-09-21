@@ -10,6 +10,7 @@ import {
   type CreateGoalInput,
   type UpdateGoalInput,
 } from './goals.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type GoalResponse = ReturnType<typeof toGoalResponse>
 
@@ -28,6 +29,7 @@ export class GoalsController {
     return toGoalResponse(await this.goals.find(id), new Date())
   }
 
+  @Permiso('meta', 'write')
   @Post()
   async create(
     @Body(new ZodValidationPipe(createGoalSchema)) input: CreateGoalInput,
@@ -35,6 +37,7 @@ export class GoalsController {
     return toGoalResponse(await this.goals.create(input), new Date())
   }
 
+  @Permiso('meta', 'write')
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -43,6 +46,7 @@ export class GoalsController {
     return toGoalResponse(await this.goals.update(id, input), new Date())
   }
 
+  @Permiso('meta', 'write')
   @Post(':id/contributions')
   @HttpCode(201)
   async contribute(
@@ -52,6 +56,7 @@ export class GoalsController {
     return toGoalResponse(await this.goals.contribute(id, input), new Date())
   }
 
+  @Permiso('meta', 'write')
   @Delete(':id')
   @HttpCode(204)
   async delete(@Param('id') id: string): Promise<void> {

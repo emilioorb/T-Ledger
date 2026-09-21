@@ -17,6 +17,7 @@ import {
   type ListAccountsQuery,
   type UpdateAccountInput,
 } from './accounting.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type AccountResponse = ReturnType<typeof toAccountResponse>
 
@@ -53,6 +54,7 @@ export class AccountsController {
     return toAccountResponse(await this.getAccount.execute(code))
   }
 
+  @Permiso('cuenta', 'write')
   @Post()
   async create(
     @Body(new ZodValidationPipe(createAccountSchema)) input: CreateAccountInput,
@@ -60,6 +62,7 @@ export class AccountsController {
     return toAccountResponse(await this.saveAccount.create(input))
   }
 
+  @Permiso('cuenta', 'write')
   @Patch(':code')
   async update(
     @Param('code') code: string,

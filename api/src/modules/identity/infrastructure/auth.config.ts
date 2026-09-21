@@ -14,7 +14,11 @@ import { ac, roles } from './roles.js'
 // las tablas de Better Auth tienen su propio modelo de pertenencia y no deben pasar por el
 // filtro de libro que viene en la tarea 5. Pasarle el cliente sin extender es la forma de que
 // nunca queden atrapadas en él por accidente.
-export const crearAuth = (prisma: PrismaClient, env: Env) =>
+export const crearAuth = (
+  prisma: PrismaClient,
+  env: Env,
+  alCrearLibro: (bookId: string) => Promise<void>,
+) =>
   betterAuth({
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
     secret: env.AUTH_SECRET,
@@ -26,6 +30,11 @@ export const crearAuth = (prisma: PrismaClient, env: Env) =>
       // toque es cambiar este booleano y prender lo que Better Auth ya trae (ADR-001).
       disableSignUp: true,
     },
+    // Los nombres van en camelCase y no en PascalCase porque Better Auth no compara contra el
+    // nombre del modelo de Prisma sino contra **la propiedad del cliente**: su adaptador lee el
+    // modelo de datos y convierte `AuthUser` en `authUser` antes de comparar. Con PascalCase la
+    // comparación no coincide nunca y arranca diciendo que faltan tablas que sí existen.
+    //
     // Todos los modelos van renombrados, no solo el que choca. El que choca es `Account`: en
     // este proyecto es la **cuenta contable** del plan de cuentas, con `code`, `accountClass`
     // y `parentCode`, y Better Auth la quiere para guardar credenciales. Sin esto, su CLI
@@ -34,19 +43,27 @@ export const crearAuth = (prisma: PrismaClient, env: Env) =>
     // Los otros cuatro no chocan hoy pero podrían mañana, y renombrarlos todos tiene un
     // segundo beneficio: en `schema.prisma` se ve de un vistazo qué es de Better Auth y qué
     // es del dominio.
-    user: { modelName: 'AuthUser' },
-    session: { modelName: 'AuthSession' },
-    account: { modelName: 'AuthAccount' },
-    verification: { modelName: 'AuthVerification' },
+    user: { modelName: 'authUser' },
+    session: { modelName: 'authSession' },
+    account: { modelName: 'authAccount' },
+    verification: { modelName: 'authVerification' },
     plugins: [
       organization({
         ac,
         roles,
         // Su `organization` es nuestro libro, así que se llama como lo que es.
         schema: {
-          organization: { modelName: 'Book' },
-          member: { modelName: 'BookMember' },
-          invitation: { modelName: 'BookInvitation' },
+          organization: { modelName: 'book' },
+          member: { modelName: 'bookMember' },
+          invitation: { modelName: 'bookInvitation' },
+        },
+        organizationHooks: {
+          // Un libro sin plan de cuentas no sirve para nada: no se puede anotar un solo
+          // movimiento. Sembrarlo acá es lo que hace que crear un libro entregue algo usable
+          // en vez de una base vacía que el usuario tiene que llenar sin saber cómo.
+          afterCreateOrganization: async ({ organization }) => {
+            await alCrearLibro(organization.id)
+          },
         },
       }),
     ],

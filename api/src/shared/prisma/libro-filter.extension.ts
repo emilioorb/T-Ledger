@@ -9,13 +9,13 @@ import { libroActual } from '../libro/libro-context.js'
 // decisión que hay que poder defender, no un atajo para que pase un test.
 export const SIN_LIBRO = new Set([
   'ExchangeRate',
-  'AuthUser',
-  'AuthSession',
-  'AuthAccount',
-  'AuthVerification',
-  'Book',
-  'BookMember',
-  'BookInvitation',
+  'authUser',
+  'authSession',
+  'authAccount',
+  'authVerification',
+  'book',
+  'bookMember',
+  'bookInvitation',
 ])
 
 const ESCRIBEN = new Set(['create', 'createMany', 'createManyAndReturn', 'upsert'])

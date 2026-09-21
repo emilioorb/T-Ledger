@@ -40,7 +40,7 @@ model Debt {
   budgetBucket   String?
   createdAt      DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
-  book           Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book           book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId, direction])
   @@map("debts")
@@ -109,7 +109,7 @@ model Account {
   parent   Account?      @relation("AccountTree", fields: [bookId, parentCode], references: [bookId, code])
   children Account[]     @relation("AccountTree")
   lines    JournalLine[]
-  book     Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book     book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@id([bookId, code])
   @@index([bookId, parentCode])
@@ -128,7 +128,7 @@ model JournalEntry {
   createdAt        DateTime @default(now()) @db.Timestamptz(3)
 
   lines JournalLine[]
-  book  Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book  book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId, date])
   @@index([bookId, sourceMovementId])
@@ -148,7 +148,7 @@ model JournalLine {
   // Compuesta porque la cuenta ahora se identifica por libro y código: sin el `bookId` acá,
   // una línea podría apuntar a la cuenta 1101 de otro libro.
   account Account      @relation(fields: [bookId, accountCode], references: [bookId, code])
-  book    Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book    book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId, accountCode, currency])
   @@index([entryId])
@@ -164,7 +164,7 @@ model Category {
   sortOrder   Int          @default(0)
   active      Boolean      @default(true)
 
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   // El libro entra en la unicidad: sin él, dos familias no podrían tener las dos una
   // categoría «Comida».
@@ -185,7 +185,7 @@ model Movement {
   receiptUrl         String?
   status             MovementStatus @default(ACTIVE)
   createdAt          DateTime       @default(now()) @db.Timestamptz(3)
-  book               Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book               book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId, date])
   @@index([bookId, categoryId])
@@ -200,7 +200,7 @@ model AccountingPeriod {
   status   PeriodStatus @default(OPEN)
   closedAt DateTime?    @db.Timestamptz(3)
 
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@id([bookId, period])
   @@map("accounting_periods")
@@ -213,7 +213,7 @@ model BudgetModel {
   active    Boolean        @default(false)
   createdAt DateTime       @default(now()) @db.Timestamptz(3)
   buckets   BudgetBucket[]
-  book      Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book      book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId])
   @@map("budget_models")
@@ -231,7 +231,7 @@ model BudgetBucket {
   accountCodes String[]
 
   model BudgetModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  book  Book        @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book  book        @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@unique([modelId, bucketKey])
   @@index([bookId])
@@ -244,7 +244,7 @@ model BudgetIncome {
   amountMinor BigInt
   currency    String @db.Char(3)
 
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@id([bookId, period])
   @@map("budget_income")
@@ -262,7 +262,7 @@ model Goal {
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
 
   contributions GoalContribution[]
-  book          Book               @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book          book               @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId, priority])
   @@map("goals")
@@ -277,7 +277,7 @@ model GoalContribution {
   currency    String   @db.Char(3)
 
   goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId, goalId])
   @@map("goal_contributions")
@@ -303,7 +303,7 @@ model Investment {
   createdAt      DateTime       @default(now()) @db.Timestamptz(3)
 
   contributions InvestmentContribution[]
-  book          Book                     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book          book                     @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId, maturesAt])
   @@map("investments")
@@ -318,7 +318,7 @@ model InvestmentContribution {
   currency     String   @db.Char(3)
 
   investment Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
-  book       Book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book       book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId, investmentId])
   @@map("investment_contributions")
@@ -349,7 +349,7 @@ model ImportProfile {
   createdAt          DateTime @default(now()) @db.Timestamptz(3)
 
   accounts BankAccount[]
-  book     Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book     book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId])
   @@map("import_profiles")
@@ -368,7 +368,7 @@ model BankAccount {
   profile    ImportProfile?  @relation(fields: [profileId], references: [id])
   statements BankStatement[]
   lines      BankLine[]
-  book       Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book       book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId])
   @@map("bank_accounts")
@@ -385,7 +385,7 @@ model BankStatement {
 
   bankAccount BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
   lines       BankLine[]
-  book        Book        @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book        book        @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@index([bookId, bankAccountId])
   @@map("bank_statements")
@@ -407,7 +407,7 @@ model BankLine {
 
   statement   BankStatement @relation(fields: [statementId], references: [id], onDelete: Cascade)
   bankAccount BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
-  book        Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book        book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@unique([bankAccountId, hash])
   @@index([bookId, bankAccountId, status])
@@ -415,7 +415,7 @@ model BankLine {
   @@map("bank_lines")
 }
 
-model AuthUser {
+model authUser {
   id              String           @id
   name            String
   email           String
@@ -423,16 +423,16 @@ model AuthUser {
   image           String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  authsessions    AuthSession[]
-  authaccounts    AuthAccount[]
-  bookmembers     BookMember[]
-  bookinvitations BookInvitation[]
+  authsessions    authSession[]
+  authaccounts    authAccount[]
+  bookmembers     bookMember[]
+  bookinvitations bookInvitation[]
 
   @@unique([email])
-  @@map("AuthUser")
+  @@map("authUser")
 }
 
-model AuthSession {
+model authSession {
   id                   String   @id
   expiresAt            DateTime
   token                String
@@ -441,20 +441,20 @@ model AuthSession {
   ipAddress            String?
   userAgent            String?
   userId               String
-  authuser             AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authuser             authUser @relation(fields: [userId], references: [id], onDelete: Cascade)
   activeOrganizationId String?
 
   @@unique([token])
   @@index([userId])
-  @@map("AuthSession")
+  @@map("authSession")
 }
 
-model AuthAccount {
+model authAccount {
   id                    String    @id
   accountId             String
   providerId            String
   userId                String
-  authuser              AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authuser              authUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -466,10 +466,10 @@ model AuthAccount {
   updatedAt             DateTime  @updatedAt
 
   @@index([userId])
-  @@map("AuthAccount")
+  @@map("authAccount")
 }
 
-model AuthVerification {
+model authVerification {
   id         String   @id
   identifier String
   value      String
@@ -478,18 +478,18 @@ model AuthVerification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
-  @@map("AuthVerification")
+  @@map("authVerification")
 }
 
-model Book {
+model book {
   id                      String                   @id
   name                    String
   slug                    String
   logo                    String?
   createdAt               DateTime
   metadata                String?
-  bookmembers             BookMember[]
-  bookinvitations         BookInvitation[]
+  bookmembers             bookMember[]
+  bookinvitations         bookInvitation[]
   debts                   Debt[]
   accounts                Account[]
   journalEntries          JournalEntry[]
@@ -510,36 +510,36 @@ model Book {
   bankLines               BankLine[]
 
   @@unique([slug])
-  @@map("Book")
+  @@map("book")
 }
 
-model BookMember {
+model bookMember {
   id             String   @id
   organizationId String
-  book           Book     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  book           book     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   userId         String
-  authuser       AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authuser       authUser @relation(fields: [userId], references: [id], onDelete: Cascade)
   role           String   @default("member")
   createdAt      DateTime
 
   @@index([organizationId])
   @@index([userId])
-  @@map("BookMember")
+  @@map("bookMember")
 }
 
-model BookInvitation {
+model bookInvitation {
   id             String   @id
   organizationId String
-  book           Book     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  book           book     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   email          String
   role           String?
   status         String   @default("pending")
   expiresAt      DateTime
   createdAt      DateTime @default(now())
   inviterId      String
-  authuser       AuthUser @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  authuser       authUser @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([email])
-  @@map("BookInvitation")
+  @@map("bookInvitation")
 }

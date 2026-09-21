@@ -14,6 +14,7 @@ import {
   type ProjectionQuery,
   type UpdateInvestmentInput,
 } from './investments.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type InvestmentResponse = ReturnType<typeof toInvestmentResponse>
 
@@ -45,6 +46,7 @@ export class InvestmentsController {
     return toInvestmentResponse(await this.investments.find(id), utc(query.at))
   }
 
+  @Permiso('inversion', 'write')
   @Post()
   async create(
     @Body(new ZodValidationPipe(createInvestmentSchema)) input: CreateInvestmentInput,
@@ -52,6 +54,7 @@ export class InvestmentsController {
     return toInvestmentResponse(await this.investments.create(input), new Date())
   }
 
+  @Permiso('inversion', 'write')
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -60,6 +63,7 @@ export class InvestmentsController {
     return toInvestmentResponse(await this.investments.update(id, input), new Date())
   }
 
+  @Permiso('inversion', 'write')
   @Post(':id/contributions')
   @HttpCode(201)
   async contribute(
@@ -69,6 +73,7 @@ export class InvestmentsController {
     return toInvestmentResponse(await this.investments.contribute(id, input), new Date())
   }
 
+  @Permiso('inversion', 'write')
   @Delete(':id')
   @HttpCode(204)
   async delete(@Param('id') id: string): Promise<void> {

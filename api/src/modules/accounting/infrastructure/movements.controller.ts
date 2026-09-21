@@ -18,6 +18,7 @@ import {
   type ListMovementsQuery,
   type UpdateMovementInput,
 } from './accounting.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type MovementResponse = ReturnType<typeof toMovementResponse>
 
@@ -69,6 +70,7 @@ export class MovementsController {
     return present(await this.listMovements.byId(id))
   }
 
+  @Permiso('movimiento', 'create')
   @Post()
   async create(
     @Body(new ZodValidationPipe(createMovementSchema)) input: CreateMovementInput,
@@ -76,6 +78,7 @@ export class MovementsController {
     return present(await this.createMovement.execute(input))
   }
 
+  @Permiso('movimiento', 'update')
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -85,6 +88,7 @@ export class MovementsController {
   }
 
   // 200 y no 201: anular no crea un movimiento, marca el que ya existía.
+  @Permiso('movimiento', 'create')
   @Post(':id/void')
   @HttpCode(200)
   async void(@Param('id') id: string): Promise<MovementResponse> {

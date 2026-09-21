@@ -16,6 +16,7 @@ import {
   type MatchLineInput,
   type ReconciliationQuery,
 } from './banking.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 const utc = (date: string): Date => new Date(`${date}T00:00:00.000Z`)
 
@@ -65,6 +66,7 @@ export class ReconciliationController {
     }
   }
 
+  @Permiso('banco', 'write')
   @Post('bank-lines/:id/match')
   @HttpCode(200)
   async match(
@@ -74,18 +76,21 @@ export class ReconciliationController {
     await this.matchLine.match(id, input.movementId)
   }
 
+  @Permiso('banco', 'write')
   @Post('bank-lines/:id/unmatch')
   @HttpCode(200)
   async unmatch(@Param('id') id: string): Promise<void> {
     await this.matchLine.unmatch(id)
   }
 
+  @Permiso('banco', 'write')
   @Post('bank-lines/:id/ignore')
   @HttpCode(200)
   async ignore(@Param('id') id: string): Promise<void> {
     await this.matchLine.ignore(id)
   }
 
+  @Permiso('banco', 'write')
   @Post('bank-lines/:id/to-movement')
   async toMovement(
     @Param('id') id: string,

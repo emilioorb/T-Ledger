@@ -3,6 +3,7 @@ import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { ManageBudgetModelsUseCase } from '../application/manage-budget-models.use-case.js'
 import { toModelResponse } from './budget.presenters.js'
 import { budgetModelSchema, type BudgetModelInput } from './budget.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type ModelResponse = ReturnType<typeof toModelResponse>
 
@@ -27,6 +28,7 @@ export class BudgetModelsController {
     return toModelResponse(model, model.id === activeId, await this.models.mappingFor(id))
   }
 
+  @Permiso('presupuesto', 'write')
   @Post()
   async create(
     @Body(new ZodValidationPipe(budgetModelSchema)) input: BudgetModelInput,
@@ -35,6 +37,7 @@ export class BudgetModelsController {
     return toModelResponse(model, input.active, await this.models.mappingFor(model.id))
   }
 
+  @Permiso('presupuesto', 'write')
   @Patch(':id')
   async update(
     @Param('id') id: string,

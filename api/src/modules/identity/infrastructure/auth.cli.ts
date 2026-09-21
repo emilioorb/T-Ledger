@@ -17,4 +17,6 @@ const env = loadEnv(process.env)
 // mismo `PrismaPg` que usa `PrismaService`.
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: env.DATABASE_URL }) })
 
-export const auth = crearAuth(prisma, env)
+// El CLI solo deriva el esquema: nunca crea un libro, así que el hook de la semilla no tiene
+// nada que hacer acá.
+export const auth = crearAuth(prisma, env, async () => {})

@@ -1,18 +1,19 @@
-import { Inject, Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { isErr } from '../../../shared/kernel/result.js'
 import { ACCOUNT_REPOSITORY, type AccountRepository } from '../domain/account-repository.port.js'
 import { Account } from '../domain/account.js'
 import { CHART_SEED } from '../infrastructure/chart-seed.js'
 
 @Injectable()
-export class SeedChartUseCase implements OnApplicationBootstrap {
+export class SeedChartUseCase {
   private readonly logger = new Logger(SeedChartUseCase.name)
 
   constructor(@Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository) {}
 
-  async onApplicationBootstrap(): Promise<void> {
-    await this.execute()
-  }
+  // Antes esto corría solo al arrancar la aplicación. Con libros dejó de tener sentido: un
+  // plan de cuentas pertenece a un libro, y en el arranque no hay ninguno. Ahora lo llama la
+  // creación del libro, que es el momento en que la pregunta «¿de quién es este plan?» tiene
+  // respuesta.
 
   // Solo con la tabla vacía. Si Emilio borró una cuenta semilla es porque no la quiere,
   // y volver a meterla en el siguiente arranque sería el sistema discutiéndole.

@@ -3,6 +3,7 @@ import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { ManageBankAccountsUseCase } from '../application/manage-bank-accounts.use-case.js'
 import { toBankAccountResponse } from './banking.presenters.js'
 import { bankAccountSchema, type BankAccountInput } from './banking.schemas.js'
+import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type BankAccountResponse = ReturnType<typeof toBankAccountResponse>
 
@@ -20,6 +21,7 @@ export class BankAccountsController {
     return toBankAccountResponse(await this.accounts.find(id))
   }
 
+  @Permiso('banco', 'write')
   @Post()
   async create(
     @Body(new ZodValidationPipe(bankAccountSchema)) input: BankAccountInput,
@@ -27,6 +29,7 @@ export class BankAccountsController {
     return toBankAccountResponse(await this.accounts.create(input))
   }
 
+  @Permiso('banco', 'write')
   @Patch(':id')
   async update(
     @Param('id') id: string,

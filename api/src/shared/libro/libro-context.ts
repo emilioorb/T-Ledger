@@ -47,3 +47,11 @@ export const libroActual = (quien?: string): ContextoDeLibro => {
 // exactamente lo que hace `enterWith`, y por eso existe esta puerta aparte: para no tentarse
 // con usarla en el camino de una petición, donde dejaría contexto pegado entre peticiones.
 export const entrarEnLibro = (contexto: ContextoDeLibro): void => almacen.enterWith(contexto)
+
+// Para un middleware de Express, que no devuelve una promesa sino que llama a `next()`. El
+// contexto no dura lo que dura esta llamada: `AsyncLocalStorage` lo propaga por toda la cadena
+// asíncrona que `next()` dispara, que es justo lo que hace falta para que el handler y los
+// repositorios lo vean. Por eso acá no sirve `conLibro`, que espera un resultado.
+export const conLibroEnCadena = (contexto: ContextoDeLibro, seguir: () => void): void => {
+  almacen.run(contexto, seguir)
+}
