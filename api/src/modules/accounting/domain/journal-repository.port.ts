@@ -9,6 +9,15 @@ export interface AccountMovementTotals {
   readonly credits: bigint
 }
 
+// El mismo total, pero partido por día. Existe para poder valuar cada movimiento a la tasa
+// de cambio de su propio día, que es lo que separa el diferencial cambiario del resto.
+export interface DailyAccountTotals {
+  readonly accountCode: string
+  readonly date: Date
+  readonly debits: bigint
+  readonly credits: bigint
+}
+
 export interface JournalPage {
   readonly items: JournalEntry[]
   readonly totalItems: number
@@ -24,6 +33,7 @@ export interface JournalRepository {
   // doce meses sobre miles de asientos no puede traérselos todos para sumarlos en Node.
   totalsByAccount(currency: CurrencyCode, range: DateRange): Promise<AccountMovementTotals[]>
   totalsUpTo(currency: CurrencyCode, at: Date): Promise<AccountMovementTotals[]>
+  totalsByAccountPerDay(currency: CurrencyCode, at: Date): Promise<DailyAccountTotals[]>
   ledgerFor(accountCode: string, currency: CurrencyCode, range: DateRange): Promise<JournalEntry[]>
   monthsWithEntries(): Promise<PeriodKey[]>
   openingBalanceFor(

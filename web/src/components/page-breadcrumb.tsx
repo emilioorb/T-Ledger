@@ -27,6 +27,7 @@ const ACCOUNTING_LABELS: Record<string, string> = {
   categorias: accounting.nav.categories,
   mayor: accounting.nav.ledger,
   comprobacion: accounting.nav.trialBalance,
+  patrimonio: accounting.nav.netWorth,
   situacion: accounting.nav.financialPosition,
   resultados: accounting.nav.incomeStatement,
   cierre: accounting.nav.closing,

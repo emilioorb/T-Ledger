@@ -7,10 +7,13 @@ import { isErr } from '../../../shared/kernel/result.js'
 import { GetFinancialPositionUseCase } from '../application/get-financial-position.use-case.js'
 import { GetIncomeStatementUseCase } from '../application/get-income-statement.use-case.js'
 import { GetLedgerUseCase } from '../application/get-ledger.use-case.js'
+import { GetNetWorthUseCase } from '../application/get-net-worth.use-case.js'
 import { GetTrialBalanceUseCase } from '../application/get-trial-balance.use-case.js'
+import { FUNCTIONAL_CURRENCY } from './bccr-valuation-rate.adapter.js'
 import {
   toFinancialPositionResponse,
   toIncomeStatementResponse,
+  toNetWorthResponse,
   toLedgerResponse,
   toTrialBalanceResponse,
   trialBalanceToCsv,
@@ -19,10 +22,12 @@ import {
   financialPositionQuerySchema,
   incomeStatementQuerySchema,
   ledgerQuerySchema,
+  netWorthQuerySchema,
   trialBalanceQuerySchema,
   type FinancialPositionQuery,
   type IncomeStatementQuery,
   type LedgerQuery,
+  type NetWorthQuery,
   type TrialBalanceQuery,
 } from './accounting.schemas.js'
 
@@ -41,6 +46,7 @@ export class ReportsController {
     private readonly getTrialBalance: GetTrialBalanceUseCase,
     private readonly getFinancialPosition: GetFinancialPositionUseCase,
     private readonly getIncomeStatement: GetIncomeStatementUseCase,
+    private readonly getNetWorth: GetNetWorthUseCase,
   ) {}
 
   @Get('ledger')
@@ -83,6 +89,13 @@ export class ReportsController {
     return toFinancialPositionResponse(
       await this.getFinancialPosition.execute(utc(query.at), query.currency),
     )
+  }
+
+  @Get('net-worth')
+  async netWorth(
+    @Query(new ZodValidationPipe(netWorthQuerySchema)) query: NetWorthQuery,
+  ): Promise<ReturnType<typeof toNetWorthResponse>> {
+    return toNetWorthResponse(await this.getNetWorth.execute(utc(query.at), FUNCTIONAL_CURRENCY))
   }
 
   @Get('income-statement')

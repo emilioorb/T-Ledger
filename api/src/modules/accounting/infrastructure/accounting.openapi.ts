@@ -8,6 +8,7 @@ import {
   financialPositionQuerySchema,
   incomeStatementQuerySchema,
   ledgerQuerySchema,
+  netWorthQuerySchema,
   listAccountsQuerySchema,
   listJournalEntriesQuerySchema,
   listMovementsQuerySchema,
@@ -21,6 +22,7 @@ import {
   categoryResponseSchema,
   financialPositionResponseSchema,
   incomeStatementResponseSchema,
+  netWorthResponseSchema,
   journalEntryResponseSchema,
   ledgerResponseSchema,
   movementResponseSchema,
@@ -138,6 +140,13 @@ export const accountingOpenApiPaths: ZodOpenApiPathsObject = {
       summary: 'Estado de situación a una fecha, con el resultado del período en patrimonio',
       requestParams: { query: financialPositionQuerySchema },
       responses: { 200: { description: 'Estado de situación', ...json(financialPositionResponseSchema) } },
+    },
+  },
+  '/reports/net-worth': {
+    get: {
+      summary: 'Patrimonio consolidado a una fecha, con el efecto del tipo de cambio separado',
+      requestParams: { query: netWorthQuerySchema },
+      responses: { 200: { description: 'Patrimonio consolidado', ...json(netWorthResponseSchema) } },
     },
   },
   '/reports/income-statement': {

@@ -51,49 +51,52 @@ tener que cerrar el mes.
 
 ### Decisión 2: método de tasa de cierre, y una sola tasa
 
-Todos los saldos —activos, pasivos y patrimonio— se traducen a la tasa vigente en la fecha del
-reporte. Una sola tasa para todo.
+Lo que se tiene hoy se traduce a la tasa vigente en la fecha del reporte. Una sola tasa para
+todo lo que se valúa a hoy.
 
-Esto no es un atajo: es lo que hace que el reporte **cuadre por construcción**. Cada libro por
-moneda ya cumple `activo = pasivo + patrimonio`; si cada saldo de ese libro se multiplica por el
-mismo número, la identidad sobrevive. Sumar los dos libros traducidos da un estado que cuadra
-sin línea de ajuste ni plug.
-
-La tentación prudencial —activos a la compra y pasivos a la venta— rompe justamente eso y mete
-un descuadre que hay que explicar con una línea de relleno. Se descarta.
+La tentación prudencial —activos a la compra y pasivos a la venta— metería un descuadre entre
+dos cifras que no son comparables, y habría que explicarlo con una línea de relleno. Se
+descarta: una sola tasa deja el desglose por moneda sumando exactamente el total.
 
 **La tasa es la de compra (indicador 317).** La pregunta que el reporte responde es «si
 convirtiera todo hoy, cuántos colones tendría», y por los dólares te pagan la compra. Es además
 la valuación conservadora en una hoja donde los activos dominan.
 
-### Decisión 3: el diferencial es contra la valuación histórica
+### Decisión 3: el diferencial es contra lo que dicen los libros, valuado cuando ocurrió
 
 El diferencial cambiario del reporte es:
 
 ```
-diferencial = (activos − pasivos) a la tasa de cierre
-            − (activos − pasivos) valuando cada movimiento a la tasa de su propio día
+patrimonio    = lo que se tiene hoy, cada moneda a la tasa de hoy
+libros        = cada aporte y cada resultado, valuado a la tasa del día en que ocurrió
+diferencial   = patrimonio − libros
 ```
 
-El segundo término es el costo histórico traducido: cada movimiento diario de cada cuenta
-multiplicado por la tasa vigente **ese día**. La diferencia entre las dos valuaciones es, por
-definición, lo que cambió por el tipo de cambio y no por lo que ocurrió.
+Comparar contra el patrimonio traducido **a la tasa de hoy** no serviría: un aporte hecho en
+dólares subiría solo porque subió la tasa, y el efecto quedaría escondido dentro de la cifra
+contra la que se lo quiere medir. Por eso el término de comparación es histórico.
+
+**La cuenta puente queda fuera de la valuación.** Sus dos lados son la misma conversión contada
+en dos monedas, y son iguales a la tasa de esa conversión, no a la del BCCR de ese día ni a la
+de hoy. Valuar cada lado por separado inventaría una ganancia sobre una conversión ya cerrada
+—y, peor, dejaría los dólares comprados en cero en el desglose, porque el lado en dólares del
+puente los cancela—. Lo que quedó de la conversión ya está contado en la moneda que entró.
+
+Que el puente sea puente pasa a ser **dato de la cuenta** (`isCurrencyBridge`) y no una
+convención escrita en un comentario. Era lo único que el plan de la rebanada 3 daba por sabido
+sin que el sistema lo supiera.
 
 Dos propiedades que lo hacen verificable:
 
-- **El diferencial sobre el total de las cuentas es cero.** Cada asiento cuadra por moneda en su
-  propia fecha, así que la valuación histórica también cuadra. Por eso el diferencial no se mide
-  sobre todas las cuentas: se mide sobre la posición neta —activos menos pasivos— y su espejo
-  exacto está en patrimonio y resultado.
-- **Las cuentas en colones aportan cero**, porque su tasa es 1 todos los días. El diferencial es
-  íntegramente de la posición en dólares, y el reporte lo muestra desglosado por moneda para que
-  eso se vea y no haya que creerlo.
+- **La columna traducida suma el total.** El desglose por moneda no es decorativo: sus cifras
+  son las que producen el patrimonio, y se pueden sumar a ojo.
+- **Las cuentas en colones aportan cero** al diferencial, porque su tasa es 1 todos los días.
+  Lo que se ve es íntegramente de la posición en dólares.
 
-Esto además responde lo que el plan de la rebanada 3 dejó pendiente sobre la cuenta puente
-`1190`: traducida, no netea a cero, y ese residuo es exactamente el resultado cambiario
-**realizado** de las conversiones ya hechas. El de las demás cuentas en dólares es el **no
-realizado**. Los dos son diferencial cambiario, y el reporte no necesita distinguirlos para ser
-correcto.
+El desglose por moneda **no lleva su propio diferencial**: el patrimonio de los libros está en
+una sola moneda, así que repartir el efecto por moneda daría cifras que no suman el total.
+Separar lo realizado —haber convertido a una tasa peor que la de referencia— de lo no realizado
+—que la tasa se moviera después— es otro reporte, y está fuera de alcance.
 
 ## 4. Arquitectura
 
@@ -137,17 +140,20 @@ Un recurso nuevo, no un parámetro del estado de situación. Un endpoint que dev
 distinta según un query param es lo que la guía de diseño de interfaces llama bandera roja, y
 el estado de situación por moneda es un reporte distinto de este, no una variante.
 
+Y sin parámetro de moneda: consolidar es justamente no elegir una. La moneda de presentación
+es la funcional y viaja en la respuesta, para que el número no quede sin decir en qué está.
+
 ```
-GET /api/v1/reports/net-worth?at=2026-09-30&currency=CRC
+GET /api/v1/reports/net-worth?at=2026-09-30
 ```
 
 ```jsonc
 {
   "at": "2026-09-30",
   "currency": "CRC",
-  "rate": { "value": "443.27", "publishedAt": "2026-09-21" },
   "assets":      { "minorUnits": "...", "currency": "CRC" },
   "liabilities": { "minorUnits": "...", "currency": "CRC" },
+  // Lo que dicen los libros: cada aporte y cada resultado valuado al día en que ocurrió.
   "equity":      { "minorUnits": "...", "currency": "CRC" },
   "netWorth":    { "minorUnits": "...", "currency": "CRC" },
   "exchangeDifference": { "minorUnits": "...", "currency": "CRC" },
@@ -155,17 +161,18 @@ GET /api/v1/reports/net-worth?at=2026-09-30&currency=CRC
   "byCurrency": [
     {
       "currency": "CRC",
+      "rate": "1",
       "netWorthNative":     { "minorUnits": "...", "currency": "CRC" },
-      "netWorthTranslated": { "minorUnits": "...", "currency": "CRC" },
-      "exchangeDifference": { "minorUnits": "0",   "currency": "CRC" }
+      "netWorthTranslated": { "minorUnits": "...", "currency": "CRC" }
     },
     { "currency": "USD", "...": "..." }
   ]
 }
 ```
 
-`balances` verifica `netWorth === equity`, que es la identidad después de traducir. Si diera
-falso hay un error de implementación, y el reporte lo dice en vez de esconderlo.
+`balances` verifica que el libro de cada moneda cuadre por separado —tenencias más tránsito
+es patrimonio— en unidades enteras, antes de traducir nada. Es una comprobación exacta, sin
+redondeo de por medio: si da falso no es un céntimo perdido, es un asiento mal armado.
 
 **Sin tasa no hay reporte.** Si no existe ninguna publicación hasta la fecha pedida, responde
 422 con el mensaje que nombra la fecha. Valuar a una tasa inventada o a la de otro día sin
@@ -180,8 +187,9 @@ usada y su fecha de publicación: un número traducido sin su tasa no es verific
 
 Después, dos cosas y nada más:
 
-1. **De cuánto es el tipo de cambio.** El diferencial con su signo y una frase que lo explique
-   sin jerga: «de tu patrimonio, ₡X viene del tipo de cambio y no de lo que hiciste».
+1. **De cuánto es el tipo de cambio.** La cuenta escrita como suma: patrimonio = libros +
+   tipo de cambio, con el diferencial en su signo y la explicación sin jerga al alcance del
+   toque.
 2. **El desglose por moneda**: lo que hay en cada una en su propia moneda, y cuánto es eso
    traducido. Es la fila que hace verificable el total.
 
@@ -201,7 +209,7 @@ señaló.
 
 | Nivel | Qué verifica |
 |---|---|
-| Unitario del dominio | El constructor del reporte con totales y tasas armados a mano: identidad, diferencial de una posición en dólares, diferencial cero cuando solo hay colones, y el caso de la cuenta puente traducida. |
+| Unitario del dominio | El constructor del reporte con totales y tasas armados a mano: una conversión no crea ni destruye patrimonio; la misma conversión con la tasa caída da el diferencial esperado; los colones no aportan diferencial; sin tasa devuelve error con la fecha. |
 | Unitario del adaptador | La tasa vigente un domingo es la del viernes; sin publicación previa, null; CRC siempre 1. |
 | Integración del repositorio | `totalsByAccountPerDay` agrupa por cuenta y día y respeta la moneda, contra Postgres real en Testcontainers. |
 | Punta a punta | Un asiento de conversión CRC→USD a una tasa y el reporte a una fecha con otra tasa: el diferencial es el esperado y `balances` es verdadero. 422 sin tasa. |
@@ -214,7 +222,8 @@ Comandos: `npm test` en `api/`, `npm run typecheck && npm test && npm run build`
    y su fecha.
 2. Con solo colones, el diferencial es exactamente cero.
 3. Con una conversión CRC→USD registrada a 508 y el reporte a una fecha de tasa 443,27, el
-   diferencial es el esperado a la unidad mínima.
+   diferencial es −₡64 730 a la unidad mínima, y los dólares comprados aparecen en el desglose
+   como $1 000 y no como cero.
 4. `balances` es verdadero en todos los casos de prueba.
 5. Sin ninguna tasa publicada hasta la fecha, responde 422 nombrando la fecha.
 6. La pantalla muestra el patrimonio, la tasa usada, el diferencial y el desglose por moneda, y

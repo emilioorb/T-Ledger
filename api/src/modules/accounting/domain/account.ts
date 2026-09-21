@@ -8,6 +8,9 @@ export interface AccountProps {
   readonly parentCode: string | null
   readonly active: boolean
   readonly sortOrder: number
+  // El tránsito entre monedas no es una tenencia: ver el comentario del esquema. Es opcional
+  // porque casi ninguna cuenta lo es, y una cuenta nueva no debería tener que declararlo.
+  readonly isCurrencyBridge?: boolean
 }
 
 export class Account {
@@ -23,7 +26,13 @@ export class Account {
     if (props.parentCode !== null && props.parentCode === props.code) {
       return err(new RangeError('Una cuenta no puede ser su propia madre'))
     }
-    return ok(new Account({ ...props, name: props.name.trim() }))
+    return ok(
+      new Account({
+        ...props,
+        name: props.name.trim(),
+        isCurrencyBridge: props.isCurrencyBridge ?? false,
+      }),
+    )
   }
 
   get code(): string { return this.props.code }
@@ -32,6 +41,7 @@ export class Account {
   get parentCode(): string | null { return this.props.parentCode }
   get active(): boolean { return this.props.active }
   get sortOrder(): number { return this.props.sortOrder }
+  get isCurrencyBridge(): boolean { return this.props.isCurrencyBridge === true }
 
   isChildOf(code: string): boolean {
     return this.props.parentCode === code

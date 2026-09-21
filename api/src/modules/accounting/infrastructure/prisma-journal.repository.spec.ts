@@ -143,6 +143,36 @@ describe('PrismaJournalRepository', () => {
     expect(mayor.map((e) => e.id)).toEqual(['a1'])
   })
 
+  it('agrega por cuenta y por día, para poder valuar cada día a su propia tasa', async () => {
+    await repository.save(asientoDeGasto('a1', utc('2026-09-16'), 20_000_00n))
+    await repository.save(asientoDeGasto('a2', utc('2026-09-16'), 5_000_00n))
+    await repository.save(asientoDeGasto('a3', utc('2026-09-17'), 30_000_00n))
+    await repository.save(asientoEnDolares('a4', utc('2026-09-17'), 100_00n))
+
+    const porDia = await repository.totalsByAccountPerDay('CRC', utc('2026-09-30'))
+    const gastos = porDia
+      .filter((total) => total.accountCode === '6100')
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+
+    expect(gastos).toHaveLength(2)
+    expect(gastos[0]?.date.toISOString().slice(0, 10)).toBe('2026-09-16')
+    expect(gastos[0]?.debits).toBe(25_000_00n)
+    expect(gastos[1]?.date.toISOString().slice(0, 10)).toBe('2026-09-17')
+    expect(gastos[1]?.debits).toBe(30_000_00n)
+    // El asiento en dólares del 17 no entra en la agregación de colones.
+    expect(gastos.reduce((acc, total) => acc + total.debits, 0n)).toBe(55_000_00n)
+  })
+
+  it('la agregación diaria excluye lo posterior a la fecha de corte', async () => {
+    await repository.save(asientoDeGasto('a1', utc('2026-09-16'), 20_000_00n))
+    await repository.save(asientoDeGasto('a2', utc('2026-10-02'), 99_000_00n))
+
+    const porDia = await repository.totalsByAccountPerDay('CRC', utc('2026-09-30'))
+
+    expect(porDia.every((total) => total.date <= utc('2026-09-30'))).toBe(true)
+    expect(porDia.filter((total) => total.accountCode === '6100')).toHaveLength(1)
+  })
+
   it('guardar dos veces el mismo asiento no duplica sus líneas', async () => {
     await repository.save(asientoDeGasto('a1', utc('2026-09-16'), 20_000_00n))
     await repository.save(asientoDeGasto('a1', utc('2026-09-16'), 20_000_00n))

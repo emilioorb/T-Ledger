@@ -6,6 +6,7 @@ import type { PeriodKey } from '../domain/accounting-period.js'
 import type { JournalEntry } from '../domain/journal-entry.js'
 import type {
   AccountMovementTotals,
+  DailyAccountTotals,
   JournalPage,
   JournalRepository,
 } from '../domain/journal-repository.port.js'
@@ -120,6 +121,45 @@ export class PrismaJournalRepository implements JournalRepository {
       _sum: { amountMinor: true },
     })
     return foldTotals(rows)
+  }
+
+  // La fecha vive en el asiento y el monto en la línea, así que Prisma no puede agrupar por
+  // las dos con su groupBy. La agregación igual va en la base: traer una fila por línea para
+  // sumarlas en Node sería justamente lo que el resto del puerto evita.
+  async totalsByAccountPerDay(currency: CurrencyCode, at: Date): Promise<DailyAccountTotals[]> {
+    const rows = await this.prisma.$queryRaw<
+      { accountCode: string; date: Date; side: string; total: bigint }[]
+    >`
+      SELECT l."accountCode" AS "accountCode",
+             e."date"         AS "date",
+             l."side"::text   AS "side",
+             SUM(l."amountMinor")::bigint AS "total"
+        FROM journal_lines l
+        JOIN journal_entries e ON e."id" = l."entryId"
+       WHERE l."currency" = ${currency}
+         AND e."date" <= ${at}
+       GROUP BY l."accountCode", e."date", l."side"
+    `
+
+    const byKey = new Map<string, DailyAccountTotals>()
+
+    for (const row of rows) {
+      const key = `${row.accountCode}|${row.date.toISOString()}`
+      const current = byKey.get(key) ?? {
+        accountCode: row.accountCode,
+        date: row.date,
+        debits: 0n,
+        credits: 0n,
+      }
+      const amount = BigInt(row.total)
+      byKey.set(key, {
+        ...current,
+        debits: row.side === 'DEBIT' ? current.debits + amount : current.debits,
+        credits: row.side === 'CREDIT' ? current.credits + amount : current.credits,
+      })
+    }
+
+    return [...byKey.values()]
   }
 
   // El mayor sí trae asientos, pero acotado a una cuenta y una moneda: es lo que muestra.

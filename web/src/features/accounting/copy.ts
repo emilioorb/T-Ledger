@@ -10,6 +10,7 @@ export const copy = {
     ledger: 'Mayor',
     trialBalance: 'Comprobación',
     financialPosition: 'Situación',
+    netWorth: 'Patrimonio',
     incomeStatement: 'Resultados',
     closing: 'Cierre',
     reportsGroup: 'Reportes',
@@ -262,6 +263,39 @@ export const copy = {
     empty: {
       title: 'Ningún movimiento en este rango',
       description: 'Un período sin asientos cuadra en cero, que es lo correcto pero no dice mucho.',
+    },
+  },
+
+  // Es el único reporte que suma colones con dólares, y por eso es el único que tiene que
+  // decir a qué tasa lo hace. Sin esa línea el número no es verificable, es una creencia.
+  netWorth: {
+    title: 'Patrimonio',
+    description: 'Todo lo que tenés menos todo lo que debés, en una sola moneda.',
+    at: 'Al',
+    total: 'Patrimonio',
+    assets: 'Activo',
+    liabilities: 'Pasivo',
+    fromBooks: 'Según los libros',
+    exchangeHint:
+      'Es la diferencia entre valuar lo que tenés a la tasa de hoy y a la del día en que entró. No es algo que hiciste: es lo que se movió la tasa, y ningún asiento lo reconoce todavía.',
+    identity: 'Patrimonio = libros + tipo de cambio',
+    balanced: 'La cuenta cierra',
+    unbalanced: 'La cuenta no cierra',
+    byCurrency: 'Por moneda',
+    columns: { currency: 'Moneda', native: 'En su moneda', translated: 'Traducido', rate: 'Tasa' },
+    rateNote: (rate: string) => `Un dólar a ₡${rate}, tasa de compra del BCCR.`,
+    bridgeNote:
+      'Una conversión ya hecha se valúa a la tasa del día en que ocurrió: no genera ganancia hoy.',
+    goToPosition: 'Ver el detalle por cuenta',
+    noRate: {
+      title: 'Falta el tipo de cambio de esa fecha',
+      description:
+        'Sin tasa publicada no se pueden sumar colones con dólares. Sincronizá los tipos de cambio y volvé a pedirlo: inventar una tasa sería inventar el patrimonio.',
+      action: 'Ver los tipos de cambio',
+    },
+    empty: {
+      title: 'Todavía no hay nada que consolidar',
+      description: 'El patrimonio se arma con los asientos acumulados hasta la fecha elegida.',
     },
   },
 

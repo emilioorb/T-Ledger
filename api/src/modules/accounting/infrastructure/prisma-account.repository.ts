@@ -42,6 +42,7 @@ export class PrismaAccountRepository implements AccountRepository {
         parentCode: account.parentCode,
         active: account.active,
         sortOrder: account.sortOrder,
+        isCurrencyBridge: account.isCurrencyBridge,
       }
       await this.prisma.account.upsert({
         where: { code: account.code },

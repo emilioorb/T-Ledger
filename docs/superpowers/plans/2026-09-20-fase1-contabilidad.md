@@ -2661,6 +2661,12 @@ git commit -m "✨ feat: pantallas de contabilidad, reportes y cierre mensual"
 
 - Ninguna bloqueante. El plan de cuentas semilla es un punto de partida editable; si Emilio prefiere otro, se cambia el dato sin tocar código.
 
-- **Diferencial cambiario, pendiente de rebanada.** Todo el módulo trata cada moneda como un libro separado, y con eso alcanza para registrar, cuadrar y cerrar. Lo que no responde es cuánto vale el patrimonio en una sola moneda: para eso hay que valuar los saldos en moneda extranjera a un tipo de cambio, y la diferencia contra el tipo histórico es una ganancia o una pérdida cambiaria que hoy no tiene cuenta ni asiento.
+- **Diferencial cambiario, resuelto el 21/09/2026.** Se abordó como reporte derivado y no como
+  asiento: ver `specs/2026-09-21-diferencial-cambiario-design.md` y su plan. No hizo falta una
+  cuenta de resultados para el diferencial ni un proceso de revaluación; sí hizo falta que la
+  cuenta puente dejara de ser una convención escrita en un comentario y pasara a ser dato de la
+  cuenta (`isCurrencyBridge`), porque valuar sus dos lados por separado dejaba los dólares
+  comprados en cero.
 
-  Lo que haría falta el día que se aborde: una cuenta de resultados para el diferencial, un proceso de revaluación a una fecha, y un estado de situación que ofrezca moneda de presentación además de moneda de consulta. No bloquea nada de lo construido: la contabilidad por moneda cierra sola. Lo que no puede hacerse hasta entonces es sumar CRC y USD en un solo número, y ninguna pantalla lo intenta.
+  Lo que sigue sin poder hacerse, y a propósito: separar en el reporte el diferencial realizado
+  —haber convertido a una tasa peor que la de referencia— del no realizado.

@@ -119,6 +119,11 @@ export const financialPositionQuerySchema = z
   .object({ currency, at: isoDate })
   .meta({ id: 'FinancialPositionQuery', title: 'FinancialPositionQuery' })
 
+// Sin moneda: consolidar es justamente no elegir una.
+export const netWorthQuerySchema = z
+  .object({ at: isoDate })
+  .meta({ id: 'NetWorthQuery', title: 'NetWorthQuery' })
+
 export const periodParamSchema = z
   .object({ period: periodParam })
   .meta({ id: 'PeriodParam', title: 'PeriodParam' })
@@ -138,3 +143,4 @@ export type LedgerQuery = z.infer<typeof ledgerQuerySchema>
 export type TrialBalanceQuery = z.infer<typeof trialBalanceQuerySchema>
 export type IncomeStatementQuery = z.infer<typeof incomeStatementQuerySchema>
 export type FinancialPositionQuery = z.infer<typeof financialPositionQuerySchema>
+export type NetWorthQuery = z.infer<typeof netWorthQuerySchema>

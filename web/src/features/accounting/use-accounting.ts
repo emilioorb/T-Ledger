@@ -21,6 +21,7 @@ import type {
   MovementFilters,
   MovementInput,
   MovementPatch,
+  NetWorth,
   Paginated,
   PeriodSummary,
   ReportNode,
@@ -175,6 +176,13 @@ export const useFinancialPosition = (currency: CurrencyCode, at: string) =>
     queryKey: queryKeys.accounting.financialPosition(currency, at),
     queryFn: () =>
       apiFetch<FinancialPosition>(`/reports/financial-position?${query({ currency, at })}`),
+  })
+
+// El patrimonio consolidado no recibe moneda: consolidar es justamente no elegir una.
+export const useNetWorth = (at: string) =>
+  useQuery({
+    queryKey: queryKeys.accounting.netWorth(at),
+    queryFn: () => apiFetch<NetWorth>(`/reports/net-worth?${query({ at })}`),
   })
 
 export const useIncomeStatement = (currency: CurrencyCode, from: string, to: string) =>

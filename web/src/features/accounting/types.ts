@@ -18,6 +18,8 @@ export type TrialBalance = components['schemas']['TrialBalance']
 export type GeneralLedger = components['schemas']['GeneralLedger']
 export type FinancialPosition = components['schemas']['FinancialPosition']
 export type IncomeStatement = components['schemas']['IncomeStatement']
+export type NetWorth = components['schemas']['NetWorth']
+export type CurrencyBreakdown = NetWorth['byCurrency'][number]
 export type PeriodSummary = components['schemas']['PeriodSummary']
 export type AccountingPeriod = components['schemas']['AccountingPeriod']
 

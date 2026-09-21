@@ -23,6 +23,7 @@ export const queryKeys = {
       ['accounting', 'ledger', account, currency, from, to] as const,
     trialBalance: (currency: string, from: string, to: string) =>
       ['accounting', 'trial-balance', currency, from, to] as const,
+    netWorth: (at: string) => ['accounting', 'net-worth', at] as const,
     financialPosition: (currency: string, at: string) =>
       ['accounting', 'financial-position', currency, at] as const,
     incomeStatement: (currency: string, from: string, to: string) =>

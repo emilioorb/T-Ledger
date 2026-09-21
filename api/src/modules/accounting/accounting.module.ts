@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { PrismaModule } from '../../shared/prisma/prisma.module.js'
+import { ExchangeRateStoreModule } from '../money/exchange-rate-store.module.js'
 import { ClosePeriodUseCase } from './application/close-period.use-case.js'
 import { CreateJournalEntryUseCase } from './application/create-journal-entry.use-case.js'
 import { CreateMovementUseCase } from './application/create-movement.use-case.js'
@@ -8,6 +9,7 @@ import { GetAccountsTreeUseCase } from './application/get-accounts-tree.use-case
 import { GetFinancialPositionUseCase } from './application/get-financial-position.use-case.js'
 import { GetIncomeStatementUseCase } from './application/get-income-statement.use-case.js'
 import { GetLedgerUseCase } from './application/get-ledger.use-case.js'
+import { GetNetWorthUseCase } from './application/get-net-worth.use-case.js'
 import { GetTrialBalanceUseCase } from './application/get-trial-balance.use-case.js'
 import { ListAccountsUseCase } from './application/list-accounts.use-case.js'
 import { ListJournalEntriesUseCase } from './application/list-journal-entries.use-case.js'
@@ -27,7 +29,9 @@ import { CATEGORY_REPOSITORY } from './domain/category-repository.port.js'
 import { JOURNAL_REPOSITORY } from './domain/journal-repository.port.js'
 import { MOVEMENT_REPOSITORY } from './domain/movement-repository.port.js'
 import { PERIOD_REPOSITORY } from './domain/period-repository.port.js'
+import { VALUATION_RATE_SOURCE } from './domain/valuation-rate.port.js'
 import { AccountsController } from './infrastructure/accounts.controller.js'
+import { BccrValuationRateAdapter } from './infrastructure/bccr-valuation-rate.adapter.js'
 import { CategoriesController } from './infrastructure/categories.controller.js'
 import { JournalEntriesController } from './infrastructure/journal-entries.controller.js'
 import { MovementsController } from './infrastructure/movements.controller.js'
@@ -40,7 +44,9 @@ import { PrismaPeriodRepository } from './infrastructure/prisma-period.repositor
 import { ReportsController } from './infrastructure/reports.controller.js'
 
 @Module({
-  imports: [PrismaModule],
+  // El patrimonio consolidado necesita tipos de cambio. Entra por el puerto de valuación,
+  // no por el repositorio: contabilidad no sabe qué es un indicador del BCCR.
+  imports: [PrismaModule, ExchangeRateStoreModule],
   controllers: [
     AccountsController,
     CategoriesController,
@@ -77,6 +83,8 @@ import { ReportsController } from './infrastructure/reports.controller.js'
     GetLedgerUseCase,
     GetFinancialPositionUseCase,
     GetIncomeStatementUseCase,
+    GetNetWorthUseCase,
+    { provide: VALUATION_RATE_SOURCE, useClass: BccrValuationRateAdapter },
     ClosePeriodUseCase,
     ListPeriodsUseCase,
     ReopenPeriodUseCase,

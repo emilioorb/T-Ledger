@@ -12,7 +12,7 @@ export const CHART_SEED: readonly AccountProps[] = [
   { code: '1112', name: 'Banco dólares', accountClass: 'ASSET', parentCode: '1100', active: true, sortOrder: 40 },
   // Su saldo en cada moneda queda distinto de cero solo mientras una conversión esté a
   // medio registrar. Si un día no está en cero, hay un asiento incompleto.
-  { code: '1190', name: 'Traslados entre monedas', accountClass: 'ASSET', parentCode: '1100', active: true, sortOrder: 90 },
+  { code: '1190', name: 'Traslados entre monedas', accountClass: 'ASSET', parentCode: '1100', active: true, isCurrencyBridge: true, sortOrder: 90 },
   { code: '1200', name: 'Cuentas por cobrar', accountClass: 'ASSET', parentCode: '1000', active: true, sortOrder: 20 },
   { code: '2000', name: 'Pasivos', accountClass: 'LIABILITY', parentCode: null, active: true, sortOrder: 20 },
   { code: '2100', name: 'Cuentas por pagar', accountClass: 'LIABILITY', parentCode: '2000', active: true, sortOrder: 10 },

@@ -55,6 +55,7 @@ const journalStub = ({
   findById: vi.fn(),
   findByMovementId: vi.fn(),
   findInRange: vi.fn().mockResolvedValue({ items: [], totalItems: entryCount }),
+  totalsByAccountPerDay: vi.fn().mockResolvedValue([]),
   totalsByAccount: vi
     .fn()
     .mockResolvedValue(

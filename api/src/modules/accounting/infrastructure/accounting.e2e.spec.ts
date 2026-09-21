@@ -78,7 +78,37 @@ beforeEach(async () => {
   await prisma.movement.deleteMany()
   await prisma.category.deleteMany()
   await prisma.accountingPeriod.deleteMany()
+  await prisma.exchangeRate.deleteMany()
 })
+
+// La tasa se publica un día y rige hasta la siguiente publicación.
+const publicarTasa = (publishedAt: string, value: string) =>
+  prisma.exchangeRate.create({
+    data: { indicator: '317', value, publishedAt: new Date(`${publishedAt}T00:00:00.000Z`) },
+  })
+
+// Un aporte en colones y su conversión completa a dólares el mismo día.
+const aportarYConvertir = async () => {
+  await post('/journal-entries', {
+    date: '2026-09-16',
+    description: 'Aporte inicial',
+    lines: [
+      { accountCode: '1101', amount: { minorUnits: '50800000', currency: 'CRC' }, side: 'DEBIT' },
+      { accountCode: '3110', amount: { minorUnits: '50800000', currency: 'CRC' }, side: 'CREDIT' },
+    ],
+  }).expect(201)
+
+  await post('/journal-entries', {
+    date: '2026-09-16',
+    description: 'Compra de dólares',
+    lines: [
+      { accountCode: '1190', amount: { minorUnits: '50800000', currency: 'CRC' }, side: 'DEBIT' },
+      { accountCode: '1101', amount: { minorUnits: '50800000', currency: 'CRC' }, side: 'CREDIT' },
+      { accountCode: '1102', amount: { minorUnits: '100000', currency: 'USD' }, side: 'DEBIT' },
+      { accountCode: '1190', amount: { minorUnits: '100000', currency: 'USD' }, side: 'CREDIT' },
+    ],
+  }).expect(201)
+}
 
 describe('flujo completo de contabilidad', () => {
   it('siembra el plan de cuentas al arrancar', async () => {
@@ -251,6 +281,47 @@ describe('flujo completo de contabilidad', () => {
     })
 
     expect(response.status).toBe(201)
+  })
+
+  it('el patrimonio consolidado separa lo que hizo el tipo de cambio', async () => {
+    await publicarTasa('2026-09-16', '508')
+    await publicarTasa('2026-09-21', '443.27')
+    await aportarYConvertir()
+
+    const patrimonio = await get('/reports/net-worth?at=2026-09-30').expect(200)
+
+    // ₡508 000 convertidos a $1 000 valen hoy ₡443 270, y los ₡64 730 que faltan son
+    // exactamente lo que se movió la tasa, no algo que Emilio hizo.
+    expect(patrimonio.body.netWorth.minorUnits).toBe('44327000')
+    expect(patrimonio.body.equity.minorUnits).toBe('50800000')
+    expect(patrimonio.body.exchangeDifference.minorUnits).toBe('-6473000')
+    expect(patrimonio.body.balances).toBe(true)
+    expect(patrimonio.body.currency).toBe('CRC')
+    expect(patrimonio.body.rate).toBeUndefined()
+
+    const dolares = patrimonio.body.byCurrency.find(
+      (row: { currency: string }) => row.currency === 'USD',
+    )
+    expect(dolares.rate).toBe('443.27')
+    // El desglose muestra los dólares que se tienen, no el cero que deja el puente.
+    expect(dolares.netWorthNative.minorUnits).toBe('100000')
+    expect(dolares.netWorthTranslated.minorUnits).toBe('44327000')
+  })
+
+  it('sin movimientos el patrimonio es cero y no pide tipo de cambio', async () => {
+    const patrimonio = await get('/reports/net-worth?at=2026-09-30').expect(200)
+
+    expect(patrimonio.body.netWorth.minorUnits).toBe('0')
+    expect(patrimonio.body.balances).toBe(true)
+  })
+
+  it('sin tipo de cambio publicado el patrimonio no se inventa: responde 422', async () => {
+    await aportarYConvertir()
+
+    const response = await get('/reports/net-worth?at=2026-09-30')
+
+    expect(response.status).toBe(422)
+    expect(response.body.error.message).toContain('2026-09-30')
   })
 
   it('no existe forma de borrar un asiento', async () => {

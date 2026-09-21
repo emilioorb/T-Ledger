@@ -9,6 +9,7 @@ import type { CloseBlocker, PeriodSnapshot } from '../domain/period-closing.js'
 import type { FinancialPosition } from '../domain/reports/financial-position.js'
 import type { GeneralLedger } from '../domain/reports/general-ledger.js'
 import type { IncomeStatement } from '../domain/reports/income-statement.js'
+import type { NetWorth } from '../domain/reports/net-worth.js'
 import type { ReportNode } from '../domain/reports/roll-up.js'
 import type { TrialBalance } from '../domain/reports/trial-balance.js'
 import type {
@@ -17,6 +18,7 @@ import type {
   financialPositionResponseSchema,
   incomeStatementResponseSchema,
   journalEntryResponseSchema,
+  netWorthResponseSchema,
   ledgerResponseSchema,
   movementResponseSchema,
   periodResponseSchema,
@@ -33,6 +35,7 @@ type TrialBalance_ = z.infer<typeof trialBalanceResponseSchema>
 type Ledger_ = z.infer<typeof ledgerResponseSchema>
 type Position_ = z.infer<typeof financialPositionResponseSchema>
 type IncomeStatement_ = z.infer<typeof incomeStatementResponseSchema>
+type NetWorth_ = z.infer<typeof netWorthResponseSchema>
 type Period_ = z.infer<typeof periodResponseSchema>
 type PeriodSummary_ = z.infer<typeof periodSummaryResponseSchema>
 
@@ -136,6 +139,23 @@ export const toFinancialPositionResponse = (position: FinancialPosition): Positi
     liabilities: position.sections.liabilities.map(toReportNodeResponse),
     equity: position.sections.equity.map(toReportNodeResponse),
   },
+})
+
+export const toNetWorthResponse = (report: NetWorth): NetWorth_ => ({
+  at: report.at.toISOString().slice(0, 10),
+  currency: report.currency,
+  assets: fromMoney(report.assets),
+  liabilities: fromMoney(report.liabilities),
+  equity: fromMoney(report.equity),
+  netWorth: fromMoney(report.netWorth),
+  exchangeDifference: fromMoney(report.exchangeDifference),
+  balances: report.balances,
+  byCurrency: report.byCurrency.map((row) => ({
+    currency: row.currency,
+    rate: row.rate,
+    netWorthNative: fromMoney(row.netWorthNative),
+    netWorthTranslated: fromMoney(row.netWorthTranslated),
+  })),
 })
 
 export const toIncomeStatementResponse = (statement: IncomeStatement): IncomeStatement_ => ({

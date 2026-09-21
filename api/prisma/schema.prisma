@@ -92,6 +92,10 @@ model Account {
   parentCode   String?
   active       Boolean      @default(true)
   sortOrder    Int          @default(0)
+  // Una cuenta puente no guarda plata: registra el tránsito de una moneda a otra. Sus dos
+  // lados son el mismo hecho contado en dos monedas, y por eso se valúan a la tasa del día
+  // en que ocurrió y no a la de hoy.
+  isCurrencyBridge Boolean  @default(false)
   createdAt    DateTime     @default(now()) @db.Timestamptz(3)
 
   parent   Account?      @relation("AccountTree", fields: [parentCode], references: [code])

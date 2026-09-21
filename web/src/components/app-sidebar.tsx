@@ -64,6 +64,7 @@ const navAccounting: NavItem[] = [
     to: '/contabilidad/comprobacion',
     icon: Scale,
     items: [
+      { title: accounting.nav.netWorth, to: '/contabilidad/patrimonio' },
       { title: accounting.nav.trialBalance, to: '/contabilidad/comprobacion' },
       { title: accounting.nav.ledger, to: '/contabilidad/mayor' },
       { title: accounting.nav.financialPosition, to: '/contabilidad/situacion' },

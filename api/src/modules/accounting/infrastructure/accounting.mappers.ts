@@ -16,6 +16,7 @@ export interface AccountRow {
   parentCode: string | null
   active: boolean
   sortOrder: number
+  isCurrencyBridge: boolean
 }
 
 export const accountToDomain = (row: AccountRow): Account =>
@@ -27,6 +28,7 @@ export const accountToDomain = (row: AccountRow): Account =>
       parentCode: row.parentCode,
       active: row.active,
       sortOrder: row.sortOrder,
+      isCurrencyBridge: row.isCurrencyBridge,
     }),
   )
 

@@ -1009,6 +1009,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/net-worth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Patrimonio consolidado a una fecha, con el efecto del tipo de cambio separado */
+        get: {
+            parameters: {
+                query: {
+                    at: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Patrimonio consolidado */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["NetWorth"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports/income-statement": {
         parameters: {
             query?: never;
@@ -2831,6 +2869,23 @@ export interface components {
                 liabilities: components["schemas"]["ReportNode"][];
                 equity: components["schemas"]["ReportNode"][];
             };
+        };
+        /** NetWorth */
+        NetWorth: {
+            at: string;
+            currency: string;
+            assets: components["schemas"]["MoneyOutput"];
+            liabilities: components["schemas"]["MoneyOutput"];
+            equity: components["schemas"]["MoneyOutput"];
+            netWorth: components["schemas"]["MoneyOutput"];
+            exchangeDifference: components["schemas"]["MoneyOutput"];
+            balances: boolean;
+            byCurrency: {
+                currency: string;
+                rate: string;
+                netWorthNative: components["schemas"]["MoneyOutput"];
+                netWorthTranslated: components["schemas"]["MoneyOutput"];
+            }[];
         };
         /** IncomeStatement */
         IncomeStatement: {

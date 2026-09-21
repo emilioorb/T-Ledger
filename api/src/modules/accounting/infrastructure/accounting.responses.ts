@@ -130,6 +130,28 @@ export const financialPositionResponseSchema = z
   })
   .meta({ id: 'FinancialPosition', title: 'FinancialPosition' })
 
+export const netWorthResponseSchema = z
+  .object({
+    at: z.string(),
+    currency: z.string(),
+    assets: moneySchema,
+    liabilities: moneySchema,
+    equity: moneySchema,
+    netWorth: moneySchema,
+    // Lo que movió el tipo de cambio y ningún asiento reconoce: patrimonio = libros + esto.
+    exchangeDifference: moneySchema,
+    balances: z.boolean(),
+    byCurrency: z.array(
+      z.object({
+        currency: z.string(),
+        rate: z.string(),
+        netWorthNative: moneySchema,
+        netWorthTranslated: moneySchema,
+      }),
+    ),
+  })
+  .meta({ id: 'NetWorth', title: 'NetWorth' })
+
 export const incomeStatementResponseSchema = z
   .object({
     income: moneySchema,
