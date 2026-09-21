@@ -8,7 +8,18 @@ import { Money } from '../kernel/money.js'
 // asientos y sigue siendo absurdo para finanzas personales.
 export const MAX_MINOR_UNITS = 100_000_000_000_000n
 
+const ENTERO = /^-?\d+$/
+
+// Zod corre todos los checks de un mismo string para poder reportar todos los errores de una,
+// así que este refine recibe el valor aunque el regex de arriba ya lo haya rechazado. Sin esta
+// guarda, `BigInt('lo que sea')` tira una excepción que nadie atrapa: el endpoint responde 500
+// en vez de 400, y el monto que escribió la persona termina dentro del mensaje del error, que
+// es por donde se escapó uno a Sentry el 21/09/2026.
+//
+// Devuelve `true` cuando el formato es inválido porque de ese error ya se encarga el regex:
+// este check solo opina del rango.
 const withinRange = (minorUnits: string): boolean => {
+  if (!ENTERO.test(minorUnits)) return true
   const value = BigInt(minorUnits)
   return value <= MAX_MINOR_UNITS && value >= -MAX_MINOR_UNITS
 }
@@ -18,7 +29,7 @@ export const moneySchema = z
   .object({
     minorUnits: z
       .string()
-      .regex(/^-?\d+$/, { error: 'El monto debe ser un entero en unidades mínimas' })
+      .regex(ENTERO, { error: 'El monto debe ser un entero en unidades mínimas' })
       .refine(withinRange, { error: 'El monto supera el máximo que el sistema puede sumar' }),
     currency: z.enum(CURRENCIES),
   })

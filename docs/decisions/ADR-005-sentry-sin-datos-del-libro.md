@@ -67,6 +67,29 @@ El DSN va por variable de entorno en `loadEnv`, con el resto de la configuració
 - Rechazada: con usuarios reales que no reportan nada, no tener observabilidad significa
   enterarse de los errores cuando alguien se va.
 
+## Lo que el filtro no puede cubrir
+
+Verificado de punta a punta el 21/09/2026 contra el proyecto real, mandando a propósito un
+movimiento con la descripción «Alquiler secreto de 450000».
+
+**El filtro cumplió:** la descripción, el monto, la moneda, el `categoryId` y el código de
+cuenta no salieron del servidor. Llegó el endpoint, el método y el tipo de error, que es lo
+que se pidió.
+
+**Pero se escapó un dato igual**, y por una puerta que el filtro no puede cerrar: el título
+del evento fue `SyntaxError: Cannot convert no-es-un-numero to a BigInt`. El valor iba dentro
+del **mensaje de la excepción**, no en un campo estructurado. Filtrar mensajes genéricamente
+es imposible sin perder toda la información que hace útil un reporte de error.
+
+**Entonces la regla no es del filtro, es del código: un mensaje de error nunca repite el valor
+que lo causó.** Se dice qué campo está mal y por qué, no con qué. Vale para los errores del
+dominio y también para los de la plataforma, que hay que interceptar antes de que ocurran.
+
+Ese caso destapó un bug real, arreglado el mismo día: `moneySchema` dejaba que el refine del
+rango llamara a `BigInt` sobre un valor que el regex ya había rechazado, porque Zod corre
+todos los checks de un string para reportarlos juntos. Cualquier monto mal escrito respondía
+500 en vez de 400 y se llevaba el valor al mensaje. Ver `money.schema.spec.ts`.
+
 ## Consecuencias
 
 - Los errores de Sentry van a tener menos contexto del habitual. Reproducir va a costar más, y
