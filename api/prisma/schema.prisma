@@ -273,3 +273,84 @@ model InvestmentContribution {
   @@index([investmentId])
   @@map("investment_contributions")
 }
+
+enum BankLineStatus {
+  PENDING
+  MATCHED
+  IGNORED
+}
+
+model ImportProfile {
+  id                 String   @id @default(uuid(7))
+  name               String
+  delimiter          String   @db.Char(1)
+  encoding           String
+  headerRows         Int      @default(1)
+  dateColumn         Int
+  dateFormat         String
+  descriptionColumn  Int
+  referenceColumn    Int?
+  amountColumn       Int?
+  debitColumn        Int?
+  creditColumn       Int?
+  decimalSeparator   String   @db.Char(1)
+  thousandsSeparator String?  @db.Char(1)
+  createdAt          DateTime @default(now()) @db.Timestamptz(3)
+
+  accounts BankAccount[]
+
+  @@map("import_profiles")
+}
+
+model BankAccount {
+  id          String   @id @default(uuid(7))
+  name        String
+  accountCode String
+  currency    String   @db.Char(3)
+  profileId   String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  profile    ImportProfile?  @relation(fields: [profileId], references: [id])
+  statements BankStatement[]
+  lines      BankLine[]
+
+  @@map("bank_accounts")
+}
+
+model BankStatement {
+  id             String   @id @default(uuid(7))
+  bankAccountId  String
+  fileName       String
+  importedAt     DateTime @default(now()) @db.Timestamptz(3)
+  lineCount      Int      @default(0)
+  duplicateCount Int      @default(0)
+
+  bankAccount BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  lines       BankLine[]
+
+  @@index([bankAccountId])
+  @@map("bank_statements")
+}
+
+model BankLine {
+  id            String         @id @default(uuid(7))
+  statementId   String
+  bankAccountId String
+  date          DateTime       @db.Date
+  description   String
+  reference     String?
+  amountMinor   BigInt
+  currency      String         @db.Char(3)
+  hash          String
+  status        BankLineStatus @default(PENDING)
+  movementId    String?
+
+  statement   BankStatement @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  bankAccount BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([bankAccountId, hash])
+  @@index([bankAccountId, status])
+  @@index([date])
+  @@map("bank_lines")
+}
