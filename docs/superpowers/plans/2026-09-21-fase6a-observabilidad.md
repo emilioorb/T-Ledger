@@ -13,8 +13,35 @@ el cuerpo entero de la petición y solo deja pasar lo que una lista blanca corta
 arranque del backend es ESM, así que Sentry se carga con `--import` y no con un import al tope
 de `main.ts`.
 
-**Stack:** `@sentry/nestjs` y `@sentry/react`. Vitest 5 para los tests. NestJS 12 en ESM,
+**Stack:** `@sentry/node` y `@sentry/react`. Vitest 5 para los tests. NestJS 12 en ESM,
 Vite 8 + React 19 en el front.
+
+## Correcciones hechas al ejecutar
+
+Cuatro cosas de este plan resultaron equivocadas al implementarlo. Quedan acá porque el plan
+sin ellas induce al mismo error.
+
+**1. `@sentry/node`, no `@sentry/nestjs`.** El segundo declara peer de `@nestjs/common` hasta
+la versión 11 y este proyecto usa la 12: `npm install` falla con `ERESOLVE`. Forzarlo con
+`--legacy-peer-deps` sería apostar a que Nest 12 no rompió nada de lo que ese paquete usa.
+`@sentry/node` no declara peers de Nest e instala limpio.
+
+**2. La captura va en `AllExceptionsFilter`, no en `SentryModule.forRoot()`.** Ese filtro ya
+existe y ya decide qué es un error de servidor (`if (status >= 500)`). Enganchar ahí evita
+tener dos criterios distintos de «esto es grave» y saca una dependencia. Resultó mejor que lo
+planeado, no un remiendo.
+
+**3. Sin `--import` y sin `cross-env`.** La guía de Sentry pide `--import` porque su
+instrumentación automática engancha la carga de módulos y necesita hacerlo antes de que se
+carguen. Con `tracesSampleRate: 0` no hay nada que instrumentar: lo único que se usa es
+`captureException`, y para eso alcanza con que `Sentry.init` haya corrido, o sea un
+`import './instrument.js'` como primer import de `main.ts`. Además `NODE_OPTIONS` con
+`--import` rompe `nest start --watch`, porque el compilador hijo hereda la variable e intenta
+cargar `dist/instrument.js` antes de que exista. **El día que se encienda el tracing, esto
+vuelve a ser `--import`.**
+
+**4. El paquete se instala antes del primer test, no después.** El test importa tipos de
+`@sentry/node`, así que sin el paquete no corre ni para fallar bien.
 
 **Spec:** `docs/superpowers/specs/2026-09-21-multiusuario-design.md`, sección 8.
 **Decisión:** `docs/decisions/ADR-005-sentry-sin-datos-del-libro.md`.
