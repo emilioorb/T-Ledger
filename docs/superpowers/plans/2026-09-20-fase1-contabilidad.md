@@ -1525,7 +1525,7 @@ git commit -m "✨ feat: categorías y movimientos que generan su asiento"
   - `blockersFor(snapshot: PeriodSnapshot): CloseBlocker[]`
   - `const PERIOD_REPOSITORY: unique symbol`, `interface PeriodRepository`
 
-- [ ] **Paso 1: Escribir el test del período que falla**
+- [x] **Paso 1: Escribir el test del período que falla**
 
 `api/src/modules/accounting/domain/accounting-period.spec.ts`:
 
@@ -1599,7 +1599,7 @@ describe('AccountingPeriod', () => {
 })
 ```
 
-- [ ] **Paso 2: Escribir el test de los bloqueos**
+- [x] **Paso 2: Escribir el test de los bloqueos**
 
 `api/src/modules/accounting/domain/period-closing.spec.ts`:
 
@@ -1666,13 +1666,13 @@ describe('blockersFor', () => {
 
 Que los bloqueos se acumulen en vez de cortar en el primero es lo que permite que la pantalla muestre la lista completa de lo que falta, en lugar de hacer que Emilio descubra los problemas de a uno.
 
-- [ ] **Paso 3: Correr y confirmar que fallan**
+- [x] **Paso 3: Correr y confirmar que fallan**
 
 ```bash
 cd api && npm test -- accounting-period period-closing
 ```
 
-- [ ] **Paso 4: Implementar el período**
+- [x] **Paso 4: Implementar el período**
 
 `api/src/modules/accounting/domain/accounting-period.ts`:
 
@@ -1772,7 +1772,7 @@ export class AccountingPeriod {
 }
 ```
 
-- [ ] **Paso 5: Implementar los bloqueos**
+- [x] **Paso 5: Implementar los bloqueos**
 
 `api/src/modules/accounting/domain/period-closing.ts`:
 
@@ -1829,7 +1829,7 @@ export const blockersFor = (snapshot: PeriodSnapshot): CloseBlocker[] => {
 
 Un mes sin asientos no es un bloqueo: un mes en el que no pasó nada es un mes válido y cerrable.
 
-- [ ] **Paso 6: Puerto del repositorio**
+- [x] **Paso 6: Puerto del repositorio**
 
 `api/src/modules/accounting/domain/period-repository.port.ts`:
 
@@ -1849,7 +1849,7 @@ export const PERIOD_REPOSITORY = Symbol('PERIOD_REPOSITORY')
 
 Un mes sin fila en la base es un mes abierto. No hace falta crear doce filas por año para representar lo que es el estado por omisión.
 
-- [ ] **Paso 7: El guardián de período cerrado**
+- [x] **Paso 7: El guardián de período cerrado**
 
 `api/src/modules/accounting/application/period-guard.ts`:
 
@@ -1879,13 +1879,15 @@ El guardián vive en la capa de aplicación, no en el agregado: saber si un per�
 
 - [ ] **Paso 8: Casos de uso de cierre y reapertura**
 
-`CloseperiodUseCase.execute(key)` arma el `PeriodSnapshot` —contando asientos y movimientos sin asiento del mes, y preguntando a la comprobación si cuadra—, corre `blockersFor` y, si hay bloqueos, lanza `SemanticValidationError` con la lista completa en `details`. Si no, guarda el período cerrado.
+Estos tres dependen de la comprobación, que se construye en la Tarea 6, y de los repositorios de la Tarea 5. Se escriben ahí, no acá: el dominio del período y el guardián son lo que esta tarea deja listo.
+
+`ClosePeriodUseCase.execute(key)` arma el `PeriodSnapshot` —contando asientos y movimientos sin asiento del mes, y preguntando a la comprobación si cuadra—, corre `blockersFor` y, si hay bloqueos, lanza `SemanticValidationError` con la lista completa en `details`. Si no, guarda el período cerrado.
 
 `ReopenPeriodUseCase.execute(key)` reabre el mes **y todos los posteriores que estén cerrados**, en una sola transacción. Reabrir agosto dejando septiembre cerrado produciría un libro donde un mes abierto queda debajo de uno cerrado, que es justo el estado que la regla del orden existe para impedir.
 
 `ListPeriodsUseCase.execute()` devuelve, por mes con actividad, su estado, sus conteos y sus bloqueos: es lo que alimenta la columna de qué falta para cerrar.
 
-- [ ] **Paso 9: Correr, verificar y commitear**
+- [x] **Paso 9: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -1894,13 +1896,13 @@ git commit -m "✨ feat: cierre mensual como bloqueo de período, con sus precon
 ```
 
 **Acceptance criteria:**
-- [ ] Cerrar un mes con el anterior abierto está bloqueado, y la razón nombra el mes anterior
-- [ ] Cerrar con movimientos sin asiento está bloqueado, y la razón dice cuántos
-- [ ] Los bloqueos se acumulan, no se corta en el primero
-- [ ] Un mes sin asientos se puede cerrar
-- [ ] Un asiento con fecha dentro de un mes cerrado es rechazado con 409
-- [ ] Reabrir un mes reabre también los posteriores cerrados
-- [ ] El rango de un febrero bisiesto llega al día 29
+- [x] Cerrar un mes con el anterior abierto está bloqueado, y la razón nombra el mes anterior
+- [x] Cerrar con movimientos sin asiento está bloqueado, y la razón dice cuántos
+- [x] Los bloqueos se acumulan, no se corta en el primero
+- [x] Un mes sin asientos se puede cerrar
+- [x] Un asiento con fecha dentro de un mes cerrado es rechazado con 409
+- [x] Reabrir un mes reabre también los posteriores cerrados
+- [x] El rango de un febrero bisiesto llega al día 29
 
 ---
 
