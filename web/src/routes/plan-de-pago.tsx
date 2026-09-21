@@ -22,10 +22,13 @@ const explanations: Record<PayoffStrategy, string> = {
 
 type PlanRow = NonNullable<ReturnType<typeof usePayoffPlan>['data']>['order'][number]
 
-// Encabezado y filas comparten la plantilla de columnas. Bajo sm la fila se parte en dos
+// Encabezado y filas comparten la plantilla de columnas. En la fila angosta se parte en dos
 // renglones y el encabezado desaparece: por eso van las dos plantillas juntas.
+//
+// `@2xl` mide el contenedor y no la ventana: con la barra lateral abierta, `sm` encendía
+// cinco columnas justo cuando el contenido bajaba a 489 px.
 const COLS =
-  'grid-cols-[1.75rem_1fr_auto] gap-x-4 gap-y-1 sm:grid-cols-[4rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]'
+  'grid-cols-[1.75rem_1fr_auto] gap-x-4 gap-y-1 @2xl:grid-cols-[4rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]'
 
 // El orden que devuelve la estrategia es la respuesta de la pantalla: esa es la columna
 // por la que arranca ordenada, y volver a ella deshace cualquier otro orden.
@@ -87,7 +90,7 @@ const PayoffPlanScreen = () => {
       </div>
 
       {plan.data && plan.data.order.length > 0 ? (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-2 @lg:flex-row @lg:items-center">
           <SearchInput
             value={table.query}
             onChange={table.setQuery}
@@ -106,7 +109,7 @@ const PayoffPlanScreen = () => {
             direction={table.sort.direction}
             onChange={(key) => table.setSort(key)}
             onFlip={() => table.toggle(table.sort.key)}
-            className="sm:hidden"
+            className="@2xl:hidden"
           />
         </div>
       ) : null}
@@ -132,7 +135,7 @@ const PayoffPlanScreen = () => {
       ) : (
         <div className="space-y-3">
           <TableFrame>
-            <FrameHeader className={`hidden ${COLS} sm:grid`}>
+            <FrameHeader className={`hidden ${COLS} @2xl:grid`}>
               {header('position', copy.payoffPlan.columns.position, 'left')}
               {header('name', copy.payoffPlan.columns.name, 'left')}
               {header('annualRate', copy.payoffPlan.columns.annualRate)}
@@ -152,15 +155,15 @@ const PayoffPlanScreen = () => {
                   <span className="num text-sm text-muted-foreground">{debt.position}</span>
                   <span className="truncate text-sm font-medium">{debt.name}</span>
                   <span className="num num-right text-sm">{debt.annualRate} %</span>
-                  <span className="num num-right hidden text-sm sm:block">
+                  <span className="num num-right hidden text-sm @2xl:block">
                     {formatMoney(debt.balance)}
                   </span>
-                  <span className="num num-right hidden text-sm text-muted-foreground sm:block">
+                  <span className="num num-right hidden text-sm text-muted-foreground @2xl:block">
                     {formatMoney(debt.monthlyPayment)}
                   </span>
                   {/* Bajo sm, saldo y cuota bajan a un pie: arriba queda el orden, que es
                       la respuesta que la pantalla vino a dar. */}
-                  <span className="col-span-2 col-start-2 text-xs text-muted-foreground sm:hidden">
+                  <span className="col-span-2 col-start-2 text-xs text-muted-foreground @2xl:hidden">
                     <span className="num num-right">{formatMoney(debt.balance)}</span>
                     {' · '}
                     <span className="num num-right">{formatMoney(debt.monthlyPayment)}</span>

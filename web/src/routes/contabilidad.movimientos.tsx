@@ -356,7 +356,7 @@ const MovementsScreen = () => {
         )
       ) : (
         <div className="space-y-4">
-          <TableFrame className="hidden md:block">
+          <TableFrame className="hidden @3xl:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -382,7 +382,7 @@ const MovementsScreen = () => {
             </Table>
           </TableFrame>
 
-          <TableFrame className="md:hidden">
+          <TableFrame className="@3xl:hidden">
             <ul className="divide-y divide-border">
               {items.map((movement) => (
                 <MovementCard

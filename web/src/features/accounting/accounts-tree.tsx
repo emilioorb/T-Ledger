@@ -13,7 +13,8 @@ interface Props {
   onEdit: (account: Account) => void
 }
 
-const INDENT_PER_LEVEL = 18
+// La sangría viaja por variable CSS para poder achicarse en filas angostas: a 360 px,
+// cuatro niveles a 18 px se comían la mitad del nombre.
 
 interface RowProps {
   node: ReportNode
@@ -32,7 +33,11 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
     <>
       <li
         className={cn(
-          `group grid grid-cols-[1fr_auto] items-center gap-3 border-b border-border ${FRAME_ROW}`,
+          `group grid gap-1 border-b border-border ${FRAME_ROW}`,
+          // A 360 px, nombre y saldo en la misma línea dejaban al nombre en 38 px: con la
+          // sangría, el código y el monto de por medio no queda ancho para leerlo. En la
+          // fila angosta el nombre se queda con el renglón y el saldo baja al siguiente.
+          '@md:grid-cols-[minmax(0,1fr)_auto] @md:items-center @md:gap-3',
           // La raíz se marca con una línea más fuerte, no con más alto: todas las filas
           // miden lo mismo y la jerarquía se lee por sangría y peso.
           node.level === 0 && 'border-border-strong',
@@ -40,7 +45,7 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
       >
         <div
           className="flex min-w-0 items-center gap-1.5"
-          style={{ paddingLeft: node.level * INDENT_PER_LEVEL }}
+          style={{ paddingLeft: `calc(var(--indent) * ${node.level})` }}
         >
           {hasChildren ? (
             <button
@@ -62,7 +67,7 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
           <span className="num num-right shrink-0 text-xs text-muted-foreground">{node.code}</span>
           <span
             className={cn(
-              'truncate text-sm',
+              'min-w-0 break-words text-sm @md:truncate',
               node.level === 0 ? 'font-medium tracking-tight' : 'text-foreground',
               account?.active === false && 'text-muted-foreground line-through',
             )}
@@ -71,13 +76,16 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
           </span>
 
           {hasChildren ? (
-            <span className="hidden shrink-0 text-[0.6875rem] text-muted-foreground sm:inline">
+            <span className="hidden shrink-0 text-[0.6875rem] text-muted-foreground @2xl:inline">
               {copy.accounts.grouping}
             </span>
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* En la fila angosta este bloque es el segundo renglón: «Editar» se ancla a la
+            izquierda y el saldo a la derecha. Los dos al final dejaban el botón flotando
+            en el medio, sin borde al que pertenecer. */}
+        <div className="flex items-center justify-between gap-2 @md:justify-end">
           {account ? (
             <Button
               variant="ghost"
@@ -92,7 +100,7 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
           <Amount
             money={node.balance}
             emphasis={node.level === 0 ? 'strong' : 'normal'}
-            className="w-24 text-sm sm:w-32"
+            className="w-28 text-sm @2xl:w-32"
           />
         </div>
       </li>
@@ -138,7 +146,7 @@ export const AccountsTree = ({ nodes, accounts, onEdit }: Props) => {
   // El borde va por fila y no con `divide-y`: la raíz se marca con una línea más fuerte, y
   // el selector de `divide-y` le gana en especificidad al color de la fila.
   return (
-    <ul className="[&>li:last-child]:border-b-0">
+    <ul className="[--indent:12px] @2xl:[--indent:18px] [&>li:last-child]:border-b-0">
       {nodes.map((node) => (
         <AccountRow
           key={node.code}

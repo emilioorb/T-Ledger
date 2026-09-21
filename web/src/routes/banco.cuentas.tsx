@@ -33,14 +33,22 @@ import { cn } from '@/lib/utils'
 const CURRENCIES: CurrencyCode[] = ['CRC', 'USD']
 const NO_PROFILE = 'none'
 
-// Encabezado y filas comparten la plantilla. Bajo sm cada celda recupera su etiqueta y la
-// fila se lee como bloque.
-const ACCOUNT_COLS = 'sm:grid-cols-[1fr_14rem_5rem_10rem_4.5rem] sm:items-baseline'
-const PROFILE_COLS = 'sm:grid-cols-[1fr_7rem_11rem_7rem_4.5rem] sm:items-baseline'
+// Encabezado y filas comparten la plantilla. Bajo el ancho de la fila cada celda recupera
+// su etiqueta y la fila se lee como bloque.
+//
+// `@2xl` y no `sm`: la fila mira el ancho del contenedor, no el de la ventana. Con la barra
+// lateral abierta, `sm` se encendía a 640 px de ventana cuando el contenido tenía 384.
+//
+// Las pistas de texto van en `minmax(0,…)` y las de monto quedan fijas: un nombre largo
+// puede ceder y recortarse, un monto no se parte nunca.
+const ACCOUNT_COLS =
+  '@2xl:grid-cols-[minmax(0,1fr)_minmax(0,14rem)_5rem_minmax(0,10rem)_4.5rem] @2xl:items-baseline'
+const PROFILE_COLS =
+  '@2xl:grid-cols-[minmax(0,1fr)_7rem_minmax(0,11rem)_7rem_4.5rem] @2xl:items-baseline'
 
 const Cell = ({ label, children }: { label: string; children: ReactNode }) => (
-  <span className="flex items-baseline justify-between gap-3 sm:contents">
-    <span className="text-xs text-muted-foreground sm:hidden">{label}</span>
+  <span className="flex items-baseline justify-between gap-3 @2xl:contents">
+    <span className="text-xs text-muted-foreground @2xl:hidden">{label}</span>
     {children}
   </span>
 )
@@ -449,7 +457,7 @@ const BankAccountsScreen = () => {
           />
         ) : (
           <TableFrame>
-            <FrameHeader className={cn('hidden gap-x-4 sm:grid', ACCOUNT_COLS)}>
+            <FrameHeader className={cn('hidden gap-x-4 @2xl:grid', ACCOUNT_COLS)}>
               <span>{copy.accounts.columns.name}</span>
               <span>{copy.accounts.columns.account}</span>
               <span>{copy.accounts.columns.currency}</span>
@@ -469,20 +477,20 @@ const BankAccountsScreen = () => {
                   </span>
 
                   <Cell label={copy.accounts.columns.account}>
-                    <span className="min-w-0 truncate text-xs sm:text-sm">
+                    <span className="min-w-0 truncate text-xs @2xl:text-sm">
                       <span className="num text-muted-foreground">{account.accountCode}</span>{' '}
                       {accountName.get(account.accountCode)}
                     </span>
                   </Cell>
 
                   <Cell label={copy.accounts.columns.currency}>
-                    <span className="num text-xs sm:text-sm">{account.currency}</span>
+                    <span className="num text-xs @2xl:text-sm">{account.currency}</span>
                   </Cell>
 
                   <Cell label={copy.accounts.columns.profile}>
                     <span
                       className={cn(
-                        'truncate text-xs sm:text-sm',
+                        'truncate text-xs @2xl:text-sm',
                         account.profileId ? undefined : 'text-muted-foreground',
                       )}
                     >
@@ -552,7 +560,7 @@ const BankAccountsScreen = () => {
 
         {profiles.data && profiles.data.length > 0 ? (
           <TableFrame>
-            <FrameHeader className={cn('hidden gap-x-4 sm:grid', PROFILE_COLS)}>
+            <FrameHeader className={cn('hidden gap-x-4 @2xl:grid', PROFILE_COLS)}>
               <span>{copy.profiles.columns.name}</span>
               <span>{copy.profiles.columns.delimiter}</span>
               <span>{copy.profiles.columns.dateFormat}</span>
@@ -569,15 +577,15 @@ const BankAccountsScreen = () => {
                   <span>{profile.name}</span>
 
                   <Cell label={copy.profiles.columns.delimiter}>
-                    <span className="num text-xs sm:text-sm">«{profile.delimiter}»</span>
+                    <span className="num text-xs @2xl:text-sm">«{profile.delimiter}»</span>
                   </Cell>
 
                   <Cell label={copy.profiles.columns.dateFormat}>
-                    <span className="num text-xs sm:text-sm">{profile.dateFormat}</span>
+                    <span className="num text-xs @2xl:text-sm">{profile.dateFormat}</span>
                   </Cell>
 
                   <Cell label={copy.profiles.columns.encoding}>
-                    <span className="num text-xs sm:text-sm">{profile.encoding}</span>
+                    <span className="num text-xs @2xl:text-sm">{profile.encoding}</span>
                   </Cell>
 
                   <Button

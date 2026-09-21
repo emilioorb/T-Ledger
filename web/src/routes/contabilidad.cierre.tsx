@@ -43,7 +43,11 @@ interface RowProps {
 
 // Encabezado y filas comparten la plantilla. Bajo lg la fila se parte en bloques y cada
 // celda lleva su etiqueta: una tabla de siete columnas no cabe en un teléfono.
-const COLS = 'lg:grid-cols-[5.5rem_6rem_5rem_9rem_7rem_1fr_auto] lg:items-baseline lg:gap-x-4'
+// Las pistas de monto quedan fijas —un monto no se parte— y la de texto cede. La fila mide
+// el contenedor: con la barra lateral abierta, `lg` encendía siete columnas cuando el
+// contenido tenía 745 px.
+const COLS =
+  '@4xl:grid-cols-[5.5rem_6rem_5rem_9rem_7rem_minmax(0,1fr)_auto] @4xl:items-baseline @4xl:gap-x-4'
 
 // Qué falta para cerrar, escrito: es la columna que decide si el botón sirve, y decirlo
 // «nada» es tan informativo como decir qué bloquea.
@@ -90,10 +94,10 @@ const Blockers = ({ summary }: { summary: PeriodSummary }) => {
   )
 }
 
-// La etiqueta solo existe bajo lg: con las columnas a la vista, repetirla sería ruido.
+// La etiqueta solo existe en la fila angosta: con las columnas a la vista, repetirla sería ruido.
 const Cell = ({ label, children }: { label: string; children: ReactNode }) => (
-  <span className="flex items-baseline justify-between gap-3 lg:contents">
-    <span className="text-xs text-muted-foreground lg:hidden">{label}</span>
+  <span className="flex items-baseline justify-between gap-3 @4xl:contents">
+    <span className="text-xs text-muted-foreground @4xl:hidden">{label}</span>
     {children}
   </span>
 )
@@ -126,7 +130,7 @@ const PeriodRow = ({ summary, onClose, onReopen }: RowProps) => {
         </span>
       </Cell>
 
-      <span className="min-w-0 text-xs lg:text-sm">
+      <span className="min-w-0 text-xs @4xl:text-sm">
         <Blockers summary={summary} />
       </span>
 
@@ -186,7 +190,7 @@ const ClosingScreen = () => {
         <EmptyState title={copy.closing.empty.title} description={copy.closing.empty.description} />
       ) : (
         <TableFrame>
-          <FrameHeader className={cn('hidden gap-x-4 lg:grid', COLS)}>
+          <FrameHeader className={cn('hidden gap-x-4 @4xl:grid', COLS)}>
             <span>{copy.closing.columns.period}</span>
             <span>{copy.closing.columns.status}</span>
             <span>{copy.closing.columns.entries}</span>

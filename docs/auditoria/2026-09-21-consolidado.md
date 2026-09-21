@@ -241,9 +241,19 @@ Editar/Anular en movimientos, que en móvil son las únicas acciones disponibles
 
 ---
 
-## Fase 2 — Responsive
+## Fase 2 — Responsive ✅ cerrada el 21/09/2026
 
-### 2.1 El acantilado de 768 px
+Los cuatro puntos quedaron cerrados por la raíz: **el contenedor de las pantallas es
+`@container`** y las filas miden su propio ancho con `@sm:`, `@2xl:`, `@3xl:` y `@4xl:` en vez
+del de la ventana. Correr los breakpoints un escalón hacia arriba habría arreglado 768 px y roto
+1280 con la barra colapsada, donde el espacio sí está.
+
+Medición final: **54 combinaciones limpias de 54** (nueve pantallas por 360, 414, 768, 1024, 1280
+y 1440). Cero elementos fuera del viewport, cero montos desbordados, cero scroll lateral de
+página.
+
+
+### 2.1 ✅ El acantilado de 768 px
 
 **A 768 px la app tiene menos ancho útil que a 640.** La barra lateral ocupa 256 px desde `md`, así
 que el contenido mide 489 px a 768 y 745 a 1024, mientras los breakpoints de Tailwind miran el
@@ -256,7 +266,7 @@ Regla a aplicar: una fila cuyo mínimo supere ~420 px entra en `lg`, no en `sm`.
 La alternativa de raíz son container queries (`@container`), que miden el contenedor y no la
 ventana.
 
-### 2.2 Lo que se mide fuera de pantalla
+### 2.2 ✅ Lo que se mide fuera de pantalla
 
 - Proyección a 768: la columna «Queda» termina 115 px fuera del viewport, recortada.
 - Cuentas bancarias a 768: el botón «Editar» en x=900 con viewport de 768, invisible e
@@ -265,13 +275,13 @@ ventana.
 - Comprobación: ningún ancho quedó limpio; los montos largos desbordan la tarjeta en los seis.
 - Plan de cuentas a 360: 17 nombres aplastados; «Traslados entre monedas» en 42 px.
 
-### 2.3 Pistas fijas en vez de `minmax(0, …)`
+### 2.3 ✅ Pistas fijas en vez de `minmax(0, …)`
 
 `banco.cuentas.tsx` (14rem), `banco.conciliacion.tsx` (22rem) y `cierre.tsx` (9rem) usan anchos
 duros. `debt-list.tsx:27` y `plan-de-pago.tsx:28` ya usan `minmax(0,…)`: ese es el patrón a
 propagar en las pistas de texto (las de monto sí quedan fijas).
 
-### 2.4 Los montos son indivisibles
+### 2.4 ✅ Los montos son indivisibles
 
 `lib/money.ts:10` usa U+202F como separador de miles, así que ningún monto se parte nunca: cada uno
 es un bloque de ~110 px (`text-sm`), ~185 px (`text-2xl`) o ~230 px (`text-3xl`). Conviene

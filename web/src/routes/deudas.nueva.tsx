@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Card } from '@/components/ui/card'
 import { Receipt } from 'lucide-react'
 import { copy } from '@/features/debts/copy'
 import { DebtForm } from '@/features/debts/debt-form'
@@ -20,16 +21,21 @@ const NewDebtScreen = () => {
         </p>
       </div>
 
-      <DebtForm
-        pending={createDebt.isPending}
-        onCancel={() => void navigate({ to: '/deudas' })}
-        onSubmit={(input) =>
-          createDebt.mutate(input, {
-            onSuccess: (debt) =>
-              void navigate({ to: '/deudas/$debtId', params: { debtId: debt.id } }),
-          })
-        }
-      />
+      {/* El formulario va en tarjeta y con ancho acotado, como los de crear y editar del
+          resto del sistema: suelto sobre el fondo se estiraba a todo el escritorio y no se
+          leía como una sola cosa. */}
+      <Card className="max-w-4xl px-4">
+        <DebtForm
+          pending={createDebt.isPending}
+          onCancel={() => void navigate({ to: '/deudas' })}
+          onSubmit={(input) =>
+            createDebt.mutate(input, {
+              onSuccess: (debt) =>
+                void navigate({ to: '/deudas/$debtId', params: { debtId: debt.id } }),
+            })
+          }
+        />
+      </Card>
     </section>
   )
 }

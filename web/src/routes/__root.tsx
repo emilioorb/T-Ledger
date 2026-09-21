@@ -63,7 +63,12 @@ const Shell = () => {
             <ExchangeRateIndicator />
           </div>
         </header>
-        <div className="w-full min-w-0 flex-1 overflow-y-auto px-4 py-6 md:px-6">
+        {/* El contenedor de las pantallas se declara `@container`: los breakpoints de
+            Tailwind miden la ventana, pero el ancho que una fila tiene de verdad lo decide
+            la barra lateral. A 768 px el contenido mide 489 y a 1024 mide 745, así que una
+            regla en `sm:` se encendía justo cuando el espacio se achicaba. Las pantallas
+            usan `@sm:`, `@lg:` y demás para mirar este ancho y no el del navegador. */}
+        <div className="@container w-full min-w-0 flex-1 overflow-y-auto px-4 py-6 md:px-6">
           <Outlet />
         </div>
 

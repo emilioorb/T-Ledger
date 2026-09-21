@@ -49,7 +49,10 @@ interface PairProps {
 // Encabezado y filas comparten la plantilla: lo que trajo el banco a la izquierda y qué
 // hacer con eso a la derecha. La explicación de por qué no hay movimiento vive arriba de
 // la lista, no repetida en cada fila.
-const COLS = 'lg:grid-cols-[6.5rem_1fr_9rem_22rem] lg:items-baseline'
+// La descripción va en `minmax(0,…)` para que ceda: con `1fr` a secas se comprimía hasta
+// los 23 px mientras la pista de 22rem de acciones no cedía nada. El monto queda fijo
+// porque no se parte, y la fila mira el ancho del contenedor, no el de la ventana.
+const COLS = '@4xl:grid-cols-[6.5rem_minmax(0,1fr)_9rem_minmax(0,22rem)] @4xl:items-baseline'
 
 const Pair = ({
   line,
@@ -74,7 +77,7 @@ const Pair = ({
         ) : null}
       </span>
 
-      <Amount money={line.amount} emphasis="strong" className="lg:text-right" />
+      <Amount money={line.amount} emphasis="strong" className="@4xl:text-right" />
 
       <div className="min-w-0">
         {suggestions.length > 0 ? (
@@ -369,7 +372,7 @@ const ReconciliationScreen = () => {
               </p>
 
               <TableFrame className="mt-2">
-                <FrameHeader className={cn('hidden gap-x-4 lg:grid', COLS)}>
+                <FrameHeader className={cn('hidden gap-x-4 @4xl:grid', COLS)}>
                   <span>{copy.reconciliation.columns.date}</span>
                   <span>{copy.reconciliation.columns.description}</span>
                   <span className="text-right">{copy.reconciliation.columns.amount}</span>

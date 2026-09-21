@@ -69,7 +69,7 @@ export const AmortizationTable = ({ installments }: Props) => {
 
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden @3xl:block">
         <TableFrame>
           <Table>
             {/* Dentro del marco, el pie necesita el mismo respiro que las celdas y una línea
@@ -124,10 +124,10 @@ export const AmortizationTable = ({ installments }: Props) => {
         direction={table.sort.direction}
         onChange={(key) => table.setSort(key)}
         onFlip={() => table.toggle(table.sort.key)}
-        className="mb-2 md:hidden"
+        className="mb-2 @3xl:hidden"
       />
 
-      <ul className="divide-y divide-border md:hidden">
+      <ul className="divide-y divide-border @3xl:hidden">
         {table.rows.map((installment) => (
           <li key={installment.number} className="py-3">
             <div className="flex items-baseline justify-between gap-3">

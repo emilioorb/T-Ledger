@@ -47,7 +47,7 @@ const MonthRow = ({ flow, breakdown }: RowProps) => {
   return (
     <li
       className={cn(
-        `grid gap-x-3 gap-y-1 ${FRAME_ROW} sm:grid-cols-[6rem_1fr_auto] sm:items-baseline`,
+        `grid gap-x-3 gap-y-1 ${FRAME_ROW} @2xl:grid-cols-[6rem_minmax(0,1fr)_auto] @2xl:items-baseline`,
         hasFreed && 'border-border-strong',
       )}
     >
@@ -94,28 +94,28 @@ const MonthRow = ({ flow, breakdown }: RowProps) => {
         ))}
       </span>
 
-      <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 sm:flex-nowrap sm:justify-end">
-        <span className="flex items-baseline gap-2 sm:contents">
-          <span className="text-xs text-muted-foreground sm:hidden">
+      <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 @2xl:flex-nowrap @2xl:justify-end">
+        <span className="flex items-baseline gap-2 @2xl:contents">
+          <span className="text-xs text-muted-foreground @2xl:hidden">
             {copy.projection.columns.income}
           </span>
-          <Amount money={flow.income} className="text-xs text-muted-foreground sm:w-28" />
+          <Amount money={flow.income} className="text-xs text-muted-foreground @2xl:w-28" />
         </span>
-        <span className="flex items-baseline gap-2 sm:contents">
-          <span className="text-xs text-muted-foreground sm:hidden">
+        <span className="flex items-baseline gap-2 @2xl:contents">
+          <span className="text-xs text-muted-foreground @2xl:hidden">
             {copy.projection.columns.committed}
           </span>
-          <Amount money={flow.committed} className="text-xs text-muted-foreground sm:w-28" />
+          <Amount money={flow.committed} className="text-xs text-muted-foreground @2xl:w-28" />
         </span>
-        <span className="flex items-baseline gap-2 sm:contents">
-          <span className="text-xs text-muted-foreground sm:hidden">
+        <span className="flex items-baseline gap-2 @2xl:contents">
+          <span className="text-xs text-muted-foreground @2xl:hidden">
             {copy.projection.columns.surplus}
           </span>
           <Amount
             money={flow.surplus}
             emphasis={negative || hasFreed ? 'strong' : 'normal'}
             tone={negative ? 'alert' : 'plain'}
-            className="text-sm sm:w-32"
+            className="text-sm @2xl:w-32"
           />
         </span>
       </span>
@@ -209,7 +209,7 @@ const ProjectionScreen = () => {
           </StatCard>
 
           <TableFrame>
-            <FrameHeader className="hidden grid-cols-[6rem_1fr_auto] gap-3 sm:grid">
+            <FrameHeader className="hidden grid-cols-[6rem_minmax(0,1fr)_auto] gap-3 @2xl:grid">
               <span>{copy.projection.columns.month}</span>
               <span />
               <span className="flex gap-4">

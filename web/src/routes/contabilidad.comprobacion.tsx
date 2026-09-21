@@ -94,7 +94,7 @@ const TrialBalanceScreen = () => {
             />
           ) : (
             <TableFrame>
-              <FrameHeader className="hidden grid-cols-[1fr_7rem_7rem_8rem] gap-2 lg:grid">
+              <FrameHeader className="hidden grid-cols-[minmax(0,1fr)_8rem_8rem_8rem] gap-2 @3xl:grid">
                 <span>{copy.trialBalance.columns.account}</span>
                 <span className="text-right">{copy.trialBalance.columns.debits}</span>
                 <span className="text-right">{copy.trialBalance.columns.credits}</span>
@@ -105,7 +105,7 @@ const TrialBalanceScreen = () => {
                 {balance.data.rows.map((row) => (
                   <li
                     key={row.accountCode}
-                    className={`grid gap-x-2 gap-y-1 ${FRAME_ROW} text-sm lg:grid-cols-[1fr_7rem_7rem_8rem] lg:items-baseline`}
+                    className={`grid gap-x-2 gap-y-1 ${FRAME_ROW} text-sm @3xl:grid-cols-[minmax(0,1fr)_8rem_8rem_8rem] @3xl:items-baseline`}
                   >
                     <Link
                       to="/contabilidad/mayor"
@@ -118,20 +118,20 @@ const TrialBalanceScreen = () => {
                       </span>{' '}
                       {row.accountName}
                     </Link>
-                    <span className="flex justify-between gap-3 lg:contents">
-                      <span className="text-xs text-muted-foreground lg:hidden">
+                    <span className="flex justify-between gap-3 @3xl:contents">
+                      <span className="text-xs text-muted-foreground @3xl:hidden">
                         {copy.trialBalance.columns.debits}
                       </span>
                       <Amount money={row.debits} />
                     </span>
-                    <span className="flex justify-between gap-3 lg:contents">
-                      <span className="text-xs text-muted-foreground lg:hidden">
+                    <span className="flex justify-between gap-3 @3xl:contents">
+                      <span className="text-xs text-muted-foreground @3xl:hidden">
                         {copy.trialBalance.columns.credits}
                       </span>
                       <Amount money={row.credits} />
                     </span>
-                    <span className="flex justify-between gap-3 lg:contents">
-                      <span className="text-xs text-muted-foreground lg:hidden">
+                    <span className="flex justify-between gap-3 @3xl:contents">
+                      <span className="text-xs text-muted-foreground @3xl:hidden">
                         {copy.trialBalance.columns.balance}
                       </span>
                       <Amount money={row.balance} />

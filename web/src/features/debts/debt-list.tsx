@@ -22,9 +22,12 @@ interface Props {
 
 // Encabezado y filas comparten la misma plantilla de columnas, con la última de ancho
 // fijo: con `auto` cada grilla la resuelve por su cuenta y las cifras dejan de alinear.
-// Solo las columnas, sin el display: el encabezado se oculta bajo sm y la fila no.
+// Solo las columnas, sin el display: el encabezado se oculta en la fila angosta y la fila no.
+//
+// `@2xl` mide el contenedor: tres montos indivisibles más el nombre no entran en los 489 px
+// que deja la barra lateral a 768 px de ventana, que es justo donde `sm` los encendía.
 const COLS =
-  'grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_6.5rem_4.5rem]'
+  'grid-cols-[1fr_auto_auto] gap-x-4 gap-y-1 @2xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_6.5rem_4.5rem]'
 
 const columns = {
   name: (debt: Debt) => debt.name,
@@ -47,14 +50,17 @@ const Row = ({ debt }: { debt: Debt }) => (
       {debt.name}
     </Link>
     <Amount money={debt.principal} className="text-sm" />
-    <Amount money={debt.monthlyPayment} className="hidden text-sm text-muted-foreground sm:block" />
-    <span className="num num-right hidden text-xs text-muted-foreground sm:block">
+    <Amount
+      money={debt.monthlyPayment}
+      className="hidden text-sm text-muted-foreground @2xl:block"
+    />
+    <span className="num num-right hidden text-xs text-muted-foreground @2xl:block">
       {formatIsoDate(debt.payoffDate)}
     </span>
     <DebtRowActions debt={debt} />
     {/* Bajo sm la fila se parte en dos renglones: nombre y saldo arriba, que es lo que
         se viene a mirar, y cuota y fecha debajo como pie. */}
-    <span className="col-span-2 text-xs text-muted-foreground sm:hidden">
+    <span className="col-span-2 text-xs text-muted-foreground @2xl:hidden">
       <Amount money={debt.monthlyPayment} />
       {' · '}
       <span className="num num-right">{formatIsoDate(debt.payoffDate)}</span>
@@ -110,7 +116,7 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 @lg:flex-row @lg:items-center">
         <SearchInput
           value={table.query}
           onChange={table.setQuery}
@@ -128,12 +134,12 @@ export const DebtList = ({ direction, emptyAction }: Props) => {
           direction={table.sort.direction}
           onChange={(key) => table.setSort(key)}
           onFlip={() => table.toggle(table.sort.key)}
-          className="sm:hidden"
+          className="@2xl:hidden"
         />
       </div>
 
       <TableFrame>
-        <FrameHeader className={`hidden ${COLS} sm:grid`}>
+        <FrameHeader className={`hidden ${COLS} @2xl:grid`}>
           {header('name', labels.name, 'left')}
           {header('balance', copy.list.columns.balance)}
           {header('payment', copy.list.columns.payment)}

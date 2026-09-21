@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Card } from '@/components/ui/card'
 import { Receipt } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { copy } from '@/features/debts/copy'
@@ -46,25 +47,30 @@ const EditDebtScreen = () => {
         <p className="mt-0.5 text-sm text-muted-foreground">{data.name}</p>
       </div>
 
-      <DebtForm
-        pending={updateDebt.isPending}
-        submitLabel={copy.form.submitEdit}
-        onCancel={back}
-        defaults={{
-          direction: data.direction,
-          name: data.name,
-          counterparty: data.counterparty,
-          principal: toMoneyInput(data.principal),
-          currency: data.principal.currency,
-          annualRate: data.annualRate,
-          compounding: data.compounding,
-          termMonths: data.termMonths,
-          startDate: data.startDate,
-          kind: data.kind,
-          budgetBucket: data.budgetBucket ?? '',
-        }}
-        onSubmit={(input) => updateDebt.mutate(input, { onSuccess: back })}
-      />
+      {/* El formulario va en tarjeta y con ancho acotado, como los de crear y editar del
+          resto del sistema: suelto sobre el fondo se estiraba a todo el escritorio y no se
+          leía como una sola cosa. */}
+      <Card className="max-w-4xl px-4">
+        <DebtForm
+          pending={updateDebt.isPending}
+          submitLabel={copy.form.submitEdit}
+          onCancel={back}
+          defaults={{
+            direction: data.direction,
+            name: data.name,
+            counterparty: data.counterparty,
+            principal: toMoneyInput(data.principal),
+            currency: data.principal.currency,
+            annualRate: data.annualRate,
+            compounding: data.compounding,
+            termMonths: data.termMonths,
+            startDate: data.startDate,
+            kind: data.kind,
+            budgetBucket: data.budgetBucket ?? '',
+          }}
+          onSubmit={(input) => updateDebt.mutate(input, { onSuccess: back })}
+        />
+      </Card>
     </section>
   )
 }
