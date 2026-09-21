@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common'
 import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import type { DateRange } from '../../../shared/kernel/date-range.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
-import type { ChartOfAccounts } from '../domain/chart-of-accounts.js'
 import type { JournalEntry } from '../domain/journal-entry.js'
 import type {
   AccountMovementTotals,

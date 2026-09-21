@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { DateRange } from '../../../shared/kernel/date-range.js'
 import { Money } from '../../../shared/kernel/money.js'
 import { unwrap } from '../../../shared/kernel/result.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
