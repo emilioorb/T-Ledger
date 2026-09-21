@@ -67,7 +67,9 @@ Seis raíces, una por clase contable. Es dato editable, no código:
 
 Bajo ellas, la semilla incluye lo mínimo para poder asentar el primer movimiento: `1100` Efectivo y equivalentes con `1101` Caja colones, `1102` Caja dólares, `1111` Banco colones, `1112` Banco dólares y `1190` Traslados entre monedas; `1200` Cuentas por cobrar; `2100` Cuentas por pagar; `3110` Aportes y `3210` Resultados acumulados; `4100` Ingresos; `6100` Gastos generales.
 
-`1190` es la cuenta puente: su saldo en cada moneda queda distinto de cero solo mientras una conversión esté a medio registrar, y ese es justamente su valor diagnóstico.
+`1190` es la cuenta puente. Una conversión completa la deja **deudora en la moneda que sale y acreedora en la que entra**, no en cero: colones y dólares no se suman, y por la decisión 1 el saldo se consulta siempre acotado a una moneda. Lo que sí debe cumplirse es que los dos tramos existan; un tramo suelto en una sola moneda es el asiento incompleto que la cuenta existe para delatar.
+
+Netear la puente en una moneda de presentación exige valuarla a un tipo de cambio, y eso reconoce **diferencial cambiario**, que el plan de cuentas semilla todavía no tiene. Ver preguntas abiertas.
 
 ### Mapa de archivos
 
@@ -2609,7 +2611,7 @@ cd web && npm test && npm run typecheck && npm run build
 
 - [x] Cargar un gasto y verlo aparecer en el mayor de su cuenta
 - [x] Anularlo y ver las dos partidas, con saldo en cero
-- [ ] Cargar una conversión entre monedas y ver la cuenta puente volver a cero — **no se cumple con el diseño actual**: registrada como un asiento de cuatro líneas, 1190 queda deudora en la moneda que sale y acreedora en la que entra. Volver a cero exigiría convertir saldos a una moneda común, que la decisión 1 descarta. Hay que decidir si el criterio se reescribe o si falta un reporte de posición por moneda.
+- [x] Cargar una conversión entre monedas y ver la cuenta puente con sus dos tramos: deudora en la moneda que sale, acreedora en la que entra
 - [x] Intentar cerrar septiembre con agosto abierto y leer la razón en pantalla
 - [x] Cerrar agosto y comprobar que un movimiento con fecha de agosto es rechazado con un toast
 - [x] Ninguna pantalla con desplazamiento horizontal a 360 px
@@ -2637,7 +2639,7 @@ git commit -m "✨ feat: pantallas de contabilidad, reportes y cierre mensual"
 
 - [x] `cd api && npm test` y `cd web && npm test` en verde
 - [x] Un gasto cargado como movimiento llega hasta el estado de situación
-- [ ] Una conversión entre monedas deja la cuenta puente en cero — ver la nota del paso 9 de la Tarea 8: contradice la decisión 1 del propio plan
+- [x] Una conversión entre monedas deja la cuenta puente con los dos tramos registrados y ningún tramo suelto en una misma moneda
 - [x] La identidad contable cuadra con datos reales cargados
 - [x] Un mes cerrado rechaza asientos, y reabrirlo arrastra los posteriores
 - [ ] Revisión con Emilio antes de la rebanada 4
@@ -2658,3 +2660,7 @@ git commit -m "✨ feat: pantallas de contabilidad, reportes y cierre mensual"
 ## Preguntas abiertas
 
 - Ninguna bloqueante. El plan de cuentas semilla es un punto de partida editable; si Emilio prefiere otro, se cambia el dato sin tocar código.
+
+- **Diferencial cambiario, pendiente de rebanada.** Todo el módulo trata cada moneda como un libro separado, y con eso alcanza para registrar, cuadrar y cerrar. Lo que no responde es cuánto vale el patrimonio en una sola moneda: para eso hay que valuar los saldos en moneda extranjera a un tipo de cambio, y la diferencia contra el tipo histórico es una ganancia o una pérdida cambiaria que hoy no tiene cuenta ni asiento.
+
+  Lo que haría falta el día que se aborde: una cuenta de resultados para el diferencial, un proceso de revaluación a una fecha, y un estado de situación que ofrezca moneda de presentación además de moneda de consulta. No bloquea nada de lo construido: la contabilidad por moneda cierra sola. Lo que no puede hacerse hasta entonces es sumar CRC y USD en un solo número, y ninguna pantalla lo intenta.
