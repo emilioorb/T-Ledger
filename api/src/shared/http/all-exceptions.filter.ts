@@ -5,6 +5,7 @@ import {
   type ArgumentsHost,
   type ExceptionFilter,
 } from '@nestjs/common'
+import { captureException } from '@sentry/node'
 import type { Response } from 'express'
 import { ConflictError, NotFoundError, SemanticValidationError } from './api-error.js'
 
@@ -19,7 +20,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>()
     const { status, body } = this.describe(exception)
-    if (status >= 500) this.logger.error(exception)
+    // Solo lo que termina en 500 llega a Sentry: un 404 o un 422 son el sistema funcionando,
+    // y reportarlos enterraría lo que de verdad se rompió. Este `if` ya era el criterio de
+    // «esto es grave» para el log, así que la captura va acá y no en un filtro aparte, que
+    // tendría su propia idea de lo mismo. Si no hay DSN, `captureException` no hace nada.
+    if (status >= 500) {
+      this.logger.error(exception)
+      captureException(exception)
+    }
     response.status(status).json(body)
   }
 

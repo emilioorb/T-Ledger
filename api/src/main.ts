@@ -1,3 +1,13 @@
+// Primero de todo: `instrument` llama a `Sentry.init`, y una captura anterior a esa llamada
+// se pierde en silencio. En ESM los módulos se evalúan en el orden en que están importados,
+// así que estar arriba alcanza.
+//
+// La guía de Sentry pide arrancar Node con `--import` en vez de esto, porque su
+// instrumentación automática engancha la carga de módulos y necesita hacerlo antes de que
+// se carguen. Acá no aplica: con `tracesSampleRate: 0` no hay spans que instrumentar, y lo
+// único que se usa es `captureException` desde el filtro de excepciones. El día que se
+// encienda el tracing, esto vuelve a ser `--import` y hay que acordarse.
+import './instrument.js'
 import 'reflect-metadata'
 import { NestFactory } from '@nestjs/core'
 import { createDocument } from 'zod-openapi'
