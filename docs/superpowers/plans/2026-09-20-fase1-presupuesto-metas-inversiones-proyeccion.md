@@ -798,7 +798,7 @@ Interés ganado = 1.030.301 − 1.000.000 = **30.301 céntimos**
 
 A 12 meses: 10.000 × 1,01¹² = 10.000 × 1,126825030131969… = ₡11.268,25 (1.126.825 céntimos).
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 ```ts
 const inversion = (overrides = {}) =>
@@ -887,7 +887,7 @@ El aporte que capitaliza desde su propia fecha es el caso que distingue una impl
 
 Que una inversión a plazo deje de capitalizar al vencer también importa: después del vencimiento la plata está disponible, no rindiendo.
 
-- [ ] **Paso 2: Implementar**
+- [x] **Paso 2: Implementar**
 
 ```ts
 // Valor = P·(1+i)^n, con n en meses completos. Cada aporte capitaliza desde su
@@ -903,13 +903,13 @@ export const compoundedValue = (principal: Money, monthlyRate: Decimal, months: 
 
 `valueAt` acota la fecha al vencimiento cuando la inversión es a plazo, cuenta los meses completos entre cada capital y esa fecha, y suma los valores capitalizados del principal y de cada aporte.
 
-- [ ] **Paso 3: Persistir y exponer**
+- [x] **Paso 3: Persistir y exponer**
 
 Esquema con `investments` e `investment_contributions`, montos en `BigInt`, tasa en `Decimal(9,6)`, fechas en `@db.Date`. API: `GET|POST /investments`, `GET|PATCH|DELETE /investments/:id`, `POST /investments/:id/contributions` y `GET /investments/:id/projection?at=YYYY-MM-DD`.
 
 Al vencer una inversión, el caso de uso emite `InvestmentMatured`.
 
-- [ ] **Paso 4: Verificar y commitear**
+- [x] **Paso 4: Verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -918,11 +918,11 @@ git commit -m "✨ feat: inversiones con capitalización y valor proyectado"
 ```
 
 **Acceptance criteria:**
-- [ ] El valor a 3 y a 12 meses coincide con el cálculo hecho a mano
-- [ ] Un aporte capitaliza desde su fecha, no desde la apertura
-- [ ] Una inversión a plazo deja de capitalizar al vencer
-- [ ] Una tasa de 0 % mantiene el capital
-- [ ] Un plazo fijo sin vencimiento es rechazado
+- [x] El valor a 3 y a 12 meses coincide con el cálculo hecho a mano
+- [x] Un aporte capitaliza desde su fecha, no desde la apertura
+- [x] Una inversión a plazo deja de capitalizar al vencer
+- [x] Una tasa de 0 % mantiene el capital
+- [x] Un plazo fijo sin vencimiento es rechazado
 
 ---
 

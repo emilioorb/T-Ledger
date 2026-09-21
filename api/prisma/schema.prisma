@@ -236,3 +236,40 @@ model GoalContribution {
   @@index([goalId])
   @@map("goal_contributions")
 }
+
+enum InvestmentKind {
+  FIXED_TERM
+  OPEN
+}
+
+model Investment {
+  id             String         @id @default(uuid(7))
+  name           String
+  principalMinor BigInt
+  currency       String         @db.Char(3)
+  annualRate     Decimal        @db.Decimal(9, 6)
+  compounding    Compounding
+  openedAt       DateTime       @db.Date
+  kind           InvestmentKind
+  maturesAt      DateTime?      @db.Date
+  accountCode    String?
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+
+  contributions InvestmentContribution[]
+
+  @@index([maturesAt])
+  @@map("investments")
+}
+
+model InvestmentContribution {
+  id           String   @id @default(uuid(7))
+  investmentId String
+  date         DateTime @db.Date
+  amountMinor  BigInt
+  currency     String   @db.Char(3)
+
+  investment Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+
+  @@index([investmentId])
+  @@map("investment_contributions")
+}
