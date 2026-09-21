@@ -1,4 +1,5 @@
 import type { DateRange } from '../../../shared/kernel/date-range.js'
+import type { PeriodKey } from './accounting-period.js'
 import type { CategoryKind } from './category.js'
 import type { Movement, MovementStatus } from './movement.js'
 
@@ -21,6 +22,11 @@ export interface MovementRepository {
   findAll(filters: MovementFilters, page: number, pageSize: number): Promise<MovementPage>
   findById(id: string): Promise<Movement | null>
   save(movement: Movement): Promise<void>
+
+  // Un movimiento activo sin asiento es lo que impide cerrar el mes. Se cuenta en la
+  // base: la pantalla de cierre solo necesita el número, no los movimientos.
+  countUnposted(range: DateRange): Promise<number>
+  monthsWithMovements(): Promise<PeriodKey[]>
 }
 
 export const MOVEMENT_REPOSITORY = Symbol('MOVEMENT_REPOSITORY')

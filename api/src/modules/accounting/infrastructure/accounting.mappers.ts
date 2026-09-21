@@ -131,3 +131,14 @@ export const periodToDomain = (row: PeriodRow): AccountingPeriod =>
     row.status as PeriodStatus,
     row.closedAt,
   )
+
+// Las filas vienen con una fecha por día distinto; el mes con actividad es lo único
+// que interesa, así que se colapsan sin repetir.
+export const monthsOf = (rows: readonly { date: Date }[]): PeriodKey[] => {
+  const months = new Map<string, PeriodKey>()
+  for (const row of rows) {
+    const key = PeriodKey.fromDate(row.date)
+    months.set(key.toString(), key)
+  }
+  return [...months.values()]
+}

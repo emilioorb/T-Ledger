@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common'
+import type { DateRange } from '../../../shared/kernel/date-range.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
+import { PeriodKey } from '../domain/accounting-period.js'
 import type { Movement } from '../domain/movement.js'
 import type {
   MovementFilters,
   MovementPage,
   MovementRepository,
 } from '../domain/movement-repository.port.js'
-import { movementToDomain, type MovementRow } from './accounting.mappers.js'
+import { monthsOf, movementToDomain, type MovementRow } from './accounting.mappers.js'
 
 @Injectable()
 export class PrismaMovementRepository implements MovementRepository {
@@ -55,5 +57,31 @@ export class PrismaMovementRepository implements MovementRepository {
       create: { id: movement.id, ...data },
       update: data,
     })
+  }
+
+  // Un movimiento anulado no cuenta: su falta de asiento es el estado esperado.
+  async countUnposted(range: DateRange): Promise<number> {
+    const candidates = await this.prisma.movement.findMany({
+      where: { status: 'ACTIVE', date: { gte: range.from, lte: range.to } },
+      select: { id: true },
+    })
+    if (candidates.length === 0) return 0
+
+    const posted = await this.prisma.journalEntry.findMany({
+      where: { sourceMovementId: { in: candidates.map((row) => row.id) } },
+      select: { sourceMovementId: true },
+    })
+    const postedIds = new Set(posted.map((row) => row.sourceMovementId))
+
+    return candidates.filter((row) => !postedIds.has(row.id)).length
+  }
+
+  async monthsWithMovements(): Promise<PeriodKey[]> {
+    const rows = await this.prisma.movement.findMany({
+      distinct: ['date'],
+      select: { date: true },
+      orderBy: { date: 'asc' },
+    })
+    return monthsOf(rows)
   }
 }

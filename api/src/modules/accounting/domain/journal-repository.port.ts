@@ -1,5 +1,6 @@
 import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import type { DateRange } from '../../../shared/kernel/date-range.js'
+import type { PeriodKey } from './accounting-period.js'
 import type { JournalEntry } from './journal-entry.js'
 
 export interface AccountMovementTotals {
@@ -24,6 +25,7 @@ export interface JournalRepository {
   totalsByAccount(currency: CurrencyCode, range: DateRange): Promise<AccountMovementTotals[]>
   totalsUpTo(currency: CurrencyCode, at: Date): Promise<AccountMovementTotals[]>
   ledgerFor(accountCode: string, currency: CurrencyCode, range: DateRange): Promise<JournalEntry[]>
+  monthsWithEntries(): Promise<PeriodKey[]>
   openingBalanceFor(
     accountCode: string,
     currency: CurrencyCode,

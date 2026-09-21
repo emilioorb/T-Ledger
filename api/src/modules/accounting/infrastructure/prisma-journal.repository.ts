@@ -2,13 +2,14 @@ import { Injectable } from '@nestjs/common'
 import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import type { DateRange } from '../../../shared/kernel/date-range.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
+import type { PeriodKey } from '../domain/accounting-period.js'
 import type { JournalEntry } from '../domain/journal-entry.js'
 import type {
   AccountMovementTotals,
   JournalPage,
   JournalRepository,
 } from '../domain/journal-repository.port.js'
-import { journalEntryToDomain, type JournalEntryRow } from './accounting.mappers.js'
+import { journalEntryToDomain, monthsOf, type JournalEntryRow } from './accounting.mappers.js'
 import { PrismaAccountRepository } from './prisma-account.repository.js'
 
 const ENTRY_INCLUDE = { lines: true } as const
@@ -137,6 +138,15 @@ export class PrismaJournalRepository implements JournalRepository {
     })
     const chart = await this.accounts.loadChart()
     return rows.map((row) => journalEntryToDomain(row as JournalEntryRow, chart))
+  }
+
+  async monthsWithEntries(): Promise<PeriodKey[]> {
+    const rows = await this.prisma.journalEntry.findMany({
+      distinct: ['date'],
+      select: { date: true },
+      orderBy: { date: 'asc' },
+    })
+    return monthsOf(rows)
   }
 
   async openingBalanceFor(
