@@ -77,7 +77,7 @@ escapadas. Es dominio puro y no sabe nada de bancos: recibe texto y devuelve fil
 **Interfaces:**
 - Produces: `parseCsv(text: string, delimiter: string): string[][]`
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 `api/src/modules/banking/domain/csv.spec.ts`:
 
@@ -124,7 +124,7 @@ describe('parseCsv', () => {
 })
 ```
 
-- [ ] **Paso 2: Correr y confirmar que falla**
+- [x] **Paso 2: Correr y confirmar que falla**
 
 ```bash
 cd api && npx vitest run csv.spec
@@ -132,7 +132,7 @@ cd api && npx vitest run csv.spec
 
 Esperado: falla con que `./csv.js` no existe.
 
-- [ ] **Paso 3: Implementar**
+- [x] **Paso 3: Implementar**
 
 `api/src/modules/banking/domain/csv.ts`:
 
@@ -191,7 +191,7 @@ export const parseCsv = (text: string, delimiter: string): string[][] => {
 }
 ```
 
-- [ ] **Paso 4: Correr hasta verde y commitear**
+- [x] **Paso 4: Correr hasta verde y commitear**
 
 ```bash
 cd api && npx vitest run csv.spec && npm run typecheck && npm run lint
@@ -200,10 +200,10 @@ git commit -m "✨ feat: parser de CSV con comillas y escapes para los extractos
 ```
 
 **Acceptance criteria:**
-- [ ] Un delimitador dentro de comillas no parte la celda
-- [ ] Las comillas escapadas se desescapan
-- [ ] El BOM de Excel no ensucia la primera celda
-- [ ] Una celda vacía se conserva
+- [x] Un delimitador dentro de comillas no parte la celda
+- [x] Las comillas escapadas se desescapan
+- [x] El BOM de Excel no ensucia la primera celda
+- [x] Una celda vacía se conserva
 
 ---
 
@@ -228,7 +228,7 @@ columna.
   - `interface ParsedLine { date: Date; description: string; reference: string | null; amount: Money }`
   - `parseStatement(text: string, profile: ImportProfile, currency: CurrencyCode): Result<ParsedLine[], RangeError>`
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 `api/src/modules/banking/domain/statement-parsing.spec.ts`:
 
@@ -369,13 +369,13 @@ describe('ImportProfile', () => {
 })
 ```
 
-- [ ] **Paso 2: Correr y confirmar que falla**
+- [x] **Paso 2: Correr y confirmar que falla**
 
 ```bash
 cd api && npx vitest run statement-parsing
 ```
 
-- [ ] **Paso 3: Implementar el perfil**
+- [x] **Paso 3: Implementar el perfil**
 
 `api/src/modules/banking/domain/import-profile.ts`:
 
@@ -456,7 +456,7 @@ export class ImportProfile {
 }
 ```
 
-- [ ] **Paso 4: Implementar la lectura**
+- [x] **Paso 4: Implementar la lectura**
 
 `api/src/modules/banking/domain/bank-line.ts`:
 
@@ -567,7 +567,7 @@ const amountOf = (
 }
 ```
 
-- [ ] **Paso 5: Correr, verificar y commitear**
+- [x] **Paso 5: Correr, verificar y commitear**
 
 ```bash
 cd api && npx vitest run statement-parsing && npm run typecheck && npm run lint
@@ -576,11 +576,11 @@ git commit -m "✨ feat: perfil de importación y lectura de extractos CSV"
 ```
 
 **Acceptance criteria:**
-- [ ] Un perfil sin monto y sin el par débito/crédito es rechazado
-- [ ] El débito de dos columnas entra negativo
-- [ ] Un monto con miles y coma decimal se lee bien
-- [ ] El error de lectura nombra la fila
-- [ ] Las filas vacías del final no rompen la importación
+- [x] Un perfil sin monto y sin el par débito/crédito es rechazado
+- [x] El débito de dos columnas entra negativo
+- [x] Un monto con miles y coma decimal se lee bien
+- [x] El error de lectura nombra la fila
+- [x] Las filas vacías del final no rompen la importación
 
 ---
 
@@ -616,7 +616,7 @@ un mapeo exigiría tocar la base a mano, que es justamente lo que la decisión 4
   - `BankStatementRepository.markPending(lineId): Promise<void>`
   - `BankStatementRepository.markIgnored(lineId): Promise<void>`
 
-- [ ] **Paso 1: Escribir el test del hash**
+- [x] **Paso 1: Escribir el test del hash**
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -660,7 +660,7 @@ describe('hashOfLine', () => {
 })
 ```
 
-- [ ] **Paso 2: Implementar el hash**
+- [x] **Paso 2: Implementar el hash**
 
 ```ts
 import { createHash } from 'node:crypto'
@@ -682,7 +682,7 @@ export const hashOfLine = (bankAccountId: string, line: ParsedLine): string =>
     .digest('hex')
 ```
 
-- [ ] **Paso 3: Ampliar el esquema**
+- [x] **Paso 3: Ampliar el esquema**
 
 ```prisma
 enum BankLineStatus {
@@ -774,7 +774,7 @@ el código: aunque dos importaciones simultáneas pasaran el filtro, la base rec
 cd api && npx prisma migrate dev --name add_banking && npx prisma generate
 ```
 
-- [ ] **Paso 4: Escribir el test de integración del repositorio**
+- [x] **Paso 4: Escribir el test de integración del repositorio**
 
 `prisma-bank-statement.repository.spec.ts`, con Testcontainers igual que los de contabilidad:
 
@@ -829,7 +829,7 @@ describe('PrismaBankStatementRepository', () => {
 })
 ```
 
-- [ ] **Paso 5: Implementar el repositorio de extractos**
+- [x] **Paso 5: Implementar el repositorio de extractos**
 
 La deduplicación la hace la base con `skipDuplicates`, que se apoya en el índice único
 `[bankAccountId, hash]`. Consultar primero qué hashes existen y después insertar dejaría una
@@ -930,7 +930,7 @@ async markIgnored(lineId: string): Promise<void> {
 }
 ```
 
-- [ ] **Paso 6: Los dos CRUD de cuentas y perfiles**
+- [x] **Paso 6: Los dos CRUD de cuentas y perfiles**
 
 `ManageBankAccountsUseCase` y `ManageImportProfilesUseCase` siguen el patrón de
 `ManageCategoriesUseCase` de contabilidad: `list`, `find`, `create`, `update`, con
@@ -952,7 +952,7 @@ Los controladores exponen `GET|POST /bank-accounts`, `GET|PATCH /bank-accounts/:
 `GET|POST /import-profiles` y `GET|PATCH /import-profiles/:id`, con esquemas Zod en
 `banking.schemas.ts` y `title` en cada `meta`, como manda la regla 10 de backend.
 
-- [ ] **Paso 7: Verificar y commitear**
+- [x] **Paso 7: Verificar y commitear**
 
 ```bash
 cd api && npm test -- banking && npm run typecheck && npm run lint
@@ -961,11 +961,11 @@ git commit -m "✨ feat: cuentas bancarias, perfiles y extractos con identidad p
 ```
 
 **Acceptance criteria:**
-- [ ] Reimportar el mismo archivo reporta 0 importadas y N duplicadas
-- [ ] Dos extractos solapados suman solo lo nuevo
-- [ ] La misma línea en otra cuenta bancaria entra
-- [ ] La unicidad está en la base, no solo en el código
-- [ ] Una cuenta bancaria apuntando a una agrupadora es rechazada con 422
+- [x] Reimportar el mismo archivo reporta 0 importadas y N duplicadas
+- [x] Dos extractos solapados suman solo lo nuevo
+- [x] La misma línea en otra cuenta bancaria entra
+- [x] La unicidad está en la base, no solo en el código
+- [x] Una cuenta bancaria apuntando a una agrupadora es rechazada con 422
 
 ---
 
@@ -992,7 +992,7 @@ para que un perfil mal mapeado se vea antes y no después de meter cien líneas 
   - `ImportStatementUseCase.execute(file, bankAccountId, profileId): Promise<{ statementId: string; imported: number; duplicated: number }>`
   - `POST /api/v1/bank-statements/preview` y `POST /api/v1/bank-statements`, ambos `multipart/form-data`
 
-- [ ] **Paso 1: El tipo del archivo subido, sin `@types/multer`**
+- [x] **Paso 1: El tipo del archivo subido, sin `@types/multer`**
 
 `uploaded-file.ts`:
 
@@ -1005,7 +1005,7 @@ export interface UploadedFile {
 }
 ```
 
-- [ ] **Paso 2: Escribir el test de punta a punta que falla**
+- [x] **Paso 2: Escribir el test de punta a punta que falla**
 
 ```ts
 describe('importación de extractos', () => {
@@ -1059,7 +1059,7 @@ describe('importación de extractos', () => {
 })
 ```
 
-- [ ] **Paso 3: Implementar los casos de uso y el controlador**
+- [x] **Paso 3: Implementar los casos de uso y el controlador**
 
 El controlador usa `FileInterceptor` de `@nestjs/platform-express`, que ya está instalado, y
 decodifica el buffer con la codificación del perfil:
@@ -1071,7 +1071,7 @@ const text = file.buffer.toString(profile.encoding === 'latin1' ? 'latin1' : 'ut
 Un archivo sin ninguna línea legible es `SemanticValidationError`: importar cero líneas en
 silencio dejaría a Emilio creyendo que el banco no tuvo movimientos.
 
-- [ ] **Paso 4: Verificar y commitear**
+- [x] **Paso 4: Verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -1080,11 +1080,11 @@ git commit -m "✨ feat: importación de extractos con vista previa del mapeo"
 ```
 
 **Acceptance criteria:**
-- [ ] La vista previa no escribe en la base
-- [ ] Importar dos veces el mismo archivo no duplica
-- [ ] Un CSV que no coincide con el perfil responde 422 con la fila
-- [ ] Un archivo vacío no crea el extracto
-- [ ] La codificación del perfil se respeta
+- [x] La vista previa no escribe en la base
+- [x] Importar dos veces el mismo archivo no duplica
+- [x] Un CSV que no coincide con el perfil responde 422 con la fila
+- [x] Un archivo vacío no crea el extracto
+- [x] La codificación del perfil se respeta
 
 ---
 
@@ -1108,7 +1108,7 @@ pura con puntaje y razón, más los tres saldos que la pantalla necesita.
   - `suggestMatches(lines: readonly StoredBankLine[], candidates: readonly MovementCandidate[]): MatchSuggestion[]`
   - `interface MovementCandidate { id: string; date: Date; amount: Money; receiptUrl: string | null; kind: 'EXPENSE' | 'INCOME' }`
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 ```ts
 describe('suggestMatches', () => {
@@ -1187,7 +1187,7 @@ describe('suggestMatches', () => {
 })
 ```
 
-- [ ] **Paso 2: Implementar**
+- [x] **Paso 2: Implementar**
 
 `api/src/modules/banking/domain/reconciliation.ts`:
 
@@ -1306,14 +1306,14 @@ export const suggestMatches = (
 }
 ```
 
-- [ ] **Paso 3: Caso de uso y los tres saldos**
+- [x] **Paso 3: Caso de uso y los tres saldos**
 
 `ReconcileUseCase.execute(bankAccountId, range, page, pageSize)` devuelve las líneas pendientes, las sugerencias,
 y tres montos: el saldo contable de la cuenta a la fecha final —`totalsUpTo` del repositorio de
 asientos, que ya existe—, el saldo del extracto —la suma de las líneas importadas— y la
 diferencia. Con todo conciliado la diferencia es cero.
 
-- [ ] **Paso 4: Verificar y commitear**
+- [x] **Paso 4: Verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -1322,11 +1322,11 @@ git commit -m "✨ feat: sugerencias de conciliación con puntaje y razón"
 ```
 
 **Acceptance criteria:**
-- [ ] Un gasto del banco no se cruza con un ingreso
-- [ ] Un movimiento se sugiere para una sola línea
-- [ ] El empate se devuelve marcado como ambiguo, no resuelto al azar
-- [ ] La exacta gana sobre la cercana
-- [ ] Los tres saldos cuadran cuando todo está conciliado
+- [x] Un gasto del banco no se cruza con un ingreso
+- [x] Un movimiento se sugiere para una sola línea
+- [x] El empate se devuelve marcado como ambiguo, no resuelto al azar
+- [x] La exacta gana sobre la cercana
+- [x] Los tres saldos cuadran cuando todo está conciliado
 
 ---
 
@@ -1352,7 +1352,7 @@ módulo toca la contabilidad, y lo hace por la puerta que ya existe.
   - `IgnoreLineUseCase.execute(lineId: string): Promise<void>`
   - `LineToMovementUseCase.execute(lineId: string, input: { categoryId: string; counterparty?: string }): Promise<{ movementId: string }>`
 
-- [ ] **Paso 1: Escribir el test de punta a punta que falla**
+- [x] **Paso 1: Escribir el test de punta a punta que falla**
 
 ```ts
 describe('acciones de conciliación', () => {
@@ -1431,7 +1431,7 @@ describe('acciones de conciliación', () => {
 El caso del período cerrado es el que prueba la decisión 1: la línea no escribe el asiento por su
 cuenta, así que hereda el guardián sin que el módulo `banking` sepa que existe.
 
-- [ ] **Paso 2: Implementar**
+- [x] **Paso 2: Implementar**
 
 ```ts
 @Injectable()
@@ -1480,7 +1480,7 @@ export class LineToMovementUseCase {
 otra línea —`ConflictError` si lo está— y llama a `markMatched`. `UnmatchUseCase` y
 `IgnoreLineUseCase` son `markPending` y `markIgnored` sobre el mismo repositorio.
 
-- [ ] **Paso 3: Verificar y commitear**
+- [x] **Paso 3: Verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -1489,11 +1489,11 @@ git commit -m "✨ feat: confirmar, deshacer, ignorar y convertir líneas en mov
 ```
 
 **Acceptance criteria:**
-- [ ] Un movimiento no se puede conciliar con dos líneas
-- [ ] Deshacer devuelve la línea a pendiente
-- [ ] Convertir crea movimiento y asiento, y concilia la línea
-- [ ] Una línea de un mes cerrado responde 409
-- [ ] Una línea ya conciliada no se convierte dos veces
+- [x] Un movimiento no se puede conciliar con dos líneas
+- [x] Deshacer devuelve la línea a pendiente
+- [x] Convertir crea movimiento y asiento, y concilia la línea
+- [x] Una línea de un mes cerrado responde 409
+- [x] Una línea ya conciliada no se convierte dos veces
 
 ---
 
@@ -1509,7 +1509,7 @@ la conciliación, que es la que importa.
 - Create: `web/src/features/banking/` — `copy.ts`, `types.ts`, `use-banking.ts`, componentes
 - Modify: `web/src/components/app-sidebar.tsx`, `page-breadcrumb.tsx`
 
-- [ ] **Paso 1: Copy y composición**
+- [x] **Paso 1: Copy y composición**
 
 Regenerar tipos con `npm run api:types`. Todo el texto con `copywriting`, en
 `web/src/features/banking/copy.ts`. Resolver la composición con `impeccable shape` antes del JSX.
@@ -1519,7 +1519,7 @@ banco a la izquierda y movimiento sugerido a la derecha, con la razón de la sug
 dos y las acciones al lado. Una tabla de líneas obligaría a buscar el movimiento en otra parte,
 que es exactamente el trabajo que la pantalla existe para evitar.
 
-- [ ] **Paso 2: Importación**
+- [x] **Paso 2: Importación**
 
 Subida con vista previa obligatoria: se elige cuenta y perfil, se sube el archivo, se ven las
 primeras filas ya interpretadas —fecha, descripción, monto— y recién ahí aparece el botón de
@@ -1528,7 +1528,7 @@ importar. Si el perfil está mal mapeado, se ve en la vista previa y no después
 El resultado dice cuántas entraron y cuántas se descartaron por duplicadas. Que diga «0 nuevas, 47
 duplicadas» es información, no un error: significa que ese archivo ya estaba.
 
-- [ ] **Paso 3: Conciliación**
+- [x] **Paso 3: Conciliación**
 
 Arriba los tres saldos —contable, extracto, diferencia—, con la diferencia siempre a la vista.
 Debajo, las parejas. Una sugerencia ambigua muestra las dos opciones y obliga a elegir; no se
@@ -1539,11 +1539,11 @@ el camino más recorrido de la pantalla y tiene que costar dos clics.
 
 Bajo 768 px la pareja se apila: línea arriba, sugerencia abajo, acciones al final.
 
-- [ ] **Paso 4: Puerta de calidad**
+- [x] **Paso 4: Puerta de calidad**
 
 Capturas a 360, 768 y 1440 px en los dos temas, `impeccable critique`, `audit` y `polish`.
 
-- [ ] **Paso 5: Verificar y commitear**
+- [x] **Paso 5: Verificar y commitear**
 
 ```bash
 cd web && npm test && npm run typecheck && npm run build
@@ -1552,20 +1552,20 @@ git commit -m "✨ feat: pantallas de cuentas bancarias, importación y concilia
 ```
 
 **Acceptance criteria:**
-- [ ] La vista previa aparece antes del botón de importar
-- [ ] Los tres saldos están siempre visibles
-- [ ] Una sugerencia ambigua muestra las dos opciones
-- [ ] Convertir una línea en movimiento cuesta dos clics
-- [ ] Ninguna pantalla con desplazamiento horizontal a 360 px
+- [x] La vista previa aparece antes del botón de importar
+- [x] Los tres saldos están siempre visibles
+- [x] Una sugerencia ambigua muestra las dos opciones
+- [x] Convertir una línea en movimiento cuesta dos clics
+- [x] Ninguna pantalla con desplazamiento horizontal a 360 px
 
 ---
 
 ### Checkpoint: fase 2 completa
 
-- [ ] `cd api && npm test` y `cd web && npm test` en verde
-- [ ] Un CSV real importado deja la diferencia entre saldo contable y saldo del banco explicada
-- [ ] Reimportar el mismo archivo no cambia nada
-- [ ] Una línea del banco no anotada se convierte en movimiento y aparece en el mayor
+- [x] `cd api && npm test` y `cd web && npm test` en verde
+- [x] Un CSV real importado deja la diferencia entre saldo contable y saldo del banco explicada
+- [x] Reimportar el mismo archivo no cambia nada
+- [x] Una línea del banco no anotada se convierte en movimiento y aparece en el mayor
 - [ ] Revisión con Emilio
 
 ---

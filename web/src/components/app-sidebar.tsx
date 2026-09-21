@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import {
+  Banknote,
   BookOpen,
   CalendarCheck,
   FolderTree,
@@ -10,6 +11,7 @@ import {
   Scale,
   Tags,
   Target,
+  Upload,
   Wallet,
 } from 'lucide-react'
 import { NavMain, type NavItem } from '@/components/nav-main'
@@ -24,6 +26,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { copy as accounting } from '@/features/accounting/copy'
+import { copy as banking } from '@/features/banking/copy'
 import { copy as budget } from '@/features/budget/copy'
 import { copy } from '@/features/debts/copy'
 import { copy as goals } from '@/features/goals/copy'
@@ -72,6 +75,14 @@ const navAccounting: NavItem[] = [
   { title: accounting.nav.closing, to: '/contabilidad/cierre', icon: CalendarCheck },
 ]
 
+// El banco es lo que entra desde afuera; la contabilidad, lo que Emilio anota. Separarlos en
+// la navegación es separar las dos fuentes de verdad que la conciliación cruza.
+const navBanking: NavItem[] = [
+  { title: banking.nav.reconciliation, to: '/banco/conciliacion', icon: Scale },
+  { title: banking.nav.import, to: '/banco/importar', icon: Upload },
+  { title: banking.nav.accounts, to: '/banco/cuentas', icon: Banknote },
+]
+
 export const AppSidebar = () => (
   <Sidebar variant="inset" collapsible="icon">
     <SidebarHeader>
@@ -93,6 +104,7 @@ export const AppSidebar = () => (
       <NavMain label={copy.nav.section} items={navMain} />
       <NavMain label={budget.nav.section} items={navPlan} />
       <NavMain label={accounting.nav.section} items={navAccounting} />
+      <NavMain label={banking.nav.section} items={navBanking} />
     </SidebarContent>
 
     <SidebarFooter>

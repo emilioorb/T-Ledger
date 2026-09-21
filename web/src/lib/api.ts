@@ -23,9 +23,14 @@ const isApiErrorBody = (value: unknown): value is ApiErrorBody =>
   typeof (value as ApiErrorBody).error?.message === 'string'
 
 export const apiFetch = async <T>(path: string, init?: RequestInit): Promise<T> => {
+  // Con FormData el navegador pone su propio content-type con el boundary: fijarlo a mano
+  // rompería la subida del archivo.
+  const isFormData = init?.body instanceof FormData
   const response = await fetch(`/api/v1${path}`, {
     ...init,
-    headers: { 'content-type': 'application/json', ...init?.headers },
+    headers: isFormData
+      ? { ...init?.headers }
+      : { 'content-type': 'application/json', ...init?.headers },
   })
 
   if (response.status === 204) return undefined as T

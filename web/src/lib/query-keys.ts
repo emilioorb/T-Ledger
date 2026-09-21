@@ -50,6 +50,15 @@ export const queryKeys = {
     projection: (id: string, at: string) => ['investments', 'projection', id, at] as const,
   },
 
+  banking: {
+    all: ['banking'] as const,
+    accounts: () => ['banking', 'accounts'] as const,
+    profiles: () => ['banking', 'profiles'] as const,
+    statements: () => ['banking', 'statements'] as const,
+    reconciliation: (bankAccountId: string, from: string, to: string) =>
+      ['banking', 'reconciliation', bankAccountId, from, to] as const,
+  },
+
   projection: {
     all: ['projection'] as const,
     cashFlow: (months: number, currency: string) =>

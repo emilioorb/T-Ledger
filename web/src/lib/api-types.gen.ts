@@ -1849,6 +1849,556 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/bank-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista las cuentas bancarias */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cuentas */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BankAccount"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Registra una cuenta bancaria contra una cuenta del plan */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["BankAccountInput"];
+                };
+            };
+            responses: {
+                /** @description Cuenta creada */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BankAccount"];
+                    };
+                };
+                /** @description La cuenta contable no acepta asientos */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank-accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve una cuenta bancaria */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cuenta */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BankAccount"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Modifica una cuenta bancaria */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["BankAccountInput"];
+                };
+            };
+            responses: {
+                /** @description Cuenta modificada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BankAccount"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/import-profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista los perfiles de importación */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Perfiles */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportProfile"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Crea un perfil: cómo leer el CSV de un banco */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ImportProfileInput"];
+                };
+            };
+            responses: {
+                /** @description Perfil creado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportProfile"];
+                    };
+                };
+                /** @description El perfil necesita monto con signo o el par débito y crédito */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/import-profiles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve un perfil */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Perfil */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportProfile"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Modifica un perfil */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ImportProfileInput"];
+                };
+            };
+            responses: {
+                /** @description Perfil modificado */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportProfile"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/bank-statements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista los extractos importados */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Extractos */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Importa un extracto en CSV, saltando las líneas que ya estaban */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Extracto importado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ImportResult"];
+                    };
+                };
+                /** @description El archivo no coincide con el perfil */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank-statements/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lee el archivo con el perfil y devuelve las líneas sin guardar nada */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Líneas leídas */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ParsedBankLine"][];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank-accounts/{id}/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Líneas pendientes, sugerencias y los tres saldos */
+        get: {
+            parameters: {
+                query: {
+                    page?: number;
+                    pageSize?: number;
+                    from: string;
+                    to: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Conciliación */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Reconciliation"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank-lines/{id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Concilia la línea con un movimiento */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MatchLineInput"];
+                };
+            };
+            responses: {
+                /** @description Línea conciliada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description El movimiento ya está conciliado con otra línea */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank-lines/{id}/unmatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deshace la conciliación */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Pendiente otra vez */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank-lines/{id}/ignore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Saca la línea de pendientes sin crear nada */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Línea ignorada */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bank-lines/{id}/to-movement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Crea el movimiento desde la línea y la concilia con él */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["LineToMovementInput"];
+                };
+            };
+            responses: {
+                /** @description Movimiento creado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description El período está cerrado o la línea ya está conciliada */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2066,6 +2616,51 @@ export interface components {
         InvestmentContributionInput: {
             date: string;
             amount: components["schemas"]["Money"];
+        };
+        /** BankAccountInput */
+        BankAccountInput: {
+            name: string;
+            accountCode: string;
+            /** @enum {string} */
+            currency: "CRC" | "USD";
+            /** @default null */
+            profileId: string | null;
+            /** @default true */
+            active: boolean;
+        };
+        /** ImportProfileInput */
+        ImportProfileInput: {
+            name: string;
+            delimiter: string;
+            /** @enum {string} */
+            encoding: "utf-8" | "latin1";
+            /** @default 1 */
+            headerRows: number;
+            dateColumn: number;
+            /** @enum {string} */
+            dateFormat: "DD/MM/YYYY" | "YYYY-MM-DD";
+            descriptionColumn: number;
+            /** @default null */
+            referenceColumn: number | null;
+            /** @default null */
+            amountColumn: number | null;
+            /** @default null */
+            debitColumn: number | null;
+            /** @default null */
+            creditColumn: number | null;
+            /** @enum {string} */
+            decimalSeparator: "." | ",";
+            /** @default null */
+            thousandsSeparator: string | null;
+        };
+        /** MatchLineInput */
+        MatchLineInput: {
+            movementId: string;
+        };
+        /** LineToMovementInput */
+        LineToMovementInput: {
+            categoryId: string;
+            counterparty?: string;
         };
         /** Debt */
         Debt: {
@@ -2354,6 +2949,91 @@ export interface components {
                 date: string;
                 amount: components["schemas"]["MoneyOutput"];
             }[];
+        };
+        /** BankAccount */
+        BankAccount: {
+            id: string;
+            name: string;
+            accountCode: string;
+            /** @enum {string} */
+            currency: "CRC" | "USD";
+            profileId: string | null;
+            active: boolean;
+        };
+        /** ImportProfile */
+        ImportProfile: {
+            name: string;
+            delimiter: string;
+            /** @enum {string} */
+            encoding: "utf-8" | "latin1";
+            /** @default 1 */
+            headerRows: number;
+            dateColumn: number;
+            /** @enum {string} */
+            dateFormat: "DD/MM/YYYY" | "YYYY-MM-DD";
+            descriptionColumn: number;
+            /** @default null */
+            referenceColumn: number | null;
+            /** @default null */
+            amountColumn: number | null;
+            /** @default null */
+            debitColumn: number | null;
+            /** @default null */
+            creditColumn: number | null;
+            /** @enum {string} */
+            decimalSeparator: "." | ",";
+            /** @default null */
+            thousandsSeparator: string | null;
+            id: string;
+        };
+        /** ImportResult */
+        ImportResult: {
+            statementId: string;
+            fileName: string;
+            imported: number;
+            duplicated: number;
+        };
+        /** ParsedBankLine */
+        ParsedBankLine: {
+            date: string;
+            description: string;
+            reference: string | null;
+            amount: components["schemas"]["MoneyOutput"];
+        };
+        /** Reconciliation */
+        Reconciliation: {
+            bankAccountId: string;
+            ledgerBalance: components["schemas"]["MoneyOutput"];
+            statementBalance: components["schemas"]["MoneyOutput"];
+            difference: components["schemas"]["MoneyOutput"];
+            lines: components["schemas"]["BankLine"][];
+            suggestions: components["schemas"]["MatchSuggestion"][];
+            pagination: {
+                page: number;
+                pageSize: number;
+                totalItems: number;
+                totalPages: number;
+            };
+        };
+        /** BankLine */
+        BankLine: {
+            id: string;
+            date: string;
+            description: string;
+            reference: string | null;
+            amount: components["schemas"]["MoneyOutput"];
+            /** @enum {string} */
+            status: "PENDING" | "MATCHED" | "IGNORED";
+            movementId: string | null;
+        };
+        /** MatchSuggestion */
+        MatchSuggestion: {
+            lineId: string;
+            movementId: string;
+            score: number;
+            /** @enum {string} */
+            reason: "EXACT" | "NEAR_DATE" | "REFERENCE";
+            ambiguous: boolean;
         };
         /** Money */
         MoneyOutput: {
