@@ -30,7 +30,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
     }
     await this.prisma.client.category.upsert({
       where: { id: category.id },
-      create: { id: category.id, ...data },
+      create: { bookId: this.prisma.libro, id: category.id, ...data },
       update: data,
     })
   }

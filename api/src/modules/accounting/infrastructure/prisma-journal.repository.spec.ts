@@ -10,6 +10,7 @@ import { JournalEntry, type JournalLine } from '../domain/journal-entry.js'
 import { CHART_SEED } from './chart-seed.js'
 import { PrismaAccountRepository } from './prisma-account.repository.js'
 import { PrismaJournalRepository } from './prisma-journal.repository.js'
+import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
 const usd = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'USD')
@@ -51,7 +52,12 @@ const asientoDeConversion = (id: string, date: Date) =>
     { accountCode: '1190', amount: usd(1_000_00n), side: 'CREDIT' },
   ])
 
+// Este test no tiene nada que decir sobre libros, pero toda consulta necesita uno:
+// sin contexto la extensión de Prisma corta, que es exactamente lo que queremos.
+beforeEach(entrarEnLibroDePrueba)
+
 beforeAll(async () => {
+  entrarEnLibroDePrueba()
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()

@@ -50,7 +50,7 @@ export class PrismaBankAccountRepository implements BankAccountRepository {
     }
     await this.prisma.client.bankAccount.upsert({
       where: { id: account.id },
-      create: { id: account.id, ...data },
+      create: { bookId: this.prisma.libro, id: account.id, ...data },
       update: data,
     })
   }

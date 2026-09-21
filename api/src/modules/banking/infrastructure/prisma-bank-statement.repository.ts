@@ -63,13 +63,15 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
       const db = this.prisma.client
       await db.bankStatement.create({
         data: {
+          bookId: this.prisma.libro, 
           id: statement.id,
           bankAccountId: statement.bankAccountId,
           fileName: statement.fileName,
         },
       })
 
-      const { count } = await db.bankLine.createMany({ data: rows, skipDuplicates: true })
+      const conLibro = rows.map((fila) => ({ ...fila, bookId: this.prisma.libro }))
+      const { count } = await db.bankLine.createMany({ data: conLibro, skipDuplicates: true })
 
       await db.bankStatement.update({
         where: { id: statement.id },

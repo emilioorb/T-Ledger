@@ -88,13 +88,14 @@ export class PrismaBudgetModelRepository implements BudgetModelRepository {
 
       await db.budgetModel.upsert({
         where: { id: model.id },
-        create: { id: model.id, name: model.name, active },
+        create: { bookId: this.prisma.libro, id: model.id, name: model.name, active },
         update: { name: model.name, active },
       })
 
       await db.budgetBucket.deleteMany({ where: { modelId: model.id } })
       await db.budgetBucket.createMany({
         data: model.buckets.map((bucket, index) => ({
+          bookId: this.prisma.libro, 
           modelId: model.id,
           bucketKey: bucket.id,
           name: bucket.name,

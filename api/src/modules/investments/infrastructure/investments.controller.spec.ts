@@ -7,6 +7,7 @@ import { AllExceptionsFilter } from '../../../shared/http/all-exceptions.filter.
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { InvestmentsModule } from '../investments.module.js'
+import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 
 let postgres: RunningPostgres
 let app: INestApplication
@@ -38,7 +39,12 @@ const capital = (amount: string, date = '2026-07-15') => ({
 const crear = async (overrides: object = {}) =>
   (await post('/investments', { ...certificado, ...overrides }).expect(201)).body as { id: string }
 
+// Este test no tiene nada que decir sobre libros, pero toda consulta necesita uno:
+// sin contexto la extensión de Prisma corta, que es exactamente lo que queremos.
+beforeEach(entrarEnLibroDePrueba)
+
 beforeAll(async () => {
+  entrarEnLibroDePrueba()
   postgres = await startPostgres()
   const moduleRef = await Test.createTestingModule({
     imports: [EventEmitterModule.forRoot(), InvestmentsModule],

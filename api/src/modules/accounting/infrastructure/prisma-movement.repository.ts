@@ -69,7 +69,7 @@ export class PrismaMovementRepository implements MovementRepository {
     }
     await this.prisma.client.movement.upsert({
       where: { id: movement.id },
-      create: { id: movement.id, ...data },
+      create: { bookId: this.prisma.libro, id: movement.id, ...data },
       update: data,
     })
   }

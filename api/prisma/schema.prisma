@@ -1,4 +1,3 @@
-
 generator client {
   provider     = "prisma-client"
   output       = "../src/generated/prisma"
@@ -27,6 +26,7 @@ enum DebtDirection {
 
 model Debt {
   id             String        @id @default(uuid(7))
+  bookId         String
   name           String
   counterparty   String
   principalMinor BigInt
@@ -40,8 +40,9 @@ model Debt {
   budgetBucket   String?
   createdAt      DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
+  book           Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([direction])
+  @@index([bookId, direction])
   @@map("debts")
 }
 
@@ -87,7 +88,12 @@ enum PeriodStatus {
 }
 
 model Account {
-  code             String       @id
+  // La clave es el libro más el código, no el código solo: dos libros tienen los dos su
+  // cuenta 1101, y con `code` de clave primaria el segundo libro no podría existir. Se
+  // conserva el código como identificador legible en vez de meter un uuid, porque es lo que
+  // hace usable un plan de cuentas.
+  bookId           String
+  code             String
   name             String
   accountClass     AccountClass
   parentCode       String?
@@ -99,17 +105,21 @@ model Account {
   isCurrencyBridge Boolean      @default(false)
   createdAt        DateTime     @default(now()) @db.Timestamptz(3)
 
-  parent   Account?      @relation("AccountTree", fields: [parentCode], references: [code])
+  // El árbol de cuentas no cruza de libro: el padre se busca dentro del mismo `bookId`.
+  parent   Account?      @relation("AccountTree", fields: [bookId, parentCode], references: [bookId, code])
   children Account[]     @relation("AccountTree")
   lines    JournalLine[]
+  book     Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([parentCode])
-  @@index([accountClass])
+  @@id([bookId, code])
+  @@index([bookId, parentCode])
+  @@index([bookId, accountClass])
   @@map("accounts")
 }
 
 model JournalEntry {
   id               String   @id
+  bookId           String
   date             DateTime @db.Date
   description      String
   reference        String?
@@ -118,14 +128,16 @@ model JournalEntry {
   createdAt        DateTime @default(now()) @db.Timestamptz(3)
 
   lines JournalLine[]
+  book  Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([date])
-  @@index([sourceMovementId])
+  @@index([bookId, date])
+  @@index([bookId, sourceMovementId])
   @@map("journal_entries")
 }
 
 model JournalLine {
   id          String    @id @default(uuid(7))
+  bookId      String
   entryId     String
   accountCode String
   currency    String    @db.Char(3)
@@ -133,27 +145,36 @@ model JournalLine {
   side        EntrySide
 
   entry   JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
-  account Account      @relation(fields: [accountCode], references: [code])
+  // Compuesta porque la cuenta ahora se identifica por libro y código: sin el `bookId` acá,
+  // una línea podría apuntar a la cuenta 1101 de otro libro.
+  account Account      @relation(fields: [bookId, accountCode], references: [bookId, code])
+  book    Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([accountCode, currency])
+  @@index([bookId, accountCode, currency])
   @@index([entryId])
   @@map("journal_lines")
 }
 
 model Category {
   id          String       @id @default(uuid(7))
+  bookId      String
   name        String
   kind        CategoryKind
   accountCode String?
   sortOrder   Int          @default(0)
   active      Boolean      @default(true)
 
-  @@unique([name, kind])
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  // El libro entra en la unicidad: sin él, dos familias no podrían tener las dos una
+  // categoría «Comida».
+  @@unique([bookId, name, kind])
   @@map("categories")
 }
 
 model Movement {
   id                 String         @id
+  bookId             String
   date               DateTime       @db.Date
   kind               CategoryKind
   categoryId         String
@@ -164,33 +185,43 @@ model Movement {
   receiptUrl         String?
   status             MovementStatus @default(ACTIVE)
   createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+  book               Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([date])
-  @@index([categoryId])
-  @@index([status])
+  @@index([bookId, date])
+  @@index([bookId, categoryId])
+  @@index([bookId, status])
   @@map("movements")
 }
 
 model AccountingPeriod {
-  period   String       @id
+  // Cada libro cierra sus propios meses: «2026-09» existe una vez por libro, no una sola vez.
+  bookId   String
+  period   String
   status   PeriodStatus @default(OPEN)
   closedAt DateTime?    @db.Timestamptz(3)
 
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@id([bookId, period])
   @@map("accounting_periods")
 }
 
 model BudgetModel {
   id        String         @id @default(uuid(7))
+  bookId    String
   name      String
   active    Boolean        @default(false)
   createdAt DateTime       @default(now()) @db.Timestamptz(3)
   buckets   BudgetBucket[]
+  book      Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
+  @@index([bookId])
   @@map("budget_models")
 }
 
 model BudgetBucket {
   id           String   @id @default(uuid(7))
+  bookId       String
   modelId      String
   bucketKey    String
   name         String
@@ -200,21 +231,28 @@ model BudgetBucket {
   accountCodes String[]
 
   model BudgetModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  book  Book        @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@unique([modelId, bucketKey])
+  @@index([bookId])
   @@map("budget_buckets")
 }
 
 model BudgetIncome {
-  period      String @id
+  bookId      String
+  period      String
   amountMinor BigInt
   currency    String @db.Char(3)
 
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@id([bookId, period])
   @@map("budget_income")
 }
 
 model Goal {
   id          String   @id @default(uuid(7))
+  bookId      String
   name        String
   targetMinor BigInt
   currency    String   @db.Char(3)
@@ -224,21 +262,24 @@ model Goal {
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
 
   contributions GoalContribution[]
+  book          Book               @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([priority])
+  @@index([bookId, priority])
   @@map("goals")
 }
 
 model GoalContribution {
   id          String   @id @default(uuid(7))
+  bookId      String
   goalId      String
   date        DateTime @db.Date
   amountMinor BigInt
   currency    String   @db.Char(3)
 
   goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([goalId])
+  @@index([bookId, goalId])
   @@map("goal_contributions")
 }
 
@@ -249,6 +290,7 @@ enum InvestmentKind {
 
 model Investment {
   id             String         @id @default(uuid(7))
+  bookId         String
   name           String
   principalMinor BigInt
   currency       String         @db.Char(3)
@@ -261,21 +303,24 @@ model Investment {
   createdAt      DateTime       @default(now()) @db.Timestamptz(3)
 
   contributions InvestmentContribution[]
+  book          Book                     @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([maturesAt])
+  @@index([bookId, maturesAt])
   @@map("investments")
 }
 
 model InvestmentContribution {
   id           String   @id @default(uuid(7))
+  bookId       String
   investmentId String
   date         DateTime @db.Date
   amountMinor  BigInt
   currency     String   @db.Char(3)
 
   investment Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  book       Book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([investmentId])
+  @@index([bookId, investmentId])
   @@map("investment_contributions")
 }
 
@@ -287,6 +332,7 @@ enum BankLineStatus {
 
 model ImportProfile {
   id                 String   @id @default(uuid(7))
+  bookId             String
   name               String
   delimiter          String   @db.Char(1)
   encoding           String
@@ -303,12 +349,15 @@ model ImportProfile {
   createdAt          DateTime @default(now()) @db.Timestamptz(3)
 
   accounts BankAccount[]
+  book     Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
+  @@index([bookId])
   @@map("import_profiles")
 }
 
 model BankAccount {
   id          String   @id @default(uuid(7))
+  bookId      String
   name        String
   accountCode String
   currency    String   @db.Char(3)
@@ -319,12 +368,15 @@ model BankAccount {
   profile    ImportProfile?  @relation(fields: [profileId], references: [id])
   statements BankStatement[]
   lines      BankLine[]
+  book       Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
+  @@index([bookId])
   @@map("bank_accounts")
 }
 
 model BankStatement {
   id             String   @id @default(uuid(7))
+  bookId         String
   bankAccountId  String
   fileName       String
   importedAt     DateTime @default(now()) @db.Timestamptz(3)
@@ -333,13 +385,15 @@ model BankStatement {
 
   bankAccount BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
   lines       BankLine[]
+  book        Book        @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  @@index([bankAccountId])
+  @@index([bookId, bankAccountId])
   @@map("bank_statements")
 }
 
 model BankLine {
   id            String         @id @default(uuid(7))
+  bookId        String
   statementId   String
   bankAccountId String
   date          DateTime       @db.Date
@@ -353,10 +407,11 @@ model BankLine {
 
   statement   BankStatement @relation(fields: [statementId], references: [id], onDelete: Cascade)
   bankAccount BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  book        Book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@unique([bankAccountId, hash])
-  @@index([bankAccountId, status])
-  @@index([date])
+  @@index([bookId, bankAccountId, status])
+  @@index([bookId, date])
   @@map("bank_lines")
 }
 
@@ -427,14 +482,32 @@ model AuthVerification {
 }
 
 model Book {
-  id              String           @id
-  name            String
-  slug            String
-  logo            String?
-  createdAt       DateTime
-  metadata        String?
-  bookmembers     BookMember[]
-  bookinvitations BookInvitation[]
+  id                      String                   @id
+  name                    String
+  slug                    String
+  logo                    String?
+  createdAt               DateTime
+  metadata                String?
+  bookmembers             BookMember[]
+  bookinvitations         BookInvitation[]
+  debts                   Debt[]
+  accounts                Account[]
+  journalEntries          JournalEntry[]
+  journalLines            JournalLine[]
+  categories              Category[]
+  movements               Movement[]
+  accountingPeriods       AccountingPeriod[]
+  budgetModels            BudgetModel[]
+  budgetBuckets           BudgetBucket[]
+  budgetIncomes           BudgetIncome[]
+  goals                   Goal[]
+  goalContributions       GoalContribution[]
+  investments             Investment[]
+  investmentContributions InvestmentContribution[]
+  importProfiles          ImportProfile[]
+  bankAccounts            BankAccount[]
+  bankStatements          BankStatement[]
+  bankLines               BankLine[]
 
   @@unique([slug])
   @@map("Book")

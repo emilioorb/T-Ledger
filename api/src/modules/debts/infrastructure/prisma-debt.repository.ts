@@ -32,7 +32,7 @@ export class PrismaDebtRepository implements DebtRepository {
     const { id, ...rest } = row
     await this.prisma.client.debt.upsert({
       where: { id },
-      create: { id, ...rest },
+      create: { bookId: this.prisma.libro, id, ...rest },
       update: rest,
     })
   }

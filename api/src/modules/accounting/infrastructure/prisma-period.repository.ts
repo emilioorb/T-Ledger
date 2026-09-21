@@ -10,7 +10,7 @@ export class PrismaPeriodRepository implements PeriodRepository {
 
   async find(key: PeriodKey): Promise<AccountingPeriod | null> {
     const row = await this.prisma.client.accountingPeriod.findUnique({
-      where: { period: key.toString() },
+      where: { bookId_period: { bookId: this.prisma.libro, period: key.toString() } },
     })
     return row ? periodToDomain(row as PeriodRow) : null
   }
@@ -38,8 +38,8 @@ export class PrismaPeriodRepository implements PeriodRepository {
       for (const period of periods) {
         const data = { status: period.status, closedAt: period.closedAt }
         await this.prisma.client.accountingPeriod.upsert({
-          where: { period: period.key.toString() },
-          create: { period: period.key.toString(), ...data },
+          where: { bookId_period: { bookId: this.prisma.libro, period: period.key.toString() } },
+          create: { bookId: this.prisma.libro, period: period.key.toString(), ...data },
           update: data,
         })
       }

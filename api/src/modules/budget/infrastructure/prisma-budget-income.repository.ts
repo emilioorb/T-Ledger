@@ -13,7 +13,7 @@ export class PrismaBudgetIncomeRepository implements BudgetIncomeRepository {
 
   async find(period: PeriodKey): Promise<MonthlyIncome | null> {
     const row = await this.prisma.client.budgetIncome.findUnique({
-      where: { period: period.toString() },
+      where: { bookId_period: { bookId: this.prisma.libro, period: period.toString() } },
     })
     if (!row) return null
 
@@ -43,8 +43,8 @@ export class PrismaBudgetIncomeRepository implements BudgetIncomeRepository {
       currency: income.amount.currency,
     }
     await this.prisma.client.budgetIncome.upsert({
-      where: { period: income.period.toString() },
-      create: { period: income.period.toString(), ...data },
+      where: { bookId_period: { bookId: this.prisma.libro, period: income.period.toString() } },
+      create: { bookId: this.prisma.libro, period: income.period.toString(), ...data },
       update: data,
     })
   }

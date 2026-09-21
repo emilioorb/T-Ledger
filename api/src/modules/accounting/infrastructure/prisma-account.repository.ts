@@ -18,7 +18,9 @@ export class PrismaAccountRepository implements AccountRepository {
   }
 
   async findByCode(code: string): Promise<Account | null> {
-    const row = await this.prisma.client.account.findUnique({ where: { code } })
+    // `findFirst` y no `findUnique`: la clave es (bookId, code) y el libro lo completa la
+    // extensión, así que pedirlo por clave compuesta acá solo repetiría lo que ya se sabe.
+    const row = await this.prisma.client.account.findFirst({ where: { code } })
     return row ? accountToDomain(row as AccountRow) : null
   }
 
@@ -45,8 +47,8 @@ export class PrismaAccountRepository implements AccountRepository {
         isCurrencyBridge: account.isCurrencyBridge,
       }
       await this.prisma.client.account.upsert({
-        where: { code: account.code },
-        create: { code: account.code, ...data },
+        where: { bookId_code: { bookId: this.prisma.libro, code: account.code } },
+        create: { bookId: this.prisma.libro, code: account.code, ...data },
         update: data,
       })
     }

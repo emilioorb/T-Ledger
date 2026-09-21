@@ -6,6 +6,7 @@ import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import { Debt } from '../domain/debt.js'
 import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { PrismaDebtRepository } from './prisma-debt.repository.js'
+import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
 const utc = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
@@ -42,7 +43,11 @@ const prestamoOtorgado = () =>
     }),
   )
 
+// Los tests de contabilidad no tienen nada que decir sobre libros, pero toda consulta
+// necesita uno: sin contexto la extensión de Prisma corta, que es justo lo que queremos.
+beforeEach(entrarEnLibroDePrueba)
 beforeAll(async () => {
+  entrarEnLibroDePrueba()
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()

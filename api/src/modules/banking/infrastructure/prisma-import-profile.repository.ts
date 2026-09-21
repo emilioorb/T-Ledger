@@ -74,7 +74,7 @@ export class PrismaImportProfileRepository implements ImportProfileRepository {
     }
     await this.prisma.client.importProfile.upsert({
       where: { id: props.id },
-      create: { id: props.id, ...data },
+      create: { bookId: this.prisma.libro, id: props.id, ...data },
       update: data,
     })
   }

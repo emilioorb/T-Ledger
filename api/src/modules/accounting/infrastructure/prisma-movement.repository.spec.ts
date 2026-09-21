@@ -12,6 +12,7 @@ import { CHART_SEED } from './chart-seed.js'
 import { PrismaAccountRepository } from './prisma-account.repository.js'
 import { PrismaJournalRepository } from './prisma-journal.repository.js'
 import { PrismaMovementRepository } from './prisma-movement.repository.js'
+import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
 const utc = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
@@ -57,7 +58,12 @@ const asientoDe = (movementId: string, date: Date) =>
     ),
   )
 
+// Este test no tiene nada que decir sobre libros, pero toda consulta necesita uno:
+// sin contexto la extensión de Prisma corta, que es exactamente lo que queremos.
+beforeEach(entrarEnLibroDePrueba)
+
 beforeAll(async () => {
+  entrarEnLibroDePrueba()
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()

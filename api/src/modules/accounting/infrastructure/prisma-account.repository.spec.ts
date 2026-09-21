@@ -6,12 +6,19 @@ import { Account } from '../domain/account.js'
 import { SeedChartUseCase } from '../application/seed-chart.use-case.js'
 import { CHART_SEED } from './chart-seed.js'
 import { PrismaAccountRepository } from './prisma-account.repository.js'
+import { LIBRO_DE_PRUEBA } from '../../../shared/libro/libro-de-prueba.js'
+import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 
 let postgres: RunningPostgres
 let prisma: PrismaService
 let repository: PrismaAccountRepository
 
+// Este test no tiene nada que decir sobre libros, pero toda consulta necesita uno:
+// sin contexto la extensión de Prisma corta, que es exactamente lo que queremos.
+beforeEach(entrarEnLibroDePrueba)
+
 beforeAll(async () => {
+  entrarEnLibroDePrueba()
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()
@@ -63,7 +70,9 @@ describe('SeedChartUseCase', () => {
   it('no reaplica la semilla si ya hay cuentas', async () => {
     const useCase = new SeedChartUseCase(repository)
     await useCase.execute()
-    await prisma.account.delete({ where: { code: '1190' } })
+    await prisma.account.delete({
+      where: { bookId_code: { bookId: LIBRO_DE_PRUEBA.bookId, code: '1190' } },
+    })
 
     expect(await useCase.execute()).toBe(0)
     expect(await prisma.account.count()).toBe(CHART_SEED.length - 1)

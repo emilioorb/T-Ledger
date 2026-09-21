@@ -8,6 +8,8 @@ import { startPostgres, type RunningPostgres } from '../../../test/postgres-cont
 import type { ParsedLine } from '../domain/bank-line.js'
 import type { StatementHeader } from '../domain/bank-statement-repository.port.js'
 import { PrismaBankStatementRepository } from './prisma-bank-statement.repository.js'
+import { LIBRO_DE_PRUEBA } from '../../../shared/libro/libro-de-prueba.js'
+import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 
 let postgres: RunningPostgres
 let prisma: PrismaService
@@ -33,7 +35,12 @@ const extracto = (bankAccountId = CUENTA): StatementHeader => ({
   fileName: 'extracto.csv',
 })
 
+// Este test no tiene nada que decir sobre libros, pero toda consulta necesita uno:
+// sin contexto la extensión de Prisma corta, que es exactamente lo que queremos.
+beforeEach(entrarEnLibroDePrueba)
+
 beforeAll(async () => {
+  entrarEnLibroDePrueba()
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()
@@ -56,7 +63,7 @@ beforeEach(async () => {
   ]
   for (const cuenta of cuentas) {
     await prisma.bankAccount.create({
-      data: { ...cuenta, accountCode: '1111', currency: 'CRC' },
+      data: { ...cuenta, bookId: LIBRO_DE_PRUEBA.bookId, accountCode: '1111', currency: 'CRC' },
     })
   }
 })

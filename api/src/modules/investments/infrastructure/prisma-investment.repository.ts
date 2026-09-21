@@ -93,7 +93,7 @@ export class PrismaInvestmentRepository implements InvestmentRepository {
     }
     await this.prisma.client.investment.upsert({
       where: { id: investment.id },
-      create: { id: investment.id, ...data },
+      create: { bookId: this.prisma.libro, id: investment.id, ...data },
       update: data,
     })
   }
@@ -101,6 +101,7 @@ export class PrismaInvestmentRepository implements InvestmentRepository {
   async addContribution(investmentId: string, contribution: InvestmentContribution): Promise<void> {
     await this.prisma.client.investmentContribution.create({
       data: {
+        bookId: this.prisma.libro, 
         id: contribution.id,
         investmentId,
         date: contribution.date,

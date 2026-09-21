@@ -50,5 +50,3 @@ export const owner = ac.newRole({
 })
 
 export const roles = { owner, editor, viewer }
-
-export type Rol = keyof typeof roles
