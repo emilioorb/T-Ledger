@@ -1,0 +1,133 @@
+import type { CurrencyCode } from '../../../shared/kernel/currency.js'
+import { Money } from '../../../shared/kernel/money.js'
+import { unwrap } from '../../../shared/kernel/result.js'
+import { AccountingPeriod, PeriodKey, type PeriodStatus } from '../domain/accounting-period.js'
+import type { AccountClass } from '../domain/account-class.js'
+import { Account } from '../domain/account.js'
+import { Category, type CategoryKind } from '../domain/category.js'
+import type { ChartOfAccounts } from '../domain/chart-of-accounts.js'
+import { JournalEntry, type EntrySide, type JournalLine } from '../domain/journal-entry.js'
+import { Movement, type MovementStatus } from '../domain/movement.js'
+
+export interface AccountRow {
+  code: string
+  name: string
+  accountClass: string
+  parentCode: string | null
+  active: boolean
+  sortOrder: number
+}
+
+export const accountToDomain = (row: AccountRow): Account =>
+  unwrap(
+    Account.create({
+      code: row.code,
+      name: row.name,
+      accountClass: row.accountClass as AccountClass,
+      parentCode: row.parentCode,
+      active: row.active,
+      sortOrder: row.sortOrder,
+    }),
+  )
+
+export interface JournalLineRow {
+  accountCode: string
+  currency: string
+  amountMinor: bigint
+  side: string
+}
+
+export interface JournalEntryRow {
+  id: string
+  date: Date
+  description: string
+  reference: string | null
+  sourceMovementId: string | null
+  reversesEntryId: string | null
+  lines: JournalLineRow[]
+}
+
+export const journalEntryToDomain = (row: JournalEntryRow, chart: ChartOfAccounts): JournalEntry => {
+  const lines: JournalLine[] = row.lines.map((line) => ({
+    accountCode: line.accountCode,
+    amount: Money.fromMinorUnits(line.amountMinor, line.currency as CurrencyCode),
+    side: line.side as EntrySide,
+  }))
+
+  return unwrap(
+    JournalEntry.create(
+      {
+        id: row.id,
+        date: row.date,
+        description: row.description,
+        reference: row.reference,
+        lines,
+        sourceMovementId: row.sourceMovementId,
+        reversesEntryId: row.reversesEntryId,
+      },
+      chart,
+    ),
+  )
+}
+
+export interface CategoryRow {
+  id: string
+  name: string
+  kind: string
+  accountCode: string | null
+  sortOrder: number
+  active: boolean
+}
+
+export const categoryToDomain = (row: CategoryRow): Category =>
+  unwrap(
+    Category.create({
+      id: row.id,
+      name: row.name,
+      kind: row.kind as CategoryKind,
+      accountCode: row.accountCode,
+      sortOrder: row.sortOrder,
+      active: row.active,
+    }),
+  )
+
+export interface MovementRow {
+  id: string
+  date: Date
+  kind: string
+  categoryId: string
+  counterparty: string
+  amountMinor: bigint
+  currency: string
+  paymentAccountCode: string | null
+  receiptUrl: string | null
+  status: string
+}
+
+export const movementToDomain = (row: MovementRow): Movement =>
+  unwrap(
+    Movement.create({
+      id: row.id,
+      date: row.date,
+      kind: row.kind as CategoryKind,
+      categoryId: row.categoryId,
+      counterparty: row.counterparty,
+      amount: Money.fromMinorUnits(row.amountMinor, row.currency as CurrencyCode),
+      paymentAccountCode: row.paymentAccountCode,
+      receiptUrl: row.receiptUrl,
+      status: row.status as MovementStatus,
+    }),
+  )
+
+export interface PeriodRow {
+  period: string
+  status: string
+  closedAt: Date | null
+}
+
+export const periodToDomain = (row: PeriodRow): AccountingPeriod =>
+  AccountingPeriod.restore(
+    unwrap(PeriodKey.parse(row.period)),
+    row.status as PeriodStatus,
+    row.closedAt,
+  )

@@ -1917,7 +1917,7 @@ git commit -m "✨ feat: cierre mensual como bloqueo de período, con sus precon
 - Create: `api/src/modules/accounting/infrastructure/prisma-account.repository.ts`, `prisma-journal.repository.ts`, `prisma-category.repository.ts`, `prisma-movement.repository.ts`, `prisma-period.repository.ts`, `accounting.mappers.ts`, `chart-seed.ts`
 - Test: `api/src/modules/accounting/infrastructure/prisma-journal.repository.spec.ts`, `prisma-account.repository.spec.ts`
 
-- [ ] **Paso 1: Ampliar el esquema**
+- [x] **Paso 1: Ampliar el esquema**
 
 Agregar a `api/prisma/schema.prisma`:
 
@@ -2049,7 +2049,7 @@ El identificador de `AccountingPeriod` es el texto `AAAA-MM`. Ordena cronológic
 cd api && npx prisma migrate dev --name add_accounting && npx prisma generate
 ```
 
-- [ ] **Paso 2: Escribir el test de las agregaciones que falla**
+- [x] **Paso 2: Escribir el test de las agregaciones que falla**
 
 `api/src/modules/accounting/infrastructure/prisma-journal.repository.spec.ts` monta Testcontainers igual que los de las rebanadas anteriores, siembra el plan de cuentas y prueba:
 
@@ -2119,13 +2119,13 @@ describe('PrismaJournalRepository', () => {
 
 El último caso es el de la cuenta puente: la misma cuenta, el mismo asiento, dos monedas, un débito de un lado y un crédito del otro. Si la agregación no separa por moneda, ese test se cae.
 
-- [ ] **Paso 3: Correr y confirmar que falla**
+- [x] **Paso 3: Correr y confirmar que falla**
 
 ```bash
 cd api && npm test -- prisma-journal
 ```
 
-- [ ] **Paso 4: Implementar los repositorios**
+- [x] **Paso 4: Implementar los repositorios**
 
 `PrismaJournalRepository` guarda el asiento y sus líneas en una transacción. Las agregaciones usan `groupBy` de Prisma sobre `journal_lines`, filtrando por moneda y por el rango de fechas del asiento, agrupando por `accountCode` y `side`, y sumando `amountMinor`. El resultado se pliega a `{ accountCode, debits, credits }`.
 
@@ -2133,7 +2133,7 @@ Ninguna agregación trae asientos a memoria. `ledgerFor` sí trae los asientos d
 
 Los otros cuatro repositorios son directos. `PrismaAccountRepository.loadChart()` trae todas las cuentas y construye el `ChartOfAccounts`, que valida la coherencia del árbol al construirse: si la base tuviera un plan incoherente, se detecta al cargarlo y no al asentar.
 
-- [ ] **Paso 5: Semilla del plan de cuentas**
+- [x] **Paso 5: Semilla del plan de cuentas**
 
 `api/src/modules/accounting/infrastructure/chart-seed.ts` declara el plan semilla como dato, y un caso de uso lo inserta si la tabla está vacía:
 
@@ -2164,7 +2164,7 @@ La semilla corre una sola vez, al arrancar con la tabla vacía. **No es una migr
 
 La 1190 es la cuenta puente. Su saldo en cada moneda queda distinto de cero solo mientras una conversión esté a medio registrar, y ese es su valor: si un día no está en cero, hay un asiento de conversión incompleto.
 
-- [ ] **Paso 6: Correr, verificar y commitear**
+- [x] **Paso 6: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -2173,11 +2173,11 @@ git commit -m "✨ feat: persistencia de contabilidad con agregación en base y 
 ```
 
 **Acceptance criteria:**
-- [ ] Un asiento vuelve de la base como agregado, con sus líneas
-- [ ] Las agregaciones corren en la base, con `groupBy`, no en memoria
-- [ ] La agregación separa por moneda, incluida la cuenta tocada dos veces en el mismo asiento
-- [ ] El rango del período excluye el día anterior y el posterior
-- [ ] La semilla corre una sola vez y no se reaplica
+- [x] Un asiento vuelve de la base como agregado, con sus líneas
+- [x] Las agregaciones corren en la base, con `groupBy`, no en memoria
+- [x] La agregación separa por moneda, incluida la cuenta tocada dos veces en el mismo asiento
+- [x] El rango del período excluye el día anterior y el posterior
+- [x] La semilla corre una sola vez y no se reaplica
 
 ---
 

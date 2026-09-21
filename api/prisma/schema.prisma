@@ -55,3 +55,121 @@ model ExchangeRate {
   @@index([indicator, publishedAt(sort: Desc)])
   @@map("exchange_rates")
 }
+
+enum AccountClass {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  COST_OF_REVENUE
+  OPERATING_EXPENSE
+}
+
+enum EntrySide {
+  DEBIT
+  CREDIT
+}
+
+enum CategoryKind {
+  EXPENSE
+  INCOME
+}
+
+enum MovementStatus {
+  ACTIVE
+  VOIDED
+}
+
+enum PeriodStatus {
+  OPEN
+  CLOSED
+}
+
+model Account {
+  code         String       @id
+  name         String
+  accountClass AccountClass
+  parentCode   String?
+  active       Boolean      @default(true)
+  sortOrder    Int          @default(0)
+  createdAt    DateTime     @default(now()) @db.Timestamptz(3)
+
+  parent   Account?      @relation("AccountTree", fields: [parentCode], references: [code])
+  children Account[]     @relation("AccountTree")
+  lines    JournalLine[]
+
+  @@index([parentCode])
+  @@index([accountClass])
+  @@map("accounts")
+}
+
+model JournalEntry {
+  id               String   @id
+  date             DateTime @db.Date
+  description      String
+  reference        String?
+  sourceMovementId String?
+  reversesEntryId  String?
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
+
+  lines JournalLine[]
+
+  @@index([date])
+  @@index([sourceMovementId])
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id          String    @id @default(uuid(7))
+  entryId     String
+  accountCode String
+  currency    String    @db.Char(3)
+  amountMinor BigInt
+  side        EntrySide
+
+  entry   JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  account Account      @relation(fields: [accountCode], references: [code])
+
+  @@index([accountCode, currency])
+  @@index([entryId])
+  @@map("journal_lines")
+}
+
+model Category {
+  id          String       @id @default(uuid(7))
+  name        String
+  kind        CategoryKind
+  accountCode String?
+  sortOrder   Int          @default(0)
+  active      Boolean      @default(true)
+
+  @@unique([name, kind])
+  @@map("categories")
+}
+
+model Movement {
+  id                 String         @id
+  date               DateTime       @db.Date
+  kind               CategoryKind
+  categoryId         String
+  counterparty       String
+  amountMinor        BigInt
+  currency           String         @db.Char(3)
+  paymentAccountCode String?
+  receiptUrl         String?
+  status             MovementStatus @default(ACTIVE)
+  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([date])
+  @@index([categoryId])
+  @@index([status])
+  @@map("movements")
+}
+
+model AccountingPeriod {
+  period   String       @id
+  status   PeriodStatus @default(OPEN)
+  closedAt DateTime?    @db.Timestamptz(3)
+
+  @@map("accounting_periods")
+}
