@@ -43,3 +43,15 @@ model Debt {
   @@index([direction])
   @@map("debts")
 }
+
+model ExchangeRate {
+  id          String   @id @default(uuid(7))
+  indicator   String   @db.Char(3)
+  value       Decimal  @db.Decimal(14, 6)
+  publishedAt DateTime @db.Date
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([indicator, publishedAt])
+  @@index([indicator, publishedAt(sort: Desc)])
+  @@map("exchange_rates")
+}

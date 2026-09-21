@@ -575,7 +575,7 @@ git commit -m "✨ feat: adaptador REST del BCCR según la norma SDDE 2025"
 - Consumes: `ExchangeRate`, `ExchangeRateRepository`, `PrismaService`, `DateRange`
 - Produces: `class PrismaExchangeRateRepository implements ExchangeRateRepository`
 
-- [ ] **Paso 1: Ampliar el esquema**
+- [x] **Paso 1: Ampliar el esquema**
 
 Agregar a `api/prisma/schema.prisma`:
 
@@ -599,7 +599,7 @@ model ExchangeRate {
 cd api && npx prisma migrate dev --name add_exchange_rates && npx prisma generate
 ```
 
-- [ ] **Paso 2: Escribir el test que falla**
+- [x] **Paso 2: Escribir el test que falla**
 
 `api/src/modules/money/infrastructure/prisma-exchange-rate.repository.spec.ts`:
 
@@ -609,7 +609,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { DateRange } from '../../../shared/kernel/date-range.js'
 import { unwrap } from '../../../shared/kernel/result.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
-import { startPostgres, type RunningPostgres } from '../../../../test/postgres-container.js'
+import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { ExchangeRate } from '../domain/exchange-rate.js'
 import { PrismaExchangeRateRepository } from './prisma-exchange-rate.repository.js'
 
@@ -658,8 +658,9 @@ describe('PrismaExchangeRateRepository', () => {
     expect((await repository.findLatest('317'))?.value.toString()).toBe('509')
   })
 
-  it('resuelve la tasa vigente un día sin publicación', async () => {
-    // Viernes 18 publicado; sábado, domingo y un lunes feriado sin publicación.
+  it('resuelve la tasa vigente cuando la sincronización va atrasada', async () => {
+    // El BCCR publica todos los días, pero el job puede no haber corrido todavía:
+    // preguntar por hoy tiene que devolver la última tasa que sí trajimos.
     await repository.saveMany([rate('508.02', '2026-09-18')])
 
     for (const dia of ['2026-09-19', '2026-09-20', '2026-09-21']) {
@@ -696,15 +697,15 @@ describe('PrismaExchangeRateRepository', () => {
 })
 ```
 
-El test del día sin publicación es el que el spec pide explícitamente. Cubre sábado, domingo y feriado con la misma aserción.
+Ese test es el que el spec pide: cubre con una sola aserción los tres días siguientes a la última tasa traída.
 
-- [ ] **Paso 3: Correr y confirmar que falla**
+- [x] **Paso 3: Correr y confirmar que falla**
 
 ```bash
 cd api && npm test -- prisma-exchange-rate
 ```
 
-- [ ] **Paso 4: Implementar el repositorio**
+- [x] **Paso 4: Implementar el repositorio**
 
 `api/src/modules/money/infrastructure/exchange-rate.mapper.ts`:
 
@@ -787,7 +788,7 @@ export class PrismaExchangeRateRepository implements ExchangeRateRepository {
 }
 ```
 
-- [ ] **Paso 5: Correr, verificar y commitear**
+- [x] **Paso 5: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -796,10 +797,10 @@ git commit -m "✨ feat: persistencia idempotente de tipos de cambio con consult
 ```
 
 **Acceptance criteria:**
-- [ ] Guardar dos veces el mismo día no duplica filas
-- [ ] Un sábado, un domingo y un feriado resuelven a la publicación del viernes anterior
-- [ ] Una fecha anterior a toda publicación devuelve `null`, no la primera tasa
-- [ ] Compra y venta no se mezclan
+- [x] Guardar dos veces el mismo día no duplica filas
+- [x] Tres días posteriores a la última tasa traída resuelven a esa última tasa
+- [x] Una fecha anterior a toda publicación devuelve `null`, no la primera tasa
+- [x] Compra y venta no se mezclan
 
 ---
 
