@@ -249,6 +249,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/exchange-rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista las tasas publicadas en un rango */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Tasas del rango */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ExchangeRate"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/exchange-rates/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devuelve la última tasa de compra y de venta, y si está desactualizada */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Últimas tasas */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LatestExchangeRates"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -353,6 +425,20 @@ export interface components {
             interestSaved: components["schemas"]["MoneyOutput"];
             monthsSaved: number;
             totalPaidWithExtra: components["schemas"]["MoneyOutput"];
+        };
+        /** ExchangeRate */
+        ExchangeRate: {
+            /** @enum {string} */
+            indicator: "317" | "318";
+            value: string;
+            publishedAt: string;
+        };
+        /** LatestExchangeRates */
+        LatestExchangeRates: {
+            buy: components["schemas"]["ExchangeRate"] | null;
+            sell: components["schemas"]["ExchangeRate"] | null;
+            stale: boolean;
+            checkedAt: string;
         };
         /** Money */
         MoneyOutput: {

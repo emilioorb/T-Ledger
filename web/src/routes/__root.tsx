@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { AppSidebar } from '@/components/app-sidebar'
 import { PageBreadcrumb } from '@/components/page-breadcrumb'
+import { ExchangeRateIndicator } from '@/features/money/exchange-rate-indicator'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
@@ -20,6 +21,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
               className="mr-1 data-vertical:h-4 data-vertical:self-auto"
             />
             <PageBreadcrumb />
+            <div className="ml-auto">
+              <ExchangeRateIndicator />
+            </div>
           </header>
           <main className="w-full px-4 py-6 md:px-6">
             <Outlet />

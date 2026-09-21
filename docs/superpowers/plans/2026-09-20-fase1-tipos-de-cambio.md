@@ -1134,7 +1134,9 @@ git commit -m "✨ feat: sincronización diaria de tipos de cambio con backfill 
 - Create: `web/src/features/money/use-exchange-rates.ts`, `exchange-rate-indicator.tsx`, `copy.ts`
 - Modify: `web/src/routes/__root.tsx`
 
-- [ ] **Paso 1: Regenerar los tipos y escribir el copy**
+- [x] **Paso 1: Publicar los endpoints en el OpenAPI, regenerar los tipos y escribir el copy**
+
+Antes de regenerar hay que agregar `exchange-rates.openapi.ts` y sumarlo a las rutas de `main.ts`. Un endpoint que no está en el contrato no existe para el frontend: el generador no lo ve y `components['schemas']` no lo trae.
 
 ```bash
 cd web && npm run api:types
@@ -1142,7 +1144,7 @@ cd web && npm run api:types
 
 El copy del indicador y del estado desactualizado sale de la skill `copywriting` y vive en `web/src/features/money/copy.ts`. Hay que decir que el dato está viejo sin alarmar: no es un error del sistema, es que el banco central no ha publicado.
 
-- [ ] **Paso 2: Hook y componente**
+- [x] **Paso 2: Hook y componente**
 
 `use-exchange-rates.ts` expone `useLatestRates()` sobre `GET /exchange-rates/latest`, con `staleTime` de una hora: la tasa cambia una vez al día, consultarla más seguido es ruido.
 
@@ -1155,21 +1157,21 @@ El copy del indicador y del estado desactualizado sale de la skill `copywriting`
 
 Ubicación: en la cabecera, **no** como una tarjeta de métrica arriba de todo. La fila de tarjetas de métricas está prohibida por la regla F9.
 
-- [ ] **Paso 3: Verificar**
+- [x] **Paso 3: Verificar**
 
 ```bash
 cd web && npm test && npm run typecheck && npm run build
 ```
 
-- [ ] Con la API respondiendo tasas frescas, el indicador muestra los dos valores y la fecha
-- [ ] Con una tasa vieja en la base, aparece la marca de desactualizado
-- [ ] Sin tasas, el estado vacío explica y no muestra ceros
-- [ ] Con la API caída, un toast, y el resto de la aplicación sigue usable
-- [ ] Contraste del `Badge` verificado en los dos temas
-- [ ] Capturas a 360, 768 y 1440 px en los dos temas, revisadas
-- [ ] `impeccable critique` y `audit` corridos sobre lo nuevo
+- [x] Con la API respondiendo tasas frescas, el indicador muestra los dos valores y la fecha
+- [x] Con una tasa vieja en la base, aparece la marca de desactualizado
+- [x] Sin tasas, el estado vacío explica y no muestra ceros
+- [x] Con la API caída, un toast, y el resto de la aplicación sigue usable
+- [x] Contraste del `Badge` verificado en los dos temas
+- [x] Capturas a 360, 768 y 1440 px en los dos temas, revisadas
+- [x] `impeccable critique` y `audit` corridos sobre lo nuevo
 
-- [ ] **Paso 4: Commit**
+- [x] **Paso 4: Commit**
 
 ```bash
 git add web
@@ -1177,9 +1179,9 @@ git commit -m "✨ feat: indicador de tipo de cambio con marca de desactualizado
 ```
 
 **Acceptance criteria:**
-- [ ] La marca de desactualizado aparece cuando la publicación tiene más de tres días
-- [ ] Sin datos, la interfaz lo dice en lugar de mostrar cero
-- [ ] Una caída del BCCR no deja ninguna pantalla inutilizable
+- [x] La marca de desactualizado aparece cuando la publicación tiene más de tres días
+- [x] Sin datos, la interfaz lo dice en lugar de mostrar cero
+- [x] Una caída del BCCR no deja ninguna pantalla inutilizable
 
 ---
 
