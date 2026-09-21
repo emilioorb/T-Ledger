@@ -3,15 +3,18 @@ import {
   Controller,
   Get,
   HttpCode,
-  Param,
   Post,
   Query,
   UploadedFile as UploadedFileDecorator,
   UseInterceptors,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
-import { paginated, type Paginated } from '../../../shared/http/pagination.js'
-import { paginationQuerySchema, type PaginationQuery } from '../../../shared/http/pagination.js'
+import {
+  paginated,
+  paginationQuerySchema,
+  type Paginated,
+  type PaginationQuery,
+} from '../../../shared/http/pagination.js'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { ImportStatementUseCase } from '../application/import-statement.use-case.js'
 import { toParsedLineResponse } from './banking.presenters.js'
