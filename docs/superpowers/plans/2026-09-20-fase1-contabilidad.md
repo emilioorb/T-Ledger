@@ -2609,7 +2609,7 @@ cd web && npm test && npm run typecheck && npm run build
 
 - [x] Cargar un gasto y verlo aparecer en el mayor de su cuenta
 - [x] Anularlo y ver las dos partidas, con saldo en cero
-- [x] Cargar una conversión entre monedas y ver la cuenta puente volver a cero
+- [ ] Cargar una conversión entre monedas y ver la cuenta puente volver a cero — **no se cumple con el diseño actual**: registrada como un asiento de cuatro líneas, 1190 queda deudora en la moneda que sale y acreedora en la que entra. Volver a cero exigiría convertir saldos a una moneda común, que la decisión 1 descarta. Hay que decidir si el criterio se reescribe o si falta un reporte de posición por moneda.
 - [x] Intentar cerrar septiembre con agosto abierto y leer la razón en pantalla
 - [x] Cerrar agosto y comprobar que un movimiento con fecha de agosto es rechazado con un toast
 - [x] Ninguna pantalla con desplazamiento horizontal a 360 px
@@ -2637,7 +2637,7 @@ git commit -m "✨ feat: pantallas de contabilidad, reportes y cierre mensual"
 
 - [x] `cd api && npm test` y `cd web && npm test` en verde
 - [x] Un gasto cargado como movimiento llega hasta el estado de situación
-- [x] Una conversión entre monedas deja la cuenta puente en cero
+- [ ] Una conversión entre monedas deja la cuenta puente en cero — ver la nota del paso 9 de la Tarea 8: contradice la decisión 1 del propio plan
 - [x] La identidad contable cuadra con datos reales cargados
 - [x] Un mes cerrado rechaza asientos, y reabrirlo arrastra los posteriores
 - [ ] Revisión con Emilio antes de la rebanada 4
