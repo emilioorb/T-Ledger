@@ -825,7 +825,7 @@ git commit -m "✨ feat: persistencia idempotente de tipos de cambio con consult
   - `ConvertMoneyUseCase.execute(amount, to, at)`
   - `GET /api/v1/exchange-rates?indicator=&from=&to=`, `GET /api/v1/exchange-rates/latest`
 
-- [ ] **Paso 1: Escribir el test del caso de uso que falla**
+- [x] **Paso 1: Escribir el test del caso de uso que falla**
 
 `api/src/modules/money/application/sync-exchange-rates.use-case.spec.ts`:
 
@@ -902,13 +902,13 @@ describe('SyncExchangeRatesUseCase', () => {
 })
 ```
 
-- [ ] **Paso 2: Correr y confirmar que falla**
+- [x] **Paso 2: Correr y confirmar que falla**
 
 ```bash
 cd api && npm test -- sync-exchange-rates
 ```
 
-- [ ] **Paso 3: Implementar la sincronización**
+- [x] **Paso 3: Implementar la sincronización**
 
 `api/src/modules/money/application/sync-exchange-rates.use-case.ts`:
 
@@ -982,7 +982,7 @@ export class SyncExchangeRatesUseCase {
 }
 ```
 
-- [ ] **Paso 4: El job**
+- [x] **Paso 4: El job**
 
 ```bash
 cd api && npm install @nestjs/schedule@12.0.2
@@ -1026,7 +1026,7 @@ export class ExchangeRatesSyncJob implements OnApplicationBootstrap {
 
 Registrar `ScheduleModule.forRoot()` **una sola vez**, en `app.module.ts`. Llamarlo en más de un módulo duplica los manejadores.
 
-- [ ] **Paso 5: Endpoints**
+- [x] **Paso 5: Endpoints**
 
 `api/src/modules/money/infrastructure/exchange-rate.schemas.ts`:
 
@@ -1058,7 +1058,9 @@ export type LatestRates = z.infer<typeof latestRatesSchema>
 
 `exchange-rates.controller.ts` expone `GET /exchange-rates` con el rango validado y `GET /exchange-rates/latest`. **`latest` va declarado antes de cualquier ruta con parámetro**, por la misma razón que `payoff-plan` en la rebanada 1.
 
-`stale` es `true` cuando la última publicación tiene más de tres días. Tres, no uno: un viernes seguido de fin de semana y feriado da tres días sin publicación y eso es normal, no un problema.
+`stale` es `true` cuando la última publicación tiene más de tres días. Tres, no uno: el BCCR publica a diario, pero el job corre una vez al día y puede fallar una vez sin que eso sea un problema. A los tres días sí lo es.
+
+El cliente del BCCR se construye **dentro de la fábrica del adaptador**, no como proveedor propio. Si fuera un proveedor del módulo, Nest lo instanciaría siempre y el módulo no arrancaría sin credenciales ni en los tests que no tocan el banco central.
 
 Test del controlador, con Testcontainers y el mismo montaje que los de la rebanada 1:
 
@@ -1096,7 +1098,7 @@ describe('GET /api/v1/exchange-rates/latest', () => {
 
 Que «nunca se sincronizó» devuelva 200 con nulos y no un 500 es parte de la misma regla: la ausencia de datos del banco central es un estado, no una falla del sistema.
 
-- [ ] **Paso 6: Correr, verificar y commitear**
+- [x] **Paso 6: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -1105,7 +1107,7 @@ npm run start:dev
 curl -s localhost:3000/api/v1/exchange-rates/latest
 ```
 
-- [ ] **Paso 7: Commit**
+- [x] **Paso 7: Commit**
 
 ```bash
 git add api
@@ -1113,12 +1115,12 @@ git commit -m "✨ feat: sincronización diaria de tipos de cambio con backfill 
 ```
 
 **Acceptance criteria:**
-- [ ] El backfill pide el hueco completo en una sola llamada
-- [ ] Sin tasas guardadas, arranca desde un año atrás
-- [ ] Estando al día, no llama al BCCR
-- [ ] Un fallo del BCCR se registra y se reporta, y la aplicación sigue respondiendo
-- [ ] `latest` responde 200 con nulos cuando no hay datos, nunca 500
-- [ ] `ScheduleModule.forRoot()` está declarado una sola vez
+- [x] El backfill pide el hueco completo en una sola llamada
+- [x] Sin tasas guardadas, arranca desde un año atrás
+- [x] Estando al día, no llama al BCCR
+- [x] Un fallo del BCCR se registra y se reporta, y la aplicación sigue respondiendo
+- [x] `latest` responde 200 con nulos cuando no hay datos, nunca 500
+- [x] `ScheduleModule.forRoot()` está declarado una sola vez
 
 ---
 
