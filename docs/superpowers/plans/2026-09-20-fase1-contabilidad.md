@@ -1098,7 +1098,7 @@ git commit -m "✨ feat: asiento de partida doble con invariante por moneda"
   - `postingFor(movement, category, chart, entryId): Result<JournalEntry | null, RangeError>` — `null` cuando el movimiento no es contabilizable
   - `const CATEGORY_REPOSITORY`, `const MOVEMENT_REPOSITORY`
 
-- [ ] **Paso 1: Escribir el test de contabilización que falla**
+- [x] **Paso 1: Escribir el test de contabilización que falla**
 
 `api/src/modules/accounting/domain/movement-posting.spec.ts`:
 
@@ -1229,7 +1229,7 @@ describe('postingFor', () => {
 })
 ```
 
-- [ ] **Paso 2: Escribir el test del movimiento**
+- [x] **Paso 2: Escribir el test del movimiento**
 
 `api/src/modules/accounting/domain/movement.spec.ts`:
 
@@ -1299,13 +1299,13 @@ describe('Category', () => {
 })
 ```
 
-- [ ] **Paso 3: Correr y confirmar que fallan**
+- [x] **Paso 3: Correr y confirmar que fallan**
 
 ```bash
 cd api && npm test -- movement category
 ```
 
-- [ ] **Paso 4: Implementar la categoría**
+- [x] **Paso 4: Implementar la categoría**
 
 `api/src/modules/accounting/domain/category.ts`:
 
@@ -1351,7 +1351,7 @@ export class Category {
 }
 ```
 
-- [ ] **Paso 5: Implementar el movimiento**
+- [x] **Paso 5: Implementar el movimiento**
 
 `api/src/modules/accounting/domain/movement.ts`:
 
@@ -1416,7 +1416,7 @@ export class Movement {
 }
 ```
 
-- [ ] **Paso 6: Implementar la contabilización**
+- [x] **Paso 6: Implementar la contabilización**
 
 `api/src/modules/accounting/domain/movement-posting.ts`:
 
@@ -1483,11 +1483,11 @@ export const postingFor = (
 }
 ```
 
-- [ ] **Paso 7: Puertos**
+- [x] **Paso 7: Puertos**
 
 `api/src/modules/accounting/domain/category-repository.port.ts` y `movement-repository.port.ts` declaran `CategoryRepository` (`findAll`, `findById`, `save`, `delete`) y `MovementRepository` (`findAll` con filtros de tipo, estado, categoría y rango; `findById`; `save`), más sus `Symbol`. Un movimiento **no tiene `delete`** en el puerto: lo que existe es anular, y ofrecer un borrado en la interfaz del repositorio invitaría a usarlo.
 
-- [ ] **Paso 8: Correr, verificar y commitear**
+- [x] **Paso 8: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -1496,12 +1496,12 @@ git commit -m "✨ feat: categorías y movimientos que generan su asiento"
 ```
 
 **Acceptance criteria:**
-- [ ] Un gasto debita la cuenta de la categoría y acredita la de pago
-- [ ] Un ingreso hace lo inverso
-- [ ] Una categoría sin cuenta produce un movimiento sin asiento, sin error
-- [ ] Un movimiento anulado no genera asiento
-- [ ] Un movimiento cuyo tipo no coincide con su categoría es rechazado
-- [ ] El puerto de movimientos no expone borrado
+- [x] Un gasto debita la cuenta de la categoría y acredita la de pago
+- [x] Un ingreso hace lo inverso
+- [x] Una categoría sin cuenta produce un movimiento sin asiento, sin error
+- [x] Un movimiento anulado no genera asiento
+- [x] Un movimiento cuyo tipo no coincide con su categoría es rechazado
+- [x] El puerto de movimientos no expone borrado
 
 ---
 
