@@ -608,7 +608,7 @@ git commit -m "✨ feat: plan de cuentas jerárquico con seis clases contables"
   - `signedBalance(debits: Money, credits: Money, accountClass: AccountClass): Money`
   - `const JOURNAL_REPOSITORY: unique symbol`, `interface JournalRepository`
 
-- [ ] **Paso 1: Escribir el test del asiento que falla**
+- [x] **Paso 1: Escribir el test del asiento que falla**
 
 `api/src/modules/accounting/domain/journal-entry.spec.ts`:
 
@@ -820,7 +820,7 @@ describe('JournalEntry', () => {
 
 El test de «cuadra en total pero no en cada moneda» es el que fija la regla. Un asiento con ₡1.000 al débito y US$1.000 al crédito tiene dos líneas, un débito y un crédito, y sería aceptado por cualquier implementación que sume sin mirar la moneda. Es exactamente el error que hay que prevenir.
 
-- [ ] **Paso 2: Escribir el test del saldo con signo**
+- [x] **Paso 2: Escribir el test del saldo con signo**
 
 `api/src/modules/accounting/domain/account-balance.spec.ts`:
 
@@ -864,13 +864,13 @@ describe('signedBalance', () => {
 
 Los números de la primera cuenta acreedora y de la deudora negativa salen de las capturas de referencia: caja en colones con saldo −219 698,00 y cuentas por pagar con 500 000,00. Si el signo estuviera invertido, esos dos casos lo dirían.
 
-- [ ] **Paso 3: Correr y confirmar que fallan**
+- [x] **Paso 3: Correr y confirmar que fallan**
 
 ```bash
 cd api && npm test -- journal-entry account-balance
 ```
 
-- [ ] **Paso 4: Implementar el saldo con signo**
+- [x] **Paso 4: Implementar el saldo con signo**
 
 `api/src/modules/accounting/domain/account-balance.ts`:
 
@@ -891,7 +891,7 @@ export const signedBalance = (
     : unwrap(credits.subtract(debits))
 ```
 
-- [ ] **Paso 5: Implementar el asiento**
+- [x] **Paso 5: Implementar el asiento**
 
 `api/src/modules/accounting/domain/journal-entry.ts`:
 
@@ -1027,7 +1027,7 @@ const totalOf = (
     .reduce((acc, line) => unwrap(acc.add(line.amount)), Money.zero(currency))
 ```
 
-- [ ] **Paso 6: Puerto del repositorio de asientos**
+- [x] **Paso 6: Puerto del repositorio de asientos**
 
 `api/src/modules/accounting/domain/journal-repository.port.ts`:
 
@@ -1060,7 +1060,7 @@ export const JOURNAL_REPOSITORY = Symbol('JOURNAL_REPOSITORY')
 
 Los reportes agregan en la base, no en memoria. Una comprobación de doce meses sobre un libro con miles de asientos no puede traérselos todos para sumarlos en Node.
 
-- [ ] **Paso 7: Correr, verificar y commitear**
+- [x] **Paso 7: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -1069,13 +1069,13 @@ git commit -m "✨ feat: asiento de partida doble con invariante por moneda"
 ```
 
 **Acceptance criteria:**
-- [ ] Un asiento descuadrado en alguna moneda es rechazado
-- [ ] Un asiento multimoneda que cuadra por moneda es aceptado
-- [ ] Un asiento que cuadra en total pero no por moneda es rechazado
-- [ ] Un asiento contra una cuenta agrupadora o inactiva es rechazado
-- [ ] Las líneas de monto cero o negativo son rechazadas
-- [ ] La reversión invierte los lados y apunta al asiento original
-- [ ] El saldo con signo es correcto en las seis clases
+- [x] Un asiento descuadrado en alguna moneda es rechazado
+- [x] Un asiento multimoneda que cuadra por moneda es aceptado
+- [x] Un asiento que cuadra en total pero no por moneda es rechazado
+- [x] Un asiento contra una cuenta agrupadora o inactiva es rechazado
+- [x] Las líneas de monto cero o negativo son rechazadas
+- [x] La reversión invierte los lados y apunta al asiento original
+- [x] El saldo con signo es correcto en las seis clases
 
 ---
 
