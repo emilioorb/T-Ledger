@@ -2,7 +2,9 @@
 // único lugar donde se dicen: la barra lateral los repite.
 export const copy = {
   app: {
-    name: 'Tape',
+    // La cinta y el libro mayor: el rollo donde cada operación queda impresa en orden, y el
+    // libro que agrupa esos mismos asientos por cuenta. Es el recorrido que hace la app.
+    name: 'Tape Ledger',
     author: 'Emilio Rodríguez',
   },
   nav: {
