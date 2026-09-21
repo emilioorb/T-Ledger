@@ -81,5 +81,8 @@ import { ReportsController } from './infrastructure/reports.controller.js'
     ListPeriodsUseCase,
     ReopenPeriodUseCase,
   ],
+  // El presupuesto lee el gasto del libro diario. Se exporta el puerto, no el repositorio:
+  // quien lo consuma depende de la interfaz, no de Prisma.
+  exports: [JOURNAL_REPOSITORY, ACCOUNT_REPOSITORY],
 })
 export class AccountingModule {}

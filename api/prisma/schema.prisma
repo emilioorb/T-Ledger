@@ -173,3 +173,37 @@ model AccountingPeriod {
 
   @@map("accounting_periods")
 }
+
+model BudgetModel {
+  id        String         @id @default(uuid(7))
+  name      String
+  active    Boolean        @default(false)
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  buckets   BudgetBucket[]
+
+  @@map("budget_models")
+}
+
+model BudgetBucket {
+  id           String   @id @default(uuid(7))
+  modelId      String
+  bucketKey    String
+  name         String
+  percentage   Decimal  @db.Decimal(6, 3)
+  isSavings    Boolean  @default(false)
+  sortOrder    Int      @default(0)
+  accountCodes String[]
+
+  model BudgetModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([modelId, bucketKey])
+  @@map("budget_buckets")
+}
+
+model BudgetIncome {
+  period      String @id
+  amountMinor BigInt
+  currency    String @db.Char(3)
+
+  @@map("budget_income")
+}

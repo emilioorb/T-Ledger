@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core'
 import { createDocument } from 'zod-openapi'
 import { AppModule } from './app.module.js'
 import { accountingOpenApiPaths } from './modules/accounting/infrastructure/accounting.openapi.js'
+import { budgetOpenApiPaths } from './modules/budget/infrastructure/budget.openapi.js'
 import { debtsOpenApiPaths } from './modules/debts/infrastructure/debts.openapi.js'
 import { exchangeRatesOpenApiPaths } from './modules/money/infrastructure/exchange-rates.openapi.js'
 import { loadEnv } from './shared/config/env.js'
@@ -19,7 +20,7 @@ const bootstrap = async (): Promise<void> => {
     openapi: '3.1.0',
     info: { title: 'Finanzas API', version: '1.0.0' },
     servers: [{ url: '/api/v1' }],
-    paths: { ...debtsOpenApiPaths, ...exchangeRatesOpenApiPaths, ...accountingOpenApiPaths },
+    paths: { ...debtsOpenApiPaths, ...exchangeRatesOpenApiPaths, ...accountingOpenApiPaths, ...budgetOpenApiPaths },
   })
   app.getHttpAdapter().get('/api/v1/openapi.json', (_req, res) => res.json(openapi))
 
