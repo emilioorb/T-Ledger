@@ -70,7 +70,7 @@ Los únicos colores del sistema. Aparecen en menos del 5 % de cualquier pantalla
 |---|---|---|
 | Negativo | `oklch(0.705 0.165 25)` · `#f6706a` | `oklch(0.480 0.185 25)` · `#ae1320` |
 | Positivo | `oklch(0.760 0.110 165)` · `#66c7a0` | `oklch(0.470 0.095 165)` · `#0c6b4d` |
-| Advertencia | `oklch(0.735 0.130 305)` · `#bc93eb` | `oklch(0.450 0.180 305)` · `#6d2ea3` |
+| Advertencia | `oklch(0.780 0.166 65)` · `#fe9e24` | `oklch(0.400 0.090 65)` · `#683c00` |
 
 Contraste medido contra fondo, superficie y superficie elevada de su propio tema:
 
@@ -78,9 +78,11 @@ Contraste medido contra fondo, superficie y superficie elevada de su propio tema
 |---|---|---|
 | Negativo | 6,93 / 6,49 / 5,92 | 6,96 / 6,45 / 5,86 |
 | Positivo | 9,55 / 8,94 / 8,15 | 6,27 / 5,81 / 5,28 |
-| Advertencia | 7,94 / 7,44 / 6,78 | 7,90 / 7,32 / 6,65 |
+| Advertencia | 9,42 / 8,82 / 8,04 | 9,11 / 8,44 / 7,67 |
 
-**La advertencia es violeta, no ámbar.** El ámbar está prohibido por la sección 6 y es además el color que todo el rubro usa por reflejo. El violeta cumple el 4,5:1 en los dos temas y, a diferencia del ámbar, se separa de negativo y positivo también para quien no distingue rojo de verde. El positivo tira a verde azulado para no caer en el verde de terminal, que la sección 6 también prohíbe.
+**La advertencia es naranja, y la separación con el negativo la hace la luminancia.** El naranja comparte familia de matiz con el rojo del negativo, así que para quien no distingue rojo de verde el matiz no alcanza: por eso los dos roles se separan además por claridad —en oscuro 0,78 contra 0,705; en claro 0,40 contra 0,48— y nunca aparecen solos, porque rige la Regla del Signo. El positivo tira a verde azulado para no caer en el verde de terminal, que la sección 6 prohíbe.
+
+La prohibición del dorado y el ámbar de la sección 6 sigue en pie y es sobre el color decorativo: el naranja acá no es identidad ni adorno, es un rol semántico con un significado verificable.
 
 Ninguno de los tres se usa solo: rige la Regla del Signo.
 
@@ -164,7 +166,7 @@ Como el sistema es monocromo, una serie se distingue de otra por **luminancia, t
 
 ### Don't
 
-- **Nada de dorado**, ni ámbar, mostaza o bronce. Es el reflejo del rubro.
+- **Nada de dorado**, ni ámbar, mostaza o bronce como color decorativo o de identidad: es el reflejo del rubro. El naranja de advertencia es la única excepción, y solo con su significado semántico.
 - **Nada de azul marino ni de tablero azul oscuro.** Mismo reflejo, un paso más adelante.
 - **Nada de terminal verde sobre negro.** Es el reflejo de segundo orden, el que aparece al evitar el primero.
 - Nada de color decorativo ni de categoría. Si no significa algo verificable, no va.

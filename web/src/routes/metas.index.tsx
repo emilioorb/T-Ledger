@@ -26,6 +26,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
+import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/goals/copy'
 import type { Goal } from '@/features/goals/types'
 import { useContribute, useDeleteGoal, useGoals, useSaveGoal } from '@/features/goals/use-goals'
@@ -158,7 +159,11 @@ const GoalBlock = ({ goal, onEdit, onDelete, onContribute }: CardProps) => (
   <li className="border-b border-border py-4">
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
       <h2 className="text-sm font-medium tracking-tight">
-        <Link to="/metas/$goalId" params={{ goalId: goal.id }} className="underline-offset-2 hover:underline">
+        <Link
+          to="/metas/$goalId"
+          params={{ goalId: goal.id }}
+          className="underline-offset-2 hover:underline"
+        >
           {goal.name}
         </Link>
       </h2>
@@ -191,8 +196,7 @@ const GoalBlock = ({ goal, onEdit, onDelete, onContribute }: CardProps) => (
       </span>
 
       <span>
-        {copy.goals.columns.desired}{' '}
-        <span className="num">{formatIsoDate(goal.desiredDate)}</span>
+        {copy.goals.columns.desired} <span className="num">{formatIsoDate(goal.desiredDate)}</span>
       </span>
 
       {!goal.reached ? (
@@ -243,6 +247,7 @@ const GoalsScreen = () => {
   const [contributionDate, setContributionDate] = useState(today())
 
   const goals = useGoals()
+  usePrimaryAction(copy.goals.new, () => setEditing({}))
   const save = useSaveGoal()
   const contribute = useContribute()
   const remove = useDeleteGoal()
@@ -255,10 +260,7 @@ const GoalsScreen = () => {
         id: contributing.id,
         input: {
           date: contributionDate,
-          amount: parseMoneyInput(
-            contributionAmount,
-            contributing.target.currency as CurrencyCode,
-          ),
+          amount: parseMoneyInput(contributionAmount, contributing.target.currency as CurrencyCode),
         },
       },
       {
@@ -303,37 +305,41 @@ const GoalsScreen = () => {
       ) : null}
 
       {contributing ? (
-        <form onSubmit={submitContribution} className="flex flex-wrap items-end gap-3 border-y border-border py-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="contribution-date">{copy.goals.contributionForm.date.label}</Label>
-            <Input
-              id="contribution-date"
-              type="date"
-              value={contributionDate}
-              required
-              onChange={(event) => setContributionDate(event.target.value)}
-            />
+        <form onSubmit={submitContribution} className="space-y-1.5 border-y border-border py-4">
+          {/* La ayuda va debajo de la fila, no dentro de un campo: metida en una columna
+              alarga esa columna, y como la fila alinea por abajo, desalinea el resto. */}
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="contribution-date">{copy.goals.contributionForm.date.label}</Label>
+              <Input
+                id="contribution-date"
+                type="date"
+                value={contributionDate}
+                required
+                onChange={(event) => setContributionDate(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="contribution-amount">
+                {copy.goals.contributionForm.amount.label}
+              </Label>
+              <Input
+                id="contribution-amount"
+                value={contributionAmount}
+                inputMode="decimal"
+                required
+                className="num num-right w-40"
+                onChange={(event) => setContributionAmount(event.target.value)}
+              />
+            </div>
+            <Button type="submit" size="sm" disabled={contribute.isPending}>
+              {copy.goals.contributionForm.submit}
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setContributing(null)}>
+              {copy.common.cancel}
+            </Button>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="contribution-amount">{copy.goals.contributionForm.amount.label}</Label>
-            <Input
-              id="contribution-amount"
-              value={contributionAmount}
-              inputMode="decimal"
-              required
-              className="num num-right w-40"
-              onChange={(event) => setContributionAmount(event.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              {copy.goals.contributionForm.amount.hint}
-            </p>
-          </div>
-          <Button type="submit" size="sm" disabled={contribute.isPending}>
-            {copy.goals.contributionForm.submit}
-          </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={() => setContributing(null)}>
-            {copy.common.cancel}
-          </Button>
+          <p className="text-xs text-muted-foreground">{copy.goals.contributionForm.amount.hint}</p>
         </form>
       ) : null}
 

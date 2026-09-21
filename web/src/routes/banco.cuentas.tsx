@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAccounts } from '@/features/accounting/use-accounting'
+import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/banking/copy'
 import type { BankAccount, ImportProfile, ImportProfileInput } from '@/features/banking/types'
 import {
@@ -346,6 +347,8 @@ const ProfileForm = ({
 const BankAccountsScreen = () => {
   const [editingAccount, setEditingAccount] = useState<{ account?: BankAccount } | null>(null)
   const [editingProfile, setEditingProfile] = useState<{ profile?: ImportProfile } | null>(null)
+
+  usePrimaryAction(copy.accounts.new, () => setEditingAccount({}))
 
   const bankAccounts = useBankAccounts()
   const profiles = useImportProfiles()

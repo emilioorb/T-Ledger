@@ -22,7 +22,7 @@
   --text: oklch(0.215 0.01 65);
   --negative: oklch(0.48 0.185 25);
   --positive: oklch(0.47 0.095 165);
-  --warning: oklch(0.45 0.18 305);
+  --warning: oklch(0.4 0.09 65);
 
   /* Series de gráfico: rampa de luminancia, no de matiz. La Regla del Gráfico. */
   --chart-1: oklch(0.215 0.01 65);
@@ -45,7 +45,7 @@
   --text: oklch(0.955 0.005 65);
   --negative: oklch(0.705 0.165 25);
   --positive: oklch(0.76 0.11 165);
-  --warning: oklch(0.735 0.13 305);
+  --warning: oklch(0.78 0.166 65);
 
   --chart-1: oklch(0.955 0.005 65);
   --chart-2: oklch(0.8 0.008 65);
@@ -137,6 +137,18 @@
 
   .num-right {
     @apply text-right;
+  }
+
+  /* Las flechitas de incremento no se usan nunca —un monto o un código se escriben— y
+     además desplazan el texto del campo. Se quitan en los dos motores. */
+  input[type='number'] {
+    appearance: textfield;
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
   }
 
   /* El borde que identifica un control llega a 3:1; el sutil es decorativo (WCAG 1.4.11). */

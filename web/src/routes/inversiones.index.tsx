@@ -26,6 +26,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
+import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/investments/copy'
 import type { Investment } from '@/features/investments/types'
 import {
@@ -65,7 +66,9 @@ interface FormProps {
 
 const InvestmentForm = ({ investment, pending, onSubmit, onCancel }: FormProps) => {
   const [name, setName] = useState(investment?.name ?? '')
-  const [amount, setAmount] = useState(investment ? investment.principal.minorUnits.slice(0, -2) : '')
+  const [amount, setAmount] = useState(
+    investment ? investment.principal.minorUnits.slice(0, -2) : '',
+  )
   const [currency, setCurrency] = useState<CurrencyCode>(
     (investment?.principal.currency as CurrencyCode) ?? 'CRC',
   )
@@ -98,7 +101,12 @@ const InvestmentForm = ({ investment, pending, onSubmit, onCancel }: FormProps) 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-1.5">
           <Label htmlFor="inv-name">{fields.name.label}</Label>
-          <Input id="inv-name" value={name} required onChange={(event) => setName(event.target.value)} />
+          <Input
+            id="inv-name"
+            value={name}
+            required
+            onChange={(event) => setName(event.target.value)}
+          />
         </div>
 
         <div className="space-y-1.5">
@@ -302,6 +310,7 @@ const InvestmentsScreen = () => {
   const [capitalDate, setCapitalDate] = useState(today())
 
   const investments = useInvestments()
+  usePrimaryAction(copy.investments.new, () => setEditing({}))
   const save = useSaveInvestment()
   const addCapital = useAddCapital()
   const remove = useDeleteInvestment()
@@ -342,7 +351,9 @@ const InvestmentsScreen = () => {
       {editing ? (
         <div className="border-y border-border py-5">
           <h2 className="mb-4 text-base font-medium tracking-tight">
-            {editing.investment ? copy.investments.form.editTitle : copy.investments.form.createTitle}
+            {editing.investment
+              ? copy.investments.form.editTitle
+              : copy.investments.form.createTitle}
           </h2>
           <InvestmentForm
             investment={editing.investment}
@@ -359,37 +370,43 @@ const InvestmentsScreen = () => {
       ) : null}
 
       {adding ? (
-        <form onSubmit={submitCapital} className="flex flex-wrap items-end gap-3 border-y border-border py-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="capital-date">{copy.investments.contributionForm.date.label}</Label>
-            <Input
-              id="capital-date"
-              type="date"
-              value={capitalDate}
-              required
-              onChange={(event) => setCapitalDate(event.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              {copy.investments.contributionForm.date.hint}
-            </p>
+        <form onSubmit={submitCapital} className="space-y-1.5 border-y border-border py-4">
+          {/* La ayuda va debajo de la fila, no dentro de un campo: metida en una columna
+              alarga esa columna, y como la fila alinea por abajo, desalinea el resto. */}
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="capital-date">{copy.investments.contributionForm.date.label}</Label>
+              <Input
+                id="capital-date"
+                type="date"
+                value={capitalDate}
+                required
+                onChange={(event) => setCapitalDate(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="capital-amount">
+                {copy.investments.contributionForm.amount.label}
+              </Label>
+              <Input
+                id="capital-amount"
+                value={capitalAmount}
+                inputMode="decimal"
+                required
+                className="num num-right w-40"
+                onChange={(event) => setCapitalAmount(event.target.value)}
+              />
+            </div>
+            <Button type="submit" size="sm" disabled={addCapital.isPending}>
+              {copy.investments.contributionForm.submit}
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setAdding(null)}>
+              {copy.common.cancel}
+            </Button>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="capital-amount">{copy.investments.contributionForm.amount.label}</Label>
-            <Input
-              id="capital-amount"
-              value={capitalAmount}
-              inputMode="decimal"
-              required
-              className="num num-right w-40"
-              onChange={(event) => setCapitalAmount(event.target.value)}
-            />
-          </div>
-          <Button type="submit" size="sm" disabled={addCapital.isPending}>
-            {copy.investments.contributionForm.submit}
-          </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={() => setAdding(null)}>
-            {copy.common.cancel}
-          </Button>
+          <p className="text-xs text-muted-foreground">
+            {copy.investments.contributionForm.date.hint}
+          </p>
         </form>
       ) : null}
 
