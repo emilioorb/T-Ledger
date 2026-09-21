@@ -113,7 +113,7 @@ web/src/
   - `class Account`: `static create(props): Result<Account, RangeError>` · `readonly code, name, accountClass, parentCode, active, sortOrder` · `level(): number` · `isChildOf(code): boolean`
   - `class ChartOfAccounts`: `static create(accounts): Result<ChartOfAccounts, RangeError>` · `all()` · `byCode(code)` · `childrenOf(code)` · `isPostable(code): boolean` · `descendantsOf(code): Account[]` · `roots(): Account[]`
 
-- [ ] **Paso 1: Escribir el test de las clases que falla**
+- [x] **Paso 1: Escribir el test de las clases que falla**
 
 `api/src/modules/accounting/domain/account-class.spec.ts`:
 
@@ -161,7 +161,7 @@ describe('AccountClass', () => {
 })
 ```
 
-- [ ] **Paso 2: Escribir el test del árbol que falla**
+- [x] **Paso 2: Escribir el test del árbol que falla**
 
 `api/src/modules/accounting/domain/chart-of-accounts.spec.ts`:
 
@@ -195,8 +195,9 @@ const plan = () =>
   )
 
 describe('Account', () => {
-  it('deriva el nivel de la profundidad en el árbol, no del código', () => {
+  it('sabe si tiene madre; la profundidad real la da el árbol', () => {
     expect(cuenta('1000', 'Activos', 'ASSET', null).level()).toBe(0)
+    expect(cuenta('1101', 'Caja', 'ASSET', '1100').level()).toBe(1)
   })
 
   it('rechaza un código que no es numérico', () => {
@@ -251,6 +252,12 @@ describe('ChartOfAccounts', () => {
 
   it('devuelve una raíz por clase presente', () => {
     expect(plan().roots().map((a) => a.code)).toEqual(['1000', '2000', '6000'])
+  })
+
+  it('cuenta la profundidad recorriendo el árbol hasta la raíz', () => {
+    expect(plan().levelOf('1000')).toBe(0)
+    expect(plan().levelOf('1100')).toBe(1)
+    expect(plan().levelOf('1101')).toBe(2)
   })
 
   it('solo son asentables las cuentas hoja y activas', () => {
@@ -310,13 +317,13 @@ describe('ChartOfAccounts', () => {
 })
 ```
 
-- [ ] **Paso 3: Correr y confirmar que fallan**
+- [x] **Paso 3: Correr y confirmar que fallan**
 
 ```bash
 cd api && npm test -- account-class chart-of-accounts
 ```
 
-- [ ] **Paso 4: Implementar las clases contables**
+- [x] **Paso 4: Implementar las clases contables**
 
 `api/src/modules/accounting/domain/account-class.ts`:
 
@@ -372,7 +379,7 @@ export const isAccountClass = (value: string): value is AccountClass =>
   (ACCOUNT_CLASSES as readonly string[]).includes(value)
 ```
 
-- [ ] **Paso 5: Implementar la cuenta**
+- [x] **Paso 5: Implementar la cuenta**
 
 `api/src/modules/accounting/domain/account.ts`:
 
@@ -427,7 +434,7 @@ export class Account {
 }
 ```
 
-- [ ] **Paso 6: Implementar el árbol**
+- [x] **Paso 6: Implementar el árbol**
 
 `api/src/modules/accounting/domain/chart-of-accounts.ts`:
 
@@ -545,7 +552,7 @@ const findCycle = (
 }
 ```
 
-- [ ] **Paso 7: Puerto del repositorio**
+- [x] **Paso 7: Puerto del repositorio**
 
 `api/src/modules/accounting/domain/account-repository.port.ts`:
 
@@ -563,7 +570,7 @@ export interface AccountRepository {
 export const ACCOUNT_REPOSITORY = Symbol('ACCOUNT_REPOSITORY')
 ```
 
-- [ ] **Paso 8: Correr, verificar y commitear**
+- [x] **Paso 8: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -572,12 +579,12 @@ git commit -m "✨ feat: plan de cuentas jerárquico con seis clases contables"
 ```
 
 **Acceptance criteria:**
-- [ ] Las seis clases tienen el saldo normal correcto
-- [ ] Una cuenta que cuelga de otra clase contable es rechazada
-- [ ] Un ciclo en la jerarquía es rechazado
-- [ ] Dos raíces de la misma clase son rechazadas
-- [ ] Solo las hojas activas son asentables
-- [ ] Ningún archivo del dominio importa Nest, Prisma ni HTTP
+- [x] Las seis clases tienen el saldo normal correcto
+- [x] Una cuenta que cuelga de otra clase contable es rechazada
+- [x] Un ciclo en la jerarquía es rechazado
+- [x] Dos raíces de la misma clase son rechazadas
+- [x] Solo las hojas activas son asentables
+- [x] Ningún archivo del dominio importa Nest, Prisma ni HTTP
 
 ---
 
