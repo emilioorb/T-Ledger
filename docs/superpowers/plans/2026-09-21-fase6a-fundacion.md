@@ -153,7 +153,38 @@ El código del spike no se conserva. Lo que se conserva es la respuesta, escrita
 
 ---
 
-### Tarea 2: Las tablas de identidad
+### Tarea 2: Las tablas de identidad — ✅ HECHA el 21/09/2026 (commit `fe03c4e`)
+
+Tres cosas que salieron al ejecutarla y que no estaban previstas:
+
+**1. `Account` choca con la cuenta contable, y el choque es destructivo.** El CLI de Better
+Auth sobrescribió `schema.prisma` y tomó el plan de cuentas por su tabla de credenciales. Se
+resolvió renombrando sus cinco modelos (ver ADR-001). **Hacer copia del esquema antes de
+correr el generador.**
+
+**2. Prisma quiso resetear la base.** `migrate dev` pidió `migrate reset` —que borra todo—
+porque la migración `20260921075737_add_currency_bridge_flag` había sido editada después de
+aplicarse y su checksum no coincidía. **No se reseteó.** Se verificó que el contenido del
+archivo ya estaba aplicado (la columna existe y la cuenta 1190 está marcada), así que el único
+desfase era el checksum registrado, y se corrigió en `_prisma_migrations`:
+
+```sql
+UPDATE _prisma_migrations SET checksum = '<sha256 del migration.sql>'
+WHERE migration_name = '<nombre>';
+```
+
+El checksum del archivo se calcula con `sha256` sobre el contenido crudo de `migration.sql`.
+Era un problema preexistente que iba a explotar en la próxima migración, con Better Auth o
+sin él.
+
+**3. `crearAuth` recibe el `PrismaClient` crudo, no el getter `client` de `PrismaService`.**
+Es a propósito: las tablas de Better Auth no deben pasar por el filtro de libro de la tarea 5,
+y pasarle el cliente sin extender es la forma de que nunca queden atrapadas en él por
+accidente. Además Prisma 7 exige un driver adapter, así que `new PrismaClient()` pelado tira
+al construirse; hay que pasarle `PrismaPg`.
+
+<details>
+<summary>Los pasos, como quedaron escritos</summary>
 
 **Archivos:**
 - Modificar: `api/prisma/schema.prisma`
@@ -306,6 +337,8 @@ cd api && npm test && npm run typecheck && npm run lint
 git add api/prisma api/src/modules/identity api/package.json api/package-lock.json
 git commit -m "✨ feat: cuentas y libros, con tres roles propios"
 ```
+
+</details>
 
 ---
 

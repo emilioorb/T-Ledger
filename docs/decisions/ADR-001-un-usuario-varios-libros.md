@@ -60,9 +60,30 @@ falta: `owner`, `editor`, `viewer`.
 
 ## Consecuencias
 
-- Better Auth agrega al esquema `user`, `session`, `account`, `verification`, `organization`,
-  `member` e `invitation`. No siguen las convenciones del resto ni pasan por el dominio
-  hexagonal. Es el precio de no escribirlas.
+- Better Auth agrega al esquema sus propias tablas. No siguen las convenciones del resto ni
+  pasan por el dominio hexagonal. Es el precio de no escribirlas.
+
+- **Su modelo `Account` choca con la cuenta contable, y el choque es destructivo.** En este
+  proyecto `Account` es el plan de cuentas (`code`, `accountClass`, `parentCode`); Better Auth
+  la quiere para guardar credenciales. Al correr su CLI sin precauciones, el 21/09/2026
+  sobrescribió `schema.prisma` tomando el plan de cuentas por suyo, y avisó que `code`, `name`
+  y `accountClass` «rechazan todo insert que Better Auth hace». Se recuperó porque había copia
+  del esquema.
+
+  La decisión fue **renombrar los cinco modelos, no solo el que choca**: `AuthUser`,
+  `AuthSession`, `AuthAccount`, `AuthVerification`, y `organization` → `Book` con `BookMember`
+  y `BookInvitation`. Renombrar uno solo dejaría la bomba armada para el día que el dominio
+  gane una tabla `Session` o `Member`, y renombrarlos todos hace que en `schema.prisma` se
+  distinga de un vistazo qué es de la librería.
+
+  Consecuencia: sus tablas quedan en PascalCase mientras las del dominio son snake_case en
+  plural. Es una inconsistencia deliberada y conviene dejarla así, porque el nombre de tabla
+  lo deriva Better Auth del `modelName` y forzarlo a snake_case se perdería en la próxima
+  regeneración del esquema.
+
+- **Su CLI reescribe `schema.prisma` entero.** Hay que hacer copia antes de correr
+  `npx auth@latest generate` y revisar el diff después. Reformatea el archivo completo, así
+  que el diff va a ser ruidoso aunque no haya cambiado nada de fondo.
 - Sus rutas quedan fuera del `createDocument` de `main.ts`. Son unos ocho endpoints, y el
   front necesita tipos a mano para esa parte. Se acota envolviéndolos en un único cliente
   tipado en un solo archivo.
