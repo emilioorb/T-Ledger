@@ -76,6 +76,7 @@ export const listMovementsQuerySchema = paginationQuerySchema
     categoryId: z.string().min(1).optional(),
     from: isoDate.optional(),
     to: isoDate.optional(),
+    search: z.string().trim().min(1).optional(),
   })
   .meta({ id: 'ListMovementsQuery', title: 'ListMovementsQuery' })
 

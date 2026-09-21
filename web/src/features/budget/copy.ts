@@ -40,6 +40,7 @@ export const copy = {
     overBy: (amount: string) => `${amount} por encima de lo asignado`,
     viewMovements: (bucket: string) => `Ver los movimientos de ${bucket}`,
     savingsBucket: 'Ahorro',
+    allocatedOf: (amount: string) => `de ${amount} asignados`,
     barLabel: (name: string, consumed: string, allocated: string) =>
       `${name}: ${consumed} consumido de ${allocated} asignado`,
     noModel: {

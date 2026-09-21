@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
+import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { copy } from '@/features/goals/copy'
 import { useContribute, useGoal } from '@/features/goals/use-goals'
 import { formatIsoDate, today } from '@/lib/dates'
@@ -84,20 +85,34 @@ const GoalDetailScreen = () => {
 
       {/* La pregunta de una meta no es cuánto llevás sino si llegás: la fecha proyectada
           contra la deseada va arriba y con peso. */}
-      <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border-strong py-4">
-        <div>
-          <p className="text-xs text-muted-foreground">
-            {meta.reached
+      {/* La pregunta de una meta no es cuánto llevás sino si llegás: la fecha proyectada
+          contra la deseada va arriba y con peso. */}
+      <StatGrid>
+        <StatCard
+          className="sm:col-span-2"
+          label={
+            meta.reached
               ? copy.goals.reached
               : meta.projectedDate === null
                 ? copy.goals.noPace
                 : meta.onTrack
                   ? copy.goals.onTrack
-                  : copy.goals.late}
-          </p>
+                  : copy.goals.late
+          }
+          hint={
+            <>
+              {meta.projectedDate === null
+                ? copy.goals.noPaceHint
+                : `${copy.goals.columns.desired} ${formatIsoDate(meta.desiredDate)}`}
+              {lateMonths > 0 ? (
+                <span className="mt-0.5 block text-warning">{copy.goals.lateBy(lateMonths)}</span>
+              ) : null}
+            </>
+          }
+        >
           <p
             className={cn(
-              'num num-right mt-1 block text-left text-3xl tracking-tight',
+              'num block text-left text-3xl tracking-tight',
               meta.reached
                 ? 'text-positive'
                 : !meta.onTrack && meta.projectedDate
@@ -107,57 +122,42 @@ const GoalDetailScreen = () => {
           >
             {meta.projectedDate ? formatIsoDate(meta.projectedDate) : '—'}
           </p>
-          <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
-            {meta.projectedDate === null
-              ? copy.goals.noPaceHint
-              : `${copy.goals.columns.desired} ${formatIsoDate(meta.desiredDate)}`}
-          </p>
-          {lateMonths > 0 ? (
-            <p className="mt-0.5 max-w-[52ch] text-xs text-warning">
-              {copy.goals.lateBy(lateMonths)}
-            </p>
-          ) : null}
-        </div>
+        </StatCard>
 
-        <dl className="flex flex-wrap gap-6 text-sm">
-          <div>
-            <dt className="text-xs text-muted-foreground">{copy.goals.columns.contributed}</dt>
-            <dd>
-              <Amount money={meta.contributed} />
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">{copy.goals.columns.target}</dt>
-            <dd>
-              <Amount money={meta.target} />
-            </dd>
-          </div>
-          {!meta.reached ? (
-            <div>
-              <dt className="text-xs text-muted-foreground">
-                <Hint text={copy.goals.requiredHint}>
-                  <span>{copy.goals.columns.required}</span>
-                </Hint>
-              </dt>
-              <dd>
-                <Amount money={meta.requiredMonthlyContribution} emphasis="strong" />
-              </dd>
-            </div>
-          ) : null}
-          {meta.observedMonthlyPace ? (
-            <div>
-              <dt className="text-xs text-muted-foreground">
-                <Hint text={copy.goals.paceHint}>
-                  <span>{copy.goals.columns.pace}</span>
-                </Hint>
-              </dt>
-              <dd>
-                <Amount money={meta.observedMonthlyPace} />
-              </dd>
-            </div>
-          ) : null}
-        </dl>
-      </div>
+        <StatCard label={copy.goals.columns.contributed}>
+          <Amount money={meta.contributed} className="block text-left text-lg" />
+        </StatCard>
+        <StatCard label={copy.goals.columns.target}>
+          <Amount money={meta.target} className="block text-left text-lg" />
+        </StatCard>
+        {!meta.reached ? (
+          <StatCard
+            label={
+              <Hint text={copy.goals.requiredHint}>
+                <span>{copy.goals.columns.required}</span>
+              </Hint>
+            }
+          >
+            <Amount
+              money={meta.requiredMonthlyContribution}
+              emphasis="strong"
+              className="block text-left text-lg"
+            />
+          </StatCard>
+        ) : null}
+        {meta.observedMonthlyPace ? (
+          <StatCard
+            label={
+              <Hint text={copy.goals.paceHint}>
+                <span>{copy.goals.columns.pace}</span>
+              </Hint>
+            }
+          >
+            <Amount money={meta.observedMonthlyPace} className="block text-left text-lg" />
+          </StatCard>
+        ) : null}
+      </StatGrid>
+
 
       {!meta.reached ? (
         <form onSubmit={submit} className="space-y-1.5">

@@ -641,6 +641,7 @@ export interface paths {
                     categoryId?: string;
                     from?: string;
                     to?: string;
+                    search?: string;
                 };
                 header?: never;
                 path?: never;

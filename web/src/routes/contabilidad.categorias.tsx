@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { ArrowRight, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { FormDialog } from '@/components/form-dialog'
 import { ErrorState } from '@/components/error-state'
 import {
   AlertDialog,
@@ -79,7 +80,7 @@ const CategoryForm = ({ category, postable, pending, onSubmit, onCancel }: FormP
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-4 sm:grid-cols-[1fr_9rem_1fr_auto] sm:items-end">
+    <form onSubmit={submit} className="grid gap-4">
       <div className="space-y-1.5">
         <Label htmlFor="name">{fields.name.label}</Label>
         <Input
@@ -128,7 +129,7 @@ const CategoryForm = ({ category, postable, pending, onSubmit, onCancel }: FormP
         </Select>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" size="sm" disabled={pending}>
           {copy.common.save}
         </Button>
@@ -228,20 +229,22 @@ const CategoriesScreen = () => {
         </Button>
       </header>
 
-      {editing ? (
-        <div className="border-y border-border py-5">
-          <h2 className="mb-4 text-base font-medium tracking-tight">
-            {editing.category ? copy.categories.form.editTitle : copy.categories.form.createTitle}
-          </h2>
+      <FormDialog
+        open={editing !== null}
+        title={editing?.category ? copy.categories.form.editTitle : copy.categories.form.createTitle}
+        onOpenChange={(open) => !open && setEditing(null)}
+      >
+        {editing ? (
           <CategoryForm
+            key={editing.category?.id ?? 'nueva'}
             category={editing.category}
             postable={postable}
             pending={save.isPending}
             onSubmit={submit}
             onCancel={() => setEditing(null)}
           />
-        </div>
-      ) : null}
+        ) : null}
+      </FormDialog>
 
       {categories.isPending ? (
         <div className="space-y-2" role="status" aria-label={copy.common.loading}>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
+import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isNegativeMoney, isZeroMoney } from '@/features/accounting/amount'
 import { copy } from '@/features/accounting/copy'
@@ -23,8 +24,9 @@ interface BlockProps {
   sign?: string
 }
 
-// La cascada es la composición: cada bloque resta del anterior y el resultado cierra
-// abajo con el peso mayor de la pantalla.
+// La cascada es la composición: cada bloque resta del anterior y el resultado cierra abajo
+// con el peso mayor de la pantalla. Los bloques van juntos —son una sola cuenta, no tres
+// secciones— y el único que se separa es el resultado, que es donde la cuenta cierra.
 const Block = ({ label, total, nodes, sign }: BlockProps) => (
   <section>
     <header className="flex items-baseline justify-between gap-3 border-b border-border-strong pb-1.5">
@@ -90,7 +92,9 @@ const IncomeStatementScreen = () => {
           description={copy.incomeStatement.empty.description}
         />
       ) : (
-        <div className="max-w-3xl space-y-7">
+        // La cascada entera va en una tarjeta: es una sola cuenta, no tres secciones. Y
+        // acotada y centrada, porque una fila de nombre y cifra deja de leerse si se estira.
+        <Card size="sm" className="mx-auto max-w-3xl gap-4 px-4">
           <Block
             label={copy.incomeStatement.income}
             total={statement.data.income}
@@ -128,7 +132,7 @@ const IncomeStatementScreen = () => {
               className="shrink-0 text-3xl tracking-tight"
             />
           </div>
-        </div>
+        </Card>
       )}
     </section>
   )

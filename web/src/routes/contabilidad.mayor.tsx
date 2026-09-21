@@ -63,7 +63,7 @@ const LedgerScreen = () => {
             {copy.ledger.account.label}
           </Label>
           <Select value={account} onValueChange={setAccount}>
-            <SelectTrigger id="account" size="sm" className="w-52 sm:w-64">
+            <SelectTrigger id="account" className="h-8 w-52 sm:w-64">
               <SelectValue placeholder={copy.ledger.account.placeholder} />
             </SelectTrigger>
             <SelectContent>

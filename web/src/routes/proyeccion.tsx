@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isNegativeMoney, isZeroMoney } from '@/features/accounting/amount'
 import { ControlBar, CurrencyField } from '@/features/accounting/report-controls'
 import type { CurrencyCode } from '@/features/accounting/types'
+import { StatCard } from '@/features/accounting/stat-card'
 import { copy } from '@/features/projection/copy'
 import type { MonthlyFlow } from '@/features/projection/types'
 import { useCashFlowProjection } from '@/features/projection/use-projection'
@@ -137,13 +138,13 @@ const ProjectionScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.projection.description}</p>
       </header>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <div className="flex flex-col gap-1">
           <Label htmlFor="horizon" className="text-xs font-normal text-muted-foreground">
             {copy.projection.horizon.label}
           </Label>
           <Select value={String(months)} onValueChange={(next) => setMonths(Number(next))}>
-            <SelectTrigger id="horizon" size="sm" className="w-32">
+            <SelectTrigger id="horizon" className="h-8 w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -192,20 +193,18 @@ const ProjectionScreen = () => {
         <div className="space-y-5">
           {/* El primer mes que no cierra, arriba: enterarse con anticipación es el valor
               entero de proyectar. */}
-          <div className="border-y border-border-strong py-4">
+          <StatCard
+            label={copy.projection.horizon.label}
+            hint={firstNegative ? copy.projection.negativeHint : undefined}
+          >
             {firstNegative ? (
-              <>
-                <p className="text-sm font-medium tracking-tight text-negative">
-                  {copy.projection.firstNegative(monthLabel(firstNegative))}
-                </p>
-                <p className="mt-1 max-w-[60ch] text-xs text-muted-foreground">
-                  {copy.projection.negativeHint}
-                </p>
-              </>
+              <p className="text-lg font-medium tracking-tight text-negative">
+                {copy.projection.firstNegative(monthLabel(firstNegative))}
+              </p>
             ) : (
-              <p className="text-sm text-muted-foreground">{copy.projection.allClear}</p>
+              <p className="text-lg tracking-tight">{copy.projection.allClear}</p>
             )}
-          </div>
+          </StatCard>
 
           <div className="hidden grid-cols-[6rem_1fr_auto] gap-3 border-b border-border pb-1 text-xs text-muted-foreground sm:grid">
             <span>{copy.projection.columns.month}</span>

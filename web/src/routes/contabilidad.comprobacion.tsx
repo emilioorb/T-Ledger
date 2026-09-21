@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount } from '@/features/accounting/amount'
 import { copy } from '@/features/accounting/copy'
+import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { ControlBar, CurrencyField, RangeFields } from '@/features/accounting/report-controls'
 import type { CurrencyCode } from '@/features/accounting/types'
 import { trialBalanceCsvUrl, useTrialBalance } from '@/features/accounting/use-accounting'
@@ -34,7 +35,7 @@ const TrialBalanceScreen = () => {
         </Button>
       </header>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <CurrencyField value={currency} onChange={setCurrency} />
         <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </ControlBar>
@@ -57,41 +58,32 @@ const TrialBalanceScreen = () => {
         <div className="space-y-6">
           {/* La diferencia se muestra siempre, cuadre o no: un indicador que solo aparece
               cuando algo está mal enseña a no mirarlo. */}
-          <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border-strong py-4">
-            <div>
-              <p className="text-xs text-muted-foreground">{copy.trialBalance.difference}</p>
-              {/* La cifra se alinea con su etiqueta, no al ancho del párrafo: `.num num-right` trae
-                  alineación a la derecha y en un bloque suelto la dejaba flotando. */}
+          <StatGrid>
+            {/* La cifra se alinea con su etiqueta, no al ancho de la tarjeta: `.num num-right`
+                trae alineación a la derecha y en un bloque suelto la dejaba flotando. */}
+            <StatCard
+              className="sm:col-span-2"
+              label={copy.trialBalance.difference}
+              hint={
+                balance.data.balances
+                  ? copy.trialBalance.balancedHint
+                  : copy.trialBalance.unbalancedHint
+              }
+            >
               <Amount
                 money={balance.data.difference}
                 emphasis="strong"
                 tone={balance.data.balances ? 'plain' : 'alert'}
-                className="mt-1 block text-left text-3xl tracking-tight"
+                className="block text-left text-3xl tracking-tight"
               />
-              <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
-                {balance.data.balances
-                  ? copy.trialBalance.balancedHint
-                  : copy.trialBalance.unbalancedHint}
-              </p>
-            </div>
-
-            <dl className="flex gap-6 text-sm">
-              <div>
-                <dt className="text-xs text-muted-foreground">{copy.trialBalance.columns.debits}</dt>
-                <dd>
-                  <Amount money={balance.data.totalDebits} />
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">
-                  {copy.trialBalance.columns.credits}
-                </dt>
-                <dd>
-                  <Amount money={balance.data.totalCredits} />
-                </dd>
-              </div>
-            </dl>
-          </div>
+            </StatCard>
+            <StatCard label={copy.trialBalance.columns.debits}>
+              <Amount money={balance.data.totalDebits} className="block text-left text-lg" />
+            </StatCard>
+            <StatCard label={copy.trialBalance.columns.credits}>
+              <Amount money={balance.data.totalCredits} className="block text-left text-lg" />
+            </StatCard>
+          </StatGrid>
 
           {balance.data.rows.length === 0 ? (
             <EmptyState

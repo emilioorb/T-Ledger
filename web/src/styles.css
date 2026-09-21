@@ -172,3 +172,18 @@
     }
   }
 }
+
+/* Radix monta un <select> nativo oculto detrás de cada desplegable para que el valor viaje en
+   el envío del formulario. No se ve, pero el apilado vertical de Tailwind lo cuenta como un
+   campo más: le deja margen al control de arriba y la columna termina seis píxeles más alta
+   que la de al lado, con los controles desalineados en toda la fila.
+
+   Van sin capa a propósito: tienen que ganarle a la utilidad de espaciado, y así no hace
+   falta un !important. */
+[data-slot='select-trigger'] ~ select {
+  position: absolute;
+}
+
+[data-slot='select-trigger']:has(+ select) {
+  margin-bottom: 0;
+}

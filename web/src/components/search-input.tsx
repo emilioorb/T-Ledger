@@ -1,15 +1,17 @@
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 interface Props {
   value: string
   onChange: (value: string) => void
   placeholder: string
   label: string
+  className?: string
 }
 
-export const SearchInput = ({ value, onChange, placeholder, label }: Props) => (
-  <div className="relative w-full sm:max-w-xs">
+export const SearchInput = ({ value, onChange, placeholder, label, className }: Props) => (
+  <div className={cn('relative w-full', className ?? 'sm:max-w-xs')}>
     <Search
       className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
       aria-hidden="true"

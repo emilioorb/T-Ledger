@@ -283,6 +283,16 @@ describe('flujo completo de contabilidad', () => {
     expect(response.status).toBe(201)
   })
 
+  it('la búsqueda filtra por contraparte en la base, no en la página cargada', async () => {
+    await crearMovimientoSimple()
+
+    const encontrados = await get('/movements?search=veedo').expect(200)
+    const vacios = await get('/movements?search=zzz').expect(200)
+
+    expect(encontrados.body.pagination.totalItems).toBe(1)
+    expect(vacios.body.pagination.totalItems).toBe(0)
+  })
+
   it('el patrimonio consolidado separa lo que hizo el tipo de cambio', async () => {
     await publicarTasa('2026-09-16', '508')
     await publicarTasa('2026-09-21', '443.27')

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isZeroMoney } from '@/features/accounting/amount'
 import { copy } from '@/features/accounting/copy'
+import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { ControlBar, DateField } from '@/features/accounting/report-controls'
 import type { CurrencyBreakdown } from '@/features/accounting/types'
 import { useNetWorth } from '@/features/accounting/use-accounting'
@@ -43,7 +44,7 @@ const NetWorthScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.netWorth.description}</p>
       </header>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <DateField id="at" label={copy.netWorth.at} value={at} onChange={setAt} />
       </ControlBar>
 
@@ -73,35 +74,26 @@ const NetWorthScreen = () => {
         <div className="space-y-7">
           {/* La cifra y, pegada a ella, la tasa con que se armó. Un número que suma dos
               monedas sin decir a cuánto las sumó no es verificable. */}
-          <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border-strong py-4">
-            <div>
-              <p className="text-xs text-muted-foreground">{copy.netWorth.total}</p>
+          <StatGrid>
+            <StatCard
+              className="sm:col-span-2"
+              label={copy.netWorth.total}
+              hint={foreign ? copy.netWorth.rateNote(foreign.rate) : copy.netWorth.description}
+            >
               <Amount
                 money={report.data.netWorth}
                 emphasis="strong"
                 tone={report.data.netWorth.minorUnits.startsWith('-') ? 'alert' : 'plain'}
-                className="mt-1 block text-left text-3xl tracking-tight"
+                className="block text-left text-3xl tracking-tight"
               />
-              <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
-                {foreign ? copy.netWorth.rateNote(foreign.rate) : copy.netWorth.description}
-              </p>
-            </div>
-
-            <dl className="flex flex-wrap gap-6 text-sm">
-              <div>
-                <dt className="text-xs text-muted-foreground">{copy.netWorth.assets}</dt>
-                <dd>
-                  <Amount money={report.data.assets} />
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">{copy.netWorth.liabilities}</dt>
-                <dd>
-                  <Amount money={report.data.liabilities} />
-                </dd>
-              </div>
-            </dl>
-          </div>
+            </StatCard>
+            <StatCard label={copy.netWorth.assets}>
+              <Amount money={report.data.assets} className="block text-left text-lg" />
+            </StatCard>
+            <StatCard label={copy.netWorth.liabilities}>
+              <Amount money={report.data.liabilities} className="block text-left text-lg" />
+            </StatCard>
+          </StatGrid>
 
           {/* Cuánto del patrimonio es lo que hiciste y cuánto es lo que hizo la tasa. */}
           <div>

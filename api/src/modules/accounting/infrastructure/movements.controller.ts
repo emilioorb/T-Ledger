@@ -53,6 +53,7 @@ export class MovementsController {
       ...(query.status ? { status: query.status } : {}),
       ...(query.categoryId ? { categoryId: query.categoryId } : {}),
       ...(range ? { range } : {}),
+      ...(query.search ? { search: query.search } : {}),
     }
 
     const { items, totalItems } = await this.listMovements.execute(

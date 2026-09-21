@@ -8,6 +8,9 @@ export interface MovementFilters {
   readonly status?: MovementStatus
   readonly categoryId?: string
   readonly range?: DateRange
+  // Busca en la contraparte. Va en el filtro y no en el cliente porque la lista viene
+  // paginada: buscar sobre la página cargada solo encontraría lo que ya se está viendo.
+  readonly search?: string
 }
 
 export interface MovementPage {

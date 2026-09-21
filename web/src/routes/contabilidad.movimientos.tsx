@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { SearchInput } from '@/components/search-input'
 import { Pager } from '@/components/pager'
 import { ErrorState } from '@/components/error-state'
 import {
@@ -24,12 +25,20 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
 import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/accounting/copy'
 import { MovementForm, type MovementFormValues } from '@/features/accounting/movement-form'
-import { ControlBar, DateField } from '@/features/accounting/report-controls'
+import { ControlBar, RangeFields } from '@/features/accounting/report-controls'
 import type { Category, Movement, MovementFilters } from '@/features/accounting/types'
 import {
   useAccounts,
@@ -40,18 +49,11 @@ import {
   useVoidMovement,
 } from '@/features/accounting/use-accounting'
 import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
+import { useDebounced } from '@/lib/use-debounced'
 import { usePage } from '@/lib/use-page'
 import { cn } from '@/lib/utils'
 
 const ALL = 'all'
-
-const groupByDate = (movements: Movement[]): [string, Movement[]][] => {
-  const groups = new Map<string, Movement[]>()
-  for (const movement of movements) {
-    groups.set(movement.date, [...(groups.get(movement.date) ?? []), movement])
-  }
-  return [...groups.entries()].sort(([a], [b]) => b.localeCompare(a))
-}
 
 interface RowProps {
   movement: Movement
@@ -60,12 +62,90 @@ interface RowProps {
   onVoid: () => void
 }
 
-// Dos renglones en el teléfono y uno solo en escritorio: en 360 px, cinco elementos
-// peleando por el ancho dejan el nombre en dos glifos, y anotar en el teléfono es el
-// camino que más se recorre.
-const MovementRow = ({ movement, category, onEdit, onVoid }: RowProps) => {
+// Las marcas que no son un dato de columna: anulado, sin contabilizar, y el enlace al
+// asiento. Van juntas porque las tres responden lo mismo: en qué estado quedó esto.
+const Marks = ({ movement }: { movement: Movement }) => {
   const isVoided = movement.status === 'VOIDED'
-  const struck = isVoided && 'text-muted-foreground line-through'
+
+  return (
+    <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
+      {isVoided ? (
+        <span className="text-muted-foreground">{copy.movements.statuses.VOIDED}</span>
+      ) : null}
+
+      {!movement.posted && !isVoided ? (
+        <Hint text={copy.movements.unpostedHint}>
+          <Link to="/contabilidad/categorias" className="text-warning">
+            {copy.movements.unposted}
+          </Link>
+        </Hint>
+      ) : null}
+
+      {movement.journalEntryId ? (
+        <Link
+          to="/contabilidad/asientos"
+          search={{ entry: movement.journalEntryId }}
+          className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+        >
+          {copy.movements.viewEntry}
+        </Link>
+      ) : null}
+    </span>
+  )
+}
+
+const Actions = ({ movement, onEdit, onVoid }: Omit<RowProps, 'category'>) =>
+  movement.status === 'VOIDED' ? null : (
+    <span className="flex justify-end gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+        aria-label={copy.movements.edit(movement.counterparty)}
+        onClick={onEdit}
+      >
+        {copy.movements.editShort}
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+        aria-label={copy.movements.void(movement.counterparty)}
+        onClick={onVoid}
+      >
+        {copy.movements.voidShort}
+      </Button>
+    </span>
+  )
+
+const MovementTableRow = ({ movement, category, onEdit, onVoid }: RowProps) => {
+  const struck = movement.status === 'VOIDED' && 'text-muted-foreground line-through'
+
+  return (
+    <TableRow>
+      <TableCell className="num whitespace-nowrap">{formatIsoDate(movement.date)}</TableCell>
+      <TableCell className={cn('max-w-0 truncate', struck)}>{movement.counterparty}</TableCell>
+      <TableCell className="text-muted-foreground">{category?.name ?? '—'}</TableCell>
+      <TableCell>
+        <Marks movement={movement} />
+      </TableCell>
+      <TableCell className={cn('num num-right whitespace-nowrap', struck)}>
+        <Amount
+          money={movement.amount}
+          emphasis={movement.kind === 'INCOME' ? 'strong' : 'normal'}
+        />
+      </TableCell>
+      <TableCell>
+        <Actions movement={movement} onEdit={onEdit} onVoid={onVoid} />
+      </TableCell>
+    </TableRow>
+  )
+}
+
+// Bajo 768 px una tabla de seis columnas obliga a desplazar de lado para leer un monto.
+// Ahí cada movimiento es un bloque, que es como se lee en el teléfono.
+const MovementCard = ({ movement, category, onEdit, onVoid }: RowProps) => {
+  const struck = movement.status === 'VOIDED' && 'text-muted-foreground line-through'
 
   return (
     <li className="border-b border-border py-2.5">
@@ -76,60 +156,17 @@ const MovementRow = ({ movement, category, onEdit, onVoid }: RowProps) => {
         <Amount
           money={movement.amount}
           className={cn('shrink-0 text-sm', struck)}
-          // Un ingreso y un gasto del mismo monto se ven igual sin esta marca.
           emphasis={movement.kind === 'INCOME' ? 'strong' : 'normal'}
         />
       </div>
 
       <div className="mt-0.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
-        <span className="text-muted-foreground">
-          {copy.movements.kinds[movement.kind]} · {category?.name ?? '—'}
+        <span className="num text-muted-foreground">{formatIsoDate(movement.date)}</span>
+        <span className="text-muted-foreground">{category?.name ?? '—'}</span>
+        <Marks movement={movement} />
+        <span className="ml-auto">
+          <Actions movement={movement} onEdit={onEdit} onVoid={onVoid} />
         </span>
-
-        {isVoided ? (
-          <span className="text-muted-foreground">{copy.movements.statuses.VOIDED}</span>
-        ) : null}
-
-        {!movement.posted && !isVoided ? (
-          <Hint text={copy.movements.unpostedHint}>
-            <Link to="/contabilidad/categorias" className="text-warning">
-              {copy.movements.unposted}
-            </Link>
-          </Hint>
-        ) : null}
-
-        {movement.journalEntryId ? (
-          <Link
-            to="/contabilidad/asientos"
-            search={{ entry: movement.journalEntryId }}
-            className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-          >
-            {copy.movements.viewEntry}
-          </Link>
-        ) : null}
-
-        {!isVoided ? (
-          <span className="ml-auto flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-              aria-label={copy.movements.edit(movement.counterparty)}
-              onClick={onEdit}
-            >
-              {copy.movements.editShort}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-              aria-label={copy.movements.void(movement.counterparty)}
-              onClick={onVoid}
-            >
-              {copy.movements.voidShort}
-            </Button>
-          </span>
-        ) : null}
       </div>
     </li>
   )
@@ -141,6 +178,8 @@ const MovementsScreen = () => {
   const [kind, setKind] = useState<string>(ALL)
   const [status, setStatus] = useState<string>(ALL)
   const [categoryId, setCategoryId] = useState<string>(ALL)
+  const [search, setSearch] = useState('')
+  const settledSearch = useDebounced(search.trim())
   const [editing, setEditing] = useState<{ movement?: Movement } | null>(null)
   const [voiding, setVoiding] = useState<Movement | null>(null)
 
@@ -150,6 +189,7 @@ const MovementsScreen = () => {
     ...(kind === ALL ? {} : { kind: kind as MovementFilters['kind'] }),
     ...(status === ALL ? {} : { status: status as MovementFilters['status'] }),
     ...(categoryId === ALL ? {} : { categoryId }),
+    ...(settledSearch === '' ? {} : { search: settledSearch }),
   }
 
   usePrimaryAction(copy.movements.new, () => setEditing({}))
@@ -168,7 +208,7 @@ const MovementsScreen = () => {
   )
   const byId = new Map((categories.data ?? []).map((category) => [category.id, category]))
   const items = movements.data?.data ?? []
-  const hasFilters = kind !== ALL || status !== ALL || categoryId !== ALL
+  const hasFilters = kind !== ALL || status !== ALL || categoryId !== ALL || settledSearch !== ''
 
   const submit = (values: MovementFormValues) =>
     save.mutate(
@@ -210,15 +250,14 @@ const MovementsScreen = () => {
       ) : null}
 
       <ControlBar>
-        <DateField id="from" label={copy.common.from} value={from} onChange={setFrom} />
-        <DateField id="to" label={copy.common.to} value={to} onChange={setTo} />
+        <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
 
         <div className="flex flex-col gap-1">
           <Label htmlFor="kind-filter" className="text-xs font-normal text-muted-foreground">
             {copy.movements.filters.kind.label}
           </Label>
           <Select value={kind} onValueChange={setKind}>
-            <SelectTrigger id="kind-filter" size="sm" className="w-40">
+            <SelectTrigger id="kind-filter" className="h-8 w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -234,7 +273,7 @@ const MovementsScreen = () => {
             {copy.movements.filters.status.label}
           </Label>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger id="status-filter" size="sm" className="w-32">
+            <SelectTrigger id="status-filter" className="h-8 w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -250,7 +289,7 @@ const MovementsScreen = () => {
             {copy.movements.filters.category.label}
           </Label>
           <Select value={categoryId} onValueChange={setCategoryId}>
-            <SelectTrigger id="category-filter" size="sm" className="w-44">
+            <SelectTrigger id="category-filter" className="h-8 w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -263,6 +302,13 @@ const MovementsScreen = () => {
             </SelectContent>
           </Select>
         </div>
+
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={copy.movements.search.placeholder}
+          label={copy.movements.search.label}
+        />
       </ControlBar>
 
       {movements.isPending ? (
@@ -291,6 +337,7 @@ const MovementsScreen = () => {
                   setKind(ALL)
                   setStatus(ALL)
                   setCategoryId(ALL)
+                  setSearch('')
                 }}
               >
                 {copy.movements.noMatches.action}
@@ -305,15 +352,22 @@ const MovementsScreen = () => {
           />
         )
       ) : (
-        <div className="space-y-6">
-          {groupByDate(items).map(([date, ofDay]) => (
-            <div key={date}>
-              <h2 className="num text-xs font-medium text-muted-foreground">
-                {formatIsoDate(date)}
-              </h2>
-              <ul className="mt-1.5">
-                {ofDay.map((movement) => (
-                  <MovementRow
+        <div className="space-y-4">
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{copy.movements.columns.date}</TableHead>
+                  <TableHead className="w-full">{copy.movements.columns.counterparty}</TableHead>
+                  <TableHead>{copy.movements.columns.category}</TableHead>
+                  <TableHead>{copy.movements.columns.status}</TableHead>
+                  <TableHead className="text-right">{copy.movements.columns.amount}</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((movement) => (
+                  <MovementTableRow
                     key={movement.id}
                     movement={movement}
                     category={byId.get(movement.categoryId)}
@@ -321,9 +375,21 @@ const MovementsScreen = () => {
                     onVoid={() => setVoiding(movement)}
                   />
                 ))}
-              </ul>
-            </div>
-          ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <ul className="md:hidden">
+            {items.map((movement) => (
+              <MovementCard
+                key={movement.id}
+                movement={movement}
+                category={byId.get(movement.categoryId)}
+                onEdit={() => setEditing({ movement })}
+                onVoid={() => setVoiding(movement)}
+              />
+            ))}
+          </ul>
 
           <Pager
             page={page}

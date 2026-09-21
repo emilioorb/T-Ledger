@@ -1,14 +1,17 @@
 import { useState, type FormEvent } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
+import { FormDialog } from '@/components/form-dialog'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
 import { ControlBar, CurrencyField, MonthField } from '@/features/accounting/report-controls'
+import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { copy } from '@/features/budget/copy'
 import type { BucketEvaluation, CurrencyCode } from '@/features/budget/types'
 import {
@@ -41,52 +44,51 @@ const BucketRow = ({ bucket, month }: RowProps) => {
   const deviation = absMoney(bucket.deviation)
 
   return (
-    <li className="border-b border-border py-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className={cn('text-sm', isOver && 'font-medium')}>{bucket.name}</span>
-        <span className="flex flex-col items-end gap-1">
-          <span className="flex items-baseline gap-4">
-            <Amount
-              money={bucket.consumed}
-              emphasis={isOver ? 'strong' : 'normal'}
-              className="text-sm"
-            />
-            <span className="text-xs text-muted-foreground">/</span>
-            <Amount money={bucket.allocated} className="w-28 text-sm text-muted-foreground" />
-          </span>
-
-          {/* El medidor vive pegado a las cifras que mide, no cruzando la fila: ahí sería
-              otra línea divisoria más. */}
-          <span
-            className="block h-1 w-40 bg-border-strong"
-            role="img"
-            aria-label={copy.budget.barLabel(
-              bucket.name,
-              formatMoney(bucket.consumed),
-              formatMoney(bucket.allocated),
-            )}
-          >
-            <span
-              className={cn('block h-full', isOver ? 'bg-warning' : 'bg-foreground')}
-              style={{ width: `${consumedRatio(bucket) * 100}%` }}
-            />
-          </span>
-        </span>
-      </div>
-
-      <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
-        <span className={cn(isOver ? 'text-warning' : 'text-muted-foreground')}>
+    <Card size="sm" className="gap-3 px-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className={cn('text-sm', isOver && 'font-medium')}>{bucket.name}</h3>
+        <span className={cn('text-xs', isOver ? 'text-warning' : 'text-muted-foreground')}>
           {isOver ? copy.budget.overBy(formatMoney(deviation)) : copy.budget.status[bucket.status]}
         </span>
-        <Link
-          to="/contabilidad/movimientos"
-          search={{ from: `${month}-01`, to: monthEnd(`${month}-01`) }}
-          className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
-        >
-          {copy.budget.viewMovements(bucket.name)}
-        </Link>
       </div>
-    </li>
+
+      {/* Lo consumido manda y lo asignado es la referencia: el dato es cuánto se fue, no
+          cuánto cabía. */}
+      <div>
+        <Amount
+          money={bucket.consumed}
+          emphasis={isOver ? 'strong' : 'normal'}
+          tone={isOver ? 'alert' : 'plain'}
+          className="block text-left text-2xl tracking-tight"
+        />
+        <p className="mt-0.5 num text-left text-xs text-muted-foreground">
+          {copy.budget.allocatedOf(formatMoney(bucket.allocated))}
+        </p>
+      </div>
+
+      <div
+        className="h-1 w-full bg-border-strong"
+        role="img"
+        aria-label={copy.budget.barLabel(
+          bucket.name,
+          formatMoney(bucket.consumed),
+          formatMoney(bucket.allocated),
+        )}
+      >
+        <div
+          className={cn('h-full', isOver ? 'bg-warning' : 'bg-foreground')}
+          style={{ width: `${consumedRatio(bucket) * 100}%` }}
+        />
+      </div>
+
+      <Link
+        to="/contabilidad/movimientos"
+        search={{ from: `${month}-01`, to: monthEnd(`${month}-01`) }}
+        className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+      >
+        {copy.budget.viewMovements(bucket.name)}
+      </Link>
+    </Card>
   )
 }
 
@@ -115,7 +117,7 @@ const BudgetScreen = () => {
   }
 
   const incomeForm = (
-    <form onSubmit={submitIncome} className="flex flex-wrap items-end gap-2">
+    <form onSubmit={submitIncome} className="grid gap-4">
       <div className="space-y-1.5">
         <Label htmlFor="income">{copy.budget.income}</Label>
         <Input
@@ -123,17 +125,18 @@ const BudgetScreen = () => {
           value={incomeDraft}
           inputMode="decimal"
           required
-          className="num num-right w-40"
+          className="num num-right w-full"
           onChange={(event) => setIncomeDraft(event.target.value)}
         />
-        <p className="max-w-[52ch] text-xs text-muted-foreground">{copy.budget.incomeHint}</p>
       </div>
-      <Button type="submit" size="sm" disabled={setIncome.isPending}>
-        {copy.budget.saveIncome}
-      </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => setEditingIncome(false)}>
-        {copy.common.cancel}
-      </Button>
+      <div className="flex justify-end gap-2 pt-1">
+        <Button type="submit" size="sm" disabled={setIncome.isPending}>
+          {copy.budget.saveIncome}
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => setEditingIncome(false)}>
+          {copy.common.cancel}
+        </Button>
+      </div>
     </form>
   )
 
@@ -144,7 +147,7 @@ const BudgetScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.budget.description}</p>
       </header>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <CurrencyField value={currency} onChange={setCurrency} />
         <MonthField id="month" label={copy.budget.month} value={at} onChange={setAt} />
       </ControlBar>
@@ -175,60 +178,50 @@ const BudgetScreen = () => {
         <div className="space-y-7">
           {/* La pregunta del mes no es cuánto queda sin gastar: es si alguna cubeta se pasó.
               Cuando la respuesta es un estado, el héroe es la frase; cuando es un monto, la cifra. */}
-          <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border-strong py-4">
-            <div>
+          <StatGrid className="lg:grid-cols-3">
+            <StatCard
+              className="sm:col-span-2 lg:col-span-3"
+              label={
+                overBucket ? (
+                  <span className="text-warning">{copy.budget.overBucket(overBucket.name)}</span>
+                ) : (
+                  copy.budget.monthState
+                )
+              }
+              hint={overBucket ? copy.budget.overHint : copy.budget.noOverHint}
+            >
               {overBucket ? (
-                <>
-                  <p className="text-xs text-warning">{copy.budget.overBucket(overBucket.name)}</p>
-                  <Amount
-                    money={absMoney(overBucket.deviation)}
-                    emphasis="strong"
-                    tone="alert"
-                    className="mt-1 block text-left text-3xl tracking-tight"
-                  />
-                  <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
-                    {copy.budget.overHint}
-                  </p>
-                </>
+                <Amount
+                  money={absMoney(overBucket.deviation)}
+                  emphasis="strong"
+                  tone="alert"
+                  className="block text-left text-3xl tracking-tight"
+                />
               ) : (
-                <>
-                  <p className="text-xs text-muted-foreground">{copy.budget.monthState}</p>
-                  <p className="mt-1 text-2xl tracking-tight">{copy.budget.noOverBucket}</p>
-                  <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
-                    {copy.budget.noOverHint}
-                  </p>
-                </>
+                <p className="text-2xl tracking-tight">{copy.budget.noOverBucket}</p>
               )}
-            </div>
+            </StatCard>
 
-            <dl className="flex flex-wrap gap-6 text-sm">
-              <div>
-                <dt className="text-xs text-muted-foreground">{copy.budget.income}</dt>
-                <dd>
-                  <Amount money={evaluation.data.income} />
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">{copy.budget.consumed}</dt>
-                <dd>
-                  <Amount money={evaluation.data.totalConsumed} />
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">
-                  <Hint text={copy.budget.surplusHint}>
-                    <span>{copy.budget.surplus}</span>
-                  </Hint>
-                </dt>
-                <dd>
-                  <Amount
-                    money={evaluation.data.surplus}
-                    tone={evaluation.data.surplus.minorUnits.startsWith('-') ? 'alert' : 'plain'}
-                  />
-                </dd>
-              </div>
-            </dl>
-          </div>
+            <StatCard label={copy.budget.income}>
+              <Amount money={evaluation.data.income} className="block text-left text-lg" />
+            </StatCard>
+            <StatCard label={copy.budget.consumed}>
+              <Amount money={evaluation.data.totalConsumed} className="block text-left text-lg" />
+            </StatCard>
+            <StatCard
+              label={
+                <Hint text={copy.budget.surplusHint}>
+                  <span>{copy.budget.surplus}</span>
+                </Hint>
+              }
+            >
+              <Amount
+                money={evaluation.data.surplus}
+                tone={evaluation.data.surplus.minorUnits.startsWith('-') ? 'alert' : 'plain'}
+                className="block text-left text-lg"
+              />
+            </StatCard>
+          </StatGrid>
 
           {!evaluation.data.incomeDeclared && !editingIncome ? (
             <EmptyState
@@ -242,7 +235,14 @@ const BudgetScreen = () => {
             />
           ) : null}
 
-          {editingIncome ? <div className="border-y border-border py-4">{incomeForm}</div> : null}
+          <FormDialog
+            open={editingIncome}
+            title={copy.budget.editIncome}
+            description={copy.budget.incomeHint}
+            onOpenChange={setEditingIncome}
+          >
+            {incomeForm}
+          </FormDialog>
 
           {evaluation.data.incomeDeclared && !editingIncome ? (
             <Button
@@ -258,11 +258,13 @@ const BudgetScreen = () => {
             </Button>
           ) : null}
 
-          <ul>
+          {/* Una cubeta por tarjeta: son tres cosas que se comparan entre sí, no una lista
+              que se recorre. */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {evaluation.data.buckets.map((bucket) => (
               <BucketRow key={bucket.bucketId} bucket={bucket} month={month} />
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </section>

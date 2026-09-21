@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isZeroMoney } from '@/features/accounting/amount'
 import { ControlBar, RangeFields } from '@/features/accounting/report-controls'
 import { useCategories, useMovements } from '@/features/accounting/use-accounting'
+import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { copy } from '@/features/banking/copy'
 import type { BankLine, MatchSuggestion } from '@/features/banking/types'
 import {
@@ -243,13 +244,13 @@ const ReconciliationScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.reconciliation.description}</p>
       </header>
 
-      <ControlBar>
+      <ControlBar separated={false}>
         <div className="flex flex-col gap-1">
           <Label htmlFor="bank-account" className="text-xs font-normal text-muted-foreground">
             {copy.reconciliation.account.label}
           </Label>
           <Select value={bankAccountId} onValueChange={setBankAccountId}>
-            <SelectTrigger id="bank-account" size="sm" className="w-56">
+            <SelectTrigger id="bank-account" className="h-8 w-56">
               <SelectValue placeholder={copy.reconciliation.account.label} />
             </SelectTrigger>
             <SelectContent>
@@ -303,50 +304,45 @@ const ReconciliationScreen = () => {
       ) : (
         <div className="space-y-6">
           {/* Los tres saldos, siempre a la vista: la diferencia es la pregunta de la pantalla. */}
-          <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border-strong py-4">
-            <div>
-              <p className="text-xs text-muted-foreground">{copy.reconciliation.difference}</p>
+          <StatGrid>
+            <StatCard
+              className="sm:col-span-2"
+              label={copy.reconciliation.difference}
+              hint={
+                <>
+                  {isZeroMoney(reconciliation.data.difference)
+                    ? copy.reconciliation.balanced
+                    : reconciliation.data.difference.minorUnits.startsWith('-')
+                      ? copy.reconciliation.statementHigher(
+                          formatMoney(absMoney(reconciliation.data.difference)),
+                        )
+                      : copy.reconciliation.ledgerHigher(
+                          formatMoney(reconciliation.data.difference),
+                        )}
+                  {explanation ? <span className="mt-1 block">{explanation}</span> : null}
+                </>
+              }
+            >
               <Amount
                 money={reconciliation.data.difference}
                 emphasis="strong"
                 tone={isZeroMoney(reconciliation.data.difference) ? 'plain' : 'alert'}
-                className="mt-1 block text-left text-3xl tracking-tight"
+                className="block text-left text-3xl tracking-tight"
               />
-              <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
-                {isZeroMoney(reconciliation.data.difference)
-                  ? copy.reconciliation.balanced
-                  : reconciliation.data.difference.minorUnits.startsWith('-')
-                    ? copy.reconciliation.statementHigher(
-                        formatMoney(absMoney(reconciliation.data.difference)),
-                      )
-                    : copy.reconciliation.ledgerHigher(
-                        formatMoney(reconciliation.data.difference),
-                      )}
-              </p>
-              {explanation ? (
-                <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">{explanation}</p>
-              ) : null}
-            </div>
-
-            <dl className="flex gap-6 text-sm">
-              <div>
-                <dt className="text-xs text-muted-foreground">
-                  {copy.reconciliation.ledgerBalance}
-                </dt>
-                <dd>
-                  <Amount money={reconciliation.data.ledgerBalance} />
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">
-                  {copy.reconciliation.statementBalance}
-                </dt>
-                <dd>
-                  <Amount money={reconciliation.data.statementBalance} />
-                </dd>
-              </div>
-            </dl>
-          </div>
+            </StatCard>
+            <StatCard label={copy.reconciliation.ledgerBalance}>
+              <Amount
+                money={reconciliation.data.ledgerBalance}
+                className="block text-left text-lg"
+              />
+            </StatCard>
+            <StatCard label={copy.reconciliation.statementBalance}>
+              <Amount
+                money={reconciliation.data.statementBalance}
+                className="block text-left text-lg"
+              />
+            </StatCard>
+          </StatGrid>
 
           {reconciliation.data.lines.length === 0 ? (
             <EmptyState

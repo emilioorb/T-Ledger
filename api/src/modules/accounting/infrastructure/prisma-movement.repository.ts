@@ -20,6 +20,9 @@ export class PrismaMovementRepository implements MovementRepository {
       ...(filters.status ? { status: filters.status } : {}),
       ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
       ...(filters.range ? { date: { gte: filters.range.from, lte: filters.range.to } } : {}),
+      ...(filters.search
+        ? { counterparty: { contains: filters.search, mode: 'insensitive' as const } }
+        : {}),
     }
 
     const [rows, totalItems] = await Promise.all([

@@ -1,0 +1,35 @@
+import type { ReactNode } from 'react'
+import { Card } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+
+interface Props {
+  label: ReactNode
+  children: ReactNode
+  hint?: ReactNode
+  className?: string
+}
+
+// La cifra que abre una pantalla, con su nombre encima y su explicación debajo. En tarjeta y
+// no entre dos reglas: la regla separa, la tarjeta agrupa, y lo que hay acá es un grupo.
+export const StatCard = ({ label, children, hint, className }: Props) => (
+  // `justify-center`: las tarjetas de una fila se estiran a la altura de la más alta, y sin
+  // esto la cifra queda pegada arriba con un hueco debajo que parece un error de armado.
+  <Card size="sm" className={cn('justify-center gap-1 px-4', className)}>
+    <p className="text-xs text-muted-foreground">{label}</p>
+    {children}
+    {hint ? <p className="max-w-[52ch] text-xs text-muted-foreground">{hint}</p> : null}
+  </Card>
+)
+
+// La rejilla de arriba: la cifra principal ocupa el ancho que necesite y las de apoyo se
+// acomodan al lado. Nunca es una fila de cuatro tarjetas iguales, que es la plantilla que
+// DESIGN.md prohíbe: acá hay una que manda y las demás la explican.
+export const StatGrid = ({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) => (
+  <div className={cn('grid gap-3 sm:grid-cols-2 lg:grid-cols-4', className)}>{children}</div>
+)

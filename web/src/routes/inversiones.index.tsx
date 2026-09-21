@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { FormDialog } from '@/components/form-dialog'
 import { ErrorState } from '@/components/error-state'
 import {
   AlertDialog,
@@ -369,34 +370,35 @@ const InvestmentsScreen = () => {
         </div>
       ) : null}
 
-      {adding ? (
-        <form onSubmit={submitCapital} className="space-y-1.5 border-y border-border py-4">
-          {/* La ayuda va debajo de la fila, no dentro de un campo: metida en una columna
-              alarga esa columna, y como la fila alinea por abajo, desalinea el resto. */}
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="capital-date">{copy.investments.contributionForm.date.label}</Label>
-              <Input
-                id="capital-date"
-                type="date"
-                value={capitalDate}
-                required
-                onChange={(event) => setCapitalDate(event.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="capital-amount">
-                {copy.investments.contributionForm.amount.label}
-              </Label>
-              <Input
-                id="capital-amount"
-                value={capitalAmount}
-                inputMode="decimal"
-                required
-                className="num num-right w-40"
-                onChange={(event) => setCapitalAmount(event.target.value)}
-              />
-            </div>
+      <FormDialog
+        open={adding !== null}
+        title={copy.investments.contributionForm.title}
+        description={copy.investments.contributionForm.date.hint}
+        onOpenChange={(open) => !open && setAdding(null)}
+      >
+        <form onSubmit={submitCapital} className="grid gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="capital-date">{copy.investments.contributionForm.date.label}</Label>
+            <Input
+              id="capital-date"
+              type="date"
+              value={capitalDate}
+              required
+              onChange={(event) => setCapitalDate(event.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="capital-amount">{copy.investments.contributionForm.amount.label}</Label>
+            <Input
+              id="capital-amount"
+              value={capitalAmount}
+              inputMode="decimal"
+              required
+              className="num num-right"
+              onChange={(event) => setCapitalAmount(event.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
             <Button type="submit" size="sm" disabled={addCapital.isPending}>
               {copy.investments.contributionForm.submit}
             </Button>
@@ -404,11 +406,8 @@ const InvestmentsScreen = () => {
               {copy.common.cancel}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {copy.investments.contributionForm.date.hint}
-          </p>
         </form>
-      ) : null}
+      </FormDialog>
 
       {investments.isPending ? (
         <div className="space-y-3" role="status" aria-label={copy.common.loading}>

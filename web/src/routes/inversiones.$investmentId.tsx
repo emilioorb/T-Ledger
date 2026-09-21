@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount } from '@/features/accounting/amount'
+import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { copy } from '@/features/investments/copy'
 import { GrowthChart, type GrowthPoint } from '@/features/investments/growth-chart'
 import type { Investment } from '@/features/investments/types'
@@ -15,7 +16,6 @@ import { apiFetch } from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import { formatIsoDate, today } from '@/lib/dates'
 import { parseMoneyInput, type CurrencyCode } from '@/lib/money'
-import { cn } from '@/lib/utils'
 
 const POINTS = 12
 
@@ -104,38 +104,41 @@ const InvestmentDetailScreen = () => {
       </header>
 
       {/* El desglose es la respuesta: cuánto pusiste y cuánto de lo que ves es rendimiento. */}
-      <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border-strong py-4">
-        <div>
-          <p className="text-xs text-muted-foreground">{copy.investments.columns.value}</p>
-          <Amount money={data.value} emphasis="strong" className="mt-1 block text-left text-3xl tracking-tight" />
-          <p className={cn('mt-1 text-xs', data.matured ? 'text-positive' : 'text-muted-foreground')}>
-            {data.matured
-              ? copy.investments.maturedHint
-              : data.kind === 'FIXED_TERM'
-                ? copy.investments.detail.fixedTermHint
-                : copy.investments.openHint}
-          </p>
-        </div>
+      <StatGrid>
+        <StatCard
+          className="sm:col-span-2"
+          label={copy.investments.columns.value}
+          hint={
+            <span className={data.matured ? 'text-positive' : undefined}>
+              {data.matured
+                ? copy.investments.maturedHint
+                : data.kind === 'FIXED_TERM'
+                  ? copy.investments.detail.fixedTermHint
+                  : copy.investments.openHint}
+            </span>
+          }
+        >
+          <Amount
+            money={data.value}
+            emphasis="strong"
+            className="block text-left text-3xl tracking-tight"
+          />
+        </StatCard>
 
-        <dl className="flex gap-6 text-sm">
-          <div>
-            <dt className="text-xs text-muted-foreground">{copy.investments.columns.invested}</dt>
-            <dd>
-              <Amount money={data.invested} />
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">{copy.investments.columns.interest}</dt>
-            <dd>
-              <Amount money={data.interestEarned} emphasis="strong" />
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">{copy.investments.columns.rate}</dt>
-            <dd className="num">{data.annualRate}%</dd>
-          </div>
-        </dl>
-      </div>
+        <StatCard label={copy.investments.columns.invested}>
+          <Amount money={data.invested} className="block text-left text-lg" />
+        </StatCard>
+        <StatCard label={copy.investments.columns.interest}>
+          <Amount
+            money={data.interestEarned}
+            emphasis="strong"
+            className="block text-left text-lg"
+          />
+        </StatCard>
+        <StatCard className="sm:col-span-2 lg:col-span-4" label={copy.investments.columns.rate}>
+          <p className="num text-left text-lg">{data.annualRate}%</p>
+        </StatCard>
+      </StatGrid>
 
       {points.length > 1 ? (
         <div>

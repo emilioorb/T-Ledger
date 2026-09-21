@@ -25,6 +25,11 @@ export const copy = {
     currency: { label: 'Moneda', hint: 'Los saldos se leen de a una moneda por vez.' },
     from: 'Desde',
     to: 'Hasta',
+    range: {
+      label: 'Rango de fechas',
+      empty: 'Elegí el rango',
+      value: (from: string, to: string) => `${from} — ${to}`,
+    },
     at: 'Al',
     period: 'Período',
     apply: 'Ver',
@@ -127,6 +132,10 @@ export const copy = {
       account: 'Cuenta de pago',
       amount: 'Monto',
       status: 'Estado',
+    },
+    search: {
+      label: 'Buscar por quién',
+      placeholder: 'Buscar por quién',
     },
     filters: {
       kind: { label: 'Tipo', all: 'Gastos e ingresos' },
