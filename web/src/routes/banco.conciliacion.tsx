@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
+import { Hint } from '@/components/hint'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -23,9 +24,10 @@ import {
   useLineToMovement,
   useMatchLine,
   useReconciliation,
+  useUnmatchLine,
 } from '@/features/banking/use-banking'
 import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
-import { formatMoney } from '@/lib/money'
+import { absMoney, formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
 interface PairProps {
@@ -61,7 +63,7 @@ const Pair = ({
           <Amount money={line.amount} emphasis="strong" className="shrink-0 text-sm" />
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          <span className="num text-left">{formatIsoDate(line.date)}</span>
+          <span className="num">{formatIsoDate(line.date)}</span>
           {line.reference ? ` · ${line.reference}` : ''}
         </p>
       </div>
@@ -85,7 +87,11 @@ const Pair = ({
                       {copy.reconciliation.reasons[suggestion.reason]}
                     </span>
                   </span>
-                  <Button size="sm" onClick={() => onMatch(suggestion.movementId)}>
+                  <Button
+                    size="sm"
+                    aria-label={copy.reconciliation.confirmOf(line.description)}
+                    onClick={() => onMatch(suggestion.movementId)}
+                  >
                     {copy.reconciliation.confirm}
                   </Button>
                 </li>
@@ -101,7 +107,11 @@ const Pair = ({
 
             <div className="mt-2 flex flex-wrap items-end gap-2">
               <Select value={categoryId} onValueChange={setCategoryId}>
-                <SelectTrigger size="sm" className="w-48" aria-label={copy.reconciliation.category.label}>
+                <SelectTrigger
+                  size="sm"
+                  className="w-48"
+                  aria-label={copy.reconciliation.categoryOf(line.description)}
+                >
                   <SelectValue placeholder={copy.reconciliation.category.label} />
                 </SelectTrigger>
                 <SelectContent>
@@ -112,26 +122,65 @@ const Pair = ({
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" disabled={categoryId === ''} onClick={() => onCreate(categoryId)}>
+              <Button
+                size="sm"
+                disabled={categoryId === ''}
+                aria-label={copy.reconciliation.toMovementOf(line.description)}
+                onClick={() => onCreate(categoryId)}
+              >
                 {copy.reconciliation.toMovement}
               </Button>
             </div>
           </div>
         )}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-2 h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-          title={copy.reconciliation.ignoreHint}
-          onClick={onIgnore}
-        >
-          {copy.reconciliation.ignore}
-        </Button>
+        {/* La explicación de «Ignorar» es la misma en todas las filas: repetirla debajo de cada
+            una sería ruido. Vive en el tooltip, que el toque y el teclado sí alcanzan. */}
+        <Hint text={copy.reconciliation.ignoreHint}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+            aria-label={copy.reconciliation.ignoreOf(line.description)}
+            onClick={onIgnore}
+          >
+            {copy.reconciliation.ignore}
+          </Button>
+        </Hint>
       </div>
     </li>
   )
 }
+
+interface ResolvedProps {
+  line: BankLine
+  onUndo: () => void
+}
+
+const ResolvedLine = ({ line, onUndo }: ResolvedProps) => (
+  <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border py-2">
+    <span className="flex min-w-0 items-baseline gap-2">
+      <span className="min-w-0 truncate text-sm text-muted-foreground">{line.description}</span>
+      <span className="shrink-0 text-xs text-muted-foreground">
+        {line.status === 'MATCHED'
+          ? copy.reconciliation.resolved.matched
+          : copy.reconciliation.resolved.ignored}
+      </span>
+    </span>
+    <span className="flex items-baseline gap-4">
+      <Amount money={line.amount} className="text-sm text-muted-foreground" />
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+        aria-label={copy.reconciliation.unmatchOf(line.description)}
+        onClick={onUndo}
+      >
+        {copy.reconciliation.unmatch}
+      </Button>
+    </span>
+  </li>
+)
 
 const ReconciliationScreen = () => {
   const [bankAccountId, setBankAccountId] = useState('')
@@ -143,8 +192,15 @@ const ReconciliationScreen = () => {
   const categories = useCategories()
   const movements = useMovements({ from, to, status: 'ACTIVE' })
   const match = useMatchLine()
+  const unmatch = useUnmatchLine()
   const ignore = useIgnoreLine()
   const toMovement = useLineToMovement()
+
+  // Con una sola cuenta no hay nada que elegir: preguntarlo es trabajo sin decisión.
+  const only = accounts.data?.length === 1 ? accounts.data[0]?.id : undefined
+  useEffect(() => {
+    if (only && bankAccountId === '') setBankAccountId(only)
+  }, [only, bankAccountId])
 
   const movementById = new Map(
     (movements.data?.data ?? []).map((movement) => [
@@ -156,6 +212,21 @@ const ReconciliationScreen = () => {
     id: category.id,
     name: category.name,
   }))
+
+  // Si las pendientes suman lo mismo que la diferencia con signo opuesto, la explican entera.
+  // Con la lista truncada no se puede afirmar nada, y entonces no se dice nada.
+  const explanationOf = (data: NonNullable<typeof reconciliation.data>): string | null => {
+    if (isZeroMoney(data.difference)) return null
+    if (data.lines.length < data.pagination.totalItems) return null
+    const pending = data.lines.reduce((acc, line) => acc + BigInt(line.amount.minorUnits), 0n)
+    const rest = BigInt(data.difference.minorUnits) + pending
+    if (rest === 0n) return copy.reconciliation.explainedAll(data.lines.length)
+    return copy.reconciliation.explainedPartly(
+      formatMoney(absMoney({ minorUnits: rest.toString(), currency: data.difference.currency })),
+    )
+  }
+
+  const explanation = reconciliation.data ? explanationOf(reconciliation.data) : null
 
   const suggestionsFor = (lineId: string): MatchSuggestion[] =>
     (reconciliation.data?.suggestions ?? []).filter((suggestion) => suggestion.lineId === lineId)
@@ -188,9 +259,9 @@ const ReconciliationScreen = () => {
         <RangeFields from={from} to={to} onFrom={setFrom} onTo={setTo} />
       </ControlBar>
 
-      {bankAccountId === '' ? (
+      {accounts.isSuccess && accounts.data.length === 0 ? (
         <EmptyState
-          title={copy.reconciliation.account.label}
+          title={copy.accounts.empty.title}
           description={copy.accounts.empty.description}
           action={
             <Button size="sm" asChild>
@@ -198,6 +269,18 @@ const ReconciliationScreen = () => {
             </Button>
           }
         />
+      ) : bankAccountId === '' ? (
+        only || accounts.isPending ? (
+          <div className="space-y-3" role="status" aria-label={copy.common.loading}>
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        ) : (
+          <EmptyState
+            title={copy.reconciliation.pickAccount.title}
+            description={copy.reconciliation.pickAccount.description}
+          />
+        )
       ) : reconciliation.isPending ? (
         <div className="space-y-3" role="status" aria-label={copy.common.loading}>
           <Skeleton className="h-20 w-full" />
@@ -227,8 +310,17 @@ const ReconciliationScreen = () => {
               <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
                 {isZeroMoney(reconciliation.data.difference)
                   ? copy.reconciliation.balanced
-                  : copy.reconciliation.unbalanced}
+                  : reconciliation.data.difference.minorUnits.startsWith('-')
+                    ? copy.reconciliation.statementHigher(
+                        formatMoney(absMoney(reconciliation.data.difference)),
+                      )
+                    : copy.reconciliation.ledgerHigher(
+                        formatMoney(reconciliation.data.difference),
+                      )}
               </p>
+              {explanation ? (
+                <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">{explanation}</p>
+              ) : null}
             </div>
 
             <dl className="flex gap-6 text-sm">
@@ -265,10 +357,19 @@ const ReconciliationScreen = () => {
             <div>
               <h2 className={cn('text-sm font-medium tracking-tight')}>
                 {copy.reconciliation.pending}{' '}
-                <span className="num text-left text-muted-foreground">
+                <span className="num text-muted-foreground">
                   {reconciliation.data.pagination.totalItems}
                 </span>
               </h2>
+
+              {reconciliation.data.lines.length < reconciliation.data.pagination.totalItems ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {copy.reconciliation.truncated(
+                    reconciliation.data.lines.length,
+                    reconciliation.data.pagination.totalItems,
+                  )}
+                </p>
+              ) : null}
 
               <ul className="mt-2">
                 {reconciliation.data.lines.map((line) => (
@@ -286,6 +387,30 @@ const ReconciliationScreen = () => {
               </ul>
             </div>
           )}
+
+          {reconciliation.data.resolved.length > 0 ? (
+            <div>
+              <h2 className="text-sm font-medium tracking-tight">
+                {copy.reconciliation.resolved.title}{' '}
+                <span className="num text-muted-foreground">
+                  {reconciliation.data.resolved.length}
+                </span>
+              </h2>
+              <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">
+                {copy.reconciliation.resolved.hint}
+              </p>
+
+              <ul className="mt-2">
+                {reconciliation.data.resolved.map((line) => (
+                  <ResolvedLine
+                    key={line.id}
+                    line={line}
+                    onUndo={() => unmatch.mutate(line.id)}
+                  />
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       )}
     </section>

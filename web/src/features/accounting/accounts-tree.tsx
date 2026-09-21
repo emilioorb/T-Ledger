@@ -53,7 +53,7 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
             <span className="inline-block w-[1.125rem]" aria-hidden="true" />
           )}
 
-          <span className="num shrink-0 text-xs text-muted-foreground">{node.code}</span>
+          <span className="num num-right shrink-0 text-xs text-muted-foreground">{node.code}</span>
           <span
             className={cn(
               'truncate text-sm',

@@ -26,6 +26,8 @@ export interface Reconciliation {
   readonly statementBalance: Money
   readonly difference: Money
   readonly lines: StoredBankLine[]
+  // Las que ya se resolvieron en el rango: sin ellas, conciliar una línea por error no tiene vuelta.
+  readonly resolved: StoredBankLine[]
   readonly suggestions: MatchSuggestion[]
   readonly totalItems: number
 }
@@ -85,6 +87,7 @@ export class ReconcileUseCase {
       statementBalance,
       difference: unwrap(ledgerBalance.subtract(statementBalance)),
       lines: pending.items,
+      resolved: allLines.filter((line) => line.status !== 'PENDING'),
       suggestions: suggestMatches(pending.items, candidates),
       totalItems: pending.totalItems,
     }

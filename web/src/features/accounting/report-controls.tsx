@@ -78,6 +78,19 @@ interface RangeProps {
   onTo: (value: string) => void
 }
 
+// Un mes no es un día: pedirlo con selector de día obliga a elegir un número que no se usa.
+export const MonthField = ({ id, label, value, onChange }: DateProps) => (
+  <Field id={id} label={label}>
+    <Input
+      id={id}
+      type="month"
+      value={value.slice(0, 7)}
+      onChange={(event) => onChange(`${event.target.value}-01`)}
+      className="h-8 w-[12rem]"
+    />
+  </Field>
+)
+
 export const RangeFields = ({ from, to, onFrom, onTo }: RangeProps) => (
   <>
     <DateField id="from" label={copy.common.from} value={from} onChange={onFrom} />

@@ -146,7 +146,7 @@ export const MovementForm = ({
               value={amount}
               inputMode="decimal"
               required
-              className="num"
+              className="num num-right"
               aria-invalid={amountError}
               onChange={(event) => {
                 setAmountError(false)

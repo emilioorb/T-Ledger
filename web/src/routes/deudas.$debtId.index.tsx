@@ -12,7 +12,7 @@ import { formatMoney } from '@/lib/money'
 const Fact = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-baseline justify-between gap-4 border-b border-border py-1.5 sm:block sm:border-0 sm:py-0">
     <dt className="text-xs tracking-wide text-muted-foreground uppercase">{label}</dt>
-    <dd className="num text-sm sm:mt-0.5 sm:text-left">{value}</dd>
+    <dd className="num num-right text-sm sm:mt-0.5 sm:text-left">{value}</dd>
   </div>
 )
 
@@ -77,11 +77,11 @@ const DebtDetail = () => {
             <div className="flex flex-wrap gap-x-8 gap-y-1 border-y border-border py-2">
               <p className="text-sm">
                 <span className="text-muted-foreground">{copy.schedule.totalInterest} </span>
-                <span className="num font-medium">{formatMoney(schedule.data.totalInterest)}</span>
+                <span className="num num-right font-medium">{formatMoney(schedule.data.totalInterest)}</span>
               </p>
               <p className="text-sm">
                 <span className="text-muted-foreground">{copy.schedule.totalPaid} </span>
-                <span className="num font-medium">{formatMoney(schedule.data.totalPaid)}</span>
+                <span className="num num-right font-medium">{formatMoney(schedule.data.totalPaid)}</span>
               </p>
             </div>
             <AmortizationTable installments={schedule.data.installments} />

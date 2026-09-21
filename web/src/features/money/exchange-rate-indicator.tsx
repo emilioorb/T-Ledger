@@ -8,7 +8,7 @@ import { useLatestRates } from './use-exchange-rates'
 const Par = ({ label, value }: { label: string; value: string }) => (
   <span className="whitespace-nowrap">
     <span className="text-muted-foreground">{label} </span>
-    <span className="num font-medium">{value}</span>
+    <span className="num num-right font-medium">{value}</span>
   </span>
 )
 
@@ -41,7 +41,7 @@ export const ExchangeRateIndicator = () => {
           <TooltipContent>{copy.staleHint}</TooltipContent>
         </Tooltip>
       ) : (
-        <span className="num hidden text-muted-foreground md:inline">
+        <span className="num num-right hidden text-muted-foreground md:inline">
           {copy.publishedAt(formatIsoDate(data.buy?.publishedAt ?? data.sell?.publishedAt ?? ''))}
         </span>
       )}

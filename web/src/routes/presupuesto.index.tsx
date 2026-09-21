@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
-import { ControlBar, CurrencyField, DateField } from '@/features/accounting/report-controls'
-import { BucketChart } from '@/features/budget/bucket-chart'
+import { ControlBar, CurrencyField, MonthField } from '@/features/accounting/report-controls'
 import { copy } from '@/features/budget/copy'
 import type { BucketEvaluation, CurrencyCode } from '@/features/budget/types'
 import {
@@ -18,7 +18,7 @@ import {
 } from '@/features/budget/use-budget'
 import { ApiError } from '@/lib/api'
 import { monthEnd, monthStart, today } from '@/lib/dates'
-import { parseMoneyInput } from '@/lib/money'
+import { absMoney, formatMoney, parseMoneyInput } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
 const monthOf = (iso: string): string => iso.slice(0, 7)
@@ -28,28 +28,55 @@ interface RowProps {
   month: string
 }
 
-// La cubeta que se pasó tiene peso propio; la que está en línea no merece ninguno. Eso
-// es jerarquía, no tres barras del mismo color.
+// La cubeta que se pasó tiene peso propio; la que está en línea no merece ninguno. La barra
+// reemplaza al gráfico: dice lo mismo, en la fila donde están las cifras.
+const consumedRatio = (bucket: BucketEvaluation): number => {
+  const allocated = Number(bucket.allocated.minorUnits)
+  if (allocated <= 0) return 0
+  return Math.min(Number(bucket.consumed.minorUnits) / allocated, 1)
+}
+
 const BucketRow = ({ bucket, month }: RowProps) => {
   const isOver = bucket.status === 'OVER'
-  const deviation = bucket.deviation.minorUnits.replace('-', '')
+  const deviation = absMoney(bucket.deviation)
 
   return (
     <li className="border-b border-border py-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <span className={cn('text-sm', isOver && 'font-medium')}>{bucket.name}</span>
-        <span className="flex items-baseline gap-4">
-          <Amount money={bucket.consumed} emphasis={isOver ? 'strong' : 'normal'} className="text-sm" />
-          <span className="text-xs text-muted-foreground">/</span>
-          <Amount money={bucket.allocated} className="w-28 text-sm text-muted-foreground" />
+        <span className="flex flex-col items-end gap-1">
+          <span className="flex items-baseline gap-4">
+            <Amount
+              money={bucket.consumed}
+              emphasis={isOver ? 'strong' : 'normal'}
+              className="text-sm"
+            />
+            <span className="text-xs text-muted-foreground">/</span>
+            <Amount money={bucket.allocated} className="w-28 text-sm text-muted-foreground" />
+          </span>
+
+          {/* El medidor vive pegado a las cifras que mide, no cruzando la fila: ahí sería
+              otra línea divisoria más. */}
+          <span
+            className="block h-1 w-40 bg-border-strong"
+            role="img"
+            aria-label={copy.budget.barLabel(
+              bucket.name,
+              formatMoney(bucket.consumed),
+              formatMoney(bucket.allocated),
+            )}
+          >
+            <span
+              className={cn('block h-full', isOver ? 'bg-warning' : 'bg-foreground')}
+              style={{ width: `${consumedRatio(bucket) * 100}%` }}
+            />
+          </span>
         </span>
       </div>
 
-      <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
+      <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
         <span className={cn(isOver ? 'text-warning' : 'text-muted-foreground')}>
-          {isOver
-            ? copy.budget.overBy(`${deviation.slice(0, -2) || '0'}`)
-            : copy.budget.status[bucket.status]}
+          {isOver ? copy.budget.overBy(formatMoney(deviation)) : copy.budget.status[bucket.status]}
         </span>
         <Link
           to="/contabilidad/movimientos"
@@ -74,6 +101,8 @@ const BudgetScreen = () => {
   const income = useMonthlyIncome(month)
   const setIncome = useSetMonthlyIncome()
 
+  const overBucket = evaluation.data?.buckets.find((bucket) => bucket.status === 'OVER')
+
   const noModel =
     evaluation.error instanceof ApiError && evaluation.error.code === 'SEMANTIC_VALIDATION_ERROR'
 
@@ -94,9 +123,10 @@ const BudgetScreen = () => {
           value={incomeDraft}
           inputMode="decimal"
           required
-          className="num w-40"
+          className="num num-right w-40"
           onChange={(event) => setIncomeDraft(event.target.value)}
         />
+        <p className="max-w-[52ch] text-xs text-muted-foreground">{copy.budget.incomeHint}</p>
       </div>
       <Button type="submit" size="sm" disabled={setIncome.isPending}>
         {copy.budget.saveIncome}
@@ -116,7 +146,7 @@ const BudgetScreen = () => {
 
       <ControlBar>
         <CurrencyField value={currency} onChange={setCurrency} />
-        <DateField id="month" label={copy.budget.month} value={at} onChange={setAt} />
+        <MonthField id="month" label={copy.budget.month} value={at} onChange={setAt} />
       </ControlBar>
 
       {evaluation.isPending ? (
@@ -143,22 +173,35 @@ const BudgetScreen = () => {
         />
       ) : (
         <div className="space-y-7">
-          {/* Lo que se mira primero: cuánto queda sin asignar del ingreso del mes. */}
+          {/* La pregunta del mes no es cuánto queda sin gastar: es si alguna cubeta se pasó.
+              Cuando la respuesta es un estado, el héroe es la frase; cuando es un monto, la cifra. */}
           <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border-strong py-4">
             <div>
-              <p className="text-xs text-muted-foreground">{copy.budget.surplus}</p>
-              <Amount
-                money={evaluation.data.surplus}
-                emphasis="strong"
-                tone={evaluation.data.surplus.minorUnits.startsWith('-') ? 'alert' : 'plain'}
-                className="mt-1 block text-left text-3xl tracking-tight"
-              />
-              <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
-                {copy.budget.surplusHint}
-              </p>
+              {overBucket ? (
+                <>
+                  <p className="text-xs text-warning">{copy.budget.overBucket(overBucket.name)}</p>
+                  <Amount
+                    money={absMoney(overBucket.deviation)}
+                    emphasis="strong"
+                    tone="alert"
+                    className="mt-1 block text-left text-3xl tracking-tight"
+                  />
+                  <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
+                    {copy.budget.overHint}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">{copy.budget.monthState}</p>
+                  <p className="mt-1 text-2xl tracking-tight">{copy.budget.noOverBucket}</p>
+                  <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
+                    {copy.budget.noOverHint}
+                  </p>
+                </>
+              )}
             </div>
 
-            <dl className="flex gap-6 text-sm">
+            <dl className="flex flex-wrap gap-6 text-sm">
               <div>
                 <dt className="text-xs text-muted-foreground">{copy.budget.income}</dt>
                 <dd>
@@ -169,6 +212,19 @@ const BudgetScreen = () => {
                 <dt className="text-xs text-muted-foreground">{copy.budget.consumed}</dt>
                 <dd>
                   <Amount money={evaluation.data.totalConsumed} />
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">
+                  <Hint text={copy.budget.surplusHint}>
+                    <span>{copy.budget.surplus}</span>
+                  </Hint>
+                </dt>
+                <dd>
+                  <Amount
+                    money={evaluation.data.surplus}
+                    tone={evaluation.data.surplus.minorUnits.startsWith('-') ? 'alert' : 'plain'}
+                  />
                 </dd>
               </div>
             </dl>
@@ -201,8 +257,6 @@ const BudgetScreen = () => {
               {copy.budget.editIncome}
             </Button>
           ) : null}
-
-          <BucketChart buckets={evaluation.data.buckets} />
 
           <ul>
             {evaluation.data.buckets.map((bucket) => (

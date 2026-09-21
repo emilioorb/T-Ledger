@@ -1,9 +1,11 @@
 import { useState, type ChangeEvent } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
+import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -60,7 +62,22 @@ const ImportScreen = () => {
         <p className="mt-1 text-sm text-muted-foreground">{copy.import.description}</p>
       </header>
 
-      {accounts.data?.length === 0 ? (
+      {accounts.isPending || profiles.isPending ? (
+        <div className="space-y-3" role="status" aria-label={copy.common.loading}>
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-9 w-40" />
+        </div>
+      ) : accounts.isError || profiles.isError ? (
+        <ErrorState
+          title={copy.common.error.title}
+          description={copy.common.error.description}
+          retryLabel={copy.common.retry}
+          onRetry={() => {
+            if (accounts.isError) void accounts.refetch()
+            if (profiles.isError) void profiles.refetch()
+          }}
+        />
+      ) : accounts.data.length === 0 ? (
         <EmptyState
           title={copy.import.needsAccount.title}
           description={copy.import.needsAccount.description}
@@ -128,7 +145,11 @@ const ImportScreen = () => {
 
           {/* El botón de importar aparece recién después de la vista previa: un perfil mal
               mapeado mete cien líneas torcidas, y revisarlo cuesta menos que deshacerlo. */}
-          {lines ? (
+          {lines && lines.length === 0 ? (
+            <p className="max-w-[65ch] text-sm text-warning">{copy.import.emptyPreview}</p>
+          ) : null}
+
+          {lines && lines.length > 0 ? (
             <div className="space-y-3">
               <div>
                 <h2 className="text-base font-medium tracking-tight">{copy.import.previewTitle}</h2>
@@ -155,7 +176,7 @@ const ImportScreen = () => {
                       key={index}
                       className="grid gap-x-2 gap-y-1 border-b border-border py-2 text-sm sm:grid-cols-[6rem_1fr_8rem_8rem] sm:items-baseline"
                     >
-                      <span className="num text-left text-xs text-muted-foreground">
+                      <span className="num text-xs text-muted-foreground">
                         {formatIsoDate(line.date)}
                       </span>
                       <span className="min-w-0 truncate">{line.description}</span>

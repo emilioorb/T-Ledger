@@ -133,7 +133,7 @@ const LedgerScreen = () => {
                     key={`${row.entryId}-${index}`}
                     className="grid gap-x-2 gap-y-1 border-b border-border py-2 text-sm lg:grid-cols-[5.5rem_1fr_7rem_7rem_8rem] lg:items-baseline lg:py-1.5"
                   >
-                    <span className="num text-left text-xs text-muted-foreground lg:text-right">
+                    <span className="num text-xs text-muted-foreground lg:text-right">
                       {formatIsoDate(row.date)}
                     </span>
                     <Link

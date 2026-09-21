@@ -2,15 +2,23 @@ import { useState, type FormEvent } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Plus, Trash2 } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { Hint } from '@/components/hint'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { copy } from '@/features/budget/copy'
 import type { BudgetModel } from '@/features/budget/types'
-import { useBudgetModels, useSaveBudgetModel } from '@/features/budget/use-budget'
+import {
+  useBudgetModels,
+  useMonthlyIncome,
+  useSaveBudgetModel,
+} from '@/features/budget/use-budget'
 import { useAccounts } from '@/features/accounting/use-accounting'
+import { today } from '@/lib/dates'
+import { formatMoney, type MoneyDto } from '@/lib/money'
 import { cn } from '@/lib/utils'
 
 interface BucketDraft {
@@ -19,7 +27,19 @@ interface BucketDraft {
   percentage: string
   isSavings: boolean
   accountCodes: string[]
+  persisted: boolean
 }
+
+// El id es un detalle de implementación: se deriva del nombre. El de una cubeta ya guardada
+// no se toca, porque es lo que ata el histórico de consumo a esa cubeta.
+const slugify = (name: string): string =>
+  name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
 
 const emptyBucket = (): BucketDraft => ({
   id: '',
@@ -27,20 +47,27 @@ const emptyBucket = (): BucketDraft => ({
   percentage: '0',
   isSavings: false,
   accountCodes: [],
+  persisted: false,
 })
+
+const shareOf = (income: MoneyDto, percentage: string): MoneyDto => {
+  const share = (BigInt(income.minorUnits) * BigInt(Math.round((Number(percentage) || 0) * 100))) / 10000n
+  return { minorUnits: share.toString(), currency: income.currency }
+}
 
 const sumOf = (buckets: BucketDraft[]): number =>
   buckets.reduce((acc, bucket) => acc + (Number(bucket.percentage) || 0), 0)
 
 interface FormProps {
   model?: BudgetModel
+  income: MoneyDto | null
   postable: { code: string; name: string }[]
   pending: boolean
   onSubmit: (values: { name: string; active: boolean; buckets: BucketDraft[] }) => void
   onCancel: () => void
 }
 
-const ModelForm = ({ model, postable, pending, onSubmit, onCancel }: FormProps) => {
+const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: FormProps) => {
   const [name, setName] = useState(model?.name ?? '')
   const [active, setActive] = useState(model?.active ?? false)
   const [buckets, setBuckets] = useState<BucketDraft[]>(
@@ -51,6 +78,7 @@ const ModelForm = ({ model, postable, pending, onSubmit, onCancel }: FormProps) 
           percentage: bucket.percentage,
           isSavings: bucket.isSavings,
           accountCodes: [...bucket.accountCodes],
+          persisted: true,
         }))
       : [emptyBucket()],
   )
@@ -86,12 +114,10 @@ const ModelForm = ({ model, postable, pending, onSubmit, onCancel }: FormProps) 
 
         <div className="space-y-1.5">
           <Label htmlFor="model-active" className="flex items-center gap-2">
-            <input
+            <Checkbox
               id="model-active"
-              type="checkbox"
               checked={active}
-              onChange={(event) => setActive(event.target.checked)}
-              className="size-4 accent-foreground"
+              onCheckedChange={(checked) => setActive(checked === true)}
             />
             {fields.activate}
           </Label>
@@ -106,29 +132,29 @@ const ModelForm = ({ model, postable, pending, onSubmit, onCancel }: FormProps) 
         <ul className="mt-3 space-y-3">
           {buckets.map((bucket, index) => (
             // eslint-disable-next-line react/no-array-index-key
-            <li key={index} className="grid gap-2 border-b border-border pb-3 sm:grid-cols-[1fr_1fr_6rem_auto]">
-              <Input
-                value={bucket.id}
-                required
-                aria-label={`${fields.bucketName} interno`}
-                placeholder="necesidades"
-                onChange={(event) => update(index, { id: event.target.value })}
-              />
+            <li key={index} className="grid gap-2 border-b border-border pb-3 sm:grid-cols-[1fr_6rem_auto]">
               <Input
                 value={bucket.name}
                 required
                 aria-label={fields.bucketName}
                 placeholder="Necesidades"
-                onChange={(event) => update(index, { name: event.target.value })}
+                onChange={(event) =>
+                  update(index, {
+                    name: event.target.value,
+                    ...(bucket.persisted ? {} : { id: slugify(event.target.value) }),
+                  })
+                }
               />
-              <Input
-                value={bucket.percentage}
-                inputMode="decimal"
-                required
-                aria-label={fields.percentage}
-                className="num"
-                onChange={(event) => update(index, { percentage: event.target.value })}
-              />
+              <div>
+                <Input
+                  value={bucket.percentage}
+                  inputMode="decimal"
+                  required
+                  aria-label={fields.percentage}
+                  className="num num-right"
+                  onChange={(event) => update(index, { percentage: event.target.value })}
+                />
+              </div>
               <Button
                 type="button"
                 variant="ghost"
@@ -140,15 +166,20 @@ const ModelForm = ({ model, postable, pending, onSubmit, onCancel }: FormProps) 
                 <Trash2 className="size-4" aria-hidden="true" />
               </Button>
 
-              <div className="sm:col-span-4">
-                <Label className="flex items-center gap-2 text-xs font-normal">
-                  <input
-                    type="checkbox"
+              <div className="sm:col-span-3">
+                {income ? (
+                  <p className="text-xs text-muted-foreground">
+                    {fields.inColones(formatMoney(shareOf(income, bucket.percentage)))}
+                  </p>
+                ) : null}
+                <Label className="mt-1 flex items-center gap-2 text-xs font-normal">
+                  <Checkbox
                     checked={bucket.isSavings}
-                    onChange={(event) => update(index, { isSavings: event.target.checked })}
-                    className="size-3.5 accent-foreground"
+                    onCheckedChange={(checked) => update(index, { isSavings: checked === true })}
                   />
-                  {fields.isSavings}
+                  <Hint text={fields.isSavingsHint}>
+                    <span>{fields.isSavings}</span>
+                  </Hint>
                 </Label>
                 <p className="mt-1 text-xs text-muted-foreground">{fields.accounts}</p>
                 <div className="mt-1 flex flex-wrap gap-2">
@@ -157,19 +188,18 @@ const ModelForm = ({ model, postable, pending, onSubmit, onCancel }: FormProps) 
                       key={account.code}
                       className="flex items-center gap-1.5 text-xs font-normal text-muted-foreground"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={bucket.accountCodes.includes(account.code)}
-                        onChange={(event) =>
+                        onCheckedChange={(checked) =>
                           update(index, {
-                            accountCodes: event.target.checked
-                              ? [...bucket.accountCodes, account.code]
-                              : bucket.accountCodes.filter((code) => code !== account.code),
+                            accountCodes:
+                              checked === true
+                                ? [...bucket.accountCodes, account.code]
+                                : bucket.accountCodes.filter((code) => code !== account.code),
                           })
                         }
-                        className="size-3.5 accent-foreground"
                       />
-                      <span className="num text-left">{account.code}</span> {account.name}
+                      <span className="num">{account.code}</span> {account.name}
                     </Label>
                   ))}
                 </div>
@@ -190,11 +220,17 @@ const ModelForm = ({ model, postable, pending, onSubmit, onCancel }: FormProps) 
       </div>
 
       {/* La suma se ve mientras se edita: descubrir el error al enviar es mala interfaz. */}
-      <div className="flex items-baseline gap-3 border-y border-border py-3 text-sm">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-y border-border py-3 text-sm">
         <span className="text-xs text-muted-foreground">{fields.total}</span>
-        <span className={cn('num text-left', balanced ? 'text-positive' : 'text-negative')}>
-          {balanced ? fields.balanced : fields.unbalanced(String(total))}
+        <span className={cn('num', balanced ? 'text-positive' : 'text-negative')}>
+          {total}%
         </span>
+        {!balanced ? (
+          <span className="text-xs text-negative">{fields.unbalancedHint}</span>
+        ) : null}
+        {balanced && !savings ? (
+          <span className="text-xs text-negative">{fields.savingsMissing}</span>
+        ) : null}
       </div>
 
       <div className="flex gap-2">
@@ -214,6 +250,7 @@ const ModelsScreen = () => {
 
   const models = useBudgetModels()
   const accounts = useAccounts()
+  const income = useMonthlyIncome(today().slice(0, 7))
   const save = useSaveBudgetModel()
 
   const all = accounts.data?.data ?? []
@@ -247,6 +284,7 @@ const ModelsScreen = () => {
           </h2>
           <ModelForm
             model={editing.model}
+            income={income.data?.amount ?? null}
             postable={postable}
             pending={save.isPending}
             onSubmit={(values) =>
@@ -309,8 +347,10 @@ const ModelsScreen = () => {
               <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 {model.buckets.map((bucket) => (
                   <li key={bucket.id}>
-                    {bucket.name} <span className="num text-left">{bucket.percentage}%</span>
-                    {bucket.isSavings ? ` · ${copy.budget.savingsBucket}` : ''}
+                    {bucket.name} <span className="num">{bucket.percentage}%</span>
+                    {bucket.isSavings && bucket.name !== copy.budget.savingsBucket
+                      ? ` · ${copy.budget.savingsBucket}`
+                      : ''}
                   </li>
                 ))}
               </ul>

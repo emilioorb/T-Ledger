@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { Hint } from '@/components/hint'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Label } from '@/components/ui/label'
@@ -42,9 +43,14 @@ const MonthRow = ({ flow }: RowProps) => {
         hasFreed && 'border-border-strong',
       )}
     >
-      <span className="num text-left text-sm">{monthLabel(flow)}</span>
+      <span className="num text-sm">{monthLabel(flow)}</span>
 
       <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        {negative ? (
+          <Hint text={copy.projection.negativeHint}>
+            <span className="text-negative">{copy.projection.negative}</span>
+          </Hint>
+        ) : null}
         {!isZeroMoney(flow.debtPayments) ? (
           <span>
             {copy.projection.detail.debtPayments} <Amount money={flow.debtPayments} />
@@ -68,7 +74,9 @@ const MonthRow = ({ flow }: RowProps) => {
         ) : null}
 
         {!flow.incomeDeclared ? (
-          <span title={copy.projection.estimatedIncomeHint}>{copy.projection.estimatedIncome}</span>
+          <Hint text={copy.projection.estimatedIncomeHint}>
+            <span>{copy.projection.estimatedIncome}</span>
+          </Hint>
         ) : null}
 
         {flow.freed.map((freed) => (

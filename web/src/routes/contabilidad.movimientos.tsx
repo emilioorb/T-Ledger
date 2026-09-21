@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Hint } from '@/components/hint'
 import { Amount } from '@/features/accounting/amount'
 import { copy } from '@/features/accounting/copy'
 import { MovementForm, type MovementFormValues } from '@/features/accounting/movement-form'
@@ -86,13 +87,11 @@ const MovementRow = ({ movement, category, onEdit, onVoid }: RowProps) => {
         ) : null}
 
         {!movement.posted && !isVoided ? (
-          <Link
-            to="/contabilidad/categorias"
-            className="text-warning underline underline-offset-2"
-            title={copy.movements.unpostedHint}
-          >
-            {copy.movements.unposted}
-          </Link>
+          <Hint text={copy.movements.unpostedHint}>
+            <Link to="/contabilidad/categorias" className="text-warning">
+              {copy.movements.unposted}
+            </Link>
+          </Hint>
         ) : null}
 
         {movement.journalEntryId ? (
@@ -302,7 +301,7 @@ const MovementsScreen = () => {
         <div className="space-y-6">
           {groupByDate(items).map(([date, ofDay]) => (
             <div key={date}>
-              <h2 className="num text-left text-xs font-medium text-muted-foreground">
+              <h2 className="num text-xs font-medium text-muted-foreground">
                 {formatIsoDate(date)}
               </h2>
               <ul className="mt-1.5">

@@ -170,15 +170,19 @@ const emptyProfile: ImportProfileInput = {
 const numberOrNull = (value: string): number | null => (value === '' ? null : Number(value))
 
 const ProfileForm = ({
+  profile,
   pending,
   onSubmit,
   onCancel,
 }: {
+  profile?: ImportProfile
   pending: boolean
   onSubmit: (values: ImportProfileInput) => void
   onCancel: () => void
 }) => {
-  const [values, setValues] = useState<ImportProfileInput>(emptyProfile)
+  const [values, setValues] = useState<ImportProfileInput>(
+    profile ? { ...profile } : emptyProfile,
+  )
   const fields = copy.profiles.form
 
   const column = (
@@ -191,7 +195,7 @@ const ProfileForm = ({
         id={`profile-${key}`}
         type="number"
         min={0}
-        className="num"
+        className="num num-right"
         value={values[key] ?? ''}
         onChange={(e) =>
           setValues({
@@ -261,7 +265,7 @@ const ProfileForm = ({
             id="profile-header"
             type="number"
             min={0}
-            className="num"
+            className="num num-right"
             value={values.headerRows}
             onChange={(e) => setValues({ ...values, headerRows: Number(e.target.value) })}
           />
@@ -341,7 +345,7 @@ const ProfileForm = ({
 
 const BankAccountsScreen = () => {
   const [editingAccount, setEditingAccount] = useState<{ account?: BankAccount } | null>(null)
-  const [composingProfile, setComposingProfile] = useState(false)
+  const [editingProfile, setEditingProfile] = useState<{ profile?: ImportProfile } | null>(null)
 
   const bankAccounts = useBankAccounts()
   const profiles = useImportProfiles()
@@ -427,7 +431,7 @@ const BankAccountsScreen = () => {
                 </span>
                 <span className="flex items-baseline gap-4 text-xs text-muted-foreground">
                   <span>
-                    <span className="num text-left">{account.accountCode}</span> · {account.currency}
+                    <span className="num">{account.accountCode}</span> · {account.currency}
                   </span>
                   <span>{account.profileId ? profileName.get(account.profileId) : copy.accounts.noProfile}</span>
                   <Button
@@ -452,22 +456,27 @@ const BankAccountsScreen = () => {
             <h2 className="text-base font-medium tracking-tight">{copy.profiles.title}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{copy.profiles.description}</p>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => setComposingProfile(true)}>
+          <Button variant="secondary" size="sm" onClick={() => setEditingProfile({})}>
             {copy.profiles.new}
           </Button>
         </header>
 
-        {composingProfile ? (
+        {editingProfile ? (
           <div className="border-y border-border py-5">
+            <h3 className="mb-4 text-sm font-medium tracking-tight">
+              {editingProfile.profile ? copy.profiles.form.editTitle : copy.profiles.form.createTitle}
+            </h3>
             <ProfileForm
+              key={editingProfile.profile?.id ?? 'nuevo'}
+              profile={editingProfile.profile}
               pending={saveProfile.isPending}
               onSubmit={(values) =>
                 saveProfile.mutate(
-                  { input: values },
-                  { onSuccess: () => setComposingProfile(false) },
+                  { id: editingProfile.profile?.id, input: values },
+                  { onSuccess: () => setEditingProfile(null) },
                 )
               }
-              onCancel={() => setComposingProfile(false)}
+              onCancel={() => setEditingProfile(null)}
             />
           </div>
         ) : null}
@@ -480,8 +489,19 @@ const BankAccountsScreen = () => {
                 className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border py-2.5 text-sm"
               >
                 <span>{profile.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  «{profile.delimiter}» · {profile.dateFormat} · {profile.encoding}
+                <span className="flex items-baseline gap-3">
+                  <span className="text-xs text-muted-foreground">
+                    «{profile.delimiter}» · {profile.dateFormat} · {profile.encoding}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    aria-label={copy.profiles.edit(profile.name)}
+                    onClick={() => setEditingProfile({ profile })}
+                  >
+                    {copy.common.edit}
+                  </Button>
                 </span>
               </li>
             ))}
@@ -491,7 +511,7 @@ const BankAccountsScreen = () => {
             title={copy.profiles.empty.title}
             description={copy.profiles.empty.description}
             action={
-              <Button variant="secondary" size="sm" onClick={() => setComposingProfile(true)}>
+              <Button variant="secondary" size="sm" onClick={() => setEditingProfile({})}>
                 {copy.profiles.empty.action}
               </Button>
             }

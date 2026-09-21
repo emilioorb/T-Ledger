@@ -20,6 +20,9 @@ export const formatMoney = (money: MoneyDto): string => {
   return `${negative ? '-' : ''}${SYMBOL[money.currency]}${grouped},${fraction}`
 }
 
+export const absMoney = (money: MoneyDto): MoneyDto =>
+  money.minorUnits.startsWith('-') ? { ...money, minorUnits: money.minorUnits.slice(1) } : money
+
 export const parseMoneyInput = (text: string, currency: CurrencyCode): MoneyDto => {
   const cleaned = text.replace(/[\s .]/g, '').replace(',', '.')
   if (!/^-?\d+(\.\d{1,2})?$/.test(cleaned)) {

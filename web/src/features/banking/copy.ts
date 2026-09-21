@@ -41,6 +41,7 @@ export const copy = {
     description:
       'Cómo leer el CSV de cada banco: qué columna es la fecha, con qué formato, dónde está el monto. Es dato, no código.',
     new: 'Nuevo perfil',
+    edit: (name: string) => `Editar ${name}`,
     columns: { name: 'Perfil', delimiter: 'Separador', dateFormat: 'Formato de fecha' },
     form: {
       createTitle: 'Nuevo perfil',
@@ -84,6 +85,8 @@ export const copy = {
       total > shown ? `Primeras ${shown} de ${total} líneas` : `${total} líneas`,
     columns: { date: 'Fecha', description: 'Descripción', reference: 'Referencia', amount: 'Monto' },
     submit: 'Importar',
+    emptyPreview:
+      'El archivo no produjo ninguna línea. O está vacío, o el perfil tiene el separador equivocado.',
     result: {
       title: 'Importación terminada',
       imported: (n: number) => (n === 1 ? '1 línea nueva' : `${n} líneas nuevas`),
@@ -103,13 +106,25 @@ export const copy = {
     title: 'Conciliación',
     description: 'Lo que el banco vio contra lo que anotaste. La diferencia es lo que falta explicar.',
     account: { label: 'Cuenta' },
+    pickAccount: {
+      title: 'Elegí contra qué cuenta conciliar',
+      description: 'Cada cuenta bancaria tiene su propio extracto y su propio saldo contable.',
+    },
     ledgerBalance: 'Saldo contable',
     statementBalance: 'Saldo del banco',
     difference: 'Diferencia',
     balanced: 'Todo conciliado: el saldo contable coincide con el del banco.',
-    unbalanced: 'La diferencia es lo que falta conciliar.',
+    // Una diferencia sin dirección no es un dato: hay que decir de qué lado sobra.
+    ledgerHigher: (amount: string) => `Tu contabilidad muestra ${amount} más que el banco.`,
+    statementHigher: (amount: string) => `El banco muestra ${amount} más que tu contabilidad.`,
+    explainedAll: (count: number) =>
+      count === 1
+        ? 'La línea pendiente explica la diferencia completa.'
+        : `Las ${count} pendientes explican la diferencia completa.`,
+    explainedPartly: (amount: string) => `Quedan ${amount} sin explicar por las pendientes.`,
+    truncated: (shown: number, total: number) =>
+      `Se muestran ${shown} de ${total}: acotá el rango de fechas para ver el resto.`,
     pending: 'Pendientes',
-    suggestion: 'Sugerencia',
     reasons: {
       EXACT: 'Mismo monto y misma fecha',
       NEAR_DATE: 'Mismo monto, con unos días de diferencia',
@@ -119,7 +134,18 @@ export const copy = {
     noSuggestion: 'Sin movimiento que le corresponda',
     noSuggestionHint: 'Es un gasto que no anotaste. Convertilo en movimiento eligiendo su categoría.',
     confirm: 'Es este',
+    confirmOf: (description: string) => `Conciliar «${description}» con este movimiento`,
+    ignoreOf: (description: string) => `Ignorar «${description}»`,
+    categoryOf: (description: string) => `Categoría para «${description}»`,
+    toMovementOf: (description: string) => `Crear el movimiento de «${description}»`,
     unmatch: 'Deshacer',
+    unmatchOf: (description: string) => `Deshacer la resolución de «${description}»`,
+    resolved: {
+      title: 'Ya resueltas',
+      hint: 'Lo que ya se concilió o se ignoró en este rango. Deshacer las devuelve a pendientes.',
+      matched: 'Conciliada',
+      ignored: 'Ignorada',
+    },
     ignore: 'Ignorar',
     ignoreHint: 'Para lo que nunca vas a anotar: un traslado interno, una comisión ya registrada.',
     toMovement: 'Crear movimiento',
@@ -142,6 +168,7 @@ export const copy = {
     retry: 'Reintentar',
     cancel: 'Cancelar',
     save: 'Guardar',
+    edit: 'Editar',
     from: 'Desde',
     to: 'Hasta',
     error: {

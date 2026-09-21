@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
+import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isNegativeMoney } from '@/features/accounting/amount'
@@ -48,6 +49,9 @@ const OverviewScreen = () => {
   const goals = useGoals()
 
   const loading = evaluation.isPending || projection.isPending || goals.isPending
+  // Una consulta caída no puede volverse «no pasa nada»: sin el dato, la frase tranquilizadora
+  // sería una afirmación falsa sobre la plata del usuario.
+  const failed = evaluation.isError || projection.isError || goals.isError
   const flows = projection.data ?? []
   const current = flows[0]
   const overBucket = evaluation.data?.buckets.find((bucket) => bucket.status === 'OVER')
@@ -58,7 +62,7 @@ const OverviewScreen = () => {
   const maturing = flows.find((flow) => !flow.maturingInvestments.minorUnits.startsWith('0'))
 
   const nothingYet =
-    !loading && flows.length > 0 && current !== undefined &&
+    !loading && !failed && flows.length > 0 && current !== undefined &&
     current.income.minorUnits === '0' &&
     current.committed.minorUnits === '0' &&
     (goals.data ?? []).length === 0
@@ -76,6 +80,17 @@ const OverviewScreen = () => {
             <Skeleton key={index} className="h-12 w-full" />
           ))}
         </div>
+      ) : failed ? (
+        <ErrorState
+          title={copy.overview.error.title}
+          description={copy.overview.error.description}
+          retryLabel={copy.overview.error.retry}
+          onRetry={() => {
+            if (evaluation.isError) void evaluation.refetch()
+            if (projection.isError) void projection.refetch()
+            if (goals.isError) void goals.refetch()
+          }}
+        />
       ) : nothingYet ? (
         <EmptyState
           title={copy.overview.empty.title}

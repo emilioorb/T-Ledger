@@ -135,7 +135,7 @@ export const DebtForm = ({ onSubmit, onCancel, pending, defaults, submitLabel }:
             <Input
               id="principal"
               inputMode="decimal"
-              className="num"
+              className="num num-right"
               aria-invalid={Boolean(error('principal'))}
               {...form.register('principal')}
             />
@@ -160,7 +160,7 @@ export const DebtForm = ({ onSubmit, onCancel, pending, defaults, submitLabel }:
           <Input
             id="annualRate"
             inputMode="decimal"
-            className="num"
+            className="num num-right"
             aria-invalid={Boolean(error('annualRate'))}
             {...form.register('annualRate')}
           />
@@ -173,7 +173,7 @@ export const DebtForm = ({ onSubmit, onCancel, pending, defaults, submitLabel }:
             id="termMonths"
             type="number"
             min={1}
-            className="num"
+            className="num num-right"
             aria-invalid={Boolean(error('termMonths'))}
             {...form.register('termMonths')}
           />
@@ -185,7 +185,7 @@ export const DebtForm = ({ onSubmit, onCancel, pending, defaults, submitLabel }:
           <Input
             id="startDate"
             type="date"
-            className="num"
+            className="num num-right"
             aria-invalid={Boolean(error('startDate'))}
             {...form.register('startDate')}
           />

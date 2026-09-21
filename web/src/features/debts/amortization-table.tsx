@@ -84,14 +84,14 @@ export const AmortizationTable = ({ installments }: Props) => {
         <TableBody>
           {table.rows.map((installment) => (
             <TableRow key={installment.number}>
-              <TableCell className="num text-left text-muted-foreground">{installment.number}</TableCell>
-              <TableCell className="num text-left">{formatIsoDate(installment.dueDate)}</TableCell>
-              <TableCell className="num font-medium">{formatMoney(installment.payment)}</TableCell>
-              <TableCell className="num">{formatMoney(installment.principal)}</TableCell>
-              <TableCell className="num text-muted-foreground">
+              <TableCell className="num text-muted-foreground">{installment.number}</TableCell>
+              <TableCell className="num">{formatIsoDate(installment.dueDate)}</TableCell>
+              <TableCell className="num num-right font-medium">{formatMoney(installment.payment)}</TableCell>
+              <TableCell className="num num-right">{formatMoney(installment.principal)}</TableCell>
+              <TableCell className="num num-right text-muted-foreground">
                 {formatMoney(installment.interest)}
               </TableCell>
-              <TableCell className="num">{formatMoney(installment.balance)}</TableCell>
+              <TableCell className="num num-right">{formatMoney(installment.balance)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -120,19 +120,19 @@ export const AmortizationTable = ({ installments }: Props) => {
           <div className="flex items-baseline justify-between gap-3">
             <span className="text-sm font-medium">
               <span className="text-muted-foreground">{columns.number} </span>
-              <span className="num">{installment.number}</span>
+              <span className="num num-right">{installment.number}</span>
             </span>
-            <span className="num text-sm">{formatIsoDate(installment.dueDate)}</span>
+            <span className="num num-right text-sm">{formatIsoDate(installment.dueDate)}</span>
           </div>
           <dl className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <dt className="text-muted-foreground">{columns.payment}</dt>
-            <dd className="num font-medium">{formatMoney(installment.payment)}</dd>
+            <dd className="num num-right font-medium">{formatMoney(installment.payment)}</dd>
             <dt className="text-muted-foreground">{columns.principal}</dt>
-            <dd className="num">{formatMoney(installment.principal)}</dd>
+            <dd className="num num-right">{formatMoney(installment.principal)}</dd>
             <dt className="text-muted-foreground">{columns.interest}</dt>
-            <dd className="num text-muted-foreground">{formatMoney(installment.interest)}</dd>
+            <dd className="num num-right text-muted-foreground">{formatMoney(installment.interest)}</dd>
             <dt className="text-muted-foreground">{columns.balance}</dt>
-            <dd className="num">{formatMoney(installment.balance)}</dd>
+            <dd className="num num-right">{formatMoney(installment.balance)}</dd>
           </dl>
         </li>
       ))}

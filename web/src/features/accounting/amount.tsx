@@ -15,7 +15,7 @@ interface Props {
 export const Amount = ({ money, className, emphasis = 'normal', tone = 'plain' }: Props) => (
   <span
     className={cn(
-      'num tabular-nums',
+      'num num-right tabular-nums',
       emphasis === 'strong' && 'font-medium',
       tone === 'alert' && 'text-negative',
       className,

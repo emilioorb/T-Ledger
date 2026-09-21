@@ -20,6 +20,12 @@ export const copy = {
       goals: 'Ver las metas',
       movements: 'Registrar un movimiento',
     },
+    error: {
+      title: 'El panel no se pudo armar',
+      description:
+        'Alguna de las consultas no respondió. Sin ellas, cualquier frase acá sería una suposición sobre tu plata.',
+      retry: 'Reintentar',
+    },
     empty: {
       title: 'Todavía no hay nada cargado',
       description:

@@ -159,7 +159,7 @@ const CategoryRow = ({ category, accountName, onEdit, onDelete }: RowProps) => (
 
     {category.accountCode ? (
       <span className="w-56 shrink-0 truncate text-sm">
-        <span className="num text-xs text-muted-foreground">{category.accountCode}</span>{' '}
+        <span className="num num-right text-xs text-muted-foreground">{category.accountCode}</span>{' '}
         {accountName}
       </span>
     ) : (

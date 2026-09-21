@@ -167,7 +167,7 @@ export const JournalEntryForm = ({ postable, pending, onSubmit, onCancel }: Prop
                 value={line.amount}
                 inputMode="decimal"
                 aria-label={fields.amount}
-                className="num"
+                className="num num-right"
                 onChange={(event) => update(index, { amount: event.target.value })}
               />
 

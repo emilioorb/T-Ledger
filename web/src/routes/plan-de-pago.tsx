@@ -144,19 +144,19 @@ const PayoffPlanScreen = () => {
                 key={debt.id}
                 className="grid grid-cols-[1.75rem_1fr_auto] items-baseline gap-x-4 gap-y-1 py-3 sm:grid-cols-[4rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]"
               >
-                <span className="num text-left text-sm text-muted-foreground">{debt.position}</span>
+                <span className="num text-sm text-muted-foreground">{debt.position}</span>
                 <span className="truncate text-sm font-medium">{debt.name}</span>
-                <span className="num text-sm">{debt.annualRate} %</span>
-                <span className="num hidden text-sm sm:block">{formatMoney(debt.balance)}</span>
-                <span className="num hidden text-sm text-muted-foreground sm:block">
+                <span className="num num-right text-sm">{debt.annualRate} %</span>
+                <span className="num num-right hidden text-sm sm:block">{formatMoney(debt.balance)}</span>
+                <span className="num num-right hidden text-sm text-muted-foreground sm:block">
                   {formatMoney(debt.monthlyPayment)}
                 </span>
                 {/* Bajo sm, saldo y cuota bajan a un pie: arriba queda el orden, que es
                     la respuesta que la pantalla vino a dar. */}
                 <span className="col-span-2 col-start-2 text-xs text-muted-foreground sm:hidden">
-                  <span className="num">{formatMoney(debt.balance)}</span>
+                  <span className="num num-right">{formatMoney(debt.balance)}</span>
                   {' · '}
-                  <span className="num">{formatMoney(debt.monthlyPayment)}</span>
+                  <span className="num num-right">{formatMoney(debt.monthlyPayment)}</span>
                 </span>
               </li>
             ))}

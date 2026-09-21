@@ -57,7 +57,7 @@ export const ExtraPaymentSimulator = ({ debt }: Props) => {
             <Input
               id="sim-amount"
               inputMode="decimal"
-              className="num"
+              className="num num-right"
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
               required
@@ -70,7 +70,7 @@ export const ExtraPaymentSimulator = ({ debt }: Props) => {
               type="number"
               min={1}
               max={debt.termMonths - 1}
-              className="num"
+              className="num num-right"
               value={afterInstallment}
               onChange={(event) => setAfterInstallment(event.target.value)}
               aria-describedby="sim-after-hint"
@@ -140,7 +140,7 @@ export const ExtraPaymentSimulator = ({ debt }: Props) => {
               <dt className="text-sm text-muted-foreground">
                 {copy.simulator.results.interestSaved}
               </dt>
-              <dd className="num text-sm font-medium text-positive">
+              <dd className="num num-right text-sm font-medium text-positive">
                 {formatMoney(projection.interestSaved)}
               </dd>
             </div>
@@ -148,7 +148,7 @@ export const ExtraPaymentSimulator = ({ debt }: Props) => {
               <dt className="text-sm text-muted-foreground">
                 {copy.simulator.results.monthsSaved}
               </dt>
-              <dd className="num text-sm font-medium">
+              <dd className="num num-right text-sm font-medium">
                 {copy.simulator.results.months(projection.monthsSaved)}
               </dd>
             </div>
@@ -156,16 +156,16 @@ export const ExtraPaymentSimulator = ({ debt }: Props) => {
               <dt className="text-sm text-muted-foreground">
                 {copy.simulator.results.newPayoffDate}
               </dt>
-              <dd className="num text-sm">{formatIsoDate(lastDueDate(projection))}</dd>
+              <dd className="num num-right text-sm">{formatIsoDate(lastDueDate(projection))}</dd>
             </div>
             <div className="flex items-baseline justify-between gap-4 border-b border-border pb-1.5">
               <dt className="text-sm text-muted-foreground">{copy.simulator.results.totalPaid}</dt>
-              <dd className="num text-sm">{formatMoney(projection.totalPaidWithExtra)}</dd>
+              <dd className="num num-right text-sm">{formatMoney(projection.totalPaidWithExtra)}</dd>
             </div>
           </dl>
           <p className="mt-2 text-xs text-muted-foreground">
             {copy.simulator.results.baselineTotal}{' '}
-            <span className="num">{formatMoney(projection.baseline.totalPaid)}</span>
+            <span className="num num-right">{formatMoney(projection.baseline.totalPaid)}</span>
           </p>
         </div>
       ) : null}

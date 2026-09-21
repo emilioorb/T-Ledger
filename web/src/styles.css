@@ -127,10 +127,16 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 
-  /* La Regla de la Cifra Tabular: toda cifra en mono, tabular y alineada a la derecha. */
+  /* La Regla de la Cifra Tabular. Son dos cosas distintas y por eso son dos clases: la forma
+     del número (mono y tabular, que una fecha o un código también quieren) y su alineación a la
+     derecha, que solo corresponde cuando la cifra se compara en columna con la de arriba. */
   .num {
-    @apply font-mono text-right;
+    @apply font-mono;
     font-variant-numeric: tabular-nums;
+  }
+
+  .num-right {
+    @apply text-right;
   }
 
   /* El borde que identifica un control llega a 3:1; el sutil es decorativo (WCAG 1.4.11). */

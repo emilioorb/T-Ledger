@@ -60,7 +60,7 @@ const TrialBalanceScreen = () => {
           <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border-strong py-4">
             <div>
               <p className="text-xs text-muted-foreground">{copy.trialBalance.difference}</p>
-              {/* La cifra se alinea con su etiqueta, no al ancho del párrafo: `.num` trae
+              {/* La cifra se alinea con su etiqueta, no al ancho del párrafo: `.num num-right` trae
                   alineación a la derecha y en un bloque suelto la dejaba flotando. */}
               <Amount
                 money={balance.data.difference}
@@ -119,7 +119,7 @@ const TrialBalanceScreen = () => {
                       className="min-w-0 truncate underline-offset-2 hover:underline"
                       aria-label={copy.trialBalance.viewLedger(row.accountName)}
                     >
-                      <span className="num text-xs text-muted-foreground">{row.accountCode}</span>{' '}
+                      <span className="num num-right text-xs text-muted-foreground">{row.accountCode}</span>{' '}
                       {row.accountName}
                     </Link>
                     <span className="flex justify-between gap-3 lg:contents">

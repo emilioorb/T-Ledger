@@ -1,21 +1,21 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { NotFound } from './components/not-found'
 import { ApiError } from './lib/api'
 import { routeTree } from './routeTree.gen'
 
 const describe = (error: unknown): string =>
   error instanceof ApiError ? error.message : 'No se pudo completar la operación'
 
-// Un QueryCache y un MutationCache con onError cubren todos los errores de una sola vez,
-// sin que cada pantalla tenga que acordarse. La excepción es la consulta que ya explica
-// su propio fallo en pantalla: un toast encima sería decir dos veces lo mismo, y una de
-// ellas como si fuera una falla del servidor.
+// Una consulta que falla ya lo explica en pantalla con su ErrorState y su reintento: el toast
+// encima diría dos veces lo mismo. Por eso el aviso es opt-in, para la consulta secundaria que
+// no tiene dónde contar su propio fallo. Una mutación sí avisa siempre: no tiene superficie.
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
   queryCache: new QueryCache({
     onError: (error, query) => {
-      if (query.meta?.handlesError === true) return
+      if (query.meta?.toastsError !== true) return
       toast.error(describe(error))
     },
   }),
@@ -27,6 +27,7 @@ export const router = createRouter({
   routeTree,
   context: { queryClient },
   defaultPreloadStaleTime: 0,
+  defaultNotFoundComponent: NotFound,
 })
 
 declare module '@tanstack/react-router' {

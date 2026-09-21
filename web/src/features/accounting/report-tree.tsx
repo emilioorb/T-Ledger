@@ -26,7 +26,7 @@ const Row = ({ node, derivedCode, derivedHint }: { node: ReportNode } & Omit<Pro
           style={{ paddingLeft: node.level * INDENT_PER_LEVEL }}
         >
           {!isDerived ? (
-            <span className="num mr-1.5 text-xs text-muted-foreground">{node.code}</span>
+            <span className="num num-right mr-1.5 text-xs text-muted-foreground">{node.code}</span>
           ) : null}
           <span className={cn(isDerived && 'italic')}>{node.name}</span>
         </span>

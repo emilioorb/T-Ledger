@@ -57,7 +57,7 @@ const EntryBlock = ({ entry, nameOf, highlighted }: EntryProps) => (
     {/* La cabecera vive fuera de la rejilla de columnas: dentro, «Reversión» caía en la
         columna Debe y se leía como un importe. */}
     <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pr-[14rem]">
-      <span className="num text-left text-xs text-muted-foreground">
+      <span className="num text-xs text-muted-foreground">
         {formatIsoDate(entry.date)}
       </span>
       <h3 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
@@ -79,7 +79,7 @@ const EntryBlock = ({ entry, nameOf, highlighted }: EntryProps) => (
           className="grid grid-cols-[1fr_auto] items-baseline gap-2 py-0.5 text-sm md:grid-cols-[1fr_7rem_7rem]"
         >
           <span className="min-w-0 truncate">
-            <span className="num text-xs text-muted-foreground">{line.accountCode}</span>{' '}
+            <span className="num num-right text-xs text-muted-foreground">{line.accountCode}</span>{' '}
             {nameOf.get(line.accountCode)}
           </span>
           {line.side === 'DEBIT' ? (
@@ -103,10 +103,10 @@ const EntryBlock = ({ entry, nameOf, highlighted }: EntryProps) => (
           className="grid grid-cols-[1fr_auto] items-baseline gap-2 text-xs text-muted-foreground md:grid-cols-[1fr_7rem_7rem]"
         >
           <span>{currency}</span>
-          <span className="num">
+          <span className="num num-right">
             {formatMoney({ minorUnits: total.debit.toString(), currency: currency as MoneyCurrency })}
           </span>
-          <span className="num">
+          <span className="num num-right">
             {formatMoney({
               minorUnits: total.credit.toString(),
               currency: currency as MoneyCurrency,

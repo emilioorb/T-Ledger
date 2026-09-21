@@ -20,7 +20,6 @@ export const useBudgetEvaluation = (month: string, currency: CurrencyCode) =>
     // Sin modelo activo la API responde 422: ni se reintenta ni se avisa por toast,
     // porque la pantalla lo explica con un estado vacío que lleva a resolverlo.
     retry: false,
-    meta: { handlesError: true },
   })
 
 export const useMonthlyIncome = (month: string) =>

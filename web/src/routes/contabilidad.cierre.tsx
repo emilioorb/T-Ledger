@@ -51,7 +51,7 @@ const PeriodBlock = ({ summary, onClose, onReopen }: RowProps) => {
   return (
     <li className="grid gap-3 border-b border-border py-4 sm:grid-cols-[8rem_1fr_auto] sm:items-start">
       <div>
-        <p className="num text-left text-sm font-medium">{formatIsoMonth(summary.period)}</p>
+        <p className="num text-sm font-medium">{formatIsoMonth(summary.period)}</p>
         <p
           className={cn(
             'mt-0.5 text-xs',
@@ -70,13 +70,13 @@ const PeriodBlock = ({ summary, onClose, onReopen }: RowProps) => {
         <dl className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
           <div className="flex gap-1.5">
             <dt>{copy.closing.columns.entries}</dt>
-            <dd className="num text-left text-foreground">{summary.entryCount}</dd>
+            <dd className="num text-foreground">{summary.entryCount}</dd>
           </div>
           <div className="flex gap-1.5">
             <dt>{copy.closing.columns.unposted}</dt>
             <dd
               className={cn(
-                'num text-left',
+                'num',
                 summary.unpostedMovementCount > 0 ? 'text-warning' : 'text-foreground',
               )}
             >

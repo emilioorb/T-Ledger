@@ -53,6 +53,7 @@ export class ReconciliationController {
       statementBalance: fromMoney(result.statementBalance),
       difference: fromMoney(result.difference),
       lines: result.lines.map(toBankLineResponse),
+      resolved: result.resolved.map(toBankLineResponse),
       suggestions: result.suggestions,
       pagination: {
         page: query.page,
