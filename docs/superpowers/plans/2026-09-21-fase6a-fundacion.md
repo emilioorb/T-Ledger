@@ -61,9 +61,34 @@ por endpoint.
 
 ---
 
-### Tarea 1 (BLOQUEANTE): ¿Better Auth entra en este proyecto?
+### Tarea 1 (BLOQUEANTE): ¿Better Auth entra en este proyecto? — ✅ RESUELTA el 21/09/2026
 
-**Esta tarea puede invalidar el ADR-001.** No se sigue a la tarea 2 sin resolverla.
+**Las tres preguntas dieron que sí. El ADR-001 sobrevive y se sigue con la tarea 2.** El spike
+se corrió, se anotó en el ADR y se borró. Los pasos quedan abajo por si hay que repetirlo
+contra otras versiones.
+
+Cinco cosas que salieron del spike y que cambian tareas de más adelante:
+
+1. **Las rutas de auth viven en `/api/auth/*`, fuera del `setGlobalPrefix('api/v1')`.** El
+   handler se monta antes que el prefijo de Nest. `/api/v1/auth/...` da 404. El cliente
+   tipado a mano de la tarea 8 tiene que apuntar a `/api/auth`.
+2. **El guard de Better Auth es global por defecto y devuelve 401 en todo.** Es lo que
+   queremos, pero hay que marcar explícitamente lo que deba ser público con
+   `@AllowAnonymous()`. Nota: `/api/v1/openapi.json` quedó accesible igual porque se monta con
+   `getHttpAdapter().get()`, fuera de Nest, así que no pasa por el guard. Si alguna vez se
+   mueve a un controlador, deja de responder sin sesión.
+3. **Better Auth valida el esquema al arrancar y falla en toda petición si faltan tablas**, no
+   solo en las de auth. Con las tablas ausentes, `GET /api/v1/categories` devolvía 500 por un
+   `SchemaMismatchError`. O sea que la tarea 2 no es opcional antes de seguir.
+4. **`@better-auth/cli` está deprecado.** El comando que sirve es `npx auth migrate`, que es
+   el que el propio mensaje de error de Better Auth sugiere.
+5. **Los peers extra del paquete (`@nestjs/graphql`, `@nestjs/websockets`, `graphql`, `qs`,
+   `express`) son todos opcionales**, así que no hay que instalar nada de eso.
+
+---
+
+<details>
+<summary>Los pasos del spike, por si hay que repetirlo</summary>
 
 El ADR-001 eligió Better Auth sobre autenticación propia, pero la integración con NestJS es de
 la comunidad (`@thallesp/nestjs-better-auth`) y exige arrancar Nest con `bodyParser: false`.
@@ -123,6 +148,8 @@ git checkout master && git branch -D spike/better-auth
 ```
 
 El código del spike no se conserva. Lo que se conserva es la respuesta, escrita en el ADR.
+
+</details>
 
 ---
 
@@ -324,19 +351,37 @@ y queda fuera del filtro de la tarea 5, con un comentario en el esquema que diga
 La columna es obligatoria y ya hay filas, así que la migración es en tres tiempos: agregar
 nullable, rellenar, y recién ahí ponerla obligatoria.
 
+**Los modelos de Prisma no se llaman como las tablas.** Todos tienen `@@map` a snake_case en
+plural, y escribir el SQL con el nombre del modelo hace fallar la migración entera. Los
+nombres reales, verificados contra `\dt` en la base:
+
+| Modelo | Tabla | Modelo | Tabla |
+|---|---|---|---|
+| `Debt` | `debts` | `Goal` | `goals` |
+| `Account` | `accounts` | `GoalContribution` | `goal_contributions` |
+| `JournalEntry` | `journal_entries` | `Investment` | `investments` |
+| `JournalLine` | `journal_lines` | `InvestmentContribution` | `investment_contributions` |
+| `Category` | `categories` | `ImportProfile` | `import_profiles` |
+| `Movement` | `movements` | `BankAccount` | `bank_accounts` |
+| `AccountingPeriod` | `accounting_periods` | `BankStatement` | `bank_statements` |
+| `BudgetModel` | `budget_models` | `BankLine` | `bank_lines` |
+| `BudgetBucket` | `budget_buckets` | `BudgetIncome` | `budget_income` |
+
+(`ExchangeRate` → `exchange_rates` queda fuera, ver el paso 1.)
+
 ```sql
 -- El libro de Emilio, que es todo lo que hay hoy.
 INSERT INTO "organization" (id, name, slug, "createdAt")
 VALUES ('lib_personal_emilio', 'Personal', 'personal', NOW());
 
--- Y su membresía como dueño. El userId sale de la cuenta creada a mano en el paso 4.
--- Si no existe todavía, esta línea se corre después y la migración falla ruidosa acá,
--- que es lo correcto: un libro sin dueño no debería poder existir.
+-- Y su membresía como dueño. El userId sale de la cuenta creada en el paso 4. Si todavía no
+-- existe, la migración falla ruidosa acá, que es lo correcto: un libro sin dueño no debería
+-- poder existir.
 
-ALTER TABLE "Movement" ADD COLUMN "bookId" TEXT;
-UPDATE "Movement" SET "bookId" = 'lib_personal_emilio';
-ALTER TABLE "Movement" ALTER COLUMN "bookId" SET NOT NULL;
-ALTER TABLE "Movement" ADD CONSTRAINT "Movement_bookId_fkey"
+ALTER TABLE movements ADD COLUMN "bookId" TEXT;
+UPDATE movements SET "bookId" = 'lib_personal_emilio';
+ALTER TABLE movements ALTER COLUMN "bookId" SET NOT NULL;
+ALTER TABLE movements ADD CONSTRAINT movements_bookId_fkey
   FOREIGN KEY ("bookId") REFERENCES "organization"(id) ON DELETE CASCADE;
 ```
 
@@ -352,8 +397,8 @@ cd api && npx prisma migrate dev --name libro-en-todas-las-tablas
 
 ```sql
 -- Tiene que devolver cero filas. Si devuelve alguna, hay una tabla sin rellenar.
-SELECT 'Movement' AS tabla, COUNT(*) FROM "Movement" WHERE "bookId" IS NULL
-UNION ALL SELECT 'JournalEntry', COUNT(*) FROM "JournalEntry" WHERE "bookId" IS NULL;
+SELECT 'movements' AS tabla, COUNT(*) FROM movements WHERE "bookId" IS NULL
+UNION ALL SELECT 'journal_entries', COUNT(*) FROM journal_entries WHERE "bookId" IS NULL;
 -- …y así con las 18.
 ```
 

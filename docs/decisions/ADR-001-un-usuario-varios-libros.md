@@ -67,8 +67,17 @@ falta: `owner`, `editor`, `viewer`.
   front necesita tipos a mano para esa parte. Se acota envolviéndolos en un único cliente
   tipado en un solo archivo.
 - La integración con NestJS es de la comunidad (`@thallesp/nestjs-better-auth`) y exige
-  arrancar Nest con `bodyParser: false`. Hay que verificarlo contra los pipes de Zod antes de
-  comprometer la tarea.
+  arrancar Nest con `bodyParser: false`. **Verificado el 21/09/2026** con un spike descartable,
+  contra `better-auth@1.7.5`, `@thallesp/nestjs-better-auth@2.8.0`, NestJS 12.0.4, Express
+  5.2.1 y Node 24.13, bajo ESM:
+  - Arranca sin problemas.
+  - Los endpoints existentes **siguen funcionando**: el paquete repone los parsers para las
+    rutas que no son de auth. `POST /api/v1/categories` con cuerpo válido devolvió 201 y creó
+    la fila; con cuerpo vacío devolvió 400 con el error de Zod campo por campo
+    (`name: expected string, received undefined`). Los pipes ven el cuerpo.
+  - El registro por correo funciona.
+  - La versión 2.8.0 declara peer `@nestjs/common: ^11.1.6 || ^12.0.0`, o sea que **sí
+    soporta NestJS 12**. La documentación que decía lo contrario era de una versión anterior.
 - Login con Google, 2FA, passkeys y recuperación por correo quedan disponibles por
   configuración el día que el registro se abra.
 - En la interfaz nunca aparece la palabra «organización». Se llama libro.
