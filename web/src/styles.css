@@ -195,6 +195,48 @@
     outline-offset: 2px;
   }
 
+  /* El avatar en reposo. Dos ritmos que no coinciden nunca —la respiración cada 5,2 s y el
+     parpadeo cada 6,4 s— para que no se lea como un bucle: si los dos cayeran juntos, el ojo
+     encuentra el patrón en dos vueltas y empieza a molestar.
+
+     Las dos animan solo `transform`, así que no tocan layout. `prefers-reduced-motion` las
+     apaga con la regla de abajo, que ya limita las iteraciones a una. */
+  @keyframes bloub-breathe {
+    0%,
+    100% {
+      transform: scale(1) translateY(0);
+    }
+    50% {
+      transform: scale(1.025) translateY(-1.5%);
+    }
+  }
+
+  /* El parpadeo es casi todo ojo abierto: solo el tramo del 46 % al 50 % los cierra, que a
+     6,4 s son unos 250 ms. Más lento parecería sueño. */
+  @keyframes bloub-blink {
+    0%,
+    45%,
+    52%,
+    100% {
+      transform: scaleY(1);
+    }
+    48% {
+      transform: scaleY(0.08);
+    }
+  }
+
+  .bloub-breathe {
+    animation: bloub-breathe 5.2s var(--ease-out-quart) infinite;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+
+  .bloub-blink {
+    animation: bloub-blink 6.4s var(--ease-out-quart) infinite;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

@@ -23,7 +23,9 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isNegativeMoney } from '@/features/accounting/amount'
-import { Delta } from '@/features/accounting/delta'
+import { Delta, percentChange } from '@/features/accounting/delta'
+import { AnimoAvatar } from '@/features/shell/animo-avatar'
+import type { Senales } from '@/features/shell/animo'
 import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { ExpenseBreakdown, type ExpenseSlice } from '@/features/accounting/expense-breakdown'
 import { useMonthlyResults } from '@/features/accounting/use-monthly-results'
@@ -44,7 +46,14 @@ import { useInvestments } from '@/features/investments/use-investments'
 import { copy } from '@/features/projection/overview-copy'
 import { useCashFlowProjection } from '@/features/projection/use-projection'
 import type { Money } from '@/features/projection/types'
-import { formatIsoDate, formatIsoMonth, monthEnd, monthStart, today } from '@/lib/dates'
+import {
+  formatIsoDate,
+  formatIsoMonth,
+  formatLongMonth,
+  monthEnd,
+  monthStart,
+  today,
+} from '@/lib/dates'
 import { formatMoney } from '@/lib/money'
 import { cn } from '@/lib/utils'
 import { TEXT_LINK } from '@/components/text-link'
@@ -296,6 +305,26 @@ const DashboardScreen = () => {
     .map((debt) => debt.payoffDate)
     .sort((a, b) => b.localeCompare(a))[0]
 
+  // Lo mismo que leen las tarjetas y el panel de «qué atender», reducido a lo que el avatar
+  // necesita para poner cara. Cada señal es `null` o `false` mientras su consulta no llegó:
+  // una cara alegre montada sobre un dato que todavía no cargó sería una afirmación falsa
+  // sobre la plata, que es justo lo que el resto del tablero se cuida de no hacer.
+  const senales: Senales = {
+    mesNoCierra: current ? isNegativeMoney(current.surplus) : false,
+    mesSinCerrar: openPast ? formatLongMonth(openPast.period) : null,
+    cubetaPasada: overBucket?.name ?? null,
+    deudaSubio: Boolean(
+      debtsBefore.data && BigInt(debtTotal.minorUnits) > BigInt(debtBefore.minorUnits),
+    ),
+    metaTarde: nearestGoal && !nearestGoal.onTrack ? nearestGoal.name : null,
+    patrimonio:
+      netWorth.data && netWorthBefore.data
+        ? percentChange(netWorth.data.netWorth, netWorthBefore.data.netWorth)
+        : null,
+    sinAhorro: Boolean(goals.data && investments.data && savedThisMonth.minorUnits === '0'),
+    sinDeudas: Boolean(debts.data && debtTotal.minorUnits === '0'),
+  }
+
   const nothingYet =
     !loading &&
     !failed &&
@@ -307,9 +336,15 @@ const DashboardScreen = () => {
 
   return (
     <section className="space-y-6">
-      <header className="max-w-[60ch]">
-        <h1 className="text-xl font-semibold tracking-tight">{copy.overview.title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{copy.overview.greeting}</p>
+      <header className="flex items-start justify-between gap-4">
+        <div className="max-w-[60ch]">
+          <h1 className="text-xl font-semibold tracking-tight">{copy.overview.title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{copy.overview.greeting}</p>
+        </div>
+        {/* Arriba a la derecha, a la altura del saludo. Se va con la página en vez de quedar
+            fijo: algo que respira encima de las cifras competiría por la atención justo
+            donde hay números que leer. */}
+        <AnimoAvatar senales={senales} className="hidden w-18 shrink-0 sm:block" />
       </header>
 
       {loading ? (

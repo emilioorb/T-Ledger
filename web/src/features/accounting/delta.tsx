@@ -23,7 +23,7 @@ interface Props {
 
 // El porcentaje se calcula sobre el valor absoluto de la base: con un patrimonio negativo,
 // dividir por el signo daría una flecha que apunta al revés de lo que pasó.
-const percentChange = (now: Money, before: Money): number | null => {
+export const percentChange = (now: Money, before: Money): number | null => {
   const base = BigInt(before.minorUnits)
   if (base === 0n) return null
   const diff = BigInt(now.minorUnits) - base

@@ -29,6 +29,14 @@ export const formatLongDate = (iso: string): string => {
   return `${Number(day)} de ${name} de ${year}`
 }
 
+// «agosto de 2026». El de arriba, `formatIsoMonth`, da «08/2026», que sirve dentro de una
+// tabla o de una etiqueta pero no dentro de una oración.
+export const formatLongMonth = (iso: string): string => {
+  const [year, month] = iso.split('-')
+  const name = MONTHS[Number(month) - 1]
+  return year && name ? `${name} de ${year}` : iso
+}
+
 export const formatIsoMonth = (iso: string): string => {
   const [year, month] = iso.split('-')
   return year && month ? `${month}/${year}` : iso
