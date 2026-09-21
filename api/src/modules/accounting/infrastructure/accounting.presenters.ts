@@ -1,4 +1,5 @@
-import { fromMoney, type MoneyDto } from '../../../shared/http/money.schema.js'
+import type { z } from 'zod'
+import { fromMoney } from '../../../shared/http/money.schema.js'
 import type { AccountingPeriod } from '../domain/accounting-period.js'
 import type { Account } from '../domain/account.js'
 import type { Category } from '../domain/category.js'
@@ -10,18 +11,34 @@ import type { GeneralLedger } from '../domain/reports/general-ledger.js'
 import type { IncomeStatement } from '../domain/reports/income-statement.js'
 import type { ReportNode } from '../domain/reports/roll-up.js'
 import type { TrialBalance } from '../domain/reports/trial-balance.js'
+import type {
+  accountResponseSchema,
+  categoryResponseSchema,
+  financialPositionResponseSchema,
+  incomeStatementResponseSchema,
+  journalEntryResponseSchema,
+  ledgerResponseSchema,
+  movementResponseSchema,
+  periodResponseSchema,
+  periodSummaryResponseSchema,
+  trialBalanceResponseSchema,
+  ReportNodeResponse,
+} from './accounting.responses.js'
+
+type Account_ = z.infer<typeof accountResponseSchema>
+type Category_ = z.infer<typeof categoryResponseSchema>
+type Movement_ = z.infer<typeof movementResponseSchema>
+type JournalEntry_ = z.infer<typeof journalEntryResponseSchema>
+type TrialBalance_ = z.infer<typeof trialBalanceResponseSchema>
+type Ledger_ = z.infer<typeof ledgerResponseSchema>
+type Position_ = z.infer<typeof financialPositionResponseSchema>
+type IncomeStatement_ = z.infer<typeof incomeStatementResponseSchema>
+type Period_ = z.infer<typeof periodResponseSchema>
+type PeriodSummary_ = z.infer<typeof periodSummaryResponseSchema>
 
 const isoDate = (date: Date): string => date.toISOString().slice(0, 10)
 
-export interface ReportNodeResponse {
-  code: string
-  name: string
-  balance: MoneyDto
-  level: number
-  children: ReportNodeResponse[]
-}
-
-export const toAccountResponse = (account: Account) => ({
+export const toAccountResponse = (account: Account): Account_ => ({
   code: account.code,
   name: account.name,
   accountClass: account.accountClass,
@@ -30,7 +47,7 @@ export const toAccountResponse = (account: Account) => ({
   sortOrder: account.sortOrder,
 })
 
-export const toCategoryResponse = (category: Category) => ({
+export const toCategoryResponse = (category: Category): Category_ => ({
   id: category.id,
   name: category.name,
   kind: category.kind,
@@ -42,7 +59,10 @@ export const toCategoryResponse = (category: Category) => ({
 
 // `posted` y `journalEntryId` son lo que permite a la interfaz distinguir un movimiento
 // contabilizado de uno que solo quedó registrado, y saltar a su asiento.
-export const toMovementResponse = (movement: Movement, journalEntryId: string | null) => ({
+export const toMovementResponse = (
+  movement: Movement,
+  journalEntryId: string | null,
+): Movement_ => ({
   id: movement.id,
   date: isoDate(movement.date),
   kind: movement.kind,
@@ -56,7 +76,7 @@ export const toMovementResponse = (movement: Movement, journalEntryId: string | 
   journalEntryId,
 })
 
-export const toJournalEntryResponse = (entry: JournalEntry) => ({
+export const toJournalEntryResponse = (entry: JournalEntry): JournalEntry_ => ({
   id: entry.id,
   date: isoDate(entry.date),
   description: entry.description,
@@ -78,7 +98,7 @@ export const toReportNodeResponse = (node: ReportNode): ReportNodeResponse => ({
   children: node.children.map(toReportNodeResponse),
 })
 
-export const toTrialBalanceResponse = (balance: TrialBalance) => ({
+export const toTrialBalanceResponse = (balance: TrialBalance): TrialBalance_ => ({
   rows: balance.rows.map((row) => ({
     accountCode: row.accountCode,
     accountName: row.accountName,
@@ -92,7 +112,7 @@ export const toTrialBalanceResponse = (balance: TrialBalance) => ({
   balances: balance.balances,
 })
 
-export const toLedgerResponse = (ledger: GeneralLedger) => ({
+export const toLedgerResponse = (ledger: GeneralLedger): Ledger_ => ({
   openingBalance: fromMoney(ledger.openingBalance),
   rows: ledger.rows.map((row) => ({
     date: isoDate(row.date),
@@ -105,7 +125,7 @@ export const toLedgerResponse = (ledger: GeneralLedger) => ({
   closingBalance: fromMoney(ledger.closingBalance),
 })
 
-export const toFinancialPositionResponse = (position: FinancialPosition) => ({
+export const toFinancialPositionResponse = (position: FinancialPosition): Position_ => ({
   assets: fromMoney(position.assets),
   liabilities: fromMoney(position.liabilities),
   equity: fromMoney(position.equity),
@@ -118,7 +138,7 @@ export const toFinancialPositionResponse = (position: FinancialPosition) => ({
   },
 })
 
-export const toIncomeStatementResponse = (statement: IncomeStatement) => ({
+export const toIncomeStatementResponse = (statement: IncomeStatement): IncomeStatement_ => ({
   income: fromMoney(statement.income),
   costOfRevenue: fromMoney(statement.costOfRevenue),
   operatingExpenses: fromMoney(statement.operatingExpenses),
@@ -130,13 +150,16 @@ export const toIncomeStatementResponse = (statement: IncomeStatement) => ({
   },
 })
 
-export const toPeriodResponse = (period: AccountingPeriod) => ({
+export const toPeriodResponse = (period: AccountingPeriod): Period_ => ({
   period: period.key.toString(),
   status: period.status,
   closedAt: period.closedAt?.toISOString() ?? null,
 })
 
-export const toPeriodSummaryResponse = (snapshot: PeriodSnapshot, blockers: CloseBlocker[]) => ({
+export const toPeriodSummaryResponse = (
+  snapshot: PeriodSnapshot,
+  blockers: CloseBlocker[],
+): PeriodSummary_ => ({
   period: snapshot.key.toString(),
   status: snapshot.status,
   entryCount: snapshot.entryCount,

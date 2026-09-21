@@ -5,11 +5,8 @@ import { GetAccountUseCase } from '../application/get-account.use-case.js'
 import { GetAccountsTreeUseCase } from '../application/get-accounts-tree.use-case.js'
 import { ListAccountsUseCase } from '../application/list-accounts.use-case.js'
 import { SaveAccountUseCase } from '../application/save-account.use-case.js'
-import {
-  toAccountResponse,
-  toReportNodeResponse,
-  type ReportNodeResponse,
-} from './accounting.presenters.js'
+import { toAccountResponse, toReportNodeResponse } from './accounting.presenters.js'
+import type { ReportNodeResponse } from './accounting.responses.js'
 import {
   accountsTreeQuerySchema,
   createAccountSchema,
