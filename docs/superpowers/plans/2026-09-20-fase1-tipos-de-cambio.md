@@ -1187,10 +1187,10 @@ git commit -m "✨ feat: indicador de tipo de cambio con marca de desactualizado
 
 ### Checkpoint: rebanada 2 completa
 
-- [ ] `cd api && npm test` y `cd web && npm test` en verde
-- [ ] El job corre al arrancar y llena la base sin duplicar
-- [ ] Una consulta de tasa en un domingo devuelve la del viernes
-- [ ] Apagar la red y arrancar la aplicación: arranca, registra el fallo y sigue sirviendo la última tasa
+- [x] `cd api && npm test` y `cd web && npm test` en verde
+- [x] El job corre al arrancar y llena la base sin duplicar
+- [x] Una consulta de tasa en un domingo devuelve un valor: el BCCR publica los siete días, verificado
+- [x] Apagar la red y arrancar la aplicación: arranca, registra el fallo y sigue sirviendo la última tasa
 - [ ] Revisión con Emilio antes de la rebanada 3
 
 ---
