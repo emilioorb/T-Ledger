@@ -54,6 +54,7 @@ export const MovementForm = ({
     movement?.paymentAccountCode ?? paymentAccounts[0]?.code ?? '',
   )
   const [receiptUrl, setReceiptUrl] = useState(movement?.receiptUrl ?? '')
+  const [amountError, setAmountError] = useState(false)
 
   const fields = copy.movements.form
   const ofKind = categories.filter((category) => category.kind === kind && category.active)
@@ -71,7 +72,8 @@ export const MovementForm = ({
         receiptUrl: receiptUrl.trim() === '' ? null : receiptUrl.trim(),
       })
     } catch {
-      toast.error(copy.movements.toast.createdUnposted)
+      setAmountError(true)
+      toast.error(copy.movements.toast.invalidAmount)
     }
   }
 
@@ -145,7 +147,11 @@ export const MovementForm = ({
               inputMode="decimal"
               required
               className="num"
-              onChange={(event) => setAmount(event.target.value)}
+              aria-invalid={amountError}
+              onChange={(event) => {
+                setAmountError(false)
+                setAmount(event.target.value)
+              }}
             />
             <Select value={currency} onValueChange={(next) => setCurrency(next as CurrencyCode)}>
               <SelectTrigger className="w-24" aria-label={copy.common.currency.label}>

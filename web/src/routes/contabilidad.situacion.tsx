@@ -7,11 +7,35 @@ import { Amount } from '@/features/accounting/amount'
 import { copy } from '@/features/accounting/copy'
 import { ControlBar, CurrencyField, DateField } from '@/features/accounting/report-controls'
 import { ReportTree } from '@/features/accounting/report-tree'
-import type { CurrencyCode } from '@/features/accounting/types'
+import type { CurrencyCode, Money, ReportNode } from '@/features/accounting/types'
 import { useFinancialPosition } from '@/features/accounting/use-accounting'
 import { today } from '@/lib/dates'
 
 const PERIOD_RESULT_CODE = 'RESULTADO-DEL-PERIODO'
+
+interface SectionProps {
+  label: string
+  nodes: ReportNode[]
+  total: Money
+  derivedCode?: string
+  derivedHint?: string
+}
+
+// Una sección sin cuentas igual tiene un saldo, y es cero. Dejar el encabezado solo,
+// sin cifra, obliga a deducir si el pasivo es cero o si el reporte se rompió.
+const Section = ({ label, nodes, total, derivedCode, derivedHint }: SectionProps) => (
+  <div>
+    <div className="flex items-baseline justify-between gap-3">
+      <h2 className="text-sm font-medium tracking-tight">{label}</h2>
+      {nodes.length === 0 ? <Amount money={total} className="text-sm" /> : null}
+    </div>
+    {nodes.length > 0 ? (
+      <div className="mt-2">
+        <ReportTree nodes={nodes} derivedCode={derivedCode} derivedHint={derivedHint} />
+      </div>
+    ) : null}
+  </div>
+)
 
 const FinancialPositionScreen = () => {
   const [currency, setCurrency] = useState<CurrencyCode>('CRC')
@@ -32,7 +56,7 @@ const FinancialPositionScreen = () => {
       </ControlBar>
 
       {position.isPending ? (
-        <div className="space-y-2" aria-label={copy.common.loading}>
+        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
           <Skeleton className="h-20 w-full" />
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-8 w-full" />
@@ -77,37 +101,25 @@ const FinancialPositionScreen = () => {
             />
           ) : (
             <div className="grid gap-8 lg:grid-cols-2">
-              <div>
-                <h2 className="text-sm font-medium tracking-tight">
-                  {copy.financialPosition.assets}
-                </h2>
-                <div className="mt-2">
-                  <ReportTree nodes={position.data.sections.assets} />
-                </div>
-              </div>
+              <Section
+                label={copy.financialPosition.assets}
+                nodes={position.data.sections.assets}
+                total={position.data.assets}
+              />
 
               <div className="space-y-8">
-                <div>
-                  <h2 className="text-sm font-medium tracking-tight">
-                    {copy.financialPosition.liabilities}
-                  </h2>
-                  <div className="mt-2">
-                    <ReportTree nodes={position.data.sections.liabilities} />
-                  </div>
-                </div>
-
-                <div>
-                  <h2 className="text-sm font-medium tracking-tight">
-                    {copy.financialPosition.equity}
-                  </h2>
-                  <div className="mt-2">
-                    <ReportTree
-                      nodes={position.data.sections.equity}
-                      derivedCode={PERIOD_RESULT_CODE}
-                      derivedHint={copy.financialPosition.periodResultHint}
-                    />
-                  </div>
-                </div>
+                <Section
+                  label={copy.financialPosition.liabilities}
+                  nodes={position.data.sections.liabilities}
+                  total={position.data.liabilities}
+                />
+                <Section
+                  label={copy.financialPosition.equity}
+                  nodes={position.data.sections.equity}
+                  total={position.data.equity}
+                  derivedCode={PERIOD_RESULT_CODE}
+                  derivedHint={copy.financialPosition.periodResultHint}
+                />
               </div>
             </div>
           )}

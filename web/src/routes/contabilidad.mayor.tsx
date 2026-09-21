@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { createFileRoute, useSearch } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Label } from '@/components/ui/label'
@@ -20,14 +19,29 @@ import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
 
 interface LedgerSearch {
   account?: string
+  currency?: CurrencyCode
+  from?: string
+  to?: string
 }
 
 const LedgerScreen = () => {
   const search = useSearch({ from: '/contabilidad/mayor' })
-  const [account, setAccount] = useState(search.account ?? '')
-  const [currency, setCurrency] = useState<CurrencyCode>('CRC')
-  const [from, setFrom] = useState(monthStart(today()))
-  const [to, setTo] = useState(monthEnd(today()))
+  const navigate = useNavigate({ from: '/contabilidad/mayor' })
+
+  // El estado vive en la URL, no en el componente: así rastrear un saldo desde la
+  // comprobación llega con su moneda y su rango, y el enlace se puede guardar.
+  const account = search.account ?? ''
+  const currency = search.currency ?? 'CRC'
+  const from = search.from ?? monthStart(today())
+  const to = search.to ?? monthEnd(today())
+
+  const update = (patch: Partial<LedgerSearch>) =>
+    void navigate({ search: (current) => ({ ...current, ...patch }) })
+
+  const setAccount = (value: string) => update({ account: value })
+  const setCurrency = (value: CurrencyCode) => update({ currency: value })
+  const setFrom = (value: string) => update({ from: value })
+  const setTo = (value: string) => update({ to: value })
 
   const accounts = useAccounts()
   const ledger = useLedger(account, currency, from, to)
@@ -72,7 +86,7 @@ const LedgerScreen = () => {
           description={copy.ledger.needsAccount.description}
         />
       ) : ledger.isPending ? (
-        <div className="space-y-2" aria-label={copy.common.loading}>
+        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-8 w-full" />
           ))}
@@ -95,7 +109,7 @@ const LedgerScreen = () => {
                 {copy.ledger.openingHint}
               </p>
             </div>
-            <Amount money={ledger.data.openingBalance} emphasis="strong" className="text-base" />
+            <Amount money={ledger.data.openingBalance} emphasis="strong" className="text-xl" />
           </div>
 
           {ledger.data.rows.length === 0 ? (
@@ -122,7 +136,13 @@ const LedgerScreen = () => {
                     <span className="num text-left text-xs text-muted-foreground lg:text-right">
                       {formatIsoDate(row.date)}
                     </span>
-                    <span className="min-w-0 truncate">{row.description}</span>
+                    <Link
+                      to="/contabilidad/asientos"
+                      search={{ entry: row.entryId }}
+                      className="min-w-0 truncate underline-offset-2 hover:underline"
+                    >
+                      {row.description}
+                    </Link>
                     <span className="flex justify-between gap-3 lg:contents">
                       <span className="text-xs text-muted-foreground lg:hidden">
                         {copy.ledger.columns.debit}
@@ -148,8 +168,8 @@ const LedgerScreen = () => {
           )}
 
           <div className="flex items-baseline justify-between border-t border-border-strong pt-2">
-            <p className="text-sm font-medium tracking-tight">{copy.ledger.closingBalance}</p>
-            <Amount money={ledger.data.closingBalance} emphasis="strong" className="text-base" />
+            <p className="text-base font-medium tracking-tight">{copy.ledger.closingBalance}</p>
+            <Amount money={ledger.data.closingBalance} emphasis="strong" className="text-xl" />
           </div>
         </div>
       )}
@@ -161,8 +181,14 @@ export const Route = createFileRoute('/contabilidad/mayor')({
   component: LedgerScreen,
   // El código de cuenta es numérico, así que una URL escrita a mano llega como número.
   // Aceptar las dos formas evita que el enlace copiado a mano caiga en el estado vacío.
-  validateSearch: (search: Record<string, unknown>): LedgerSearch =>
-    typeof search.account === 'string' || typeof search.account === 'number'
+  validateSearch: (search: Record<string, unknown>): LedgerSearch => ({
+    ...(typeof search.account === 'string' || typeof search.account === 'number'
       ? { account: String(search.account) }
-      : {},
+      : {}),
+    ...(search.currency === 'CRC' || search.currency === 'USD'
+      ? { currency: search.currency }
+      : {}),
+    ...(typeof search.from === 'string' ? { from: search.from } : {}),
+    ...(typeof search.to === 'string' ? { to: search.to } : {}),
+  }),
 })

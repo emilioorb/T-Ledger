@@ -135,6 +135,8 @@ export const copy = {
     fixUnposted: 'Asignar cuenta a la categoría',
     viewEntry: 'Ver asiento',
     new: 'Nuevo movimiento',
+    editShort: 'Editar',
+    voidShort: 'Anular',
     edit: (counterparty: string) => `Editar el movimiento de ${counterparty}`,
     void: (counterparty: string) => `Anular el movimiento de ${counterparty}`,
     form: {
@@ -170,6 +172,7 @@ export const copy = {
       createdUnposted: 'Movimiento registrado, sin asiento: su categoría no tiene cuenta',
       updated: 'Movimiento corregido, con asiento nuevo',
       voided: 'Movimiento anulado y revertido',
+      invalidAmount: 'El monto no se pudo leer',
       periodClosed: 'Ese mes está cerrado y no acepta asientos',
     },
   },
@@ -288,6 +291,8 @@ export const copy = {
       title: 'Ningún ingreso ni gasto en el rango',
       description: 'El resultado es cero porque no hubo movimiento, no porque algo falle.',
     },
+    netZero:
+      'Hubo movimiento en el período, pero ingresos y gastos se cancelan entre sí: un gasto anulado y su reversión netean cero.',
   },
 
   closing: {
@@ -308,6 +313,9 @@ export const copy = {
     reopen: (period: string) => `Reabrir ${period}`,
     balanced: 'Cuadra',
     unbalanced: 'No cuadra',
+    goToUnposted: 'Ver los movimientos del mes',
+    goToTrialBalance: 'Ver la comprobación',
+    closePreviousFirst: (period: string) => `Cerrá primero ${period}`,
     blockerCodes: {
       ALREADY_CLOSED: 'Ya está cerrado',
       PREVIOUS_PERIOD_OPEN: 'Falta cerrar el mes anterior',

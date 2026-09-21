@@ -66,7 +66,7 @@ const AccountsScreen = () => {
       </ControlBar>
 
       {tree.isPending || accounts.isPending ? (
-        <div className="space-y-2" aria-label={copy.common.loading}>
+        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
           {Array.from({ length: 8 }, (_, index) => (
             <Skeleton key={index} className="h-7 w-full" />
           ))}

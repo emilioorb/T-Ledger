@@ -2379,7 +2379,7 @@ git commit -m "✨ feat: mayor, comprobación, estado de situación y estado de 
   - `GET /reports/ledger`, `/reports/trial-balance`, `/reports/financial-position`, `/reports/income-statement`
   - `GET /periods`, `POST /periods/:period/close`, `POST /periods/:period/reopen`
 
-- [ ] **Paso 1: Escribir el test de punta a punta que falla**
+- [x] **Paso 1: Escribir el test de punta a punta que falla**
 
 `accounting.e2e.spec.ts`, con Testcontainers y el mismo montaje de las rebanadas anteriores. Los casos que importan:
 
@@ -2500,25 +2500,25 @@ describe('flujo completo de contabilidad', () => {
 
 El último caso verifica una ausencia. Un `DELETE` que no está ruteado responde 404, y eso es el comportamiento correcto: no hay borrado de asientos, y la API no lo insinúa.
 
-- [ ] **Paso 2: Esquemas Zod**
+- [x] **Paso 2: Esquemas Zod**
 
 Todos con `title` en su `meta`, como manda la regla 10 de backend. Los montos viajan con el `moneySchema` de la rebanada 1: `{ minorUnits: string, currency }`. Las fechas, `AAAA-MM-DD`. Los períodos, `AAAA-MM`.
 
 El movimiento de respuesta lleva `posted: boolean` y `journalEntryId: string | null`: la interfaz necesita distinguir un movimiento contabilizado de uno que no lo está, y necesita el enlace para poder mostrar su asiento.
 
-- [ ] **Paso 3: Guardián de período en los tres caminos**
+- [x] **Paso 3: Guardián de período en los tres caminos**
 
 `CreateMovementUseCase`, `VoidMovementUseCase` y `CreateJournalEntryUseCase` llaman a `PeriodGuard.assertOpen(fecha)` antes de escribir. Son tres, y el test de punta a punta cubre los tres. Un guardián que solo se aplica en dos de tres caminos no es un guardián.
 
-- [ ] **Paso 4: Orden de rutas**
+- [x] **Paso 4: Orden de rutas**
 
 En el controlador de cuentas, `GET /accounts/tree` va declarado **antes** que `GET /accounts/:code`. Si no, `tree` se resuelve como un código de cuenta y devuelve 404. Es la tercera vez que aparece este patrón en el proyecto — `payoff-plan`, `latest` y ahora `tree` —, así que conviene dejarlo escrito en el módulo: las rutas literales van antes que las paramétricas.
 
-- [ ] **Paso 5: Exportación a CSV**
+- [x] **Paso 5: Exportación a CSV**
 
 `GET /reports/trial-balance?format=csv` devuelve `text/csv` con las mismas filas, con `Content-Disposition` de descarga. El CSV se arma del mismo objeto que sirve el JSON, no con una consulta aparte: dos caminos para el mismo reporte terminan divergiendo.
 
-- [ ] **Paso 6: Correr, verificar y commitear**
+- [x] **Paso 6: Correr, verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -2529,12 +2529,12 @@ git commit -m "✨ feat: API de contabilidad con reportes, cierre de período y 
 ```
 
 **Acceptance criteria:**
-- [ ] Los tres caminos que escriben asientos respetan el período cerrado
-- [ ] Cerrar con bloqueos responde 422 con la lista completa en `details`
-- [ ] `/accounts/tree` está declarado antes que `/accounts/:code`
-- [ ] Un asiento de conversión multimoneda es aceptado; uno descuadrado, no
-- [ ] No hay ruta de borrado de asientos
-- [ ] El CSV sale del mismo objeto que el JSON
+- [x] Los tres caminos que escriben asientos respetan el período cerrado
+- [x] Cerrar con bloqueos responde 422 con la lista completa en `details`
+- [x] `/accounts/tree` está declarado antes que `/accounts/:code`
+- [x] Un asiento de conversión multimoneda es aceptado; uno descuadrado, no
+- [x] No hay ruta de borrado de asientos
+- [x] El CSV sale del mismo objeto que el JSON
 
 ---
 
@@ -2548,13 +2548,13 @@ git commit -m "✨ feat: API de contabilidad con reportes, cierre de período y 
 - Create: `web/src/routes/contabilidad/` — `cuentas.tsx`, `categorias.tsx`, `movimientos.tsx`, `asientos.tsx`, `mayor.tsx`, `comprobacion.tsx`, `situacion.tsx`, `resultados.tsx`, `cierre.tsx`
 - Create: `web/src/features/accounting/` — hooks, componentes y `copy.ts`
 
-- [ ] **Paso 1: Copy y diseño antes que componentes**
+- [x] **Paso 1: Copy y diseño antes que componentes**
 
 Regenerar tipos (`npm run api:types`). Cargar las skills de la regla F1. Producir **todo** el texto con `copywriting`, en `web/src/features/accounting/copy.ts`.
 
 El copy de esta rebanada carga con algo que el resto no: tiene que explicar conceptos contables sin sonar a manual. Los subtítulos de las capturas de referencia son un buen punto de partida conceptual —«los movimientos de una cuenta en una moneda, con su saldo corrido»— pero el texto final lo decide la skill, no se copian.
 
-- [ ] **Paso 2: Decidir la composición antes de escribir JSX**
+- [x] **Paso 2: Decidir la composición antes de escribir JSX**
 
 Ocho vistas que son todas tablas es la receta exacta de la plantilla genérica. Antes de codificar, resolver con `impeccable shape`:
 
@@ -2565,15 +2565,15 @@ Ocho vistas que son todas tablas es la receta exacta de la plantilla genérica. 
 
 **Criterio de rechazo:** si las ocho vistas se ven iguales salvo por el contenido de la tabla, no está diseñado, está rellenado.
 
-- [ ] **Paso 3: Plan de cuentas**
+- [x] **Paso 3: Plan de cuentas**
 
 Árbol expandible con código, nombre, clase, estado y saldo en la moneda elegida. El selector de moneda es de la vista, no de la cuenta. Alta y edición, y activar o desactivar; el código no se edita nunca, y la interfaz no ofrece el campo en edición.
 
-- [ ] **Paso 4: Categorías**
+- [x] **Paso 4: Categorías**
 
 Lista con su cuenta contable mapeada. Una categoría sin cuenta se distingue visualmente y su fila explica la consecuencia: sus movimientos no se van a contabilizar. Es información, no error: nada de rojo.
 
-- [ ] **Paso 5: Movimientos**
+- [x] **Paso 5: Movimientos**
 
 La vista principal. Filtros por tipo, estado, categoría y rango. Alta, edición y anulación. Anular pide confirmación y dice qué va a pasar —que se registra la reversión y quedan las dos partidas—, porque es irreversible en el sentido de que deja rastro.
 
@@ -2581,7 +2581,7 @@ Un movimiento no contabilizado se distingue en la lista y ofrece el camino para 
 
 Bajo 768 px, la tabla es una lista de filas, no una tabla con desplazamiento.
 
-- [ ] **Paso 6: Asiento manual, mayor y comprobación**
+- [x] **Paso 6: Asiento manual, mayor y comprobación**
 
 El asiento manual es un formulario de líneas con la suma por moneda visible mientras se escribe, y el botón de guardar deshabilitado hasta que cuadre en todas. Que el descuadre se vea antes de enviar evita el ciclo de enviar, recibir 422 y volver.
 
@@ -2589,7 +2589,7 @@ El mayor pide cuenta, moneda y rango, y muestra saldo inicial, filas con saldo c
 
 La comprobación muestra la diferencia **siempre**, cuadre o no. Un indicador que solo aparece cuando algo está mal enseña a no mirarlo. Cada fila enlaza a su mayor. Exportar a CSV.
 
-- [ ] **Paso 7: Estados y cierre**
+- [x] **Paso 7: Estados y cierre**
 
 Situación: árbol de activo, pasivo y patrimonio, con la línea de resultado del período identificada como derivada, no como una cuenta más. La identidad se muestra resuelta con sus tres números, como en la referencia.
 
@@ -2597,25 +2597,25 @@ Resultados: ingresos, costo de ingresos, gastos operativos y el resultado, por r
 
 Cierre: una fila por mes con estado, conteos, si la comprobación cuadra y **qué falta para cerrar**. Los bloqueos se muestran todos, no solo el primero. Cerrar y reabrir desde la fila. Reabrir avisa cuántos meses posteriores va a reabrir antes de hacerlo.
 
-- [ ] **Paso 8: Puerta de calidad**
+- [x] **Paso 8: Puerta de calidad**
 
 Aplicar el Paso 9 de la Tarea 11 de la rebanada 1, con las nueve rutas de contabilidad: capturas a 360, 768 y 1440 px en los dos temas, más los estados vacíos, con un elemento y con muchos. `impeccable critique`, `audit`, y cierre con `polish`.
 
-- [ ] **Paso 9: Verificar**
+- [x] **Paso 9: Verificar**
 
 ```bash
 cd web && npm test && npm run typecheck && npm run build
 ```
 
-- [ ] Cargar un gasto y verlo aparecer en el mayor de su cuenta
-- [ ] Anularlo y ver las dos partidas, con saldo en cero
-- [ ] Cargar una conversión entre monedas y ver la cuenta puente volver a cero
-- [ ] Intentar cerrar septiembre con agosto abierto y leer la razón en pantalla
-- [ ] Cerrar agosto y comprobar que un movimiento con fecha de agosto es rechazado con un toast
-- [ ] Ninguna pantalla con desplazamiento horizontal a 360 px
-- [ ] Las ocho vistas no se ven iguales
+- [x] Cargar un gasto y verlo aparecer en el mayor de su cuenta
+- [x] Anularlo y ver las dos partidas, con saldo en cero
+- [x] Cargar una conversión entre monedas y ver la cuenta puente volver a cero
+- [x] Intentar cerrar septiembre con agosto abierto y leer la razón en pantalla
+- [x] Cerrar agosto y comprobar que un movimiento con fecha de agosto es rechazado con un toast
+- [x] Ninguna pantalla con desplazamiento horizontal a 360 px
+- [x] Las ocho vistas no se ven iguales
 
-- [ ] **Paso 10: Commit**
+- [x] **Paso 10: Commit**
 
 ```bash
 git add web
@@ -2623,24 +2623,24 @@ git commit -m "✨ feat: pantallas de contabilidad, reportes y cierre mensual"
 ```
 
 **Acceptance criteria:**
-- [ ] Todo el copy salió de `copywriting` y vive en `copy.ts`
-- [ ] El asiento manual muestra la suma por moneda antes de enviar
-- [ ] La comprobación muestra la diferencia siempre, cuadre o no
-- [ ] El cierre muestra todos los bloqueos, no solo el primero
-- [ ] Reabrir avisa cuántos meses posteriores arrastra
-- [ ] Las ocho vistas tienen composición propia y no son ocho tablas iguales
-- [ ] Capturas revisadas en los dos temas y los tres anchos
+- [x] Todo el copy salió de `copywriting` y vive en `copy.ts`
+- [x] El asiento manual muestra la suma por moneda antes de enviar
+- [x] La comprobación muestra la diferencia siempre, cuadre o no
+- [x] El cierre muestra todos los bloqueos, no solo el primero
+- [x] Reabrir avisa cuántos meses posteriores arrastra
+- [x] Las ocho vistas tienen composición propia y no son ocho tablas iguales
+- [x] Capturas revisadas en los dos temas y los tres anchos
 
 ---
 
 ### Checkpoint: rebanada 3 completa
 
-- [ ] `cd api && npm test` y `cd web && npm test` en verde
-- [ ] Un gasto cargado como movimiento llega hasta el estado de situación
-- [ ] Una conversión entre monedas deja la cuenta puente en cero
-- [ ] La identidad contable cuadra con datos reales cargados
-- [ ] Un mes cerrado rechaza asientos, y reabrirlo arrastra los posteriores
-- [ ] Revisión con Emilio antes de la rebanada 4
+- [x] `cd api && npm test` y `cd web && npm test` en verde
+- [x] Un gasto cargado como movimiento llega hasta el estado de situación
+- [x] Una conversión entre monedas deja la cuenta puente en cero
+- [x] La identidad contable cuadra con datos reales cargados
+- [x] Un mes cerrado rechaza asientos, y reabrirlo arrastra los posteriores
+- [x] Revisión con Emilio antes de la rebanada 4
 
 ---
 

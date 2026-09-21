@@ -11,7 +11,6 @@ import { ControlBar, CurrencyField, RangeFields } from '@/features/accounting/re
 import type { CurrencyCode } from '@/features/accounting/types'
 import { trialBalanceCsvUrl, useTrialBalance } from '@/features/accounting/use-accounting'
 import { monthEnd, monthStart, today } from '@/lib/dates'
-import { cn } from '@/lib/utils'
 
 const TrialBalanceScreen = () => {
   const [currency, setCurrency] = useState<CurrencyCode>('CRC')
@@ -41,7 +40,7 @@ const TrialBalanceScreen = () => {
       </ControlBar>
 
       {balance.isPending ? (
-        <div className="space-y-2" aria-label={copy.common.loading}>
+        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
           <Skeleton className="h-16 w-64" />
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-8 w-full" />
@@ -61,13 +60,13 @@ const TrialBalanceScreen = () => {
           <div className="flex flex-wrap items-end justify-between gap-4 border-y border-border-strong py-4">
             <div>
               <p className="text-xs text-muted-foreground">{copy.trialBalance.difference}</p>
+              {/* La cifra se alinea con su etiqueta, no al ancho del párrafo: `.num` trae
+                  alineación a la derecha y en un bloque suelto la dejaba flotando. */}
               <Amount
                 money={balance.data.difference}
                 emphasis="strong"
-                className={cn(
-                  'mt-1 block text-3xl tracking-tight',
-                  !balance.data.balances && 'text-negative',
-                )}
+                tone={balance.data.balances ? 'plain' : 'alert'}
+                className="mt-1 block text-left text-3xl tracking-tight"
               />
               <p className="mt-1 max-w-[52ch] text-xs text-muted-foreground">
                 {balance.data.balances
@@ -116,7 +115,7 @@ const TrialBalanceScreen = () => {
                   >
                     <Link
                       to="/contabilidad/mayor"
-                      search={{ account: row.accountCode }}
+                      search={{ account: row.accountCode, currency, from, to }}
                       className="min-w-0 truncate underline-offset-2 hover:underline"
                       aria-label={copy.trialBalance.viewLedger(row.accountName)}
                     >
@@ -139,7 +138,7 @@ const TrialBalanceScreen = () => {
                       <span className="text-xs text-muted-foreground lg:hidden">
                         {copy.trialBalance.columns.balance}
                       </span>
-                      <Amount money={row.balance} emphasis="strong" />
+                      <Amount money={row.balance} />
                     </span>
                   </li>
                 ))}

@@ -3,11 +3,16 @@ import { createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Amount, isZeroMoney } from '@/features/accounting/amount'
+import { Amount, isNegativeMoney, isZeroMoney } from '@/features/accounting/amount'
 import { copy } from '@/features/accounting/copy'
 import { ControlBar, CurrencyField, RangeFields } from '@/features/accounting/report-controls'
 import { ReportTree } from '@/features/accounting/report-tree'
-import type { CurrencyCode, Money, ReportNode } from '@/features/accounting/types'
+import type {
+  CurrencyCode,
+  IncomeStatement,
+  Money,
+  ReportNode,
+} from '@/features/accounting/types'
 import { useIncomeStatement } from '@/features/accounting/use-accounting'
 import { monthEnd, monthStart, today } from '@/lib/dates'
 
@@ -37,13 +42,22 @@ const Block = ({ label, total, nodes, sign }: BlockProps) => (
   </section>
 )
 
+const hasNoRows = (statement: IncomeStatement): boolean =>
+  statement.sections.income.length === 0 &&
+  statement.sections.costOfRevenue.length === 0 &&
+  statement.sections.operatingExpenses.length === 0
+
 const IncomeStatementScreen = () => {
   const [currency, setCurrency] = useState<CurrencyCode>('CRC')
   const [from, setFrom] = useState(monthStart(today()))
   const [to, setTo] = useState(monthEnd(today()))
 
   const statement = useIncomeStatement(currency, from, to)
-  const isLoss = statement.data ? statement.data.result.minorUnits.startsWith('-') : false
+  const isLoss = statement.data ? isNegativeMoney(statement.data.result) : false
+  // Un período donde todo se canceló sí tuvo movimiento: decir que no lo hubo
+  // contradice a la comprobación, que muestra esos mismos débitos y créditos.
+  const netZero =
+    statement.data !== undefined && !hasNoRows(statement.data) && isZeroMoney(statement.data.result)
 
   return (
     <section className="space-y-6">
@@ -58,7 +72,7 @@ const IncomeStatementScreen = () => {
       </ControlBar>
 
       {statement.isPending ? (
-        <div className="space-y-3" aria-label={copy.common.loading}>
+        <div className="space-y-3" role="status" aria-label={copy.common.loading}>
           {Array.from({ length: 4 }, (_, index) => (
             <Skeleton key={index} className="h-14 w-full" />
           ))}
@@ -70,9 +84,7 @@ const IncomeStatementScreen = () => {
           retryLabel={copy.common.retry}
           onRetry={() => void statement.refetch()}
         />
-      ) : isZeroMoney(statement.data.income) &&
-        isZeroMoney(statement.data.costOfRevenue) &&
-        isZeroMoney(statement.data.operatingExpenses) ? (
+      ) : hasNoRows(statement.data) ? (
         <EmptyState
           title={copy.incomeStatement.empty.title}
           description={copy.incomeStatement.empty.description}
@@ -102,14 +114,18 @@ const IncomeStatementScreen = () => {
               <h2 className="text-base font-medium tracking-tight">
                 {copy.incomeStatement.result}
               </h2>
-              <p className="text-xs text-muted-foreground">
-                {isLoss ? copy.incomeStatement.loss : copy.incomeStatement.profit}
+              <p className="max-w-[60ch] text-xs text-muted-foreground">
+                {netZero
+                  ? copy.incomeStatement.netZero
+                  : isLoss
+                    ? copy.incomeStatement.loss
+                    : copy.incomeStatement.profit}
               </p>
             </div>
             <Amount
               money={statement.data.result}
               emphasis="strong"
-              className="text-3xl tracking-tight"
+              className="shrink-0 text-3xl tracking-tight"
             />
           </div>
         </div>

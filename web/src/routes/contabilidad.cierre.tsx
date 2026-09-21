@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import {
@@ -17,8 +17,18 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { copy } from '@/features/accounting/copy'
 import type { PeriodSummary } from '@/features/accounting/types'
 import { useClosePeriod, usePeriods, useReopenPeriod } from '@/features/accounting/use-accounting'
-import { formatIsoMonth } from '@/lib/dates'
+import { monthEnd, formatIsoMonth } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+
+// El servidor nombra el mes como 2026-08 y la pantalla como 08/2026: convivir las dos
+// formas en la misma frase hace dudar de si hablan del mismo mes.
+const previousOf = (period: string): string => {
+  const [year, month] = period.split('-').map(Number)
+  if (!year || !month) return period
+  return month === 1
+    ? `${year - 1}-12`
+    : `${year}-${String(month - 1).padStart(2, '0')}`
+}
 
 const blockerLabel = (code: string): string =>
   code in copy.closing.blockerCodes
@@ -84,11 +94,39 @@ const PeriodBlock = ({ summary, onClose, onReopen }: RowProps) => {
         {/* Todos los bloqueos, no solo el primero: descubrirlos de a uno es tres viajes
             en vez de uno. */}
         {blockers.length > 0 ? (
-          <ul className="space-y-0.5">
+          <ul className="space-y-1">
             {blockers.map((blocker) => (
-              <li key={blocker.code} className="text-xs">
+              <li key={blocker.code} className="text-sm">
                 <span className="text-warning">{blockerLabel(blocker.code)}</span>
-                <span className="text-muted-foreground"> · {blocker.reason}</span>
+                {blocker.code === 'UNPOSTED_MOVEMENTS' ? (
+                  <>
+                    {' · '}
+                    <Link
+                      to="/contabilidad/movimientos"
+                      search={{ from: `${summary.period}-01`, to: monthEnd(`${summary.period}-01`) }}
+                      className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                    >
+                      {copy.closing.goToUnposted}
+                    </Link>
+                  </>
+                ) : null}
+                {blocker.code === 'TRIAL_BALANCE_UNBALANCED' ? (
+                  <>
+                    {' · '}
+                    <Link
+                      to="/contabilidad/comprobacion"
+                      className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                    >
+                      {copy.closing.goToTrialBalance}
+                    </Link>
+                  </>
+                ) : null}
+                {blocker.code === 'PREVIOUS_PERIOD_OPEN' ? (
+                  <span className="text-muted-foreground">
+                    {' · '}
+                    {copy.closing.closePreviousFirst(formatIsoMonth(previousOf(summary.period)))}
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -118,7 +156,9 @@ const ClosingScreen = () => {
   const close = useClosePeriod()
   const reopen = useReopenPeriod()
 
-  const items = periods.data?.data ?? []
+  // De más viejo a más nuevo: los meses se cierran en orden, así que el accionable es
+  // el primero de la lista, no el último.
+  const items = [...(periods.data?.data ?? [])].sort((a, b) => a.period.localeCompare(b.period))
   // Reabrir arrastra los posteriores cerrados: decir cuántos antes de hacerlo es la
   // diferencia entre una acción y una sorpresa.
   const laterClosed = reopening
@@ -133,7 +173,7 @@ const ClosingScreen = () => {
       </header>
 
       {periods.isPending ? (
-        <div className="space-y-3" aria-label={copy.common.loading}>
+        <div className="space-y-3" role="status" aria-label={copy.common.loading}>
           {Array.from({ length: 3 }, (_, index) => (
             <Skeleton key={index} className="h-20 w-full" />
           ))}

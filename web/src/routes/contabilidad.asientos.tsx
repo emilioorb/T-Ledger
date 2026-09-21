@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useSearch } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
@@ -16,18 +16,50 @@ import {
   useJournalEntries,
 } from '@/features/accounting/use-accounting'
 import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
+import { formatMoney, type CurrencyCode as MoneyCurrency } from '@/lib/money'
+import { cn } from '@/lib/utils'
+
+interface JournalSearch {
+  entry?: string
+}
+
+// El total por moneda y lado es la prueba de que la partida cierra: sin él hay que
+// sumar a ojo las líneas para saber si el asiento está sano.
+const totalsOf = (entry: JournalEntry) => {
+  const totals = new Map<string, { debit: bigint; credit: bigint }>()
+  for (const line of entry.lines) {
+    const current = totals.get(line.amount.currency) ?? { debit: 0n, credit: 0n }
+    const amount = BigInt(line.amount.minorUnits)
+    totals.set(line.amount.currency, {
+      debit: current.debit + (line.side === 'DEBIT' ? amount : 0n),
+      credit: current.credit + (line.side === 'CREDIT' ? amount : 0n),
+    })
+  }
+  return [...totals.entries()]
+}
 
 interface EntryProps {
   entry: JournalEntry
   nameOf: Map<string, string>
+  highlighted: boolean
 }
 
 // La unidad de esta vista es el asiento, no la línea: cabecera con su fecha y descripción,
 // y debajo sus líneas en dos columnas. Una tabla plana perdería esa agrupación.
-const EntryBlock = ({ entry, nameOf }: EntryProps) => (
-  <article className="border-b border-border py-4">
-    <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <span className="num text-xs text-muted-foreground">{formatIsoDate(entry.date)}</span>
+const EntryBlock = ({ entry, nameOf, highlighted }: EntryProps) => (
+  <article
+    id={entry.id}
+    className={cn(
+      'border-b border-border py-4',
+      highlighted && '-mx-3 rounded-sm bg-accent px-3',
+    )}
+  >
+    {/* La cabecera vive fuera de la rejilla de columnas: dentro, «Reversión» caía en la
+        columna Debe y se leía como un importe. */}
+    <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pr-[14rem]">
+      <span className="num text-left text-xs text-muted-foreground">
+        {formatIsoDate(entry.date)}
+      </span>
       <h3 className="min-w-0 flex-1 truncate text-sm font-medium tracking-tight">
         {entry.description}
       </h3>
@@ -63,10 +95,31 @@ const EntryBlock = ({ entry, nameOf }: EntryProps) => (
         </li>
       ))}
     </ul>
+
+    <footer className="mt-1 border-t border-border pt-1">
+      {totalsOf(entry).map(([currency, total]) => (
+        <div
+          key={currency}
+          className="grid grid-cols-[1fr_auto] items-baseline gap-2 text-xs text-muted-foreground md:grid-cols-[1fr_7rem_7rem]"
+        >
+          <span>{currency}</span>
+          <span className="num">
+            {formatMoney({ minorUnits: total.debit.toString(), currency: currency as MoneyCurrency })}
+          </span>
+          <span className="num">
+            {formatMoney({
+              minorUnits: total.credit.toString(),
+              currency: currency as MoneyCurrency,
+            })}
+          </span>
+        </div>
+      ))}
+    </footer>
   </article>
 )
 
 const JournalScreen = () => {
+  const search = useSearch({ from: '/contabilidad/asientos' })
   const [from, setFrom] = useState(monthStart(today()))
   const [to, setTo] = useState(monthEnd(today()))
   const [composing, setComposing] = useState(false)
@@ -113,7 +166,7 @@ const JournalScreen = () => {
       </ControlBar>
 
       {entries.isPending ? (
-        <div className="space-y-4" aria-label={copy.common.loading}>
+        <div className="space-y-4" role="status" aria-label={copy.common.loading}>
           {Array.from({ length: 4 }, (_, index) => (
             <Skeleton key={index} className="h-20 w-full" />
           ))}
@@ -135,7 +188,12 @@ const JournalScreen = () => {
             <span className="text-right">{copy.journal.columns.credit}</span>
           </div>
           {items.map((entry) => (
-            <EntryBlock key={entry.id} entry={entry} nameOf={nameOf} />
+            <EntryBlock
+              key={entry.id}
+              entry={entry}
+              nameOf={nameOf}
+              highlighted={entry.id === search.entry}
+            />
           ))}
         </div>
       )}
@@ -143,4 +201,8 @@ const JournalScreen = () => {
   )
 }
 
-export const Route = createFileRoute('/contabilidad/asientos')({ component: JournalScreen })
+export const Route = createFileRoute('/contabilidad/asientos')({
+  component: JournalScreen,
+  validateSearch: (search: Record<string, unknown>): JournalSearch =>
+    typeof search.entry === 'string' ? { entry: search.entry } : {},
+})

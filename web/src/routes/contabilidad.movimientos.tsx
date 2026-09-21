@@ -55,71 +55,82 @@ interface RowProps {
   onVoid: () => void
 }
 
-// Una fila de movimiento no es una celda de tabla: es un renglón de la cinta, con el
-// monto siempre en la misma columna y todo lo demás apoyado a la izquierda.
-const MovementRow = ({ movement, category, onEdit, onVoid }: RowProps) => (
-  <li className="group flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border py-2.5 md:flex-nowrap">
-    <span
-      className={cn(
-        'min-w-0 flex-1 truncate text-sm',
-        movement.status === 'VOIDED' && 'text-muted-foreground line-through',
-      )}
-    >
-      {movement.counterparty}
-    </span>
+// Dos renglones en el teléfono y uno solo en escritorio: en 360 px, cinco elementos
+// peleando por el ancho dejan el nombre en dos glifos, y anotar en el teléfono es el
+// camino que más se recorre.
+const MovementRow = ({ movement, category, onEdit, onVoid }: RowProps) => {
+  const isVoided = movement.status === 'VOIDED'
+  const struck = isVoided && 'text-muted-foreground line-through'
 
-    <span className="shrink-0 text-xs text-muted-foreground">{category?.name ?? '—'}</span>
+  return (
+    <li className="border-b border-border py-2.5">
+      <div className="flex items-baseline gap-3">
+        <span className={cn('min-w-0 flex-1 truncate text-sm', struck)}>
+          {movement.counterparty}
+        </span>
+        <Amount
+          money={movement.amount}
+          className={cn('shrink-0 text-sm', struck)}
+          // Un ingreso y un gasto del mismo monto se ven igual sin esta marca.
+          emphasis={movement.kind === 'INCOME' ? 'strong' : 'normal'}
+        />
+      </div>
 
-    {!movement.posted && movement.status === 'ACTIVE' ? (
-      <Link
-        to="/contabilidad/categorias"
-        className="shrink-0 text-xs text-warning underline underline-offset-2"
-      >
-        {copy.movements.unposted}
-      </Link>
-    ) : null}
+      <div className="mt-0.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
+        <span className="text-muted-foreground">
+          {copy.movements.kinds[movement.kind]} · {category?.name ?? '—'}
+        </span>
 
-    {movement.journalEntryId ? (
-      <Link
-        to="/contabilidad/asientos"
-        className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-      >
-        {copy.movements.viewEntry}
-      </Link>
-    ) : null}
+        {isVoided ? (
+          <span className="text-muted-foreground">{copy.movements.statuses.VOIDED}</span>
+        ) : null}
 
-    <span className="flex shrink-0 gap-1">
-      {movement.status === 'ACTIVE' ? (
-        <>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-            onClick={onEdit}
+        {!movement.posted && !isVoided ? (
+          <Link
+            to="/contabilidad/categorias"
+            className="text-warning underline underline-offset-2"
+            title={copy.movements.unpostedHint}
           >
-            {copy.movements.form.editTitle}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-            onClick={onVoid}
-          >
-            {copy.movements.statuses.VOIDED}
-          </Button>
-        </>
-      ) : null}
-    </span>
+            {copy.movements.unposted}
+          </Link>
+        ) : null}
 
-    <Amount
-      money={movement.amount}
-      className={cn(
-        'w-28 shrink-0 text-sm',
-        movement.status === 'VOIDED' && 'text-muted-foreground line-through',
-      )}
-    />
-  </li>
-)
+        {movement.journalEntryId ? (
+          <Link
+            to="/contabilidad/asientos"
+            search={{ entry: movement.journalEntryId }}
+            className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            {copy.movements.viewEntry}
+          </Link>
+        ) : null}
+
+        {!isVoided ? (
+          <span className="ml-auto flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              aria-label={copy.movements.edit(movement.counterparty)}
+              onClick={onEdit}
+            >
+              {copy.movements.editShort}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              aria-label={copy.movements.void(movement.counterparty)}
+              onClick={onVoid}
+            >
+              {copy.movements.voidShort}
+            </Button>
+          </span>
+        ) : null}
+      </div>
+    </li>
+  )
+}
 
 const MovementsScreen = () => {
   const [from, setFrom] = useState(monthStart(today()))
@@ -249,7 +260,7 @@ const MovementsScreen = () => {
       </ControlBar>
 
       {movements.isPending ? (
-        <div className="space-y-2" aria-label={copy.common.loading}>
+        <div className="space-y-2" role="status" aria-label={copy.common.loading}>
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-9 w-full" />
           ))}

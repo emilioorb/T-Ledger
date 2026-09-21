@@ -110,8 +110,14 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
 // El árbol es la composición de esta vista: la jerarquía se lee por sangría y por el
 // peso de la raíz, no por columnas repetidas.
 export const AccountsTree = ({ nodes, accounts, onEdit }: Props) => {
+  // Abierto hasta el segundo nivel: ver «Efectivo y equivalentes» sin ver «Caja colones»
+  // esconde justamente las cuentas donde se asienta.
   const [expanded, setExpanded] = useState<Set<string>>(
-    () => new Set(nodes.map((node) => node.code)),
+    () =>
+      new Set([
+        ...nodes.map((node) => node.code),
+        ...nodes.flatMap((node) => node.children.map((child) => child.code)),
+      ]),
   )
 
   const toggle = (code: string) =>
