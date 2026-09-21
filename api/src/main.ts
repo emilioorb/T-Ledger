@@ -7,6 +7,7 @@ import { budgetOpenApiPaths } from './modules/budget/infrastructure/budget.opena
 import { goalsOpenApiPaths } from './modules/goals/infrastructure/goals.openapi.js'
 import { investmentsOpenApiPaths } from './modules/investments/infrastructure/investments.openapi.js'
 import { projectionOpenApiPaths } from './modules/projection/infrastructure/projection.openapi.js'
+import { bankingOpenApiPaths } from './modules/banking/infrastructure/banking.openapi.js'
 import { debtsOpenApiPaths } from './modules/debts/infrastructure/debts.openapi.js'
 import { exchangeRatesOpenApiPaths } from './modules/money/infrastructure/exchange-rates.openapi.js'
 import { loadEnv } from './shared/config/env.js'
@@ -23,7 +24,7 @@ const bootstrap = async (): Promise<void> => {
     openapi: '3.1.0',
     info: { title: 'Finanzas API', version: '1.0.0' },
     servers: [{ url: '/api/v1' }],
-    paths: { ...debtsOpenApiPaths, ...exchangeRatesOpenApiPaths, ...accountingOpenApiPaths, ...budgetOpenApiPaths, ...goalsOpenApiPaths, ...investmentsOpenApiPaths, ...projectionOpenApiPaths },
+    paths: { ...debtsOpenApiPaths, ...exchangeRatesOpenApiPaths, ...accountingOpenApiPaths, ...budgetOpenApiPaths, ...goalsOpenApiPaths, ...investmentsOpenApiPaths, ...projectionOpenApiPaths, ...bankingOpenApiPaths },
   })
   app.getHttpAdapter().get('/api/v1/openapi.json', (_req, res) => res.json(openapi))
 
