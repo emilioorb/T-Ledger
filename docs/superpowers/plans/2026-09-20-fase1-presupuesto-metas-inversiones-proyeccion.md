@@ -946,7 +946,7 @@ git commit -m "✨ feat: inversiones con capitalización y valor proyectado"
   - `CashFlowProjectionUseCase.execute(months: number, from?: Date, currency?: CurrencyCode): Promise<MonthlyFlow[]>`
   - `GET /api/v1/projections?months=N&currency=CRC`
 
-- [ ] **Paso 1: Escribir el test que falla**
+- [x] **Paso 1: Escribir el test que falla**
 
 ```ts
 describe('CashFlowProjectionUseCase', () => {
@@ -1029,7 +1029,7 @@ describe('CashFlowProjectionUseCase', () => {
 
 Los dos casos centrales son la dirección del préstamo otorgado —ingreso, no egreso— y las cuotas que se liberan con el excedente que sube el mes siguiente. Ese par es la razón de ser del módulo.
 
-- [ ] **Paso 2: Implementar**
+- [x] **Paso 2: Implementar**
 
 `CashFlowProjectionUseCase` recorre los meses y, por cada uno, pregunta a cada deuda su cuota de ese mes —separando por dirección—, a cada meta su aporte requerido, a cada inversión si vence, y lee el ingreso estimado y el gasto del mes.
 
@@ -1037,7 +1037,7 @@ Una cuota se considera liberada en el mes **siguiente** al de su última cuota: 
 
 `projection` no tiene repositorio propio y no importa el `domain/` de ningún otro módulo: consume los puertos de repositorio, que devuelven agregados, y les pregunta.
 
-- [ ] **Paso 3: Verificar y commitear**
+- [x] **Paso 3: Verificar y commitear**
 
 ```bash
 cd api && npm test && npm run typecheck && npm run lint
@@ -1046,12 +1046,12 @@ git commit -m "✨ feat: proyección de flujo de caja mes a mes"
 ```
 
 **Acceptance criteria:**
-- [ ] La cuota de un préstamo otorgado suma al ingreso, no al egreso
-- [ ] Las cuotas liberadas se reportan con su mes y su monto
-- [ ] El excedente sube el mes siguiente a liberarse una cuota
-- [ ] El vencimiento de una inversión entra como ingreso en su mes
-- [ ] Sin datos cargados proyecta en cero sin fallar
-- [ ] `projection` no importa el `domain/` de ningún otro módulo
+- [x] La cuota de un préstamo otorgado suma al ingreso, no al egreso
+- [x] Las cuotas liberadas se reportan con su mes y su monto
+- [x] El excedente sube el mes siguiente a liberarse una cuota
+- [x] El vencimiento de una inversión entra como ingreso en su mes
+- [x] Sin datos cargados proyecta en cero sin fallar
+- [x] `projection` no importa el `domain/` de ningún otro módulo
 
 ---
 

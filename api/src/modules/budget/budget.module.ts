@@ -23,5 +23,7 @@ import { PrismaBudgetModelRepository } from './infrastructure/prisma-budget-mode
     EvaluateMonthUseCase,
     ManageBudgetModelsUseCase,
   ],
+  // La proyección necesita el ingreso declarado del mes, no las tablas del presupuesto.
+  exports: [BUDGET_INCOME_REPOSITORY],
 })
 export class BudgetModule {}
