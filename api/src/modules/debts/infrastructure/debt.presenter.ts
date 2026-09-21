@@ -4,13 +4,14 @@ import type { DebtResponse } from './debt.schemas.js'
 
 const toIsoDate = (date: Date): string => date.toISOString().slice(0, 10)
 
-export const toDebtResponse = (debt: Debt): DebtResponse => {
+export const toDebtResponse = (debt: Debt, at: Date): DebtResponse => {
   const schedule = debt.schedule()
   return {
     id: debt.id,
     name: debt.name,
     counterparty: debt.counterparty,
     principal: fromMoney(debt.principal),
+    outstanding: fromMoney(debt.balanceAt(at)),
     annualRate: debt.rate.annualPercentage.toString(),
     compounding: debt.rate.compounding,
     termMonths: debt.termMonths,

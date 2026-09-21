@@ -56,6 +56,35 @@ describe('POST /api/v1/debts', () => {
     expect(response.body.id).toEqual(expect.any(String))
   })
 
+  it('devuelve el saldo pendiente además del monto original', async () => {
+    await request(app.getHttpServer()).post('/api/v1/debts').send(nuevaDeuda).expect(201)
+
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/debts?page=1&pageSize=10')
+      .expect(200)
+
+    const deuda = response.body.data[0]
+    // El original no baja nunca; el pendiente sí, y a la fecha de inicio son iguales.
+    expect(deuda.principal.minorUnits).toBe('5634929300')
+    expect(BigInt(deuda.outstanding.minorUnits)).toBeLessThan(BigInt(deuda.principal.minorUnits))
+  })
+
+  // Es lo que permite comparar contra el cierre del mes pasado en una sola consulta.
+  it('el saldo a una fecha anterior es mayor que el de hoy', async () => {
+    await request(app.getHttpServer()).post('/api/v1/debts').send(nuevaDeuda).expect(201)
+
+    const antes = await request(app.getHttpServer())
+      .get('/api/v1/debts?page=1&pageSize=10&at=2026-03-15')
+      .expect(200)
+    const hoy = await request(app.getHttpServer())
+      .get('/api/v1/debts?page=1&pageSize=10')
+      .expect(200)
+
+    expect(BigInt(antes.body.data[0].outstanding.minorUnits)).toBeGreaterThan(
+      BigInt(hoy.body.data[0].outstanding.minorUnits),
+    )
+  })
+
   it('rechaza una entrada inválida con 400 y el formato de error único', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/debts')
@@ -143,7 +172,11 @@ describe('GET, PATCH y DELETE /api/v1/debts/:id', () => {
   it('borra y luego devuelve 404', async () => {
     const created = await request(app.getHttpServer()).post('/api/v1/debts').send(nuevaDeuda)
 
-    expect((await request(app.getHttpServer()).delete(`/api/v1/debts/${created.body.id}`)).status).toBe(204)
-    expect((await request(app.getHttpServer()).get(`/api/v1/debts/${created.body.id}`)).status).toBe(404)
+    expect(
+      (await request(app.getHttpServer()).delete(`/api/v1/debts/${created.body.id}`)).status,
+    ).toBe(204)
+    expect(
+      (await request(app.getHttpServer()).get(`/api/v1/debts/${created.body.id}`)).status,
+    ).toBe(404)
   })
 })

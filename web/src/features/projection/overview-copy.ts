@@ -17,6 +17,12 @@ export const copy = {
     stats: {
       netWorth: 'Patrimonio',
       netWorthHint: 'Lo que tenés menos lo que debés.',
+      // Contra el cierre del mes anterior, que es lo único con lo que se puede comparar sin
+      // inventar nada: un mes a medias contra otro completo no dice nada.
+      vsLastMonth: 'vs mes pasado',
+      sameAsLastMonth: 'Igual que el mes pasado',
+      newThisMonth: 'Nuevo este mes',
+      debtOutstanding: 'Lo que falta pagar de las deudas vigentes.',
       surplus: 'Queda libre este mes',
       surplusNegative: 'Este mes no cierra',
       saved: 'Ahorrado este mes',

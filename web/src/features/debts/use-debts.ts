@@ -21,11 +21,15 @@ import type {
 
 // 100 es el tope que admite la API. Con un solo usuario, una lista entera de un
 // tirón se lee mejor que partida en páginas, que es lo que pide la densidad.
-export const useDebts = (direction: DebtDirection, page = 1, pageSize = 100) =>
+// `at` mira el saldo a una fecha. Va en la clave porque la caché se resuelve solo por la
+// clave: sin él, pedir el cierre del mes pasado devolvería lo que ya estaba guardado de hoy.
+export const useDebts = (direction: DebtDirection, at?: string, page = 1, pageSize = 100) =>
   useQuery({
-    queryKey: queryKeys.debts.list({ page, pageSize, direction }),
+    queryKey: queryKeys.debts.list({ page, pageSize, direction, at }),
     queryFn: () =>
-      apiFetch<Paginated<Debt>>(`/debts?page=${page}&pageSize=${pageSize}&direction=${direction}`),
+      apiFetch<Paginated<Debt>>(
+        `/debts?page=${page}&pageSize=${pageSize}&direction=${direction}${at ? `&at=${at}` : ''}`,
+      ),
   })
 
 export const useDebt = (id: string) =>

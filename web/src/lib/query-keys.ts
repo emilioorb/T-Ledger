@@ -1,7 +1,7 @@
 export const queryKeys = {
   debts: {
     all: ['debts'] as const,
-    list: (params: { page: number; pageSize: number; direction?: string }) =>
+    list: (params: { page: number; pageSize: number; direction?: string; at?: string }) =>
       ['debts', 'list', params] as const,
     detail: (id: string) => ['debts', 'detail', id] as const,
     schedule: (id: string) => ['debts', 'schedule', id] as const,
@@ -47,7 +47,7 @@ export const queryKeys = {
 
   investments: {
     all: ['investments'] as const,
-    list: () => ['investments', 'list'] as const,
+    list: (at?: string) => ['investments', 'list', at ?? 'hoy'] as const,
     detail: (id: string) => ['investments', 'detail', id] as const,
     projection: (id: string, at: string) => ['investments', 'projection', id, at] as const,
   },

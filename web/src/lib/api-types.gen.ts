@@ -2699,6 +2699,7 @@ export interface components {
             name: string;
             counterparty: string;
             principal: components["schemas"]["MoneyOutput"];
+            outstanding: components["schemas"]["MoneyOutput"];
             annualRate: string;
             /** @enum {string} */
             compounding: "MONTHLY" | "ANNUAL";

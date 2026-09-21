@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common'
 import { fromMoney } from '../../../shared/http/money.schema.js'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { paginated, type Paginated } from '../../../shared/http/pagination.js'
@@ -41,6 +31,8 @@ import {
   type SimulateExtraPaymentInput,
 } from './schedule.schemas.js'
 
+const utc = (date: string): Date => new Date(`${date}T00:00:00.000Z`)
+
 @Controller('debts')
 export class DebtsController {
   constructor(
@@ -63,14 +55,20 @@ export class DebtsController {
       query.pageSize,
       query.direction,
     )
-    return paginated(items.map(toDebtResponse), query.page, query.pageSize, totalItems)
+    const at = query.at ? utc(query.at) : new Date()
+    return paginated(
+      items.map((debt) => toDebtResponse(debt, at)),
+      query.page,
+      query.pageSize,
+      totalItems,
+    )
   }
 
   @Post()
   async create(
     @Body(new ZodValidationPipe(createDebtSchema)) input: CreateDebtInput,
   ): Promise<DebtResponse> {
-    return toDebtResponse(await this.createDebt.execute(input))
+    return toDebtResponse(await this.createDebt.execute(input), new Date())
   }
 
   // Declarado antes de ':id': si no, Nest resolvería 'payoff-plan' como el id de una deuda.
@@ -96,7 +94,7 @@ export class DebtsController {
 
   @Get(':id')
   async get(@Param('id') id: string): Promise<DebtResponse> {
-    return toDebtResponse(await this.getDebt.execute(id))
+    return toDebtResponse(await this.getDebt.execute(id), new Date())
   }
 
   @Get(':id/schedule')
@@ -119,7 +117,7 @@ export class DebtsController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateDebtSchema)) input: UpdateDebtInput,
   ): Promise<DebtResponse> {
-    return toDebtResponse(await this.updateDebt.execute(id, input))
+    return toDebtResponse(await this.updateDebt.execute(id, input), new Date())
   }
 
   @Delete(':id')

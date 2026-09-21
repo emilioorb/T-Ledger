@@ -10,10 +10,11 @@ import type {
   InvestmentPatch,
 } from './types'
 
-export const useInvestments = () =>
+// `at` valúa la cartera a una fecha, y va en la clave por la misma razón que en deudas.
+export const useInvestments = (at?: string) =>
   useQuery({
-    queryKey: queryKeys.investments.list(),
-    queryFn: () => apiFetch<Investment[]>('/investments'),
+    queryKey: queryKeys.investments.list(at),
+    queryFn: () => apiFetch<Investment[]>(`/investments${at ? `?at=${at}` : ''}`),
   })
 
 export const useInvestmentProjection = (id: string, at: string) =>

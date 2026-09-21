@@ -5,10 +5,12 @@ import { toInvestmentResponse } from './investments.presenters.js'
 import {
   createInvestmentSchema,
   investmentContributionSchema,
+  listInvestmentsQuerySchema,
   projectionQuerySchema,
   updateInvestmentSchema,
   type CreateInvestmentInput,
   type InvestmentContributionInput,
+  type ListInvestmentsQuery,
   type ProjectionQuery,
   type UpdateInvestmentInput,
 } from './investments.schemas.js'
@@ -22,8 +24,10 @@ export class InvestmentsController {
   constructor(private readonly investments: ManageInvestmentsUseCase) {}
 
   @Get()
-  async list(): Promise<InvestmentResponse[]> {
-    const at = new Date()
+  async list(
+    @Query(new ZodValidationPipe(listInvestmentsQuerySchema)) query: ListInvestmentsQuery,
+  ): Promise<InvestmentResponse[]> {
+    const at = query.at ? utc(query.at) : new Date()
     return (await this.investments.list()).map((investment) => toInvestmentResponse(investment, at))
   }
 

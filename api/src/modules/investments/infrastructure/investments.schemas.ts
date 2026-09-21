@@ -46,6 +46,12 @@ export const projectionQuerySchema = z
   .object({ at: isoDate })
   .meta({ id: 'InvestmentProjectionQuery', title: 'InvestmentProjectionQuery' })
 
+// El listado acepta la misma fecha, opcional: sin ella vale hoy. Es lo que permite pedir el
+// valor de toda la cartera al cierre del mes pasado en una sola consulta.
+export const listInvestmentsQuerySchema = z
+  .object({ at: isoDate.optional() })
+  .meta({ id: 'ListInvestmentsQuery', title: 'ListInvestmentsQuery' })
+
 export const investmentResponseSchema = z
   .object({
     id: z.string(),
@@ -69,3 +75,4 @@ export type CreateInvestmentInput = z.infer<typeof createInvestmentSchema>
 export type UpdateInvestmentInput = z.infer<typeof updateInvestmentSchema>
 export type InvestmentContributionInput = z.infer<typeof investmentContributionSchema>
 export type ProjectionQuery = z.infer<typeof projectionQuerySchema>
+export type ListInvestmentsQuery = z.infer<typeof listInvestmentsQuerySchema>

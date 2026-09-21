@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isNegativeMoney } from '@/features/accounting/amount'
+import { Delta } from '@/features/accounting/delta'
 import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { ExpenseBreakdown, type ExpenseSlice } from '@/features/accounting/expense-breakdown'
 import { useMonthlyResults } from '@/features/accounting/use-monthly-results'
@@ -66,6 +67,14 @@ const leavesWithBalance = (nodes: ReportNode[]): ReportNode[] =>
   )
 
 const monthOf = (iso: string): string => iso.slice(0, 7)
+
+// El mes anterior al de una fecha, en AAAA-MM. Enero retrocede a diciembre del año previo.
+const previousMonthOf = (iso: string): string => {
+  const [year, month] = iso.split('-').map(Number)
+  if (!year || !month) return monthOf(iso)
+  const previous = new Date(Date.UTC(year, month - 2, 1))
+  return `${previous.getUTCFullYear()}-${String(previous.getUTCMonth() + 1).padStart(2, '0')}`
+}
 
 const monthLabel = (year: number, month: number): string =>
   formatIsoMonth(`${year}-${String(month).padStart(2, '0')}`)
@@ -164,6 +173,12 @@ const DashboardScreen = () => {
   const netWorth = useNetWorth(today())
   const debts = useDebts('BORROWED')
   const investments = useInvestments()
+  // El mismo corte al cierre del mes anterior: es contra lo único que se puede comparar sin
+  // inventar nada. Comparar un mes a medias contra otro completo no diría nada.
+  const lastMonthEnd = monthEnd(previousMonthOf(today()))
+  const netWorthBefore = useNetWorth(lastMonthEnd)
+  const debtsBefore = useDebts('BORROWED', lastMonthEnd)
+  const investmentsBefore = useInvestments(lastMonthEnd)
   // El gasto del mes por categoría sale de los movimientos, no del estado de resultados: el
   // reporte agrupa por cuenta contable, y «en qué se fue» se piensa por categoría.
   const movements = useMovements(
@@ -195,12 +210,23 @@ const DashboardScreen = () => {
     .sort((a, b) => a.desiredDate.localeCompare(b.desiredDate))
     .slice(0, TOP_GOALS)
 
+  // `outstanding` y no `principal`: el segundo es el monto original de cada deuda y no baja
+  // nunca, así que la tarjeta decía que debías lo mismo aunque llevaras años pagando.
   const debtTotal = sum(
-    (debts.data?.data ?? []).map((debt) => debt.principal),
+    (debts.data?.data ?? []).map((debt) => debt.outstanding),
     'CRC',
   )
   const investedTotal = sum(
     (investments.data ?? []).map((investment) => investment.value),
+    'CRC',
+  )
+
+  const debtBefore = sum(
+    (debtsBefore.data?.data ?? []).map((debt) => debt.outstanding),
+    'CRC',
+  )
+  const investedBefore = sum(
+    (investmentsBefore.data ?? []).map((investment) => investment.value),
     'CRC',
   )
 
@@ -244,20 +270,27 @@ const DashboardScreen = () => {
 
   // Ahorrar no es «lo que sobró»: es la plata que efectivamente movió a una meta o a una
   // inversión este mes. El excedente puede quedarse en la cuenta y gastarse el mes que viene.
-  const inMonth = (date: string): boolean => date.startsWith(month)
-  const savedThisMonth = sum(
-    [
-      ...(goals.data ?? []).flatMap((goal) =>
-        goal.contributions.filter((entry) => inMonth(entry.date)).map((entry) => entry.amount),
-      ),
-      ...(investments.data ?? []).flatMap((investment) =>
-        investment.contributions
-          .filter((entry) => inMonth(entry.date))
-          .map((entry) => entry.amount),
-      ),
-    ],
-    'CRC',
-  )
+  // El ahorro de un mes sale de los aportes que ya vienen con el listado: no hace falta
+  // pedir nada más para tener también el del mes anterior.
+  const savedIn = (target: string) =>
+    sum(
+      [
+        ...(goals.data ?? []).flatMap((goal) =>
+          goal.contributions
+            .filter((entry) => entry.date.startsWith(target))
+            .map((entry) => entry.amount),
+        ),
+        ...(investments.data ?? []).flatMap((investment) =>
+          investment.contributions
+            .filter((entry) => entry.date.startsWith(target))
+            .map((entry) => entry.amount),
+        ),
+      ],
+      'CRC',
+    )
+
+  const savedThisMonth = savedIn(month)
+  const savedLastMonth = goals.data && investments.data ? savedIn(previousMonthOf(today())) : null
 
   const freedom = [...(debts.data?.data ?? [])]
     .map((debt) => debt.payoffDate)
@@ -323,12 +356,22 @@ const DashboardScreen = () => {
               hint={copy.overview.stats.netWorthHint}
             >
               {netWorth.data ? (
-                <Amount
-                  money={netWorth.data.netWorth}
-                  emphasis="strong"
-                  tone={isNegativeMoney(netWorth.data.netWorth) ? 'alert' : 'plain'}
-                  className="block text-left text-3xl tracking-tight"
-                />
+                <>
+                  <Amount
+                    money={netWorth.data.netWorth}
+                    emphasis="strong"
+                    tone={isNegativeMoney(netWorth.data.netWorth) ? 'alert' : 'plain'}
+                    className="block text-left text-3xl tracking-tight"
+                  />
+                  <Delta
+                    now={netWorth.data.netWorth}
+                    before={netWorthBefore.data?.netWorth}
+                    meaning="more-is-better"
+                    against={copy.overview.stats.vsLastMonth}
+                    unchanged={copy.overview.stats.sameAsLastMonth}
+                    fromZero={copy.overview.stats.newThisMonth}
+                  />
+                </>
               ) : (
                 <Skeleton className="h-9 w-40" />
               )}
@@ -340,18 +383,46 @@ const DashboardScreen = () => {
               hint={copy.overview.stats.savedHint}
             >
               <Amount money={savedThisMonth} className="block text-left text-2xl" />
+              <Delta
+                now={savedThisMonth}
+                before={savedLastMonth}
+                meaning="more-is-better"
+                against={copy.overview.stats.vsLastMonth}
+                unchanged={copy.overview.stats.sameAsLastMonth}
+                fromZero={copy.overview.stats.newThisMonth}
+              />
             </StatCard>
 
             <StatCard
               icon={CreditCard}
               label={copy.overview.stats.debt}
-              hint={freedom ? copy.overview.stats.debtFree(formatIsoDate(freedom)) : undefined}
+              hint={
+                freedom
+                  ? copy.overview.stats.debtFree(formatIsoDate(freedom))
+                  : copy.overview.stats.debtOutstanding
+              }
             >
               <Amount money={debtTotal} className="block text-left text-2xl" />
+              <Delta
+                now={debtTotal}
+                before={debtsBefore.data ? debtBefore : null}
+                meaning="less-is-better"
+                against={copy.overview.stats.vsLastMonth}
+                unchanged={copy.overview.stats.sameAsLastMonth}
+                fromZero={copy.overview.stats.newThisMonth}
+              />
             </StatCard>
 
             <StatCard icon={TrendingUp} label={copy.overview.stats.invested}>
               <Amount money={investedTotal} className="block text-left text-2xl" />
+              <Delta
+                now={investedTotal}
+                before={investmentsBefore.data ? investedBefore : null}
+                meaning="more-is-better"
+                against={copy.overview.stats.vsLastMonth}
+                unchanged={copy.overview.stats.sameAsLastMonth}
+                fromZero={copy.overview.stats.newThisMonth}
+              />
             </StatCard>
           </StatGrid>
 

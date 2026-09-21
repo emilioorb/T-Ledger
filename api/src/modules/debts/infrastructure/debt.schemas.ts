@@ -23,11 +23,14 @@ export const updateDebtSchema = createDebtSchema
   .partial()
   .meta({ id: 'UpdateDebtInput', title: 'UpdateDebtInput' })
 
+// `at` mira el saldo a una fecha y por omisión es hoy. Existe para poder comparar contra
+// el cierre del mes pasado sin pedir la tabla de amortización de cada deuda por separado.
 export const listDebtsQuerySchema = z
   .object({
     page: z.coerce.number().int().positive().default(1),
     pageSize: z.coerce.number().int().positive().max(100).default(20),
     direction: z.enum(['BORROWED', 'LENT']).optional(),
+    at: isoDate.optional(),
   })
   .meta({ id: 'ListDebtsQuery', title: 'ListDebtsQuery' })
 
@@ -37,6 +40,9 @@ export const debtResponseSchema = z
     name: z.string(),
     counterparty: z.string(),
     principal: moneySchema,
+    // Lo que falta pagar a la fecha consultada. `principal` es el monto original y no baja
+    // nunca: son dos datos distintos y los dos hacen falta.
+    outstanding: moneySchema,
     annualRate: z.string(),
     compounding: z.enum(['MONTHLY', 'ANNUAL']),
     termMonths: z.number(),
