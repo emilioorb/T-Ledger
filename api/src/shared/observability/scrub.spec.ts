@@ -83,3 +83,45 @@ describe('scrub', () => {
     expect(JSON.stringify(limpio)).not.toContain('secreto')
   })
 })
+
+describe('el mensaje de la excepción', () => {
+  // El evento real que lo destapó: una consulta inválida a `audit_log` mandó a Sentry el
+  // término que la persona había escrito en el buscador y el id de su libro, no por el
+  // request —ese sí se filtraba— sino dentro del texto del error de Prisma.
+  const errorDePrisma = `
+Invalid \`prisma.auditLog.findMany()\` invocation:
+
+{
+  where: {
+    OR: [
+      { authuser: { name: { contains: "Alquiler de Juan", mode: "insensitive" } } },
+      { searchText: { contains: "Alquiler de Juan", mode: "insensitive" } }
+    ],
+    bookId: "lib_personal_emilio"
+  }
+}
+
+Unknown argument \`searchText\`. Available options are marked with ?.`.trim()
+
+  it('deja afuera lo que la persona escribió y el libro', () => {
+    const limpio = scrub(evento({ exception: { values: [{ value: errorDePrisma }] } }))
+    const mensaje = limpio.exception?.values?.[0]?.value ?? ''
+
+    expect(mensaje).not.toContain('Alquiler de Juan')
+    expect(mensaje).not.toContain('lib_personal_emilio')
+  })
+
+  it('conserva qué falló y por qué, que es para lo que sirve', () => {
+    const limpio = scrub(evento({ exception: { values: [{ value: errorDePrisma }] } }))
+    const mensaje = limpio.exception?.values?.[0]?.value ?? ''
+
+    expect(mensaje).toContain('prisma.auditLog.findMany()')
+    expect(mensaje).toContain('Unknown argument')
+  })
+
+  it('no toca los mensajes que no traen una consulta adentro', () => {
+    const limpio = scrub(evento({ exception: { values: [{ value: 'No se pudo conectar' }] } }))
+
+    expect(limpio.exception?.values?.[0]?.value).toBe('No se pudo conectar')
+  })
+})
