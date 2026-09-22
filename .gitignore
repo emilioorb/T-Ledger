@@ -13,3 +13,14 @@ web/.tanstack/
 
 # Capturas sueltas de las sesiones de diseño.
 /*.png
+
+# El contrato generado desde el código: lo escribe `npm run openapi` y lo lee el front para
+# generar sus tipos. Versionarlo sería tener dos fuentes de verdad del mismo contrato.
+api/openapi.json
+
+# La lista de lo que sembró `npm run datos:prueba`, para poder deshacerlo. Es de una base
+# local: en otra máquina esos ids no existen.
+api/.datos-de-prueba.json
+
+# Los comprobantes cuando no hay R2 configurado: archivos de una máquina, no del repositorio.
+api/.archivos/

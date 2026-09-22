@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc -b --noEmit",
-    "api:types": "node scripts/generate-api-types.mjs"
+    "api:types": "npm --prefix ../api run openapi && node scripts/generate-api-types.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",
