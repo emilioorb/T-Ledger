@@ -1,5 +1,6 @@
 import { organizationClient } from 'better-auth/client/plugins'
 import { createAuthClient } from 'better-auth/react'
+import { controlDeAcceso, rolesDelLibro } from './roles'
 
 // El único archivo del front que habla con Better Auth. Sus rutas quedan fuera del contrato
 // Zod → OpenAPI del resto de la API (ADR-001), así que acá no hay tipos generados: los pone
@@ -18,7 +19,7 @@ import { createAuthClient } from 'better-auth/react'
 // React: la variante de React es la que trae los hooks reactivos de sesión.
 export const auth = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL ?? window.location.origin,
-  plugins: [organizationClient()],
+  plugins: [organizationClient({ ac: controlDeAcceso, roles: rolesDelLibro })],
 })
 
 export const {
