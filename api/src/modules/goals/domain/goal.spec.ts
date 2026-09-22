@@ -29,7 +29,8 @@ const props: GoalProps = {
   contributions: [],
 }
 
-const meta = (contributions: Contribution[] = []) => unwrap(Goal.create({ ...props, contributions }))
+const meta = (contributions: Contribution[] = []) =>
+  unwrap(Goal.create({ ...props, contributions }))
 
 describe('Goal', () => {
   it('reporta lo aportado y lo que falta', () => {
@@ -40,7 +41,11 @@ describe('Goal', () => {
   })
 
   it('reporta el avance como porcentaje', () => {
-    expect(meta([aporte('2026-09-01', 1_250_000_00n)]).progress().value.toNumber()).toBe(25)
+    expect(
+      meta([aporte('2026-09-01', 1_250_000_00n)])
+        .progress()
+        .value.toNumber(),
+    ).toBe(25)
   })
 
   it('deriva el aporte mensual requerido para llegar a la fecha deseada', () => {
@@ -87,7 +92,11 @@ describe('Goal', () => {
   })
 
   it('aportar de más no pasa del objetivo en el avance', () => {
-    expect(meta([aporte('2026-09-01', 9_000_000_00n)]).progress().value.toNumber()).toBe(100)
+    expect(
+      meta([aporte('2026-09-01', 9_000_000_00n)])
+        .progress()
+        .value.toNumber(),
+    ).toBe(100)
   })
 
   it('un aporte nuevo devuelve una meta nueva, sin tocar la anterior', () => {

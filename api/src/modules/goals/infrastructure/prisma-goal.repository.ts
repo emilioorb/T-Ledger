@@ -88,7 +88,7 @@ export class PrismaGoalRepository implements GoalRepository {
   async addContribution(goalId: string, contribution: Contribution): Promise<void> {
     await this.prisma.client.goalContribution.create({
       data: {
-        bookId: this.prisma.libro, 
+        bookId: this.prisma.libro,
         id: contribution.id,
         goalId,
         date: contribution.date,

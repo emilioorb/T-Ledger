@@ -29,7 +29,9 @@ export const budgetOpenApiPaths: ZodOpenApiPathsObject = {
     put: {
       summary: 'Declara el ingreso estimado del mes',
       requestBody: json(monthlyIncomeSchema),
-      responses: { 200: { description: 'Ingreso declarado', ...json(monthlyIncomeResponseSchema) } },
+      responses: {
+        200: { description: 'Ingreso declarado', ...json(monthlyIncomeResponseSchema) },
+      },
     },
   },
   '/budget-models': {

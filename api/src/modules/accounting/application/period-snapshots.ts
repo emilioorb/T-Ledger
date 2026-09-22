@@ -49,9 +49,10 @@ export class PeriodSnapshots {
     const range = key.range()
 
     const balances = await Promise.all(
-      CURRENCIES.map(async (currency) =>
-        buildTrialBalance(await this.journal.totalsByAccount(currency, range), chart, currency)
-          .balances,
+      CURRENCIES.map(
+        async (currency) =>
+          buildTrialBalance(await this.journal.totalsByAccount(currency, range), chart, currency)
+            .balances,
       ),
     )
 

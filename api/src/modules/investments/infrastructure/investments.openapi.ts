@@ -32,7 +32,9 @@ export const investmentsOpenApiPaths: ZodOpenApiPathsObject = {
     patch: {
       summary: 'Modifica una inversión',
       requestBody: json(updateInvestmentSchema),
-      responses: { 200: { description: 'Inversión modificada', ...json(investmentResponseSchema) } },
+      responses: {
+        200: { description: 'Inversión modificada', ...json(investmentResponseSchema) },
+      },
     },
     delete: {
       summary: 'Borra una inversión y sus aportes',

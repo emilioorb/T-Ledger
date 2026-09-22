@@ -21,13 +21,19 @@ export const goalsOpenApiPaths: ZodOpenApiPathsObject = {
     },
   },
   '/goals/{id}': {
-    get: { summary: 'Devuelve una meta', responses: { 200: { description: 'Meta', ...json(goalResponseSchema) } } },
+    get: {
+      summary: 'Devuelve una meta',
+      responses: { 200: { description: 'Meta', ...json(goalResponseSchema) } },
+    },
     patch: {
       summary: 'Modifica una meta',
       requestBody: json(updateGoalSchema),
       responses: { 200: { description: 'Meta modificada', ...json(goalResponseSchema) } },
     },
-    delete: { summary: 'Borra una meta y sus aportes', responses: { 204: { description: 'Borrada' } } },
+    delete: {
+      summary: 'Borra una meta y sus aportes',
+      responses: { 204: { description: 'Borrada' } },
+    },
   },
   '/goals/{id}/contributions': {
     post: {

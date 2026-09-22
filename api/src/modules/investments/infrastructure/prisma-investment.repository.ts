@@ -101,7 +101,7 @@ export class PrismaInvestmentRepository implements InvestmentRepository {
   async addContribution(investmentId: string, contribution: InvestmentContribution): Promise<void> {
     await this.prisma.client.investmentContribution.create({
       data: {
-        bookId: this.prisma.libro, 
+        bookId: this.prisma.libro,
         id: contribution.id,
         investmentId,
         date: contribution.date,

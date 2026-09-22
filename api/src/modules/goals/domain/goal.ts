@@ -50,13 +50,27 @@ export class Goal {
     return ok(new Goal({ ...props, name: props.name.trim() }))
   }
 
-  get id(): string { return this.props.id }
-  get name(): string { return this.props.name }
-  get target(): Money { return this.props.target }
-  get desiredDate(): Date { return this.props.desiredDate }
-  get priority(): number { return this.props.priority }
-  get accountCode(): string | null { return this.props.accountCode }
-  get contributions(): readonly Contribution[] { return this.props.contributions }
+  get id(): string {
+    return this.props.id
+  }
+  get name(): string {
+    return this.props.name
+  }
+  get target(): Money {
+    return this.props.target
+  }
+  get desiredDate(): Date {
+    return this.props.desiredDate
+  }
+  get priority(): number {
+    return this.props.priority
+  }
+  get accountCode(): string | null {
+    return this.props.accountCode
+  }
+  get contributions(): readonly Contribution[] {
+    return this.props.contributions
+  }
 
   contributed(): Money {
     return this.props.contributions.reduce(

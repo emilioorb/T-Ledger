@@ -63,7 +63,10 @@ describe('AccountingSpendingProvider', () => {
   it('pide a la contabilidad solo el rango del período', async () => {
     await provider.spendingFor(septiembre, 'CRC', mapping)
 
-    const [currency, range] = journal.totalsByAccount.mock.calls[0] as [string, { from: Date; to: Date }]
+    const [currency, range] = journal.totalsByAccount.mock.calls[0] as [
+      string,
+      { from: Date; to: Date },
+    ]
     expect(currency).toBe('CRC')
     expect(range.from.toISOString().slice(0, 10)).toBe('2026-09-01')
     expect(range.to.toISOString().slice(0, 10)).toBe('2026-09-30')

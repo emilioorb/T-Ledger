@@ -96,7 +96,16 @@ describe('presupuesto contra la contabilidad', () => {
     await gastoDe('30000000')
 
     const response = await get('/budget/evaluation?month=2026-09&currency=CRC').expect(200)
-    const necesidades = (response.body as { buckets: { bucketId: string; allocated: { minorUnits: string }; consumed: { minorUnits: string }; status: string }[] }).buckets[0]
+    const necesidades = (
+      response.body as {
+        buckets: {
+          bucketId: string
+          allocated: { minorUnits: string }
+          consumed: { minorUnits: string }
+          status: string
+        }[]
+      }
+    ).buckets[0]
 
     expect(necesidades?.allocated.minorUnits).toBe('50000000')
     expect(necesidades?.consumed.minorUnits).toBe('30000000')

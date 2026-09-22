@@ -47,9 +47,15 @@ export class PercentageBudgetModel implements BudgetModel {
     return ok(new PercentageBudgetModel(props))
   }
 
-  get id(): string { return this.props.id }
-  get name(): string { return this.props.name }
-  get buckets(): readonly BudgetBucket[] { return this.props.buckets }
+  get id(): string {
+    return this.props.id
+  }
+  get name(): string {
+    return this.props.name
+  }
+  get buckets(): readonly BudgetBucket[] {
+    return this.props.buckets
+  }
 
   evaluate(income: Money, spending: CategorizedSpending): BudgetEvaluation {
     // allocate reparte el residuo: la suma de lo asignado siempre iguala el ingreso.

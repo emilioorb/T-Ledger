@@ -25,11 +25,7 @@ export interface InvestmentProps {
 
 // Valor = P·(1+i)^n, con n en meses completos. Cada aporte capitaliza desde su
 // propia fecha: multiplicar el acumulado por el factor completo sobrestimaría.
-export const compoundedValue = (
-  principal: Money,
-  monthlyRate: Decimal,
-  months: number,
-): Money => {
+export const compoundedValue = (principal: Money, monthlyRate: Decimal, months: number): Money => {
   if (months <= 0) return principal
   return Money.fromDecimal(
     principal.toDecimal().mul(monthlyRate.plus(1).pow(months)),
@@ -75,15 +71,33 @@ export class Investment {
     return ok(new Investment({ ...props, name: props.name.trim() }))
   }
 
-  get id(): string { return this.props.id }
-  get name(): string { return this.props.name }
-  get principal(): Money { return this.props.principal }
-  get rate(): InterestRate { return this.props.rate }
-  get openedAt(): Date { return this.props.openedAt }
-  get kind(): InvestmentKind { return this.props.kind }
-  get maturesAt(): Date | null { return this.props.maturesAt }
-  get accountCode(): string | null { return this.props.accountCode }
-  get contributions(): readonly InvestmentContribution[] { return this.props.contributions }
+  get id(): string {
+    return this.props.id
+  }
+  get name(): string {
+    return this.props.name
+  }
+  get principal(): Money {
+    return this.props.principal
+  }
+  get rate(): InterestRate {
+    return this.props.rate
+  }
+  get openedAt(): Date {
+    return this.props.openedAt
+  }
+  get kind(): InvestmentKind {
+    return this.props.kind
+  }
+  get maturesAt(): Date | null {
+    return this.props.maturesAt
+  }
+  get accountCode(): string | null {
+    return this.props.accountCode
+  }
+  get contributions(): readonly InvestmentContribution[] {
+    return this.props.contributions
+  }
 
   // Después del vencimiento la plata está disponible, no rindiendo: la fecha se acota
   // al vencimiento antes de contar meses.
