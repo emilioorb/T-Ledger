@@ -1,12 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
-import { Outlet, createRootRouteWithContext, useRouterState } from '@tanstack/react-router'
+import {
+  Outlet,
+  createRootRouteWithContext,
+  redirect,
+  useRouterState,
+} from '@tanstack/react-router'
 import { Keyboard } from 'lucide-react'
 import { AppFooter } from '@/components/app-footer'
 import { DocumentTitle } from '@/components/document-title'
 import { AppSidebar } from '@/components/app-sidebar'
 import { PageBreadcrumb } from '@/components/page-breadcrumb'
 import { ExchangeRateIndicator } from '@/features/money/exchange-rate-indicator'
+import { auth } from '@/features/identity/auth-client'
+import { useAsegurarLibroActivo } from '@/features/identity/libro-activo'
+import { VigilanteDeSesion } from '@/features/identity/vigilante-de-sesion'
 import { copy as shell } from '@/features/shell/copy'
 import { copy as shortcuts } from '@/features/shortcuts/copy'
 import { PrimaryActionProvider } from '@/features/shortcuts/primary-action'
@@ -21,6 +29,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const CONTENT_ID = 'contenido'
 
 const Shell = () => {
+  // Del lado privado y no en la raíz: sin sesión no hay libro que elegir.
+  useAsegurarLibroActivo()
+
   const [helpOpen, setHelpOpen] = useState(false)
   const openHelp = useCallback(() => setHelpOpen(true), [])
   const content = useRef<HTMLElement>(null)
@@ -120,12 +131,83 @@ const Shell = () => {
   )
 }
 
+// Las pantallas donde todavía no sos nadie. No llevan barra lateral —no hay a dónde navegar
+// sin sesión— y son las únicas a las que se entra sin ella.
+const PUBLICAS = ['/entrar', '/crear-cuenta']
+
+const esPublica = (ruta: string) => PUBLICAS.includes(ruta)
+
+// Medio minuto. La sesión se preguntaba en **cada** navegación —cuatro clics en la barra
+// lateral, cuatro viajes al servidor, y cada uno bloqueando la pantalla antes de pintar nada—,
+// que es de dónde salía el medio segundo de espera después de apretar Entrar.
+//
+// El precio de cachearla es que una sesión vencida del lado del servidor tarda hasta este rato
+// en notarse, y mientras tanto las consultas devuelven 401. Treinta segundos es poco para que
+// eso moleste y mucho para no repetir la pregunta en cada clic.
+//
+// Los dos lugares donde se entra y se sale vacían la caché entera (`queryClient.clear()`), así
+// que la invalidación en el momento que importa ya está: acá no hace falta acordarse de nada.
+const VIGENCIA_DE_LA_SESION = 30_000
+
+const SESION = ['sesion'] as const
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  component: () => (
-    <TooltipProvider delayDuration={300}>
-      <PrimaryActionProvider>
-        <Shell />
-      </PrimaryActionProvider>
-    </TooltipProvider>
-  ),
+  // Sin sesión no se entra a ningún lado. Antes la app dejaba pasar y cada consulta devolvía
+  // 401: el resultado era el esqueleto completo con todos los paneles rotos, que es peor que
+  // decir «entrá» de una.
+  //
+  // El destino viaja en `redirigirA` para volver ahí después de entrar, en vez de dejar a
+  // todo el mundo en el tablero cuando venía siguiendo un enlace a otra pantalla.
+  beforeLoad: async ({ location, context }) => {
+    if (esPublica(location.pathname)) return
+
+    // `ensureQueryData` y no `fetchQuery`: si la respuesta sigue fresca la devuelve sin tocar
+    // la red, que es justamente el punto.
+    const sesion = await context.queryClient.ensureQueryData({
+      queryKey: SESION,
+      queryFn: async () => (await auth.getSession()).data,
+      staleTime: VIGENCIA_DE_LA_SESION,
+    })
+
+    if (!sesion) {
+      throw redirect({ to: '/entrar', search: { redirigirA: location.href } })
+    }
+  },
+  component: () => {
+    // Se pregunta por los **matches** y no por `location.pathname`, aunque el pathname sea más
+    // directo de leer. El `Outlet` de abajo renderiza los matches; el pathname cambia apenas
+    // arranca la navegación, mientras el match del destino todavía está resolviendo su
+    // `beforeLoad` —que acá pregunta la sesión al servidor y tarda—. En esa ventana los dos no
+    // coinciden, y como el layout se elegía con uno y el contenido con el otro, al entrar se
+    // veían **las dos cosas a la vez**: la barra lateral del tablero alrededor del formulario
+    // de ingreso, medida en 720 ms. Preguntando por lo mismo que se renderiza, no pueden
+    // diferir.
+    const enPublica = useRouterState({
+      select: (estado) => estado.matches.some((match) => esPublica(match.routeId)),
+    })
+
+    if (enPublica) {
+      return (
+        <TooltipProvider delayDuration={300}>
+          {/* También acá: el título de la pestaña es lo primero que lee un lector de pantalla
+              al cambiar de ruta, y sin esto las pantallas sin sesión heredaban el título de
+              donde vinieras. */}
+          <DocumentTitle />
+          <Outlet />
+          <Toaster position="bottom-right" />
+        </TooltipProvider>
+      )
+    }
+
+    // El vigilante va del lado privado y no envolviendo todo: en la pantalla de entrar no hay
+    // sesión que cerrar, y un reloj corriendo ahí sería un temporizador vigilando a nadie.
+    return (
+      <TooltipProvider delayDuration={300}>
+        <PrimaryActionProvider>
+          <Shell />
+          <VigilanteDeSesion />
+        </PrimaryActionProvider>
+      </TooltipProvider>
+    )
+  },
 })

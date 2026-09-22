@@ -116,7 +116,7 @@ export const AppSidebar = () => (
     </SidebarContent>
 
     <SidebarFooter>
-      <NavUser name={copy.nav.user} subtitle={copy.nav.userSubtitle} />
+      <NavUser />
     </SidebarFooter>
   </Sidebar>
 )

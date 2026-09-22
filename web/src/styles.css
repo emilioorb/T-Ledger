@@ -22,7 +22,16 @@
   --text: oklch(0.215 0.01 65);
   --negative: oklch(0.48 0.185 25);
   --positive: oklch(0.47 0.095 165);
-  --warning: oklch(0.4 0.09 65);
+  /* 0,65 y no 0,40. El ámbar oscurecido llegaba a 4,5:1 como texto, pero el mismo token pinta
+     las barras de progreso, donde el color **es** el dato y el requisito es 3:1 (WCAG 1.4.11),
+     no 4,5:1. El resultado era un aviso que sobre fondo claro no se distinguía del neutro,
+     mientras la barra de al lado —una cubeta, con `--bucket-1` a 0,72— se veía viva.
+     Medido sobre las tres superficies: 3,24:1 / 3,0:1 / 2,72:1.
+     La contrapartida, aceptada a conciencia: una cifra en ámbar ya no llega a 4,5:1. La Regla
+     del Signo la sostiene —ningún dato viaja solo en el color— pero es una decisión, no un
+     descuido. La separación con el negativo, que es lo que protege a quien no distingue rojo
+     de verde, se mantiene y de hecho crece: 0,65 contra 0,48. */
+  --warning: oklch(0.65 0.16 65);
 
   /* Reparto de cubetas: el naranja y el verde que la app ya usa, más matices que completan
      la familia. Sin rojo: acá el color identifica una cubeta, y una cubeta en rojo diría que
@@ -76,7 +85,17 @@
   --color-foreground: var(--text);
   --color-card: var(--surface);
   --color-card-foreground: var(--text);
-  --color-popover: var(--raised);
+  /* En `surface` y no en `raised`, aunque un menú flotante sea lo más elevado que hay en
+     pantalla. La escala de elevación tiene tres niveles —`bg`, `surface`, `raised`— y el
+     resaltado de un ítem necesita subir uno respecto de su contenedor: con el menú ya en el
+     último, `--color-accent` pintaba exactamente el mismo color y el hover pasaba sin verse.
+     La barra lateral nunca tuvo el problema porque su fondo es `surface` y deja `raised`
+     libre para el estado, que es la misma regla que ahora vale para todo:
+
+       un contenedor nunca usa el último nivel de la escala; ese nivel es del estado.
+
+     El menú sigue despegado de lo que tiene debajo por su borde y su sombra. */
+  --color-popover: var(--surface);
   --color-popover-foreground: var(--text);
   --color-primary: var(--text);
   --color-primary-foreground: var(--bg);
@@ -235,6 +254,57 @@
     animation: bloub-blink 6.4s var(--ease-out-quart) infinite;
     transform-origin: center;
     transform-box: fill-box;
+  }
+
+  /* La cinta. El movimiento lo maneja `usar-cinta.ts` por la Web Animations API —CSS no
+     sabe frenar de a poco ni cambiar de velocidad sin saltar—, así que acá queda solo lo
+     que es presentación.
+
+     `will-change` la pone en su propia capa: son mil trescientos píxeles de texto
+     monoespaciado moviéndose sin parar, y sin capa el navegador los vuelve a rasterizar en
+     cada cuadro para siempre. */
+  .cinta-sube {
+    will-change: transform;
+  }
+
+  /* Los dos extremos se desvanecen en vez de cortarse contra un borde: es lo que hace leer
+     el bloque como un rollo que sigue fuera de la pantalla y no como una lista recortada. */
+  .cinta {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 84%, transparent);
+  }
+
+  /* La cinta no aparece hecha: entra desenfocada y se acomoda, como papel que entra en foco.
+     El desenfoque es el que hace el trabajo —tapa que el contenido ya estaba ahí— y son tres
+     píxeles, muy por debajo de lo que le cuesta caro a Safari. No hay desplazamiento, así
+     que con `prefers-reduced-motion` alcanza con que la regla de abajo lo acorte. */
+  @keyframes cinta-entra {
+    from {
+      opacity: 0;
+      filter: blur(3px);
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  .cinta-entra {
+    animation: cinta-entra 400ms var(--ease-out-quart) both;
+  }
+
+  /* El cambio de gesto del avatar. Antes la cara se cambiaba sola de un cuadro al otro, que
+     es lo que hace un sprite y no lo que hace una cara: acá cierra los ojos, cambia detrás
+     del párpado y los vuelve a abrir. Va en un grupo aparte del parpadeo para que los dos
+     transforms se multipliquen en vez de pelearse. */
+  .bloub-gesto {
+    transition: transform 90ms var(--ease-out-quart);
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+
+  .bloub-gesto[data-cerrado='true'] {
+    transform: scaleY(0.08);
   }
 
   @media (prefers-reduced-motion: reduce) {

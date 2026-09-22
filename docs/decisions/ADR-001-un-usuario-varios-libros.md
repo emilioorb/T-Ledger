@@ -102,3 +102,23 @@ falta: `owner`, `editor`, `viewer`.
 - Login con Google, 2FA, passkeys y recuperación por correo quedan disponibles por
   configuración el día que el registro se abra.
 - En la interfaz nunca aparece la palabra «organización». Se llama libro.
+
+## Corrección del 22 de setiembre de 2026
+
+«Cerrado por invitación» se había implementado como `emailAndPassword.disableSignUp: true`, y
+eso no cierra el registro: lo rompe. El invitado necesita una cuenta **antes** de poder aceptar
+la invitación, porque `acceptInvitation` de Better Auth se resuelve bajo su middleware de
+sesión y no a partir del enlace. Sin registro, el invitado no podía crear la cuenta, y sin
+cuenta no podía aceptar la invitación: el flujo trabado contra sí mismo, y nadie más que el
+primer usuario podía entrar nunca.
+
+La documentación de Better Auth es explícita al respecto: `disableSignUp` sirve para apagar el
+registro, y para permitirlo *condicionalmente* hay que decidirlo en `databaseHooks.user.create.
+before` y lanzar un `APIError`. Eso es lo que hace ahora `puedeRegistrarse`, con dos caminos de
+entrada y ninguno más: una invitación pendiente y vigente para ese correo, o ser la primera
+cuenta de la instancia —a quien levanta su propio Tape Ledger no la puede invitar nadie—.
+
+Queda sin efecto, por lo tanto, la idea de que abrir el registro al público es cambiar un
+booleano. Abrirlo es sacar la condición del gancho, y ese día sí hacen falta las piezas que
+este ADR difiere: verificación de correo, recuperación y captcha. Lo que la condición permite
+hoy es lo que faltaba: que un invitado pueda entrar.

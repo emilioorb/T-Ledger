@@ -1,9 +1,11 @@
 import { betterAuth } from 'better-auth'
+import { APIError } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { organization } from 'better-auth/plugins'
 import type { PrismaClient } from '../../../generated/prisma/client.js'
 import type { Env } from '../../../shared/config/env.js'
 import { ac, roles } from './roles.js'
+import { puedeRegistrarse, SIN_INVITACION } from './registro.js'
 
 // Better Auth trae su propio modelo de datos y su propio router, que no pasan por el dominio
 // hexagonal ni por el contrato Zod del resto de la app. Es el precio de no escribir a mano las
@@ -23,12 +25,46 @@ export const crearAuth = (
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
     secret: env.AUTH_SECRET,
     baseURL: env.AUTH_BASE_URL,
+    // El front vive en otro puerto que la API, así que el navegador manda un `Origin` que no
+    // es el `baseURL` y Better Auth lo rechaza con `INVALID_ORIGIN` —un 403 en cada intento de
+    // entrar—. Va el mismo origen que ya se confía para CORS y no una lista aparte: dos listas
+    // de orígenes permitidos se desincronizan el día que cambia el dominio, y la que quede
+    // vieja rompe el ingreso.
+    //
+    // Lo que no se hace es apagar la comprobación con `disableOriginCheck`: eso desactiva
+    // también la protección CSRF y deja pasar cualquier URL en las redirecciones.
+    trustedOrigins: [env.CORS_ORIGIN],
     emailAndPassword: {
       enabled: true,
-      // Cerrado hasta que el producto se abra. Se entra por invitación y nada más, y por eso
-      // 6a no construye verificación de correo, recuperación ni captcha: abrirlo el día que
-      // toque es cambiar este booleano y prender lo que Better Auth ya trae (ADR-001).
-      disableSignUp: true,
+    },
+    // La puerta está condicionada, no cerrada. `disableSignUp` apaga el registro entero, y eso
+    // dejaba al invitado sin poder crear la cuenta que necesita para aceptar su invitación:
+    // el flujo trabado contra sí mismo. Para permitir el registro *a veces*, la documentación
+    // de Better Auth manda decidirlo acá, en el gancho de creación del usuario.
+    //
+    // Las dos consultas van contra el cliente crudo a propósito, igual que el resto de este
+    // archivo: las tablas de Better Auth no pasan por el filtro de libro, y acá todavía no hay
+    // libro que filtrar —la persona ni siquiera existe—.
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (usuario) => {
+            const [cuentas, invitaciones] = await Promise.all([
+              prisma.authUser.count(),
+              prisma.bookInvitation.findMany({
+                where: { email: usuario.email },
+                select: { status: true, expiresAt: true },
+              }),
+            ])
+
+            const permitido = puedeRegistrarse(
+              { esLaPrimeraCuenta: cuentas === 0, invitaciones },
+              new Date(),
+            )
+            if (!permitido) throw new APIError('FORBIDDEN', { message: SIN_INVITACION })
+          },
+        },
+      },
     },
     // Los nombres van en camelCase y no en PascalCase porque Better Auth no compara contra el
     // nombre del modelo de Prisma sino contra **la propiedad del cliente**: su adaptador lee el

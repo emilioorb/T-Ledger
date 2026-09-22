@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 // Avatar «nuage» tomado de bloub (https://github.com/jeremy-prt/bloub), de Jérémy Prt, bajo
@@ -72,13 +73,41 @@ const ubicar = (lado: 'izq' | 'der', ojo: Ojo, parpado: number) => {
   return `translate(${x} 2.5) rotate(${giro}) scale(${escala} ${parpado})`
 }
 
+// Lo que tarda el párpado en bajar. Es el mismo tramo que el parpadeo de reposo —unos
+// noventa milisegundos— porque es el mismo gesto: acá no se pestañea porque sí, se pestañea
+// para cambiar de cara.
+const CIERRE = 90
+
+// Una cara no se cambia de un cuadro al otro: eso es un sprite. Cierra los ojos, cambia
+// detrás del párpado y los abre con la cara nueva. Vale para los dos usos del avatar —acá y
+// el del tablero, que cambia de ánimo cuando cambian las cifras—, así que vive adentro del
+// componente y nadie tiene que acordarse de pedirlo.
+const usarParpadeoDeCambio = (gesto: NombreDeGesto) => {
+  const [visible, setVisible] = useState(gesto)
+  const [cerrado, setCerrado] = useState(false)
+
+  useEffect(() => {
+    if (gesto === visible) return
+
+    setCerrado(true)
+    const cambio = setTimeout(() => {
+      setVisible(gesto)
+      setCerrado(false)
+    }, CIERRE)
+    return () => clearTimeout(cambio)
+  }, [gesto, visible])
+
+  return { visible, cerrado }
+}
+
 interface Props {
   gesto?: NombreDeGesto
   className?: string
 }
 
 export const Bloub = ({ gesto = 'neutro', className }: Props) => {
-  const { izq, der, parpado = 1 }: Gesto = GESTOS[gesto]
+  const { visible, cerrado } = usarParpadeoDeCambio(gesto)
+  const { izq, der, parpado = 1 }: Gesto = GESTOS[visible]
   return (
     // El viewBox original mide 316 y el dibujo ocupa 193,5 × 167,7: más de un tercio era aire,
     // así que la nube se veía chica dentro de su propia caja. Acá va ajustado a la forma, con
@@ -94,16 +123,18 @@ export const Bloub = ({ gesto = 'neutro', className }: Props) => {
       <g className="bloub-breathe">
         <path d={CUERPO} fill="currentColor" />
         <g className="bloub-blink">
-          <path
-            d={capsula(izq.ancho, izq.alto)}
-            transform={ubicar('izq', izq, parpado)}
-            className="fill-background"
-          />
-          <path
-            d={capsula(der.ancho, der.alto)}
-            transform={ubicar('der', der, parpado)}
-            className="fill-background"
-          />
+          <g className="bloub-gesto" data-cerrado={cerrado}>
+            <path
+              d={capsula(izq.ancho, izq.alto)}
+              transform={ubicar('izq', izq, parpado)}
+              className="fill-background"
+            />
+            <path
+              d={capsula(der.ancho, der.alto)}
+              transform={ubicar('der', der, parpado)}
+              className="fill-background"
+            />
+          </g>
         </g>
       </g>
     </svg>

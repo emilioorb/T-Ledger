@@ -10,6 +10,14 @@ export const copy = {
   nav: {
     dashboard: 'Dashboard',
     releases: 'Novedades',
+    signOut: 'Cerrar sesión',
+    // El subtítulo del menú dice en qué libro estás parado, no tu correo: el correo ya lo
+    // sabés, y con varios libros lo que se pierde de vista es en cuál estás anotando.
+    noBook: 'Sin libro',
+    loadingSession: 'Cargando tu sesión',
+    // Si cerrar sesión falla, la sesión sigue abierta: decirlo es lo único honesto, porque
+    // dejar la pantalla como si nada da a entender que la persona ya salió.
+    signOutFailed: 'No se pudo cerrar la sesión. Seguís dentro.',
     toggleSidebar: 'Alternar la barra lateral',
     skipToContent: 'Saltar al contenido',
     expand: (section: string) => `Desplegar ${section}`,
