@@ -33,12 +33,12 @@ const Shell = () => {
   useAsegurarLibroActivo()
 
   const [helpOpen, setHelpOpen] = useState(false)
-  const openHelp = useCallback(() => setHelpOpen(true), [])
+  const alternarAyuda = useCallback(() => setHelpOpen((abierta) => !abierta), [])
   const content = useRef<HTMLElement>(null)
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const rutaAnterior = useRef(pathname)
 
-  useShortcuts(openHelp)
+  useShortcuts(helpOpen, alternarAyuda)
 
   // Al cambiar de pantalla el foco se queda donde estaba, así que el siguiente Tab vuelve a
   // recorrer los veinte enlaces de la barra antes de llegar al contenido. Se mueve al
@@ -90,7 +90,7 @@ const Shell = () => {
                 size="icon"
                 className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
                 aria-label={shortcuts.shortcuts.help}
-                onClick={openHelp}
+                onClick={alternarAyuda}
               >
                 <Keyboard className="size-4" aria-hidden="true" />
               </Button>

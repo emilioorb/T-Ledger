@@ -17,9 +17,13 @@ const isTyping = (target: EventTarget | null): boolean => {
 // Con un diálogo abierto, el teclado le pertenece al diálogo: navegar por detrás dejaría
 // al usuario en otra pantalla con el diálogo todavía encima.
 const hasOpenDialog = (): boolean =>
-  document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]') !== null
+  document.querySelector(
+    '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]',
+  ) !== null
 
-export const useShortcuts = (onHelp: () => void): void => {
+// `ayudaAbierta` no se deduce del DOM aunque la hoja esté ahí: el diálogo abierto puede ser
+// cualquiera, y «?» solo tiene que cerrar el de la ayuda.
+export const useShortcuts = (ayudaAbierta: boolean, alternarAyuda: () => void): void => {
   const navigate = useNavigate()
   const primary = usePrimaryActionValue()
   const prefixedAt = useRef<number | null>(null)
@@ -27,7 +31,18 @@ export const useShortcuts = (onHelp: () => void): void => {
   useEffect(() => {
     const handle = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return
-      if (isTyping(event.target) || hasOpenDialog()) return
+      if (isTyping(event.target)) return
+
+      // La misma tecla que la abrió la cierra. Va antes de la guarda de diálogos porque la
+      // hoja de ayuda es uno: si se respetara la guarda, «?» con la ayuda abierta no haría
+      // nada y habría que ir a buscar la Escape o la equis.
+      if (event.key === '?' && ayudaAbierta) {
+        event.preventDefault()
+        alternarAyuda()
+        return
+      }
+
+      if (hasOpenDialog()) return
 
       const pending =
         prefixedAt.current !== null && Date.now() - prefixedAt.current < PREFIX_TIMEOUT
@@ -49,7 +64,7 @@ export const useShortcuts = (onHelp: () => void): void => {
 
       if (event.key === '?') {
         event.preventDefault()
-        onHelp()
+        alternarAyuda()
         return
       }
 
@@ -61,5 +76,5 @@ export const useShortcuts = (onHelp: () => void): void => {
 
     window.addEventListener('keydown', handle)
     return () => window.removeEventListener('keydown', handle)
-  }, [navigate, onHelp, primary])
+  }, [alternarAyuda, ayudaAbierta, navigate, primary])
 }
