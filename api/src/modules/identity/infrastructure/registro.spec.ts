@@ -7,7 +7,7 @@ const laSemanaPasada = new Date('2026-09-15T10:00:00Z')
 
 describe('puedeRegistrarse', () => {
   it('deja pasar a la primera cuenta de la instancia', () => {
-    // No hay quien la invite: es quien acaba de levantar su Tape Ledger.
+    // No hay quien la invite: es quien acaba de levantar su T-Ledger.
     expect(puedeRegistrarse({ esLaPrimeraCuenta: true, invitaciones: [] }, AHORA)).toBe(true)
   })
 

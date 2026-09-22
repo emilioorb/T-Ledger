@@ -10,7 +10,7 @@ Aceptado
 
 ## Contexto
 
-El 21/09/2026 se decidió que Tape Ledger tuviera cifrado extremo a extremo: ni el dueño del
+El 21/09/2026 se decidió que T-Ledger tuviera cifrado extremo a extremo: ni el dueño del
 servidor puede ver los datos de nadie.
 
 Medido sobre el código real, eso cuesta: 234 agregaciones (`groupBy`, `aggregate`, `_sum`),

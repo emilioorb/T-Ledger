@@ -1,6 +1,6 @@
 // Quién puede crear una cuenta.
 //
-// Tape Ledger no tiene registro abierto, pero «cerrado» no puede significar apagado: el
+// T-Ledger no tiene registro abierto, pero «cerrado» no puede significar apagado: el
 // invitado necesita una cuenta **antes** de poder aceptar la invitación, porque aceptarla es
 // una llamada con sesión —Better Auth la resuelve bajo su middleware de sesión, no a partir
 // del enlace—. Con el registro apagado del todo, el invitado no podía crear la cuenta y por lo
@@ -16,7 +16,7 @@ export interface InvitacionDelCorreo {
 
 interface Solicitud {
   // La primera cuenta de la instancia no la puede invitar nadie: no hay quien invite. Es la
-  // persona que acaba de levantar su Tape Ledger, y dejarla afuera sería dejar la base vacía
+  // persona que acaba de levantar su T-Ledger, y dejarla afuera sería dejar la base vacía
   // para siempre.
   esLaPrimeraCuenta: boolean
   // Todas las invitaciones que existen para ese correo, en cualquier estado. La decisión de

@@ -30,7 +30,7 @@ export const MarcoDeIdentidad = ({ gesto, children }: Props) => {
   // a la derecha. Abajo de `lg` el panel desaparece entero en vez de apilarse: en un teléfono,
   // entrar es la tarea, y lo demás sería ruido debajo del pliegue.
   return (
-    <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-background p-4 sm:p-8">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center gap-5 overflow-hidden bg-background p-4 sm:p-8">
       <FondoDePuntos />
 
       {/* Tres escalas y no una. En una laptop de 1280 la tarjeta de 1024 ocupaba el ochenta
@@ -42,12 +42,17 @@ export const MarcoDeIdentidad = ({ gesto, children }: Props) => {
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col">
             {/* La marca arriba, la misma que la barra lateral: quien ya usó la app la
                 reconoce, y quien no, la ve por primera vez donde corresponde. En monoespaciada
-                porque Tape Ledger se llama así por la cinta impresa donde cada operación queda
-                en orden, y Geist Mono ya está cargada para las cifras. */}
+                porque el nombre viene de la cuenta T —debe a la izquierda, haber a la
+                derecha—, y eso solo se lee derecho cuando las columnas alinean. Geist Mono ya
+                está cargada para las cifras. */}
             <header className="flex items-center justify-between gap-4">
               <span className="flex items-center gap-2.5">
                 <Bloub
                   gesto={gesto}
+                  // En tinta y no del color que alguien eligió: acá Nimbo es la marca, no el
+                  // avatar de nadie. Además todavía no hay sesión, así que el color guardado
+                  // es el del último que usó este navegador, que puede no ser quien entra.
+                  color={null}
                   // A este tamaño el ojo mide menos de tres píxeles reales —nueve unidades de
                   // un viewBox de 206— y el antialiasing lo suaviza: es el precio de que la
                   // mascota acompañe al nombre en vez de ganarle. Si alguna vez se ve sucia,
@@ -83,6 +88,23 @@ export const MarcoDeIdentidad = ({ gesto, children }: Props) => {
 
         <PanelDeConfianza />
       </div>
+
+      {/* El mismo pie que adentro de la aplicación, por el mismo motivo: cuando algo se ve
+          raro, lo primero es descartar que sea una versión vieja en caché. Acá vale incluso
+          más, porque quien no puede entrar suele estar mirando una pantalla cacheada. Va
+          debajo de la tarjeta y no adentro: no es del formulario, es de la aplicación. */}
+      <footer className="relative flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+        {/* Como se escribe un copyright: el símbolo, el año y de quién es, en ese orden y sin
+            separadores en el medio. El año sale de la compilación, así que no se queda viejo
+            solo. Sin la firma del autor porque acá todavía no entró nadie: lo que esta línea
+            contesta es qué es esto, de cuándo y qué versión estás viendo. */}
+        <span>
+          © <span className="num">{__BUILD_YEAR__}</span>{' '}
+          <span className="text-foreground">{shell.app.name}</span>
+        </span>
+        <span aria-hidden="true">·</span>
+        <span className="num">v{__APP_VERSION__}</span>
+      </footer>
     </main>
   )
 }

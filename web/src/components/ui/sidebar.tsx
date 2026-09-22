@@ -27,7 +27,7 @@ const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 // Lo primero que se anuncia al abrir la barra en el teléfono: iba en inglés en una app que
 // está entera en español.
 const SIDEBAR_LABEL = "Navegación"
-const SIDEBAR_DESCRIPTION = "Las secciones de Tape Ledger."
+const SIDEBAR_DESCRIPTION = "Las secciones de T-Ledger."
 
 const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"

@@ -14,7 +14,7 @@ Con usuarios que no son uno mismo hace falta saber cuándo se rompe algo, porque
 reportarlo. Hoy los errores se ven en la consola del que está programando.
 
 Ya existe una organización en Sentry, `arclo-systems`, con tres proyectos (`kodi`,
-`kodi-admin`, `kodi-backend`). No hay ninguno de Tape Ledger.
+`kodi-admin`, `kodi-backend`). No hay ninguno de T-Ledger.
 
 Sentry instalado por defecto se lleva el cuerpo de las peticiones. Un error en
 `POST /movimientos` viaja con el monto, la descripción y la categoría. Los breadcrumbs del

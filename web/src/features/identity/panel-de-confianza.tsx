@@ -2,7 +2,7 @@ import { CintaContable } from './cinta-contable'
 import { copy } from './copy'
 
 // La mitad derecha de la pantalla de entrar. En un producto empresarial acá va un testimonio
-// y tres sellos de certificación; acá no, porque Tape Ledger todavía no tiene usuarios que
+// y tres sellos de certificación; acá no, porque T-Ledger todavía no tiene usuarios que
 // citar ni auditorías que mostrar, y ponerlos sería abrir la relación con una mentira.
 //
 // Lo que sí tiene es su propia cinta: el rollo ocupa el panel entero y la frase va al pie,

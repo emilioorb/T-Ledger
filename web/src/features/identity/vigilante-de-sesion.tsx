@@ -24,7 +24,7 @@ const SENALES_DE_VIDA = ['pointerdown', 'keydown'] as const
 
 // El canal entre pestañas. Dos ventanas del mismo libro son la misma persona: si trabaja en
 // una, la otra no tiene por qué cerrarse sola.
-const CANAL = 'tape-ledger-sesion'
+const CANAL = 't-account-ledger-sesion'
 
 type Aviso = { tipo: 'actividad' | 'cerrada' }
 

@@ -2,10 +2,10 @@
 // pasa, sin pedir disculpas ni prometer de más.
 export const copy = {
   entrar: {
-    title: 'Entrar a Tape Ledger',
-    // El nombre corto, para la pestaña. El titular ya dice «Tape Ledger» y el título de la
-    // pestaña le agrega el nombre de la app al final: junto daría «Entrar a Tape Ledger ·
-    // Tape Ledger».
+    title: 'Entrar a T-Ledger',
+    // El nombre corto, para la pestaña. El titular ya dice «T-Ledger» y el título de la
+    // pestaña le agrega el nombre de la app al final: junto daría «Entrar a T-Ledger ·
+    // T-Ledger».
     tab: 'Entrar',
     // Dice para qué sirve la cuenta, que es lo que alguien necesita saber parado acá. Y es
     // cierto: una misma cuenta lleva varios libros, que es de lo que se trata la fase.
@@ -57,7 +57,7 @@ export const copy = {
     // entrar, porque es lo mismo que va a contestar el servidor.
     invited: 'Te invitaron a un libro. Creá tu cuenta y entrás directo.',
     alone:
-      'Se entra por invitación. Si estás levantando tu propio Tape Ledger, esta va a ser la primera cuenta.',
+      'Se entra por invitación. Si estás levantando tu propio T-Ledger, esta va a ser la primera cuenta.',
     name: 'Tu nombre',
     namePlaceholder: 'Emilio Rodríguez',
     // Ocho es el mínimo de Better Auth. Se dice antes de escribir y no después de fallar.
@@ -79,7 +79,7 @@ export const copy = {
   panel: {
     // Lo que el producto puede demostrar de sí mismo, en vez de un testimonio inventado. Y se
     // dice en el mismo orden en que la cinta de abajo lo muestra: primero la plata que llega,
-    // después de dónde salió. La frase apunta al hábito que Tape Ledger reemplaza —anotar el
+    // después de dónde salió. La frase apunta al hábito que T-Ledger reemplaza —anotar el
     // gasto y nada más— sin nombrarlo.
     title: 'La plata no aparece: sale de algún lado.',
     // No repite el titular: el titular es la regla, esto es qué cosa es la regla.
@@ -96,9 +96,9 @@ export const copy = {
     // Un correo de verdad y no un formulario que no existe: si alguien no puede entrar, lo
     // último que necesita es otra pantalla.
     correoDeAyuda: 'emiliorb@arclosystems.com',
-    asuntoDeAyuda: 'No puedo entrar a Tape Ledger',
+    asuntoDeAyuda: 'No puedo entrar a T-Ledger',
     // En el original acá dice «Protegido por política SSO del espacio de trabajo». Acá va lo
-    // único equivalente que es cierto en Tape Ledger, y además es lo que el aislamiento en
+    // único equivalente que es cierto en T-Ledger, y además es lo que el aislamiento en
     // dos capas garantiza de verdad.
     privacidad: 'Cada libro es privado: solo lo ven las personas que están en él.',
   },

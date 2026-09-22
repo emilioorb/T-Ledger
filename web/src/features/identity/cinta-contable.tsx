@@ -5,7 +5,7 @@ import { usarCinta } from './usar-cinta'
 // en dos columnas, y los dos extremos desvanecidos para que se lea como una cinta que sigue
 // fuera de la pantalla.
 //
-// Es la única demostración que Tape Ledger puede dar de sí mismo sin inventar nada: no dice
+// Es la única demostración que T-Ledger puede dar de sí mismo sin inventar nada: no dice
 // que lleva partida doble, la muestra treinta líneas seguidas. Cada asiento suma lo mismo en
 // el debe y en el haber, y eso se ve sin leer un solo rótulo.
 
