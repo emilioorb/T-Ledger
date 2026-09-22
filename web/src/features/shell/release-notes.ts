@@ -8,8 +8,8 @@ export type Grupo = 'added' | 'improved' | 'fixed'
 
 export interface Release {
   date: string
-  // Solo va donde exista de verdad. Mientras el paquete siga en 0.0.0, la fecha es el
-  // único identificador honesto de una entrega.
+  // Solo va donde exista de verdad: las entregas anteriores a la 1.0.0 no tuvieron número, y
+  // para ellas la fecha es el único identificador honesto.
   version?: string
   grupos: Record<Grupo, string>
 }

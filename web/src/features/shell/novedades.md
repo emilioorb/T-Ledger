@@ -12,6 +12,46 @@ entrega, como este texto, no se muestra.
 Criterio: la negrita marca **de qué** habla la nota, para que la lista se pueda escanear sin
 leerla entera. Las teclas y los formatos van como código.
 
+## 2026-09-22 · v1.0.0
+
+### Nuevo
+
+- **Una portada pública** en la raíz del dominio: la página entera es una cuenta T, con el
+  titular partido por la pata y tres asientos de ejemplo.
+  - **Los totales corren como una sumadora** mientras se escribe cada asiento, y la doble
+    raya se traza cuando cuadran.
+  - **Pedir acceso** abre la dirección de correo con un botón de copiar, sin guardar nada.
+- **El tablero se muda a** `/tablero`, y la raíz queda para la portada.
+- **Tema claro u oscuro en las pantallas de entrada**, con un botón flotante; entrar y crear
+  cuenta siguen lo que se elija en la portada.
+- **Novedades y la guía en Markdown**: negritas, código, enlaces y listas anidadas.
+- **Cuentas y libros**: se entra con correo y contraseña, por invitación, y cada persona puede
+  llevar varios libros —el personal, el de la casa, el de la familia— con su gente y tres roles.
+- **Una cuenta de administración** para la instancia, y **la pantalla de tu cuenta**.
+- **El registro de auditoría** dice quién cambió qué en el libro, y quién sumó o sacó gente.
+- **Comprobantes** adjuntos a cada movimiento, y la tabla dice en qué se fue la plata.
+- **Colores propios** para cada cubeta y cada categoría.
+- **El tablero** abre diciendo qué día es y cómo va el mes, y cada cifra dice cuánto cambió
+  desde el mes pasado.
+- **Nimbo**, una nube en la esquina que pone cara según cómo va el mes.
+
+### Mejorado
+
+- **La guía** se pliega en un índice: el mapa entero entra de una mirada.
+- **Novedades** se lee como una bitácora de entregas.
+- **El fondo de puntos** es uno solo para la portada, entrar y crear cuenta: ya no se
+  reinicia al pasar de una a otra, y aparece de a poco cuando el lienzo está listo.
+- **Las negritas** de la guía y de las novedades pesan más, y se distinguen del texto.
+- **La portada entra entera** en una laptop de poco alto, sin desplazamiento.
+
+### Corregido
+
+- **Al pasar de la portada a entrar** en tema oscuro, la pantalla se veía gris unos
+  400 ms: el fondo de puntos pintaba su papel más oscuro de lo que pedía el tema.
+- **El buscador de la guía** cortaba su texto de ayuda.
+- **El tablero** usaba anchos y colores que hacían leer mal las cifras.
+- **Un monto mal escrito** devolvía un error del servidor en lugar de decir qué estaba mal.
+
 ## 2026-09-21
 
 ### Nuevo

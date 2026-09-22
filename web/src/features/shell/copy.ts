@@ -59,7 +59,7 @@ export const copy = {
   releases: {
     title: 'Novedades',
     description:
-      'Qué cambió en cada entrega, de la más reciente a la más vieja. Mientras no haya números de versión publicados, cada entrega se nombra por su fecha.',
+      'Qué cambió en cada entrega, de la más reciente a la más vieja.',
     added: 'Nuevo',
     improved: 'Mejorado',
     fixed: 'Corregido',

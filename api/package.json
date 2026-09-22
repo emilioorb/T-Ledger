@@ -1,5 +1,9 @@
 {
-  "name": "finanzas-api",
+  "name": "t-ledger-api",
+  "version": "1.0.0",
+  "description": "T-Ledger: finanzas personales con contabilidad de partida doble.",
+  "license": "UNLICENSED",
+  "author": "Emilio Rodríguez",
   "private": true,
   "type": "module",
   "engines": {
