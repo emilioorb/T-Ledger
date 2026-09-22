@@ -4,9 +4,10 @@ import {
   ForbiddenException,
   Injectable,
   SetMetadata,
+  UnauthorizedException,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { libroActual } from '../../../shared/libro/libro-context.js'
+import { libroActualSiHay } from '../../../shared/libro/libro-context.js'
 import { puede, type Recurso } from './permisos.js'
 
 const CLAVE = 'permiso-del-libro'
@@ -36,8 +37,13 @@ export class PermisoGuard implements CanActivate {
     // un error, pero lo caza el test de cobertura y no una excepción en producción.
     if (!pedido) return true
 
-    const { rol } = libroActual()
-    if (!puede(rol, pedido.recurso, pedido.accion)) {
+    // Esta guardia corre antes que la de sesión de Better Auth, y el contexto de libro solo lo
+    // abre el middleware cuando hay sesión. Sin contexto, entonces, lo que falta es la sesión:
+    // es un 401, no un error del servidor.
+    const libro = libroActualSiHay()
+    if (!libro) throw new UnauthorizedException()
+
+    if (!puede(libro.rol, pedido.recurso, pedido.accion)) {
       throw new ForbiddenException(
         `Tu rol en este libro no permite ${pedido.accion} ${pedido.recurso}`,
       )
