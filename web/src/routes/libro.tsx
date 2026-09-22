@@ -9,7 +9,8 @@ import { Seccion } from '@/features/cuenta/seccion'
 import { useActiveOrganization, useSession } from '@/features/identity/auth-client'
 import { copy } from '@/features/libro/copy'
 import { LaGente, type Miembro } from '@/features/libro/la-gente'
-import { useRenombrarLibro } from '@/features/libro/use-libro'
+import { EliminarElLibro } from '@/features/libro/eliminar-el-libro'
+import { useMisLibros, useRenombrarLibro } from '@/features/libro/use-libro'
 import { VaciarElLibro } from '@/features/libro/vaciar-el-libro'
 import { copy as shell } from '@/features/shell/copy'
 
@@ -52,6 +53,7 @@ const NombreDelLibro = ({ id, nombre }: { id: string; nombre: string }) => {
 const LibroScreen = () => {
   const { data: sesion } = useSession()
   const { data: activo, isPending } = useActiveOrganization()
+  const { data: libros } = useMisLibros()
 
   if (isPending) return <Skeleton className="h-96 w-full" aria-label={copy.title} />
 
@@ -78,11 +80,12 @@ const LibroScreen = () => {
         <LaGente miembros={miembros} soyYo={sesion.user.id} puedoAdministrar={puedoAdministrar} />
 
         {/* Las dos cosas que solo el dueño puede hacer van juntas y a un lado: el nombre
-            porque es identidad, y vaciar porque es lo último que uno mira. */}
+            porque es identidad, y vaciar y eliminar porque son lo último que uno mira. */}
         {puedoAdministrar ? (
           <div className="grid content-start gap-4">
             <NombreDelLibro id={activo.id} nombre={activo.name} />
             <VaciarElLibro nombre={activo.name} />
+            <EliminarElLibro nombre={activo.name} unico={(libros?.length ?? 1) <= 1} />
           </div>
         ) : null}
       </div>

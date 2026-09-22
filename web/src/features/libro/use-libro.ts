@@ -125,6 +125,40 @@ export const useRenombrarLibro = () => {
   })
 }
 
+type LibroPropio = components['schemas']['LibroPropio']
+
+// La misma consulta que la lista de libros de la cuenta, con la misma clave: comparten caché.
+export const useMisLibros = () =>
+  useQuery({
+    queryKey: ['identity', 'my-books'],
+    queryFn: () => apiFetch<LibroPropio[]>('/book/mine'),
+  })
+
+// El borrado es nuestro y no el de Better Auth por lo mismo que vaciar: pide la contraseña y
+// no deja a nadie sin libro. Después entra al primero que le queda y recarga entero, igual
+// que al cambiar de libro: en memoria quedan las cifras del que ya no existe.
+export const useBorrarLibro = (nombre: string) =>
+  useMutation({
+    mutationFn: (password: string) =>
+      apiFetch<void>('/book', { method: 'DELETE', body: JSON.stringify({ password }) }),
+    onSuccess: async () => {
+      const [siguiente] = await apiFetch<LibroPropio[]>('/book/mine')
+      if (siguiente) await organization.setActive({ organizationId: siguiente.id })
+      toast.success(copy.borrar.done(nombre))
+      window.location.assign('/tablero')
+    },
+    onError: (error: unknown) => toast.error(motivoDelRechazo(error)),
+  })
+
+// Por el `status` y no por el texto, igual que al vaciar: el 401 es la contraseña y el 409
+// es el último libro, las dos cosas que la persona puede entender y corregir.
+const motivoDelRechazo = (error: unknown): string => {
+  if (!(error instanceof ApiError)) return copy.borrar.failed
+  if (error.status === 401) return copy.borrar.wrongPassword
+  if (error.status === 409) return copy.borrar.lastBook
+  return copy.borrar.failed
+}
+
 // Lo único de esta pantalla que no es de Better Auth: vaciar es nuestro, con su caso de uso,
 // su permiso y su entrada en el registro.
 export const useVaciarLibro = () => {

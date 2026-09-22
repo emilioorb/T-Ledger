@@ -2614,6 +2614,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/book": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Borra el libro activo entero, para todos sus miembros. No se puede con el último */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["BorrarLibro"];
+                };
+            };
+            responses: {
+                /** @description Borrado */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description La contraseña no es la de quien pide */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Es el único libro de la persona */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/book/mine": {
         parameters: {
             query?: never;
@@ -3025,6 +3077,10 @@ export interface components {
         LineToMovementInput: {
             categoryId: string;
             counterparty?: string;
+        };
+        /** BorrarLibro */
+        BorrarLibro: {
+            password: string;
         };
         /** VaciarLibro */
         VaciarLibro: {

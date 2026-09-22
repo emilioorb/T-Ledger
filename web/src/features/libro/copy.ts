@@ -71,4 +71,21 @@ export const copy = {
       total === 0 ? 'No había nada que borrar.' : `Listo: se borraron ${total} registros.`,
     failed: 'No se pudo vaciar el libro.',
   },
+
+  borrar: {
+    title: 'Eliminar el libro',
+    hint: 'Desaparece entero, para todos los que están adentro: lo anotado, el plan de cuentas, la gente y el registro.',
+    open: 'Eliminar el libro',
+    lastBook: 'Es tu único libro. Para empezar de cero, vacialo.',
+    dialogTitle: 'Eliminar el libro',
+    dialogHint:
+      'No se puede deshacer, y a diferencia de vaciarlo, no queda ni el registro de auditoría. Quien tenga acceso lo pierde en el momento.',
+    confirmLabel: (nombre: string) => `Tu contraseña, para eliminar ${nombre}`,
+    wrongPassword: 'Esa no es tu contraseña.',
+    confirm: 'Eliminar',
+    deleting: 'Eliminando',
+    cancel: 'Dejarlo como está',
+    done: (nombre: string) => `Listo: ${nombre} ya no existe.`,
+    failed: 'No se pudo eliminar el libro.',
+  },
 } as const
