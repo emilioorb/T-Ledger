@@ -692,6 +692,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/movements/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Suma por categoría de los movimientos que cumplen el filtro, sin paginar */
+        get: {
+            parameters: {
+                query?: {
+                    kind?: "EXPENSE" | "INCOME";
+                    status?: "ACTIVE" | "VOIDED";
+                    categoryId?: string;
+                    from?: string;
+                    to?: string;
+                    search?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Totales por categoría */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CategoryTotal"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/movements/{id}": {
         parameters: {
             query?: never;
@@ -750,6 +793,87 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/movements/{id}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Redirige al comprobante, con un enlace que vence en minutos */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Al archivo */
+                302: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Sube el comprobante de un movimiento: una foto o un PDF, hasta 5 MB */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        archivo: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Movimiento con su comprobante */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Movement"];
+                    };
+                };
+            };
+        };
+        /** Quita el comprobante de un movimiento */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Movimiento sin comprobante */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Movement"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/movements/{id}/void": {
@@ -2454,6 +2578,9 @@ export interface paths {
                     entity?: "movimiento" | "periodo" | "deuda" | "meta" | "inversion" | "presupuesto" | "miembro";
                     entityId?: string;
                     userId?: string;
+                    search?: string;
+                    sort?: "cuando" | "quien" | "que";
+                    direction?: "asc" | "desc";
                 };
                 header?: never;
                 path?: never;
@@ -2471,6 +2598,161 @@ export interface paths {
                     };
                 };
                 /** @description Solo el dueño del libro ve el registro */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/book/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Los libros a los que pertenece quien pregunta, con su rol en cada uno */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Tus libros */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LibroPropio"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/book/empty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Borra lo anotado en el libro y conserva los catálogos y el registro */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VaciarLibro"];
+                };
+            };
+            responses: {
+                /** @description Lo que se borró */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Vaciado"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dice si quien pregunta administra la instancia */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Sí o no */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SoyAdmin"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Los números del servidor entero, solo para la administración */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Resumen */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResumenDeInstancia"];
+                    };
+                };
+                /** @description No administrás esta instancia */
                 403: {
                     headers: {
                         [name: string]: unknown;
@@ -2569,6 +2851,8 @@ export interface components {
             sortOrder: number;
             /** @default true */
             active: boolean;
+            /** @default null */
+            colorIndex: number | null;
         };
         /** UpdateCategoryInput */
         UpdateCategoryInput: {
@@ -2578,6 +2862,7 @@ export interface components {
             accountCode?: string | null;
             sortOrder?: number;
             active?: boolean;
+            colorIndex?: number | null;
         };
         /** CreateMovementInput */
         CreateMovementInput: {
@@ -2589,8 +2874,6 @@ export interface components {
             amount: components["schemas"]["Money"];
             /** @default null */
             paymentAccountCode: string | null;
-            /** @default null */
-            receiptUrl: string | null;
         };
         /** UpdateMovementInput */
         UpdateMovementInput: {
@@ -2601,7 +2884,6 @@ export interface components {
             counterparty?: string;
             amount?: components["schemas"]["Money"];
             paymentAccountCode?: string | null;
-            receiptUrl?: string | null;
         };
         /** CreateJournalEntryInput */
         CreateJournalEntryInput: {
@@ -2638,6 +2920,8 @@ export interface components {
             isSavings: boolean;
             /** @default [] */
             accountCodes: string[];
+            /** @default null */
+            colorIndex: number | null;
         };
         /** CreateGoalInput */
         CreateGoalInput: {
@@ -2742,6 +3026,10 @@ export interface components {
             categoryId: string;
             counterparty?: string;
         };
+        /** VaciarLibro */
+        VaciarLibro: {
+            password: string;
+        };
         /** Debt */
         Debt: {
             id: string;
@@ -2840,6 +3128,7 @@ export interface components {
             accountCode: string | null;
             sortOrder: number;
             active: boolean;
+            colorIndex: number | null;
             postable: boolean;
         };
         /** Movement */
@@ -2852,11 +3141,16 @@ export interface components {
             counterparty: string;
             amount: components["schemas"]["MoneyOutput"];
             paymentAccountCode: string | null;
-            receiptUrl: string | null;
+            receiptKey: string | null;
             /** @enum {string} */
             status: "ACTIVE" | "VOIDED";
             posted: boolean;
             journalEntryId: string | null;
+        };
+        /** CategoryTotal */
+        CategoryTotal: {
+            categoryId: string;
+            total: components["schemas"]["MoneyOutput"];
         };
         /** JournalEntry */
         JournalEntry: {
@@ -3001,6 +3295,7 @@ export interface components {
                 percentage: string;
                 isSavings: boolean;
                 accountCodes: string[];
+                colorIndex: number | null;
             }[];
         };
         /** Goal */
@@ -3153,6 +3448,28 @@ export interface components {
             campo: string;
             antes: unknown;
             despues: unknown;
+        };
+        /** LibroPropio */
+        LibroPropio: {
+            id: string;
+            name: string;
+            role: string;
+            createdAt: string;
+        };
+        /** Vaciado */
+        Vaciado: {
+            borrado: {
+                [key: string]: number;
+            };
+            total: number;
+        };
+        /** SoyAdmin */
+        SoyAdmin: {
+            admin: boolean;
+        };
+        /** ResumenDeInstancia */
+        ResumenDeInstancia: {
+            usuarios: number;
         };
         /** Money */
         MoneyOutput: {
