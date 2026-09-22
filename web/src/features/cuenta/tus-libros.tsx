@@ -53,7 +53,7 @@ export const TusLibros = ({ activo, roles }: Props) => {
     // Recarga entera, igual que al cerrar sesión y por el mismo motivo: en memoria quedan los
     // saldos, los movimientos y las metas del libro anterior, y mostrarlos un instante bajo
     // el nombre del nuevo sería mezclar dos contabilidades en pantalla.
-    window.location.assign('/')
+    window.location.assign('/tablero')
   }
 
   return (

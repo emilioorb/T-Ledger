@@ -37,7 +37,7 @@ import { copy as shell } from '@/features/shell/copy'
 
 // El panel va solo, encima de todo: es la pantalla que responde «¿y ahora qué?», y no
 // pertenece a ninguna de las secciones porque las cruza a todas.
-const navHome: NavItem[] = [{ title: shell.nav.dashboard, to: '/', icon: LayoutDashboard }]
+const navHome: NavItem[] = [{ title: shell.nav.dashboard, to: '/tablero', icon: LayoutDashboard }]
 
 const navMain: NavItem[] = [
   { title: copy.nav.debts, to: '/deudas', icon: Receipt },
@@ -96,7 +96,7 @@ export const AppSidebar = () => (
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton asChild>
-            <Link to="/">
+            <Link to="/tablero">
               <span className="grid size-6 shrink-0 place-items-center rounded-sm bg-primary text-xs font-semibold text-primary-foreground">
                 T
               </span>

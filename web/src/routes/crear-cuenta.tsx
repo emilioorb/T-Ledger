@@ -47,7 +47,7 @@ const CrearCuentaScreen = () => {
           // libro lo crea después desde adentro.
           if (!invitacion) {
             queryClient.clear()
-            void navegar({ to: '/' })
+            void navegar({ to: '/tablero' })
             return
           }
 
@@ -61,7 +61,7 @@ const CrearCuentaScreen = () => {
           if (rechazo) return fallar(copy.crear.accountWithoutBook)
 
           queryClient.clear()
-          void navegar({ to: '/' })
+          void navegar({ to: '/tablero' })
         },
         // El 403 es la regla de registro del servidor: no hay invitación vigente para ese
         // correo. El 422 es el correo repetido. Lo demás no se disfraza de error de tecleo.

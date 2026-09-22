@@ -68,7 +68,7 @@ const GROUPS: GuideGroup[] = [
       {
         id: 'panel',
         title: shell.nav.dashboard,
-        to: '/',
+        to: '/tablero',
         icon: LayoutDashboard,
         ...guide.modules.dashboard,
       },

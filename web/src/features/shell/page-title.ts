@@ -4,6 +4,7 @@ import { copy as budget } from '@/features/budget/copy'
 import { copy as debts } from '@/features/debts/copy'
 import { copy as goals } from '@/features/goals/copy'
 import { copy as investments } from '@/features/investments/copy'
+import { copy as landing } from '@/features/landing/copy'
 import { copy as projection } from '@/features/projection/copy'
 import { copy as overview } from '@/features/projection/overview-copy'
 import { copy as shell } from '@/features/shell/copy'
@@ -45,7 +46,8 @@ export const BANKING_LABELS: Record<string, string> = {
 export const screenNameFor = (pathname: string): string | null => {
   const [section, second] = pathname.split('/').filter(Boolean)
 
-  if (!section) return overview.overview.title
+  if (!section) return landing.tab
+  if (section === 'tablero') return overview.overview.title
   if (section === 'banco') return BANKING_LABELS[second ?? ''] ?? banking.nav.section
   if (section === 'contabilidad') return ACCOUNTING_LABELS[second ?? ''] ?? accounting.nav.section
   if (section === 'presupuesto' && second === 'modelos') return budget.nav.models

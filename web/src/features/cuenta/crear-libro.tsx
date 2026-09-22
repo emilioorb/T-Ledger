@@ -50,7 +50,7 @@ export const CrearLibro = ({ lleno }: { lleno: boolean }) => {
     toast.success(copy.libros.created(limpio))
     // La recarga entera, igual que al cambiar de libro: en memoria quedan los saldos y los
     // movimientos del anterior.
-    window.location.assign('/')
+    window.location.assign('/tablero')
   }
 
   return (

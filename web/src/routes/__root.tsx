@@ -133,7 +133,10 @@ const Shell = () => {
 
 // Las pantallas donde todavía no sos nadie. No llevan barra lateral —no hay a dónde navegar
 // sin sesión— y son las únicas a las que se entra sin ella.
-const PUBLICAS = ['/entrar', '/crear-cuenta']
+// La landing entra acá por dos motivos a la vez: no pide sesión, y no lleva barra lateral.
+// `beforeLoad` la compara contra el pathname y el componente contra el `routeId`, y para la
+// raíz las dos cosas son '/'.
+const PUBLICAS = ['/', '/entrar', '/crear-cuenta']
 
 const esPublica = (ruta: string) => PUBLICAS.includes(ruta)
 

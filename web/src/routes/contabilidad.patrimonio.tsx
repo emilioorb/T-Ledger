@@ -63,7 +63,7 @@ const NetWorthScreen = () => {
           description={copy.netWorth.noRate.description}
           action={
             <Button variant="secondary" size="sm" asChild>
-              <Link to="/">{copy.netWorth.noRate.action}</Link>
+              <Link to="/tablero">{copy.netWorth.noRate.action}</Link>
             </Button>
           }
         />

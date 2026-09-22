@@ -16,7 +16,7 @@ export interface Destination {
 // Los destinos son datos, no un switch: la lista del diálogo de ayuda y el despachador de
 // teclas se leen de la misma tabla, así que no pueden discrepar.
 export const DESTINATIONS: Destination[] = [
-  { key: 'h', to: '/', label: overview.overview.title },
+  { key: 'h', to: '/tablero', label: overview.overview.title },
   { key: 'd', to: '/deudas', label: debts.nav.debts },
   { key: 'p', to: '/presupuesto', label: budget.nav.budget },
   { key: 'm', to: '/metas', label: goals.goals.title },

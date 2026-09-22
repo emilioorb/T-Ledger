@@ -30,7 +30,7 @@ const EntrarScreen = () => {
           // La caché puede tener datos de quien usó esta pantalla antes. Vaciarla acá es lo
           // que evita que el primer instante después de entrar muestre plata ajena.
           queryClient.clear()
-          void navegar({ to: redirigirA ?? '/' })
+          void navegar({ to: redirigirA ?? '/tablero' })
         },
         // Tres casos y no dos. Sin conexión no es culpa de nadie; un 401 sí es una credencial
         // equivocada —sin decir cuál de las dos, que confirmaría qué correos tienen cuenta—; y

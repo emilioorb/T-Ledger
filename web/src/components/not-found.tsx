@@ -9,7 +9,7 @@ export const NotFound = () => (
     <h1 className="text-xl font-semibold tracking-tight">{copy.notFound.title}</h1>
     <p className="text-sm text-muted-foreground">{copy.notFound.description}</p>
     <Button size="sm" asChild>
-      <Link to="/">{copy.notFound.action}</Link>
+      <Link to="/tablero">{copy.notFound.action}</Link>
     </Button>
   </section>
 )
