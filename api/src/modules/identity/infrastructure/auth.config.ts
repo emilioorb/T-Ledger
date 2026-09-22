@@ -41,8 +41,8 @@ export const crearAuth = (
   env: Env,
   alCrearLibro: (bookId: string) => Promise<void>,
   alCambiarMiembro: (cambio: CambioDeMiembro) => Promise<void>,
-) =>
-  betterAuth({
+) => {
+  const auth = betterAuth({
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
     secret: env.AUTH_SECRET,
     baseURL: env.AUTH_BASE_URL,
@@ -96,6 +96,15 @@ export const crearAuth = (
               new Date(),
             )
             if (!permitido) throw new APIError('FORBIDDEN', { message: SIN_INVITACION })
+          },
+          // Toda cuenta nace con su libro personal, venga o no de una invitación: entrar a un
+          // libro ajeno no reemplaza tener el propio. Va por la API de organizaciones y no
+          // directo a la base para que corra `afterCreateOrganization` y el libro salga con
+          // su plan de cuentas. El slug lleva el id porque es único en toda la instancia.
+          after: async (usuario) => {
+            await auth.api.createOrganization({
+              body: { name: 'Personal', slug: `personal-${usuario.id}`, userId: usuario.id },
+            })
           },
         },
       },
@@ -263,5 +272,7 @@ export const crearAuth = (
       }),
     ],
   })
+  return auth
+}
 
 export type Auth = ReturnType<typeof crearAuth>
