@@ -1,12 +1,10 @@
 import { ShieldCheckIcon } from 'lucide-react'
-import { useLayoutEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { TEXT_LINK } from '@/components/text-link'
 import { Bloub, type NombreDeGesto } from '@/features/shell/bloub'
 import { copy as shell } from '@/features/shell/copy'
-import { forceTheme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { copy } from './copy'
-import { FondoDePuntos } from './fondo-de-puntos'
 import { PanelDeConfianza } from './panel-de-confianza'
 
 interface Props {
@@ -20,18 +18,13 @@ interface Props {
 // Vive acá y no en la ruta de entrar porque la de crear cuenta es la misma pantalla con otro
 // formulario adentro, y dos copias del marco se desincronizan a la primera corrección.
 export const MarcoDeIdentidad = ({ gesto, children }: Props) => {
-  // Papel blanco con tinta negra, sea cual sea el tema del resto de la app, y antes del primer
-  // pintado: en un efecto normal la pantalla asoma con el tema viejo durante un cuadro y da un
-  // parpadeo. Al salir, el documento vuelve a la preferencia de la persona.
-  useLayoutEffect(() => forceTheme('light'), [])
-
-  // El campo de puntos ocupa la página entera y la tarjeta flota encima. Adentro, dos columnas
+  // El tema y el campo de puntos los pone `MarcoPublico`, una vez para las tres pantallas de
+  // antes de entrar. La tarjeta flota encima. Adentro, dos columnas
   // desde `lg`: el formulario a la izquierda y lo que el producto puede demostrar de sí mismo
   // a la derecha. Abajo de `lg` el panel desaparece entero en vez de apilarse: en un teléfono,
   // entrar es la tarea, y lo demás sería ruido debajo del pliegue.
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center gap-5 overflow-hidden bg-background p-4 sm:p-8">
-      <FondoDePuntos />
+    <main className="relative flex min-h-dvh flex-col items-center justify-center gap-5 overflow-hidden p-4 sm:p-8">
 
       {/* Tres escalas y no una. En una laptop de 1280 la tarjeta de 1024 ocupaba el ochenta
           por ciento del ancho y tres cuartos del alto: lo mismo que en un monitor grande, y

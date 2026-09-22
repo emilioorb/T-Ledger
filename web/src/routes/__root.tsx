@@ -14,6 +14,7 @@ import { PageBreadcrumb } from '@/components/page-breadcrumb'
 import { ExchangeRateIndicator } from '@/features/money/exchange-rate-indicator'
 import { auth } from '@/features/identity/auth-client'
 import { useAsegurarLibroActivo } from '@/features/identity/libro-activo'
+import { MarcoPublico } from '@/features/identity/marco-publico'
 import { VigilanteDeSesion } from '@/features/identity/vigilante-de-sesion'
 import { copy as shell } from '@/features/shell/copy'
 import { copy as shortcuts } from '@/features/shortcuts/copy'
@@ -196,7 +197,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
               al cambiar de ruta, y sin esto las pantallas sin sesión heredaban el título de
               donde vinieras. */}
           <DocumentTitle />
-          <Outlet />
+          <MarcoPublico>
+            <Outlet />
+          </MarcoPublico>
           <Toaster position="bottom-right" />
         </TooltipProvider>
       )

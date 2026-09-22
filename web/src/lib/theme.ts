@@ -47,6 +47,16 @@ export const seguirAlSistema = (): (() => void) => {
   return () => consulta.removeEventListener('change', alCambiar)
 }
 
+// El tema de las pantallas de antes de entrar —la landing, entrar y crear cuenta—, aparte del
+// de adentro: abren en papel blanco y no en el oscuro de la app, y quien lo cambia en la
+// landing espera que el formulario de entrar lo siga. No pinta el documento al cambiar: cada
+// pantalla lo aplica con `forceTheme`, que al salir devuelve la preferencia de adentro.
+export const temaDeEntrada = crearAjuste<Theme>(
+  `${STORAGE_KEY}.entrada`,
+  (guardado) => (guardado === 'dark' ? 'dark' : 'light'),
+  (valor) => valor,
+)
+
 // Una pantalla puede correr en un tema propio —la de entrar es papel blanco con tinta negra—
 // y al salir el documento vuelve a la preferencia de la persona, que nunca se tocó.
 //

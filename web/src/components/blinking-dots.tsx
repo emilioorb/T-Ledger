@@ -62,6 +62,8 @@ export interface BlinkingDotsProps {
   opacity?: number;
   /** Let the pointer shift the layers */
   cursorInteraction?: boolean;
+  /** Called once the first frame has been painted */
+  onReady?: () => void;
   /** How far the pointer displaces the nearest layer */
   cursorParallax?: number;
   /** Drop resolution when the frame rate falls short */
@@ -83,7 +85,10 @@ void main() {
 }
 `;
 
-const fieldFragment = `
+// Los uniformes de color llegan en lineal: `THREE.Color.set('#0e0c0a')` convierte desde sRGB.
+// Un `ShaderMaterial` no vuelve a sRGB solo, y sin `colorspace_fragment` el papel oscuro se
+// pintaba (1, 1, 1) en vez de (14, 12, 10): la página sin puntos se veía gris al lado.
+export const fieldFragment = `
 precision highp float;
 
 varying vec2 vSpot;
@@ -175,6 +180,7 @@ void main() {
   float alpha = veil + rest;
 
   gl_FragColor = vec4(rgb, alpha) * uOpacity;
+  #include <colorspace_fragment>
 }
 `;
 
@@ -442,6 +448,7 @@ const BlinkingDots = ({
   brightness = 1,
   opacity = 1,
   cursorInteraction = true,
+  onReady,
   cursorParallax = 0.06,
   adaptiveQuality = true,
   targetFps = 60,
@@ -514,6 +521,9 @@ const BlinkingDots = ({
           powerPreference: "high-performance",
         }}
         orthographic
+        // Dos cuadros y no al crearse: el primero compila el shader y puede bloquear cientos
+        // de milisegundos, y quien espere este aviso para una transición la vería empezada.
+        onCreated={() => requestAnimationFrame(() => requestAnimationFrame(() => onReady?.()))}
       >
         <DotField
           awake={awake}
