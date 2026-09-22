@@ -2,13 +2,14 @@ import { ForbiddenException, Inject, Injectable, Logger, type NestMiddleware } f
 import { fromNodeHeaders } from 'better-auth/node'
 import type { NextFunction, Request, Response } from 'express'
 import { conLibroEnCadena, type Rol } from '../../../shared/libro/libro-context.js'
+import { elegirLibro } from './elegir-libro.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import { AUTH } from '../identity.tokens.js'
 import type { Auth } from './auth.config.js'
 
-// La cabecera que dice en qué libro está parada la pantalla. Cuando no viene, se usa el único
-// libro de la persona; si tiene varios, hay que elegir, y elegir por ella sería mostrarle las
-// cifras de un libro con el nombre de otro.
+// La cabecera que dice en qué libro está parada la pantalla. Cuando no viene, manda el libro
+// activo de la sesión; y si tampoco hay, el único que tenga. Elegir por ella cuando tiene
+// varios sería mostrarle las cifras de un libro con el nombre de otro.
 export const CABECERA_LIBRO = 'x-libro'
 
 // Middleware y no guard. Un guard devuelve `true` y termina: el contexto que abriera moriría
@@ -34,7 +35,11 @@ export class LibroMiddleware implements NestMiddleware {
     // Sin sesión no decide este middleware: el guard de Better Auth responde 401 más adelante.
     if (!userId) return seguir()
 
-    const membresia = await this.membresiaDe(userId, peticion.header(CABECERA_LIBRO))
+    const membresia = await this.membresiaDe(
+      userId,
+      peticion.header(CABECERA_LIBRO),
+      sesion.session.activeOrganizationId,
+    )
 
     // 403 y no 404 cuando el libro no es suyo. Un 404 distinto de un 403 confirmaría que ese
     // libro existe en algún lado, y eso ya es contar de más.
@@ -46,21 +51,26 @@ export class LibroMiddleware implements NestMiddleware {
     )
   }
 
-  private async membresiaDe(userId: string, libroPedido: string | undefined) {
+  private async membresiaDe(
+    userId: string,
+    libroPedido: string | undefined,
+    libroActivo: string | null | undefined,
+  ) {
     // Sin filtro: las membresías no pertenecen a un libro, lo deciden. Pasarlas por el filtro
     // sería pedirle al portero que muestre la llave antes de entrar.
-    const db = this.prisma.clientSinFiltroDeLibro
+    //
+    // Se traen todas y se elige en memoria: son dos o tres filas por persona, y con la
+    // decisión en una función pura se puede probar sin base.
+    const suyas = await this.prisma.clientSinFiltroDeLibro.bookMember.findMany({
+      where: { userId },
+      select: { organizationId: true, role: true },
+    })
 
-    if (libroPedido) {
-      return db.bookMember.findFirst({ where: { userId, organizationId: libroPedido } })
-    }
+    const elegida = elegirLibro({ pedido: libroPedido, activo: libroActivo, suyas })
 
-    const suyas = await db.bookMember.findMany({ where: { userId }, take: 2 })
-    if (suyas.length === 1) return suyas[0] ?? null
-
-    if (suyas.length > 1) {
+    if (!elegida && suyas.length > 1) {
       this.logger.warn(`El usuario ${userId} tiene varios libros y la petición no eligió ninguno`)
     }
-    return null
+    return elegida
   }
 }

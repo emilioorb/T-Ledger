@@ -93,21 +93,39 @@ transacción de Better Auth es interna —su código deja dicho que nunca se exp
 nuestra escritura no puede entrar en ella. Se acepta el desbalance porque la dirección que
 importa es la que queda cubierta: el registro no pierde entradas.
 
-**Se registran tres de los cinco caminos**, y los otros dos quedan pendientes a propósito:
+**Se registran los cinco caminos.** Tres salieron directo del gancho, y los otros dos tuvieron
+que esperar a que apareciera de dónde sacar al autor:
 
-| Camino | Registra | Por qué |
-|---|---|---|
-| Invitar | sí | El gancho recibe `inviter: session.user` |
-| Cancelar una invitación | sí | Recibe `cancelledBy: session.user` |
-| Aceptar una invitación | sí | Autor y afectado son la misma persona, y es cierto |
-| Cambiar un rol | **no** | El gancho solo recibe al afectado |
-| Sacar a alguien | **no** | Ídem |
+| Camino | De dónde sale el autor |
+|---|---|
+| Invitar | El gancho recibe `inviter: session.user` |
+| Cancelar una invitación | Recibe `cancelledBy: session.user` |
+| Aceptar una invitación | Autor y afectado son la misma persona, y es cierto |
+| Cambiar un rol | Del contexto de la petición |
+| Sacar a alguien | Ídem |
 
 En los dos últimos, el único usuario que llega al gancho es la persona afectada. Anotarlo como
 autor diría que alguien se degradó o se expulsó a sí mismo, y un registro que miente sobre
 quién hizo el cambio es peor que uno que no lo tiene, porque se le cree. Se probó y se
 descartó: la primera versión registró un cambio de rol firmado por la persona equivocada.
 
-La salida, cuando se retome, son los `databaseHooks`: su gancho recibe un `ctx` con la sesión y
-ahí sí se sabe quién ejecuta.
+### Cómo se cerró (22 de setiembre de 2026)
+
+El dato faltante existe un escalón más arriba. El hook global de Better Auth
+—`hooks.before`— corre dentro de la petición y ahí `getSessionFromCtx(ctx)` devuelve quién
+ejecuta. Se siembra en un `AsyncLocalStorage` (`autor-de-la-peticion.ts`) y el gancho de
+organización lo lee: corre en la misma cadena asíncrona, así que llega sin que nadie lo pase de
+mano en mano. Es el mismo mecanismo con el que el libro viaja hasta los repositorios.
+
+Si el autor no está, `exigirAutor` lanza y la operación se aborta. Es la regla de este ADR
+llevada al caso donde el dato podría faltar: dejar pasar el cambio sin rastro rompe la promesa
+en silencio, y firmarlo con el afectado la rompe mintiendo.
+
+Lo sostienen dos guardias en `cobertura-de-rastro.spec.ts`: que los cinco ganchos de gente
+avisen del cambio, y que los dos que solo reciben al afectado pidan el autor aparte en vez de
+firmar con `user.id`.
+
+Se descartó el camino que este ADR había anotado como salida —los `databaseHooks` del modelo
+`member`—: esos ganchos existen para `user`, `session`, `account` y `verification`, y las
+tablas del plugin de organización no pasan por ahí.
 

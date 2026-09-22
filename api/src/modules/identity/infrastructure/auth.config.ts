@@ -55,6 +55,19 @@ export const crearAuth = (
     // Lo que no se hace es apagar la comprobación con `disableOriginCheck`: eso desactiva
     // también la protección CSRF y deja pasar cualquier URL en las redirecciones.
     trustedOrigins: [env.CORS_ORIGIN],
+    // Quién ejecuta, guardado antes de que corra el endpoint. Es lo que les falta a los
+    // ganchos de organización para poder firmar un cambio de rol o una expulsión: ellos
+    // reciben al afectado, no a la sesión. Acá sí se puede pedir, y el gancho corre en la
+    // misma cadena asíncrona de esta petición.
+    //
+    // No corta nada si no hay sesión: entrar y registrarse pasan por acá, y ahí todavía no
+    // hay nadie. Quien necesite el autor lo exige por su cuenta.
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        const sesion = await getSessionFromCtx(ctx).catch(() => null)
+        if (sesion) entrarComoAutor(sesion.user.id)
+      }),
+    },
     emailAndPassword: {
       enabled: true,
     },
@@ -142,6 +155,17 @@ export const crearAuth = (
       organization({
         ac,
         roles,
+        // Cualquiera con cuenta puede abrir un libro, hasta tres. Se cuentan los que posee y
+        // no los que mira: que te inviten al libro de tu familia no te gasta un lugar propio.
+        //
+        // La comprobación vive acá y no en la pantalla porque una pantalla no protege nada:
+        // el endpoint de crear organización de Better Auth es público para cualquier sesión.
+        allowUserToCreateOrganization: async (usuario) => {
+          const propios = await prisma.bookMember.count({
+            where: { userId: usuario.id, role: 'owner' },
+          })
+          return puedeCrearLibro(propios)
+        },
         // Su `organization` es nuestro libro, así que se llama como lo que es.
         schema: {
           organization: { modelName: 'book' },
@@ -169,14 +193,12 @@ export const crearAuth = (
           // está escrita en el ADR: la transacción de Better Auth es interna y su propio
           // código dice que nunca se expone, así que nuestra escritura no puede entrar en
           // ella.
-          // Sobre gente, se registran los tres caminos en los que se sabe **quién** lo hizo,
-          // y solo esos. Los ganchos de organización reciben a la persona afectada, no a la
-          // sesión que ejecuta: en `beforeUpdateMemberRole` y `beforeRemoveMember` el único
-          // usuario a mano es el afectado, y anotarlo como autor diría que alguien se degradó
-          // o se expulsó a sí mismo. Un registro que miente sobre quién hizo el cambio es peor
-          // que uno que no lo tiene, porque se le cree.
-          //
-          // Cambiar un rol y sacar a alguien quedan pendientes, documentados en el ADR-004.
+          // Sobre gente se registran los cinco caminos. Los ganchos de organización reciben a
+          // la persona afectada y no a la sesión que ejecuta, así que en los dos últimos el
+          // autor lo pone `autorDeLaPeticion`, sembrado por el hook global de arriba. Antes
+          // quedaban sin registrar justamente por eso: anotar al afectado como autor diría
+          // que alguien se degradó o se expulsó a sí mismo, y un registro que miente sobre
+          // quién hizo el cambio es peor que uno que no lo tiene, porque se le cree.
           //
           // Son ganchos **before** y no **after** a propósito: el código de Better Auth encola
           // los `after` y los corre después del commit, fuera de la transacción, y deja dicho
@@ -214,6 +236,27 @@ export const crearAuth = (
               autorId: cancelledBy.id,
               accion: 'eliminar',
               antes: { invitado: invitation.email, rol: invitation.role },
+            })
+          },
+
+          beforeUpdateMemberRole: async ({ member, newRole, user, organization }) => {
+            await alCambiarMiembro({
+              bookId: organization.id,
+              aQuien: user.id,
+              autorId: exigirAutor('cambiar un rol'),
+              accion: 'editar',
+              antes: { quien: user.name, rol: member.role },
+              despues: { quien: user.name, rol: newRole },
+            })
+          },
+
+          beforeRemoveMember: async ({ member, user, organization }) => {
+            await alCambiarMiembro({
+              bookId: organization.id,
+              aQuien: user.id,
+              autorId: exigirAutor('sacar a alguien del libro'),
+              accion: 'eliminar',
+              antes: { quien: user.name, correo: user.email, rol: member.role },
             })
           },
         },

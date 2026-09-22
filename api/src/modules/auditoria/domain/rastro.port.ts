@@ -2,7 +2,16 @@
 // escribe «donde hay plata o decisiones», y un tipo abierto invitaría a registrar cualquier
 // cosa hasta enterrar la señal bajo el ruido de catálogos y consultas.
 export type EntidadAuditada =
-  'movimiento' | 'periodo' | 'deuda' | 'meta' | 'inversion' | 'presupuesto' | 'miembro'
+  | 'movimiento'
+  | 'periodo'
+  | 'deuda'
+  | 'meta'
+  | 'inversion'
+  | 'presupuesto'
+  | 'miembro'
+  // El libro mismo: hoy solo cuando alguien lo vacía, que es la decisión más destructiva que
+  // ofrece el producto y la que más merece quedar anotada.
+  | 'libro'
 
 // `anular` no es `eliminar`: un movimiento anulado sigue existiendo y su asiento se revierte,
 // que es una cosa distinta de borrarlo. Distinguirlas es la diferencia entre poder reconstruir
@@ -11,7 +20,16 @@ export type EntidadAuditada =
 // y el registro se lee como una frase —«editó una meta» cuando alguien aportó ₡50 000 es una
 // respuesta falsa a la pregunta que el registro existe para contestar—.
 export type AccionAuditada =
-  'crear' | 'editar' | 'aportar' | 'eliminar' | 'anular' | 'cerrar' | 'reabrir'
+  | 'crear'
+  | 'editar'
+  | 'aportar'
+  | 'eliminar'
+  | 'anular'
+  | 'cerrar'
+  | 'reabrir'
+  // Vaciar no es eliminar: eliminar se lleva una cosa, vaciar se lleva todo lo anotado y deja
+  // el libro en pie. Leídas en el registro, son dos frases distintas.
+  | 'vaciar'
 
 export interface EntradaDeRastro {
   entidad: EntidadAuditada

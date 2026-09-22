@@ -26,6 +26,7 @@ export const copy = {
       inversion: 'Inversiones',
       presupuesto: 'Presupuestos',
       miembro: 'Personas',
+      libro: 'El libro',
     },
     // Cada acción se lee como una frase terminada, porque en la tabla va sola.
     actions: {
@@ -36,6 +37,7 @@ export const copy = {
       anular: 'anuló',
       cerrar: 'cerró',
       reabrir: 'reabrió',
+      vaciar: 'vació',
     },
     // Singular: la fila cuenta un hecho, no una categoría.
     singular: {
@@ -46,6 +48,8 @@ export const copy = {
       inversion: 'una inversión',
       presupuesto: 'un presupuesto',
       miembro: 'una persona',
+      // «vació el libro» y no «vació un libro»: es este, el que se está mirando.
+      libro: 'el libro',
     },
     columns: { when: 'Cuándo', who: 'Quién', what: 'Qué pasó', changes: 'Detalle' },
     // Los campos se guardan con el nombre que tienen en el código, pero el registro lo lee una
@@ -58,7 +62,7 @@ export const copy = {
       counterparty: 'a quién',
       amount: 'monto',
       paymentAccountCode: 'cuenta de pago',
-      receiptUrl: 'comprobante',
+      receiptKey: 'comprobante',
       status: 'estado',
       name: 'nombre',
       target: 'objetivo',

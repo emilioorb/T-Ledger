@@ -6,6 +6,9 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
 import { ScheduleModule } from '@nestjs/schedule'
 import { AccountingModule } from './modules/accounting/accounting.module.js'
 import { BankingModule } from './modules/banking/banking.module.js'
+import { ArchivosModule } from './shared/archivos/archivos.module.js'
+import { AdminModule } from './modules/admin/admin.module.js'
+import { LibroModule } from './modules/libro/libro.module.js'
 import { BudgetModule } from './modules/budget/budget.module.js'
 import { GoalsModule } from './modules/goals/goals.module.js'
 import { InvestmentsModule } from './modules/investments/investments.module.js'
@@ -33,6 +36,9 @@ import { PrismaModule } from './shared/prisma/prisma.module.js'
     InvestmentsModule,
     ProjectionModule,
     BankingModule,
+    LibroModule,
+    AdminModule,
+    ArchivosModule,
   ],
 })
 export class AppModule {}

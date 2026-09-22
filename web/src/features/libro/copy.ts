@@ -1,0 +1,74 @@
+export const copy = {
+  title: 'El libro',
+  description: 'Quién entra, qué puede hacer y cómo empezar de nuevo.',
+
+  nombre: {
+    label: 'Cómo se llama',
+    hint: 'Lo ves en la barra lateral y en cada invitación que mandás.',
+    saved: 'Listo, así se llama el libro.',
+    failed: 'No se pudo cambiar el nombre.',
+  },
+
+  gente: {
+    title: 'La gente',
+    hint: 'Cada quien entra con su cuenta. Lo que hace queda firmado con su nombre.',
+    you: 'Vos',
+    roles: {
+      owner: { name: 'Dueño', hint: 'Anota, cierra meses y decide quién entra.' },
+      editor: { name: 'Anota', hint: 'Todo el libro, menos la gente.' },
+      viewer: { name: 'Mira', hint: 'Ve el libro y no puede cambiar nada.' },
+    },
+    changeRole: (quien: string) => `Qué puede hacer ${quien}`,
+    roleChanged: 'Listo, eso puede hacer de ahora en adelante.',
+    roleFailed: 'No se pudo cambiar lo que puede hacer.',
+    remove: 'Sacar del libro',
+    removeTitle: (quien: string) => `¿Sacar a ${quien} del libro?`,
+    removeHint:
+      'Pierde el acceso en el momento. Lo que anotó se queda: el libro no se reescribe cuando alguien se va.',
+    removeConfirm: 'Sacar',
+    removed: 'Listo, ya no tiene acceso.',
+    removeFailed: 'No se pudo sacar a esa persona.',
+    lastOwner: 'Sos el único dueño: primero pasale el libro a alguien más.',
+  },
+
+  invitar: {
+    open: 'Invitar a alguien',
+    title: 'Invitar al libro',
+    hint: 'Se crea la invitación y vos le pasás el enlace. Todavía no mandamos correos.',
+    email: 'Su correo',
+    emailPlaceholder: 'nombre@correo.com',
+    role: 'Qué va a poder hacer',
+    submit: 'Crear la invitación',
+    submitting: 'Creando',
+    created: 'Invitación lista. Copiá el enlace y mandáselo.',
+    failed: 'No se pudo crear la invitación.',
+    linkLabel: 'El enlace para esa persona',
+    copy: 'Copiar el enlace',
+    copied: 'Enlace copiado.',
+    close: 'Listo',
+    pending: 'Invitaciones sin aceptar',
+    expires: (fecha: string) => `Vence el ${fecha}`,
+    cancel: 'Cancelar',
+    cancelled: 'Invitación cancelada.',
+    cancelFailed: 'No se pudo cancelar la invitación.',
+    none: 'No hay ninguna invitación esperando.',
+  },
+
+  vaciar: {
+    title: 'Empezar de nuevo',
+    hint: 'Borra lo anotado —movimientos, asientos, deudas, metas, inversiones y extractos— y deja el plan de cuentas, las categorías y los modelos de presupuesto.',
+    open: 'Vaciar el libro',
+    dialogTitle: 'Vaciar el libro',
+    dialogHint:
+      'No se puede deshacer. El registro de auditoría no se borra: queda anotado que lo vaciaste, y con cuánto se fue.',
+    export: 'Antes de hacerlo, los reportes se descargan en CSV.',
+    confirmLabel: (nombre: string) => `Tu contraseña, para vaciar ${nombre}`,
+    wrongPassword: 'Esa no es tu contraseña.',
+    confirm: 'Vaciar',
+    emptying: 'Vaciando',
+    cancel: 'Dejarlo como está',
+    done: (total: number) =>
+      total === 0 ? 'No había nada que borrar.' : `Listo: se borraron ${total} registros.`,
+    failed: 'No se pudo vaciar el libro.',
+  },
+} as const

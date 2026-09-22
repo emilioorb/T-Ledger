@@ -56,3 +56,45 @@ describe('cobertura del rastro de auditoría', () => {
     expect(fantasmas).toEqual([])
   })
 })
+
+// Los cambios de gente no pasan por un caso de uso: los hace Better Auth desde sus propios
+// ganchos, así que la guardia de arriba no los ve. Esta es la misma promesa mirando ese otro
+// camino, el que el ADR-004 dejó a medias hasta que se resolvió de dónde sacar al autor.
+const authConfig = readFileSync(`${raiz}modules/identity/infrastructure/auth.config.ts`, 'utf8')
+
+// Un gancho de gente: los que hablan de miembros o invitaciones. `beforeCreateOrganization` y
+// compañía quedan fuera porque crear un libro no es mover gente.
+const GANCHOS_DE_GENTE = /before(\w*(?:Member|Invitation)\w*): async/g
+
+describe('los cambios de gente también dejan rastro', () => {
+  const ganchos = [...authConfig.matchAll(GANCHOS_DE_GENTE)].map(([, nombre]) => nombre!)
+
+  it('se encontraron los ganchos, si no este test no prueba nada', () => {
+    // Invitar, aceptar, cancelar, cambiar el rol y sacar. Los cinco caminos del ADR-004.
+    expect(ganchos).toHaveLength(5)
+  })
+
+  it('cada gancho de gente avisa del cambio', () => {
+    const mudos = ganchos.filter((nombre) => {
+      const desde = authConfig.indexOf(`before${nombre}: async`)
+      const siguiente = authConfig.indexOf('before', desde + 10)
+      const cuerpo = authConfig.slice(desde, siguiente === -1 ? undefined : siguiente)
+      return !cuerpo.includes('alCambiarMiembro')
+    })
+
+    expect(mudos).toEqual([])
+  })
+
+  it('los dos que firman a quien no es el autor lo piden aparte', () => {
+    // `beforeUpdateMemberRole` y `beforeRemoveMember` solo reciben al afectado. Si alguien
+    // los «arregla» pasando `user.id` como autor, el registro diría que se degradó solo.
+    for (const gancho of ['beforeUpdateMemberRole', 'beforeRemoveMember']) {
+      const desde = authConfig.indexOf(`${gancho}: async`)
+      const siguiente = authConfig.indexOf('before', desde + 10)
+      const cuerpo = authConfig.slice(desde, siguiente === -1 ? undefined : siguiente)
+
+      expect(cuerpo).toContain('exigirAutor')
+      expect(cuerpo).not.toContain('autorId: user.id')
+    }
+  })
+})

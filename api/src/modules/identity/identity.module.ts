@@ -10,6 +10,7 @@ import { AUTH, LIBRO_CREADO } from './identity.tokens.js'
 import { crearAuth, type Auth } from './infrastructure/auth.config.js'
 import { LibroMiddleware } from './infrastructure/libro.middleware.js'
 import { PermisoGuard } from './infrastructure/permiso.guard.js'
+import { VerificadorDeContrasena } from './infrastructure/verificador-de-contrasena.js'
 
 // Global porque el middleware del libro corre sobre todas las rutas y la guardia de permiso se
 // registra una vez para toda la aplicación: son infraestructura transversal, no un servicio
@@ -52,9 +53,10 @@ import { PermisoGuard } from './infrastructure/permiso.guard.js'
         ),
     },
     LibroMiddleware,
+    VerificadorDeContrasena,
     { provide: APP_GUARD, useClass: PermisoGuard },
   ],
-  exports: [AUTH],
+  exports: [AUTH, VerificadorDeContrasena],
 })
 export class IdentityModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

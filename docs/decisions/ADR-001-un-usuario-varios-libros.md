@@ -10,7 +10,7 @@ Aceptado
 
 ## Contexto
 
-Tape Ledger no tiene autenticación: ni usuarios, ni sesiones, ni passport, ni hash de
+T-Ledger no tiene autenticación: ni usuarios, ni sesiones, ni passport, ni hash de
 contraseñas. La app asume una sola persona.
 
 El requisito es que una persona lleve, con un solo correo, su libro personal, el de la casa
@@ -116,7 +116,7 @@ La documentación de Better Auth es explícita al respecto: `disableSignUp` sirv
 registro, y para permitirlo *condicionalmente* hay que decidirlo en `databaseHooks.user.create.
 before` y lanzar un `APIError`. Eso es lo que hace ahora `puedeRegistrarse`, con dos caminos de
 entrada y ninguno más: una invitación pendiente y vigente para ese correo, o ser la primera
-cuenta de la instancia —a quien levanta su propio Tape Ledger no la puede invitar nadie—.
+cuenta de la instancia —a quien levanta su propio T-Ledger no la puede invitar nadie—.
 
 Queda sin efecto, por lo tanto, la idea de que abrir el registro al público es cambiar un
 booleano. Abrirlo es sacar la condición del gancho, y ese día sí hacen falta las piezas que
