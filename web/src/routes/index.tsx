@@ -24,7 +24,8 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Amount, isNegativeMoney } from '@/features/accounting/amount'
 import { Delta, percentChange } from '@/features/accounting/delta'
-import { AnimoAvatar } from '@/features/shell/animo-avatar'
+import { CabeceraDelTablero } from '@/features/shell/cabecera-del-tablero'
+import { useSession } from '@/features/identity/auth-client'
 import type { Senales } from '@/features/shell/animo'
 import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { ExpenseBreakdown, type ExpenseSlice } from '@/features/accounting/expense-breakdown'
@@ -44,6 +45,7 @@ import { copy as goalsCopy } from '@/features/goals/copy'
 import { useGoals } from '@/features/goals/use-goals'
 import { useInvestments } from '@/features/investments/use-investments'
 import { copy } from '@/features/projection/overview-copy'
+import { copy as shell } from '@/features/shell/copy'
 import { useCashFlowProjection } from '@/features/projection/use-projection'
 import type { Money } from '@/features/projection/types'
 import {
@@ -200,6 +202,7 @@ const DashboardScreen = () => {
   const tree = useAccountsTree('CRC', today())
   const trend = useMonthlyResults(TREND_MONTHS, 'CRC', today())
   const periods = usePeriods()
+  const { data: sesion } = useSession()
 
   const loading = evaluation.isPending || projection.isPending || goals.isPending
   // Una consulta caída no puede volverse «no pasa nada»: sin el dato, la frase tranquilizadora
@@ -243,9 +246,9 @@ const DashboardScreen = () => {
   const spent = (movements.data?.data ?? []).filter(
     (movement) => movement.status !== 'VOIDED' && movement.amount.currency === 'CRC',
   )
-  const categoryName = new Map(
-    (categories.data ?? []).map((category) => [category.id, category.name]),
-  )
+  // La categoría entera y no solo su nombre: el desglose también pinta con el color que
+  // eligió, y su lugar en el catálogo es el que decide el color cuando no eligió ninguno.
+  const byId = new Map((categories.data ?? []).map((category) => [category.id, category]))
   const byCategory = new Map<string, bigint>()
   for (const movement of spent) {
     byCategory.set(
@@ -254,12 +257,30 @@ const DashboardScreen = () => {
     )
   }
   const slices: ExpenseSlice[] = [...byCategory.entries()]
-    .map(([id, minorUnits]) => ({
-      id,
-      name: categoryName.get(id) ?? copy.overview.expenses.uncategorized,
-      amount: { minorUnits: minorUnits.toString(), currency: 'CRC' as const },
-    }))
+    .map(([id, minorUnits]) => {
+      const categoria = byId.get(id)
+      return {
+        id,
+        name: categoria?.name ?? copy.overview.expenses.uncategorized,
+        amount: { minorUnits: minorUnits.toString(), currency: 'CRC' as const },
+        colorIndex: categoria?.colorIndex ?? null,
+        ...(categoria ? { posicion: categoria.sortOrder } : {}),
+      }
+    })
     .sort((a, b) => Number(BigInt(b.amount.minorUnits) - BigInt(a.amount.minorUnits)))
+  // Lo que va en la barra de arriba: cuánto se anotó y cuánto falta para cerrar el mes. Son
+  // dos cifras que el tablero ya tiene a mano y que nadie más muestra.
+  const diasParaCerrar = Math.max(
+    Math.round(
+      (new Date(`${monthEnd(today())}T00:00:00.000Z`).getTime() -
+        new Date(`${today()}T00:00:00.000Z`).getTime()) /
+        86_400_000,
+    ),
+    0,
+  )
+  // El primero: en la barra hay lugar para un nombre, no para el nombre completo con apellidos.
+  const primerNombre = (sesion?.user.name ?? '').split(' ')[0] ?? ''
+
   const spentTotal = sum(
     slices.map((slice) => slice.amount),
     'CRC',
@@ -336,16 +357,11 @@ const DashboardScreen = () => {
 
   return (
     <section className="space-y-6">
-      <header className="flex items-start justify-between gap-4">
-        <div className="max-w-[60ch]">
-          <h1 className="text-xl font-semibold tracking-tight">{copy.overview.title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{copy.overview.greeting}</p>
-        </div>
-        {/* Arriba a la derecha, a la altura del saludo. Se va con la página en vez de quedar
-            fijo: algo que respira encima de las cifras competiría por la atención justo
-            donde hay números que leer. */}
-        <AnimoAvatar senales={senales} className="hidden w-18 shrink-0 sm:block" />
-      </header>
+      <CabeceraDelTablero
+        nombre={primerNombre}
+        senales={senales}
+        resumen={shell.tablero.resumen(spent.length, diasParaCerrar)}
+      />
 
       {loading ? (
         <div className="space-y-3" role="status" aria-label="Cargando">
