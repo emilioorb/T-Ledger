@@ -150,7 +150,9 @@ const valueCurrency = (
   for (const [key, ofDay] of groupByDay(input.daily)) {
     const dayRate = input.dailyRates.get(key)
     if (!dayRate) return err(new MissingRateError(input.currency, ofDay[0]?.date ?? at))
-    equityHistorical = equityHistorical.plus(slicesOf(ofDay, chart, input.currency).equity.mul(dayRate))
+    equityHistorical = equityHistorical.plus(
+      slicesOf(ofDay, chart, input.currency).equity.mul(dayRate),
+    )
   }
 
   // El libro de cada moneda cuadra por separado: tenencias más tránsito es patrimonio. Si

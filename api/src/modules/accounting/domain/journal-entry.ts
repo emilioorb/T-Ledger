@@ -26,11 +26,7 @@ const MIN_LINES = 2
 const currenciesOf = (lines: readonly JournalLine[]): CurrencyCode[] =>
   [...new Set(lines.map((line) => line.amount.currency))].sort()
 
-const totalOf = (
-  lines: readonly JournalLine[],
-  currency: CurrencyCode,
-  side: EntrySide,
-): Money =>
+const totalOf = (lines: readonly JournalLine[], currency: CurrencyCode, side: EntrySide): Money =>
   lines
     .filter((line) => line.amount.currency === currency && line.side === side)
     .reduce((acc, line) => unwrap(acc.add(line.amount)), Money.zero(currency))
@@ -38,7 +34,10 @@ const totalOf = (
 export class JournalEntry {
   private constructor(private readonly props: JournalEntryProps) {}
 
-  static create(props: JournalEntryProps, chart: ChartOfAccounts): Result<JournalEntry, RangeError> {
+  static create(
+    props: JournalEntryProps,
+    chart: ChartOfAccounts,
+  ): Result<JournalEntry, RangeError> {
     if (props.lines.length < MIN_LINES) {
       return err(new RangeError('Un asiento necesita al menos dos líneas'))
     }
@@ -81,13 +80,27 @@ export class JournalEntry {
     return ok(new JournalEntry({ ...props, description: props.description.trim() }))
   }
 
-  get id(): string { return this.props.id }
-  get date(): Date { return this.props.date }
-  get description(): string { return this.props.description }
-  get reference(): string | null { return this.props.reference }
-  get lines(): readonly JournalLine[] { return this.props.lines }
-  get sourceMovementId(): string | null { return this.props.sourceMovementId }
-  get reversesEntryId(): string | null { return this.props.reversesEntryId }
+  get id(): string {
+    return this.props.id
+  }
+  get date(): Date {
+    return this.props.date
+  }
+  get description(): string {
+    return this.props.description
+  }
+  get reference(): string | null {
+    return this.props.reference
+  }
+  get lines(): readonly JournalLine[] {
+    return this.props.lines
+  }
+  get sourceMovementId(): string | null {
+    return this.props.sourceMovementId
+  }
+  get reversesEntryId(): string | null {
+    return this.props.reversesEntryId
+  }
 
   currencies(): CurrencyCode[] {
     return currenciesOf(this.props.lines)

@@ -422,16 +422,16 @@ model BankLine {
 // entradas no se borran —se volverían agujeros en la historia justo donde alguien querría
 // mirar— y pasan a mostrarse como «cuenta eliminada».
 model AuditLog {
-  id        String    @id
-  bookId    String
-  userId    String?
+  id         String    @id
+  bookId     String
+  userId     String?
   // Qué se tocó y cuál, para poder pedir la historia de un movimiento puntual.
-  entity    String
-  entityId  String
-  action    String
+  entity     String
+  entityId   String
+  action     String
   // Campo por campo: qué era antes y qué quedó. Sin esto el rastro dice que algo cambió pero
   // no qué, que es la mitad inútil de la respuesta.
-  changes   Json?
+  changes    Json?
   // El detalle otra vez, en texto plano, para poder buscarlo. Duplicar parece feo hasta que se
   // intenta lo otro: `changes` es un arreglo de objetos, y el `string_contains` de Prisma solo
   // mira columnas JSON que sean un string suelto —medido: cero resultados con la fila ahí, y
@@ -441,9 +441,9 @@ model AuditLog {
   // índice común. El día que el registro pese, la respuesta es `pg_trgm` con un GIN sobre esta
   // columna, no partirla en pedazos.
   searchText String?
-  createdAt DateTime  @default(now()) @db.Timestamptz(3)
-  book      book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  authuser  authUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  book       book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  authuser   authUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // El orden natural de lectura es el cronológico invertido dentro de un libro.
   @@index([bookId, createdAt])

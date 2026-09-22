@@ -39,7 +39,9 @@ describe('blockersFor', () => {
   })
 
   it('bloquea si el período ya está cerrado', () => {
-    expect(blockersFor(snapshot({ status: 'CLOSED' })).map((b) => b.code)).toEqual(['ALREADY_CLOSED'])
+    expect(blockersFor(snapshot({ status: 'CLOSED' })).map((b) => b.code)).toEqual([
+      'ALREADY_CLOSED',
+    ])
   })
 
   it('acumula todos los bloqueos, no se detiene en el primero', () => {

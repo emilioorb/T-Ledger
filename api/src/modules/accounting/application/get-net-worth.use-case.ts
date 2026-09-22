@@ -32,10 +32,7 @@ export class GetNetWorthUseCase {
           this.journal.totalsByAccountPerDay(currency, at),
         ])
 
-        const rates = await this.rates.ratesFor(
-          [at, ...daily.map((total) => total.date)],
-          currency,
-        )
+        const rates = await this.rates.ratesFor([at, ...daily.map((total) => total.date)], currency)
 
         return {
           currency,

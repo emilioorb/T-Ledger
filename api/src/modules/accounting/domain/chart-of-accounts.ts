@@ -48,7 +48,9 @@ export class ChartOfAccounts {
       const parent = index.get(account.parentCode)
       if (!parent) {
         return err(
-          new RangeError(`La cuenta ${account.code} cuelga de ${account.parentCode}, que no existe`),
+          new RangeError(
+            `La cuenta ${account.code} cuelga de ${account.parentCode}, que no existe`,
+          ),
         )
       }
       if (parent.accountClass !== account.accountClass) {

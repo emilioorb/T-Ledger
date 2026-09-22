@@ -36,7 +36,9 @@ const colones = (
   closing,
   daily: dailyTotals,
   closingRate: new Decimal(1),
-  dailyRates: new Map(dailyTotals.map((row) => [row.date.toISOString().slice(0, 10), new Decimal(1)])),
+  dailyRates: new Map(
+    dailyTotals.map((row) => [row.date.toISOString().slice(0, 10), new Decimal(1)]),
+  ),
 })
 
 describe('buildNetWorth', () => {
@@ -65,7 +67,11 @@ describe('buildNetWorth', () => {
   it('una conversión no crea ni destruye patrimonio, aunque la tasa cambie después', () => {
     // Un aporte de ₡508 000 y, el mismo día, su conversión completa a $1 000 a 508.
     const enColones = colones(
-      [total('1101', 508_000_00n, 508_000_00n), total('1190', 508_000_00n, 0n), total('3110', 0n, 508_000_00n)],
+      [
+        total('1101', 508_000_00n, 508_000_00n),
+        total('1190', 508_000_00n, 0n),
+        total('3110', 0n, 508_000_00n),
+      ],
       [
         daily('1101', '2026-09-18', 508_000_00n, 508_000_00n),
         daily('1190', '2026-09-18', 508_000_00n, 0n),
@@ -106,7 +112,11 @@ describe('buildNetWorth', () => {
   it('la conversión ya hecha se valúa a la tasa de su día; la tenencia, a la de hoy', () => {
     // El mismo caso, pero el reporte se pide cuando el dólar bajó de 508 a 443,27.
     const enColones = colones(
-      [total('1101', 508_000_00n, 508_000_00n), total('1190', 508_000_00n, 0n), total('3110', 0n, 508_000_00n)],
+      [
+        total('1101', 508_000_00n, 508_000_00n),
+        total('1190', 508_000_00n, 0n),
+        total('3110', 0n, 508_000_00n),
+      ],
       [
         daily('1101', '2026-09-18', 508_000_00n, 508_000_00n),
         daily('1190', '2026-09-18', 508_000_00n, 0n),

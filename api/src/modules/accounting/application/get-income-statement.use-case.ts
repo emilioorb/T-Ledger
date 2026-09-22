@@ -3,10 +3,7 @@ import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import type { DateRange } from '../../../shared/kernel/date-range.js'
 import { ACCOUNT_REPOSITORY, type AccountRepository } from '../domain/account-repository.port.js'
 import { JOURNAL_REPOSITORY, type JournalRepository } from '../domain/journal-repository.port.js'
-import {
-  buildIncomeStatement,
-  type IncomeStatement,
-} from '../domain/reports/income-statement.js'
+import { buildIncomeStatement, type IncomeStatement } from '../domain/reports/income-statement.js'
 
 @Injectable()
 export class GetIncomeStatementUseCase {

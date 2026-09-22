@@ -7,8 +7,12 @@ import { ChartOfAccounts } from '../chart-of-accounts.js'
 import { JournalEntry, type JournalLine } from '../journal-entry.js'
 import { buildLedger } from './general-ledger.js'
 
-const cuenta = (code: string, name: string, accountClass: AccountClass, parentCode: string | null) =>
-  unwrap(Account.create({ code, name, accountClass, parentCode, active: true, sortOrder: 0 }))
+const cuenta = (
+  code: string,
+  name: string,
+  accountClass: AccountClass,
+  parentCode: string | null,
+) => unwrap(Account.create({ code, name, accountClass, parentCode, active: true, sortOrder: 0 }))
 
 const chart = unwrap(
   ChartOfAccounts.create([
@@ -68,7 +72,13 @@ describe('buildLedger', () => {
   })
 
   it('cada fila lleva su débito o su crédito, no los dos', () => {
-    const ledger = buildLedger({ debits: 0n, credits: 0n }, [gasto('a1', 3, 20_000_00n)], '6310', 'CRC', 'OPERATING_EXPENSE')
+    const ledger = buildLedger(
+      { debits: 0n, credits: 0n },
+      [gasto('a1', 3, 20_000_00n)],
+      '6310',
+      'CRC',
+      'OPERATING_EXPENSE',
+    )
 
     const [row] = ledger.rows
     expect(row?.entryId).toBe('a1')
@@ -115,7 +125,13 @@ describe('buildLedger', () => {
   })
 
   it('una cuenta sin movimiento en el período cierra donde abrió', () => {
-    const ledger = buildLedger({ debits: 80_000_00n, credits: 5_000_00n }, [], '1101', 'CRC', 'ASSET')
+    const ledger = buildLedger(
+      { debits: 80_000_00n, credits: 5_000_00n },
+      [],
+      '1101',
+      'CRC',
+      'ASSET',
+    )
 
     expect(ledger.rows).toEqual([])
     expect(ledger.closingBalance.minorUnits).toBe(75_000_00n)

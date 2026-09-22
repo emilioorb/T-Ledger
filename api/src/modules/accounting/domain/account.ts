@@ -18,7 +18,9 @@ export class Account {
 
   static create(props: AccountProps): Result<Account, RangeError> {
     if (!/^\d{3,10}$/.test(props.code)) {
-      return err(new RangeError(`El código de cuenta debe ser numérico, se recibió «${props.code}»`))
+      return err(
+        new RangeError(`El código de cuenta debe ser numérico, se recibió «${props.code}»`),
+      )
     }
     if (props.name.trim().length === 0) {
       return err(new RangeError('La cuenta necesita un nombre'))
@@ -35,13 +37,27 @@ export class Account {
     )
   }
 
-  get code(): string { return this.props.code }
-  get name(): string { return this.props.name }
-  get accountClass(): AccountClass { return this.props.accountClass }
-  get parentCode(): string | null { return this.props.parentCode }
-  get active(): boolean { return this.props.active }
-  get sortOrder(): number { return this.props.sortOrder }
-  get isCurrencyBridge(): boolean { return this.props.isCurrencyBridge === true }
+  get code(): string {
+    return this.props.code
+  }
+  get name(): string {
+    return this.props.name
+  }
+  get accountClass(): AccountClass {
+    return this.props.accountClass
+  }
+  get parentCode(): string | null {
+    return this.props.parentCode
+  }
+  get active(): boolean {
+    return this.props.active
+  }
+  get sortOrder(): number {
+    return this.props.sortOrder
+  }
+  get isCurrencyBridge(): boolean {
+    return this.props.isCurrencyBridge === true
+  }
 
   isChildOf(code: string): boolean {
     return this.props.parentCode === code

@@ -5,14 +5,7 @@ import { rootCodeOf, type AccountClass } from '../account-class.js'
 import type { ChartOfAccounts } from '../chart-of-accounts.js'
 import type { AccountMovementTotals } from '../journal-repository.port.js'
 import { periodResultOf } from './income-statement.js'
-import {
-  asSection,
-  buildTree,
-  indexTree,
-  ownBalances,
-  rollUp,
-  type ReportNode,
-} from './roll-up.js'
+import { asSection, buildTree, indexTree, ownBalances, rollUp, type ReportNode } from './roll-up.js'
 
 // No es una cuenta: es una línea derivada. El código no es numérico justamente para que
 // no pueda colisionar con ninguna cuenta del plan, que siempre lo es.

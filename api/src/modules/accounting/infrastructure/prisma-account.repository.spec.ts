@@ -55,7 +55,14 @@ describe('PrismaAccountRepository', () => {
     await repository.saveMany(CHART_SEED.map((props) => unwrap(Account.create(props))))
     const chart = await repository.loadChart()
 
-    expect(chart.roots().map((a) => a.code)).toEqual(['1000', '2000', '3000', '4000', '5000', '6000'])
+    expect(chart.roots().map((a) => a.code)).toEqual([
+      '1000',
+      '2000',
+      '3000',
+      '4000',
+      '5000',
+      '6000',
+    ])
     expect(chart.isPostable('1101')).toBe(true)
     expect(chart.isPostable('1100')).toBe(false)
   })

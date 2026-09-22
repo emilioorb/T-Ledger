@@ -26,7 +26,15 @@ let chart: ChartOfAccounts
 const asiento = (id: string, date: Date, lines: JournalLine[]) =>
   unwrap(
     JournalEntry.create(
-      { id, date, description: 'Prueba', reference: null, lines, sourceMovementId: null, reversesEntryId: null },
+      {
+        id,
+        date,
+        description: 'Prueba',
+        reference: null,
+        lines,
+        sourceMovementId: null,
+        reversesEntryId: null,
+      },
       chart,
     ),
   )

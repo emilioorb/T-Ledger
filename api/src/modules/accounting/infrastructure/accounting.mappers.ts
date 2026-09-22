@@ -49,7 +49,10 @@ export interface JournalEntryRow {
   lines: JournalLineRow[]
 }
 
-export const journalEntryToDomain = (row: JournalEntryRow, chart: ChartOfAccounts): JournalEntry => {
+export const journalEntryToDomain = (
+  row: JournalEntryRow,
+  chart: ChartOfAccounts,
+): JournalEntry => {
   const lines: JournalLine[] = row.lines.map((line) => ({
     accountCode: line.accountCode,
     amount: Money.fromMinorUnits(line.amountMinor, line.currency as CurrencyCode),

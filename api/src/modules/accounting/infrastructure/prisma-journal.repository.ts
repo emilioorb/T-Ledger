@@ -49,7 +49,7 @@ export class PrismaJournalRepository implements JournalRepository {
       await this.prisma.client.journalEntry.upsert({
         where: { id: entry.id },
         create: {
-          bookId: this.prisma.libro, 
+          bookId: this.prisma.libro,
           id: entry.id,
           date: entry.date,
           description: entry.description,
@@ -63,7 +63,7 @@ export class PrismaJournalRepository implements JournalRepository {
       await this.prisma.client.journalLine.deleteMany({ where: { entryId: entry.id } })
       await this.prisma.client.journalLine.createMany({
         data: entry.lines.map((line) => ({
-          bookId: this.prisma.libro, 
+          bookId: this.prisma.libro,
           entryId: entry.id,
           accountCode: line.accountCode,
           currency: line.amount.currency,

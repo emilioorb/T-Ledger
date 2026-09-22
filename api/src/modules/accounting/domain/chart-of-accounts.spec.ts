@@ -86,20 +86,27 @@ describe('ChartOfAccounts', () => {
   })
 
   it('lista las hijas directas de una cuenta', () => {
-    expect(plan().childrenOf('1100').map((a) => a.code)).toEqual(['1101', '1102', '1190'])
+    expect(
+      plan()
+        .childrenOf('1100')
+        .map((a) => a.code),
+    ).toEqual(['1101', '1102', '1190'])
   })
 
   it('lista todas las descendientes, no solo las hijas', () => {
-    expect(plan().descendantsOf('1000').map((a) => a.code)).toEqual([
-      '1100',
-      '1101',
-      '1102',
-      '1190',
-    ])
+    expect(
+      plan()
+        .descendantsOf('1000')
+        .map((a) => a.code),
+    ).toEqual(['1100', '1101', '1102', '1190'])
   })
 
   it('devuelve una raíz por clase presente', () => {
-    expect(plan().roots().map((a) => a.code)).toEqual(['1000', '2000', '6000'])
+    expect(
+      plan()
+        .roots()
+        .map((a) => a.code),
+    ).toEqual(['1000', '2000', '6000'])
   })
 
   it('cuenta la profundidad recorriendo el árbol hasta la raíz', () => {

@@ -96,7 +96,9 @@ describe('postingFor', () => {
   it('el asiento cuadra siempre, por construcción', () => {
     const entry = unwrap(postingFor(movimiento(), categoria('EXPENSE', '6210'), chart, 'a5'))
 
-    expect(entry?.totalFor('CRC', 'DEBIT').minorUnits).toBe(entry?.totalFor('CRC', 'CREDIT').minorUnits)
+    expect(entry?.totalFor('CRC', 'DEBIT').minorUnits).toBe(
+      entry?.totalFor('CRC', 'CREDIT').minorUnits,
+    )
   })
 
   it('falla si el tipo del movimiento no coincide con el de su categoría', () => {
@@ -108,7 +110,12 @@ describe('postingFor', () => {
   })
 
   it('no contabiliza un movimiento anulado', () => {
-    const result = postingFor(movimiento({ status: 'VOIDED' }), categoria('EXPENSE', '6210'), chart, 'a8')
+    const result = postingFor(
+      movimiento({ status: 'VOIDED' }),
+      categoria('EXPENSE', '6210'),
+      chart,
+      'a8',
+    )
 
     expect(unwrap(result)).toBeNull()
   })

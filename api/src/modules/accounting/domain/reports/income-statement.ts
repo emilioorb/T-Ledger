@@ -4,14 +4,7 @@ import { unwrap } from '../../../../shared/kernel/result.js'
 import { rootCodeOf, type AccountClass } from '../account-class.js'
 import type { ChartOfAccounts } from '../chart-of-accounts.js'
 import type { AccountMovementTotals } from '../journal-repository.port.js'
-import {
-  asSection,
-  buildTree,
-  indexTree,
-  ownBalances,
-  rollUp,
-  type ReportNode,
-} from './roll-up.js'
+import { asSection, buildTree, indexTree, ownBalances, rollUp, type ReportNode } from './roll-up.js'
 
 export interface IncomeStatementSections {
   readonly income: ReportNode[]

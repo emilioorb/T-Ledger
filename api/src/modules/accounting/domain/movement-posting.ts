@@ -22,7 +22,9 @@ export const postingFor = (
   entryId: string,
 ): Result<JournalEntry | null, RangeError> => {
   if (movement.kind !== category.kind) {
-    return err(new RangeError(`El movimiento es ${movement.kind} y su categoría es ${category.kind}`))
+    return err(
+      new RangeError(`El movimiento es ${movement.kind} y su categoría es ${category.kind}`),
+    )
   }
   if (movement.isVoided()) return ok(null)
   if (!category.isPostable() || movement.paymentAccountCode === null) return ok(null)

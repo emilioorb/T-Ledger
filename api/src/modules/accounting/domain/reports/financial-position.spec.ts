@@ -5,8 +5,12 @@ import { Account } from '../account.js'
 import { ChartOfAccounts } from '../chart-of-accounts.js'
 import { buildFinancialPosition } from './financial-position.js'
 
-const cuenta = (code: string, name: string, accountClass: AccountClass, parentCode: string | null) =>
-  unwrap(Account.create({ code, name, accountClass, parentCode, active: true, sortOrder: 0 }))
+const cuenta = (
+  code: string,
+  name: string,
+  accountClass: AccountClass,
+  parentCode: string | null,
+) => unwrap(Account.create({ code, name, accountClass, parentCode, active: true, sortOrder: 0 }))
 
 const chart = unwrap(
   ChartOfAccounts.create([
