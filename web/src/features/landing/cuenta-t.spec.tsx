@@ -17,15 +17,15 @@ describe('CuentaT', () => {
     expect(screen.getByText('Salario')).toBeInTheDocument()
   })
 
-  it('cierra con los dos totales, y son el mismo', () => {
+  it('cierra con los dos totales, y son el mismo, después de que la sumadora corre', async () => {
     render(<CuentaT />)
-    expect(screen.getAllByText(/920\s000,00/)).toHaveLength(2)
+    expect(await screen.findAllByText(/920\s000,00/, {}, { timeout: 3000 })).toHaveLength(2)
   })
 
   it('rotula las dos columnas', () => {
     render(<CuentaT />)
-    expect(screen.getAllByText('Debe').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Haber').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/^Debe/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/^Haber/).length).toBeGreaterThanOrEqual(1)
   })
 
   it('el debe va antes que el haber, o la página afirma algo falso', () => {

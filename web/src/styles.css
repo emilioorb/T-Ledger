@@ -272,6 +272,84 @@
     outline-offset: 2px;
   }
 
+  /* La landing: cada anotación aparece un suspiro después de la frase que la explica. Es la
+     demostración del titular —anotás una cosa, el libro escribe dos—, no un efecto: sin esto
+     hay que creerle a la frase.
+
+     Sube cuatro píxeles además de aparecer, porque una cifra que solo se desvanece no parece
+     escribirse, parece prenderse. `backwards` mantiene invisible lo que todavía no entró: sin
+     él los tres pares se ven desde el primer cuadro y después parpadean. */
+  @keyframes asiento-entra {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .asiento-entra {
+    animation: asiento-entra 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  /* Cada renglón sale de la pata hacia su lado: la frase de arriba se parte en dos a la
+     vista. `--desde` lo pone el renglón, positivo en el debe y negativo en el haber. Cuando el
+     visitante cambia el verbo, los renglones se vuelven a montar y la cuenta que cambió de
+     lado se ve cruzar. */
+  @keyframes sale-de-la-pata {
+    from {
+      opacity: 0;
+      transform: translateX(var(--desde, 0));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .sale-de-la-pata {
+    animation: sale-de-la-pata 320ms cubic-bezier(0.25, 1, 0.5, 1) backwards;
+  }
+
+  /* La doble raya de los totales se traza de izquierda a derecha, como a pluma, cuando los
+     totales dejaron de correr. */
+  @keyframes raya-se-traza {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  .raya-se-traza {
+    transform-origin: left;
+    animation: raya-se-traza 450ms cubic-bezier(0.65, 0, 0.35, 1) backwards;
+  }
+
+  /* La pata baja del travesaño antes de que se escriba nada: primero el libro, después los
+     asientos. */
+  @keyframes pata-crece {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  .pata-crece {
+    transform-origin: top;
+    animation: pata-crece 500ms cubic-bezier(0.25, 1, 0.5, 1) backwards;
+  }
+
+  /* Quien pidió menos movimiento ve la pantalla entera de una. No es una versión degradada:
+     la página dice exactamente lo mismo sin escribirse sola. */
+  @media (prefers-reduced-motion: reduce) {
+    .asiento-entra,
+    .sale-de-la-pata,
+    .pata-crece,
+    .raya-se-traza {
+      animation: none;
+    }
+  }
+
   /* El avatar en reposo. Dos ritmos que no coinciden nunca —la respiración cada 5,2 s y el
      parpadeo cada 6,4 s— para que no se lea como un bucle: si los dos cayeran juntos, el ojo
      encuentra el patrón en dos vueltas y empieza a molestar.

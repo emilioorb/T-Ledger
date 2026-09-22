@@ -6,16 +6,18 @@ export const copy = {
   // adelante: `documentTitleFor` ya lo agrega al final.
   tab: 'Contabilidad personal de partida doble',
   // No dice «contabilidad»: lo demuestra en vez de anunciarlo, y la palabra espanta a quien
-  // no la usa. La bajada sí la dice, para quien la estaba buscando.
-  titular: 'Vos anotás una cosa. El libro escribe dos.',
-  bajada: 'Finanzas personales con contabilidad de partida doble de verdad.',
+  // no la usa. Va partido porque la pata lo parte: lo tuyo a la izquierda, lo del libro a la
+  // derecha.
+  titular: { tuyo: 'Vos anotás una cosa.', libro: 'El libro escribe dos.' },
   debe: 'Debe',
   haber: 'Haber',
   // Sería marketing sin la segunda mitad. Con ella es la promesa que el producto cumple.
   cierre: 'Cuadra siempre, o te dice por qué no.',
   entrar: 'Entrar',
+  tema: { claro: 'Cambiar a tema claro', oscuro: 'Cambiar a tema oscuro' },
   acceso: {
     open: 'Solicitar acceso',
+    openCorto: 'Acceso',
     title: 'Pedir acceso',
     description:
       'T-Ledger es de una persona y de quien esa persona invite. Si querés una cuenta, escribime.',

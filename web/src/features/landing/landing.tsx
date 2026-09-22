@@ -1,12 +1,15 @@
-import { useEffect, useLayoutEffect } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ArrowRightIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/features/identity/auth-client'
 import { copy as shell } from '@/features/shell/copy'
-import { forceTheme } from '@/lib/theme'
+import { temaDeEntrada } from '@/lib/theme'
+import { CambioDeTema } from './cambio-de-tema'
+import { cn } from '@/lib/utils'
 import { CuentaT } from './cuenta-t'
 import { copy } from './copy'
+import { PATA, Tramo } from './pata'
 import { PedirAcceso } from './pedir-acceso'
 
 // La única pantalla pública que no pide nada.
@@ -19,22 +22,20 @@ export const Landing = () => {
   const navegar = useNavigate()
   const { data: sesion } = useSession()
 
-  // Papel blanco con tinta negra, sea cual sea la preferencia guardada, igual que `/entrar` y
-  // `/crear-cuenta`: las tres son la misma superficie, y el botón de entrar lleva de una a la
-  // otra. Con la landing en oscuro, tocarlo encandila.
-  //
-  // `useLayoutEffect` y no `useEffect`, por lo mismo que en `MarcoDeIdentidad`: en un efecto
-  // normal la pantalla asoma un cuadro con el tema viejo y da un parpadeo. `forceTheme`
-  // devuelve la limpieza que restaura la preferencia al salir.
-  useLayoutEffect(() => forceTheme('light'), [])
+  // El tema y el campo de puntos los pone `MarcoPublico`. El botón cambia el tema de las tres
+  // pantallas de antes de entrar: `/entrar` y `/crear-cuenta` siguen lo que se elija acá, y la
+  // preferencia de adentro de la app no se toca.
+  const tema = temaDeEntrada.usar()
 
   useEffect(() => {
     if (sesion) void navegar({ to: '/tablero', replace: true })
   }, [navegar, sesion])
 
   return (
-    <main className="flex min-h-dvh flex-col bg-background px-6 py-5 sm:px-10">
-      <header className="flex items-center justify-between gap-4">
+    <main className="flex min-h-dvh flex-col">
+      <CambioDeTema tema={tema} alCambiar={temaDeEntrada.poner} />
+
+      <header className="flex items-center justify-between gap-4 px-4 py-4 sm:px-10 sm:py-5">
         {/* En monoespaciada, como en la pantalla de entrar: el nombre viene de la cuenta T, y
             dos columnas solo se leen derechas cuando alinean. */}
         <span className="font-mono text-lg font-medium tracking-tight">{shell.app.name}</span>
@@ -50,33 +51,46 @@ export const Landing = () => {
         </nav>
       </header>
 
-      {/* El travesaño de la T, de borde a borde: es la única regla gruesa de la página, y lo
-          que la hace leer como una cuenta T y no como una cabecera con línea abajo. */}
-      <div aria-hidden="true" className="-mx-6 mt-5 border-t-2 border-foreground/70 sm:-mx-10" />
+      {/* El travesaño de la T, de borde a borde: es la única regla gruesa de la página. */}
+      <div aria-hidden="true" className="border-t-2 border-foreground/80" />
 
-      <div className="flex flex-1 flex-col justify-center py-10">
-        <h1 className="mx-auto max-w-[24ch] text-center text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          {copy.titular}
+      {/* La página entera es la cuenta. La pata baja del travesaño hasta el pie y parte la
+          pantalla en dos mitades reales, en tramos: lo que tiene dos lados la lleva en su
+          borde, y lo que cruza de lado a lado —las frases, el cierre— la corta. */}
+      <div className="flex flex-1 flex-col">
+        <Tramo className="min-h-[clamp(1rem,4dvh,3rem)] flex-1" />
+
+        {/* Partido por la pata: lo tuyo de un lado, lo del libro del otro. */}
+        <h1 className="grid grid-cols-2 text-[clamp(1.6rem,min(6vw,8.5dvh),5rem)] leading-[0.95] font-semibold tracking-tight">
+          <span className={cn('pr-3 text-right text-balance sm:pr-6 md:pr-8', PATA)}>
+            {copy.titular.tuyo}
+          </span>{' '}
+          <span className="pl-3 text-balance sm:pl-6 md:pl-8">{copy.titular.libro}</span>
         </h1>
-        <p className="mx-auto mt-3 max-w-[50ch] text-center text-sm text-muted-foreground">
-          {copy.bajada}
-        </p>
 
-        <CuentaT className="mt-10 sm:mt-12" />
+        <Tramo className="h-[clamp(1rem,4dvh,3rem)]" />
+        <CuentaT />
+        <Tramo className="min-h-[clamp(1rem,4dvh,3rem)] flex-1" />
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">{copy.cierre}</p>
+        {/* Los dos rótulos se corren lo mismo hacia adentro: a la derecha flota el botón del
+            tema, y correr solo uno rompería la simetría de la T. */}
+        <footer className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 pb-4 text-xs text-muted-foreground sm:px-10 sm:pb-5">
+          <span className="pl-11 tracking-wide uppercase sm:pl-12" aria-hidden="true">
+            {copy.debe}
+          </span>
+          <span className="flex flex-wrap items-center justify-center gap-2 px-1.5 py-1 sm:px-3">
+            <span>
+              © <span className="num">{__BUILD_YEAR__}</span>{' '}
+              <span className="text-foreground">{shell.app.name}</span>
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="num">v{__APP_VERSION__}</span>
+          </span>
+          <span className="pr-11 text-right tracking-wide uppercase sm:pr-12" aria-hidden="true">
+            {copy.haber}
+          </span>
+        </footer>
       </div>
-
-      {/* El mismo pie que adentro y que en la pantalla de entrar: el símbolo, el año y el
-          nombre juntos, y la versión después del separador, que es lo que cambia. */}
-      <footer className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-        <span>
-          © <span className="num">{__BUILD_YEAR__}</span>{' '}
-          <span className="text-foreground">{shell.app.name}</span>
-        </span>
-        <span aria-hidden="true">·</span>
-        <span className="num">v{__APP_VERSION__}</span>
-      </footer>
     </main>
   )
 }
