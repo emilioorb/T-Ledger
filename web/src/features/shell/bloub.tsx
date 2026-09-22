@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { colorDeNimbo, colorDeNimboCss, type ColorDeNimbo } from '@/lib/nimbo'
 import { cn } from '@/lib/utils'
 
 // Avatar «nuage» tomado de bloub (https://github.com/jeremy-prt/bloub), de Jérémy Prt, bajo
@@ -102,18 +103,27 @@ const usarParpadeoDeCambio = (gesto: NombreDeGesto) => {
 
 interface Props {
   gesto?: NombreDeGesto
+  // Para mostrar un color sin haberlo elegido todavía: lo usa el selector de la pantalla de
+  // cuenta. Sin esto, la vista previa tendría que guardar para poder verse.
+  color?: ColorDeNimbo
   className?: string
 }
 
-export const Bloub = ({ gesto = 'neutro', className }: Props) => {
+export const Bloub = ({ gesto = 'neutro', color, className }: Props) => {
   const { visible, cerrado } = usarParpadeoDeCambio(gesto)
   const { izq, der, parpado = 1 }: Gesto = GESTOS[visible]
+  const elegido = colorDeNimbo.usar()
+  const pintado = color === undefined ? elegido : color
+
   return (
     // El viewBox original mide 316 y el dibujo ocupa 193,5 × 167,7: más de un tercio era aire,
     // así que la nube se veía chica dentro de su propia caja. Acá va ajustado a la forma, con
     // seis unidades de margen para que la respiración no roce el borde al escalar.
     <svg
       viewBox="-104 -84 206 180"
+      // El color del cuerpo entra por `color` y no por una clase: los diez de la paleta son
+      // variables CSS, y una clase armada en tiempo de ejecución no existe para Tailwind.
+      style={pintado === null ? undefined : { color: colorDeNimboCss(pintado) }}
       className={cn('text-foreground', className)}
       role="img"
       aria-hidden="true"

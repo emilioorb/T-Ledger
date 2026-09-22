@@ -1,9 +1,12 @@
 import { betterAuth } from 'better-auth'
-import { APIError } from 'better-auth/api'
+import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { organization } from 'better-auth/plugins'
 import type { PrismaClient } from '../../../generated/prisma/client.js'
 import type { Env } from '../../../shared/config/env.js'
+import { entrarComoAutor, exigirAutor } from './autor-de-la-peticion.js'
+import { librosQueSeVanConLaCuenta } from './baja-de-cuenta.js'
+import { puedeCrearLibro } from './cuantos-libros.js'
 import { ac, roles } from './roles.js'
 import { puedeRegistrarse, SIN_INVITACION } from './registro.js'
 
@@ -97,7 +100,41 @@ export const crearAuth = (
     // Los otros cuatro no chocan hoy pero podrían mañana, y renombrarlos todos tiene un
     // segundo beneficio: en `schema.prisma` se ve de un vistazo qué es de Better Auth y qué
     // es del dominio.
-    user: { modelName: 'authUser' },
+    user: {
+      modelName: 'authUser',
+      // Darse de baja se pide desde la pantalla de cuenta y hay que habilitarlo acá: Better
+      // Auth lo trae apagado, que es lo correcto para algo irreversible.
+      deleteUser: {
+        enabled: true,
+        // Un libro sin dueño no es un libro archivado: es una base con la plata de alguien
+        // adentro y nadie que pueda entrar. Así que el libro del que se va su único dueño se
+        // va con él, y el `onDelete: Cascade` del esquema se lleva todo lo que colgaba.
+        //
+        // Corre **antes** del borrado, que es la única forma de que un fallo acá deje la
+        // cuenta en pie: al revés quedaría la persona borrada y su libro huérfano, que es
+        // exactamente lo que esto evita.
+        beforeDelete: async (usuario) => {
+          const membresias = await prisma.bookMember.findMany({
+            where: { userId: usuario.id, role: 'owner' },
+            select: { organizationId: true },
+          })
+
+          const libros = await Promise.all(
+            membresias.map(async ({ organizationId }) => ({
+              bookId: organizationId,
+              duennos: await prisma.bookMember.count({
+                where: { organizationId, role: 'owner' },
+              }),
+            })),
+          )
+
+          const aBorrar = librosQueSeVanConLaCuenta(libros)
+          if (aBorrar.length > 0) {
+            await prisma.book.deleteMany({ where: { id: { in: aBorrar } } })
+          }
+        },
+      },
+    },
     session: { modelName: 'authSession' },
     account: { modelName: 'authAccount' },
     verification: { modelName: 'authVerification' },

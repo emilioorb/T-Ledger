@@ -3,7 +3,7 @@ import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { iniciarObservabilidad } from './lib/observability'
-import { applyTheme, readTheme } from './lib/theme'
+import { applyTheme, seguirAlSistema, tema } from './lib/theme'
 import { queryClient, router } from './router'
 import './styles.css'
 
@@ -11,7 +11,11 @@ import './styles.css'
 // justo cuando más se rompe.
 iniciarObservabilidad()
 
-applyTheme(readTheme())
+// La preferencia guardada, pintada antes del primer render. Y si esa preferencia es «la del
+// sistema», se queda escuchando: cambiar el modo del sistema operativo con la app abierta
+// tiene que verse en el momento, no en la próxima recarga.
+applyTheme(tema.leer())
+seguirAlSistema()
 
 const container = document.getElementById('root')
 if (!container) throw new Error('Falta el contenedor #root en index.html')

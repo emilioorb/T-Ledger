@@ -9,6 +9,8 @@ import { copy as overview } from '@/features/projection/overview-copy'
 import { copy as shell } from '@/features/shell/copy'
 import { copy as guide } from '@/features/shell/guide-copy'
 import { copy as auditoria } from '@/features/auditoria/copy'
+import { copy as cuenta } from '@/features/cuenta/copy'
+import { copy as libro } from '@/features/libro/copy'
 import { copy as identity } from '@/features/identity/copy'
 
 export const ACCOUNTING_LABELS: Record<string, string> = {
@@ -39,7 +41,7 @@ export const BANKING_LABELS: Record<string, string> = {
 
 // Cómo se llama la pantalla en la que estás, derivado de la ruta y no declarado por cada
 // pantalla: lo usan la miga del encabezado y el título de la pestaña, que hasta ahora decía
-// «Tape» en las veintiocho.
+// «T-Ledger» en las veintiocho.
 export const screenNameFor = (pathname: string): string | null => {
   const [section, second] = pathname.split('/').filter(Boolean)
 
@@ -53,6 +55,8 @@ export const screenNameFor = (pathname: string): string | null => {
   if (section === 'novedades') return shell.nav.releases
   if (section === 'guia') return guide.guide.title
   if (section === 'auditoria') return auditoria.audit.title
+  if (section === 'cuenta') return cuenta.title
+  if (section === 'libro') return libro.title
   // Las pantallas sin sesión también son pantallas. Faltaban, y eso tenía una consecuencia
   // que no se veía venir: al cerrar la sesión por inactividad, el vigilante navega a
   // `/entrar` mientras el título todavía se está recalculando, no encontraba la ruta y la

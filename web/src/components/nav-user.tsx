@@ -7,9 +7,11 @@ import {
   MoonIcon,
   ScrollTextIcon,
   ShieldCheckIcon,
+  LifeBuoyIcon,
   SunIcon,
+  UserIcon,
+  UsersIcon,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -29,6 +31,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { copy } from '@/features/debts/copy'
 import { copy as shell } from '@/features/shell/copy'
 import { copy as auditoria } from '@/features/auditoria/copy'
+import { copy as libroCopy } from '@/features/libro/copy'
 import { copy as guide } from '@/features/shell/guide-copy'
 import {
   signOut,
@@ -38,7 +41,7 @@ import {
 } from '@/features/identity/auth-client'
 import { olvidarQuienEra } from '@/lib/observability'
 import { queryClient } from '@/router'
-import { applyTheme, readTheme, type Theme } from '@/lib/theme'
+import { applyTheme, resolver, tema as ajusteDeTema } from '@/lib/theme'
 
 interface Props {
   name: string
@@ -61,18 +64,10 @@ const Identity = ({ name, subtitle }: Props) => (
 
 export const NavUser = () => {
   const { isMobile } = useSidebar()
-  const [theme, setTheme] = useState<Theme>(readTheme)
+  const preferencia = ajusteDeTema.usar()
   const { data: sesion, isPending } = useSession()
   const { data: activo } = useActiveOrganization()
   const { data: libros } = useListOrganizations()
-
-  // Entre los hooks y no más abajo. Acá hay dos salidas tempranas —el esqueleto mientras
-  // carga la sesión y el `null` cuando no hay— y con el efecto después de ellas React contaba
-  // once hooks en un render y doce en el siguiente: el tablero reventaba con «Rendered more
-  // hooks than during the previous render» justo al entrar.
-  useEffect(() => {
-    applyTheme(theme)
-  }, [theme])
 
   // El subtítulo dice en qué libro estás parado. Si todavía no elegiste uno y tenés uno solo,
   // se muestra ese: es el mismo criterio con el que el servidor resuelve la petición cuando
@@ -154,6 +149,20 @@ export const NavUser = () => {
             <DropdownMenuSeparator />
 
             <DropdownMenuItem asChild>
+              <Link to="/cuenta">
+                <UserIcon aria-hidden="true" />
+                {shell.nav.account}
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <Link to="/libro">
+                <UsersIcon aria-hidden="true" />
+                {libroCopy.title}
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
               <Link to="/guia">
                 <CompassIcon aria-hidden="true" />
                 {guide.guide.title}
@@ -176,14 +185,39 @@ export const NavUser = () => {
               </DropdownMenuItem>
             ) : null}
 
+            {/* Soporte cierra el bloque y va aparte: los de arriba son lugares de la
+                aplicación, y este manda a escribirle a una persona. */}
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem asChild>
+              {/* Un correo y no un formulario: del otro lado hay alguien, y su dirección ya
+                  está escrita en la pantalla de entrar. El asunto va puesto para que el
+                  mensaje llegue diciendo de qué es. */}
+              <a
+                href={`mailto:${shell.nav.supportEmail}?subject=${encodeURIComponent(shell.nav.supportSubject)}`}
+              >
+                <LifeBuoyIcon aria-hidden="true" />
+                {shell.nav.support}
+              </a>
+            </DropdownMenuItem>
+
             {/* El tema va último y separado: es una preferencia de la aplicación, no un
                 lugar al que se va. Una sola fila, porque la elección es binaria y el rótulo
                 dice a qué se cambia, no dónde se está. */}
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem onSelect={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-              {theme === 'dark' ? <SunIcon aria-hidden="true" /> : <MoonIcon aria-hidden="true" />}
-              {theme === 'dark' ? copy.nav.lightTheme : copy.nav.darkTheme}
+            {/* Alterna sobre el tema que se está viendo, no sobre la preferencia: con «el del
+                sistema» elegido, lo que la persona quiere del atajo es lo contrario de lo que
+                tiene delante. Las tres opciones viven en la pantalla de cuenta. */}
+            <DropdownMenuItem
+              onSelect={() => applyTheme(resolver(preferencia) === 'dark' ? 'light' : 'dark')}
+            >
+              {resolver(preferencia) === 'dark' ? (
+                <SunIcon aria-hidden="true" />
+              ) : (
+                <MoonIcon aria-hidden="true" />
+              )}
+              {resolver(preferencia) === 'dark' ? copy.nav.lightTheme : copy.nav.darkTheme}
             </DropdownMenuItem>
 
             {/* Salir va al fondo y con su propia separación: es lo único del menú que termina
