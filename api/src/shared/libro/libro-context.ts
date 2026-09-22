@@ -20,6 +20,11 @@ const almacen = new AsyncLocalStorage<ContextoDeLibro>()
 export const conLibro = <T>(contexto: ContextoDeLibro, correr: () => Promise<T>): Promise<T> =>
   almacen.run(contexto, async () => await correr())
 
+// El contexto si lo hay, sin exigirlo. Lo usa quien puede seguir sin él: los ganchos de
+// Better Auth corren dentro de la petición, pero en una —aceptar la invitación— quien la
+// acepta todavía no pertenece a ningún libro y el middleware no pudo resolver ninguno.
+export const libroActualSiHay = (): ContextoDeLibro | undefined => almacen.getStore()
+
 export class SinLibroError extends Error {
   // Lleva qué se estaba consultando: sin eso, el mensaje dice que algo corrió sin libro pero
   // no qué, y encontrarlo en una suite de sesenta archivos es buscar a ciegas.

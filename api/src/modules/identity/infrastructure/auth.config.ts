@@ -16,10 +16,28 @@ import { puedeRegistrarse, SIN_INVITACION } from './registro.js'
 // las tablas de Better Auth tienen su propio modelo de pertenencia y no deben pasar por el
 // filtro de libro que viene en la tarea 5. Pasarle el cliente sin extender es la forma de que
 // nunca queden atrapadas en él por accidente.
+// Lo que un cambio de gente le cuenta al registro. Viaja como datos y no como una llamada al
+// rastro porque este archivo no conoce la auditoría: identidad avisa, y quien quiera anotarlo
+// se suscribe, igual que con el libro recién creado.
+export interface CambioDeMiembro {
+  bookId: string
+  // A quién le pasó. El rastro guarda la persona y no la fila de membresía: la fila se borra
+  // al sacar a alguien, y entonces el rastro apuntaría a nada. En una invitación todavía no
+  // hay persona, así que va el correo, que es lo único que existe de ella.
+  aQuien: string
+  // Y quién lo hizo, que es la pregunta del registro. Viaja explícito porque no se puede
+  // deducir: los ganchos de organización no reciben la sesión.
+  autorId: string
+  accion: 'crear' | 'editar' | 'eliminar'
+  antes?: object
+  despues?: object
+}
+
 export const crearAuth = (
   prisma: PrismaClient,
   env: Env,
   alCrearLibro: (bookId: string) => Promise<void>,
+  alCambiarMiembro: (cambio: CambioDeMiembro) => Promise<void>,
 ) =>
   betterAuth({
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
@@ -99,6 +117,67 @@ export const crearAuth = (
           // en vez de una base vacía que el usuario tiene que llenar sin saber cómo.
           afterCreateOrganization: async ({ organization }) => {
             await alCrearLibro(organization.id)
+          },
+
+          // Los ganchos **before** y no los **after**, aunque el cambio todavía no haya
+          // ocurrido cuando corren. Es la única forma de cumplir el ADR-004 acá: el código de
+          // Better Auth encola los `after` y los ejecuta después del commit, fuera de la
+          // transacción, y deja dicho que un fallo ahí «no puede revertir el trabajo ya
+          // confirmado». Con un `after`, a alguien lo podrían sacar del libro sin que quede
+          // registrado, que es justo lo que el ADR rechazó cuando descartó escribir el rastro
+          // con un evento.
+          //
+          // Desde un `before`, si el rastro falla se lanza y Better Auth aborta: no hay cambio
+          // sin rastro. La garantía inversa —ningún rastro sin cambio— es la que se cede, y
+          // está escrita en el ADR: la transacción de Better Auth es interna y su propio
+          // código dice que nunca se expone, así que nuestra escritura no puede entrar en
+          // ella.
+          // Sobre gente, se registran los tres caminos en los que se sabe **quién** lo hizo,
+          // y solo esos. Los ganchos de organización reciben a la persona afectada, no a la
+          // sesión que ejecuta: en `beforeUpdateMemberRole` y `beforeRemoveMember` el único
+          // usuario a mano es el afectado, y anotarlo como autor diría que alguien se degradó
+          // o se expulsó a sí mismo. Un registro que miente sobre quién hizo el cambio es peor
+          // que uno que no lo tiene, porque se le cree.
+          //
+          // Cambiar un rol y sacar a alguien quedan pendientes, documentados en el ADR-004.
+          //
+          // Son ganchos **before** y no **after** a propósito: el código de Better Auth encola
+          // los `after` y los corre después del commit, fuera de la transacción, y deja dicho
+          // que un fallo ahí «no puede revertir el trabajo ya confirmado». Desde un `before`,
+          // si el rastro falla la operación se aborta, y no queda cambio sin registrar.
+          beforeCreateInvitation: async ({ invitation, inviter, organization }) => {
+            await alCambiarMiembro({
+              bookId: organization.id,
+              aQuien: invitation.email,
+              autorId: inviter.id,
+              accion: 'crear',
+              despues: { invitado: invitation.email, rol: invitation.role },
+            })
+          },
+
+          // Acá el autor y el afectado son la misma persona, y es verdad: nadie acepta una
+          // invitación por otro. Aceptar tampoco pasa por `beforeAddMember` —Better Auth crea
+          // esa membresía llamando directo a su adaptador—, así que sin este gancho el camino
+          // más común de todos no dejaría rastro. Medido: la invitada entró y el registro
+          // quedó vacío.
+          beforeAcceptInvitation: async ({ invitation, user, organization }) => {
+            await alCambiarMiembro({
+              bookId: organization.id,
+              aQuien: user.id,
+              autorId: user.id,
+              accion: 'editar',
+              despues: { entro: user.name, correo: user.email, rol: invitation.role },
+            })
+          },
+
+          beforeCancelInvitation: async ({ invitation, cancelledBy, organization }) => {
+            await alCambiarMiembro({
+              bookId: organization.id,
+              aQuien: invitation.email,
+              autorId: cancelledBy.id,
+              accion: 'eliminar',
+              antes: { invitado: invitation.email, rol: invitation.role },
+            })
           },
         },
       }),

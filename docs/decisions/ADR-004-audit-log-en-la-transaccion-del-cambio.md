@@ -73,3 +73,41 @@ muestran como «cuenta eliminada».
   política.
 - La estructura de `changes` separa el campo del valor, lo que deja el camino abierto para
   recortar los valores bajo cifrado sin rediseñar la tabla (ver ADR-003).
+
+## Qué pasó con los cambios de gente (22 de setiembre de 2026)
+
+Los seis dominios de contabilidad registran el rastro dentro de la misma transacción que el
+cambio, como manda este ADR. Las personas no pasan por nuestros casos de uso —las maneja Better
+Auth— y eso obligó a dos decisiones que conviene dejar escritas.
+
+**Se usan los ganchos `before` y no los `after`.** El código de Better Auth encola los `after` y
+los ejecuta después del commit, fuera de la transacción, y su propio comentario dice que un
+fallo ahí «no puede revertir el trabajo ya confirmado». Con un `after`, a alguien podrían
+sacarlo del libro sin que quede registrado: exactamente lo que este ADR rechazó al descartar la
+alternativa de escribir el rastro con un evento. Desde un `before`, si el rastro falla se lanza
+y la operación se aborta.
+
+La atomicidad, aun así, es parcial y en una sola dirección: no puede haber cambio sin rastro,
+pero sí podría quedar un rastro sin cambio si la operación falla después del gancho. La
+transacción de Better Auth es interna —su código deja dicho que nunca se expone— así que
+nuestra escritura no puede entrar en ella. Se acepta el desbalance porque la dirección que
+importa es la que queda cubierta: el registro no pierde entradas.
+
+**Se registran tres de los cinco caminos**, y los otros dos quedan pendientes a propósito:
+
+| Camino | Registra | Por qué |
+|---|---|---|
+| Invitar | sí | El gancho recibe `inviter: session.user` |
+| Cancelar una invitación | sí | Recibe `cancelledBy: session.user` |
+| Aceptar una invitación | sí | Autor y afectado son la misma persona, y es cierto |
+| Cambiar un rol | **no** | El gancho solo recibe al afectado |
+| Sacar a alguien | **no** | Ídem |
+
+En los dos últimos, el único usuario que llega al gancho es la persona afectada. Anotarlo como
+autor diría que alguien se degradó o se expulsó a sí mismo, y un registro que miente sobre
+quién hizo el cambio es peor que uno que no lo tiene, porque se le cree. Se probó y se
+descartó: la primera versión registró un cambio de rol firmado por la persona equivocada.
+
+La salida, cuando se retome, son los `databaseHooks`: su gancho recibe un `ctx` con la sesión y
+ahí sí se sabe quién ejecuta.
+
