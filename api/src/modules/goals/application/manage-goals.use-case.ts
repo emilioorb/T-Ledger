@@ -5,6 +5,7 @@ import { NotFoundError, SemanticValidationError } from '../../../shared/http/api
 import { toMoney } from '../../../shared/http/money.schema.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
+import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import { AccountGuard } from '../../accounting/application/account-guard.js'
 import { CreateJournalEntryUseCase } from '../../accounting/application/create-journal-entry.use-case.js'
 import { GOAL_REACHED, type GoalReached } from '../domain/goal-events.js'
@@ -26,6 +27,7 @@ export class ManageGoalsUseCase {
     private readonly accounts: AccountGuard,
     private readonly events: EventEmitter2,
     @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
+    @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
   async list(): Promise<Goal[]> {
@@ -51,7 +53,16 @@ export class ManageGoalsUseCase {
     })
     if (isErr(goal)) throw new SemanticValidationError(goal.error.message)
 
-    await this.goals.save(goal.value)
+    await this.transaction.withTransaction(async () => {
+      await this.goals.save(goal.value)
+      await this.rastro.registrar({
+        entidad: 'meta',
+        entidadId: goal.value.id,
+        accion: 'crear',
+        despues: goal.value.toProps(),
+      })
+    })
+
     return goal.value
   }
 
@@ -68,7 +79,17 @@ export class ManageGoalsUseCase {
     })
     if (isErr(goal)) throw new SemanticValidationError(goal.error.message)
 
-    await this.goals.save(goal.value)
+    await this.transaction.withTransaction(async () => {
+      await this.goals.save(goal.value)
+      await this.rastro.registrar({
+        entidad: 'meta',
+        entidadId: id,
+        accion: 'editar',
+        antes: props,
+        despues: goal.value.toProps(),
+      })
+    })
+
     return goal.value
   }
 
@@ -111,6 +132,15 @@ export class ManageGoalsUseCase {
       })
 
       await this.goals.addContribution(id, contribution)
+      // Un aporte es plata que se mueve, así que deja rastro como cualquier otro movimiento.
+      // El `despues` es el aporte y no la meta entera: lo que pasó fue que entró este monto,
+      // no que la meta cambió de nombre.
+      await this.rastro.registrar({
+        entidad: 'meta',
+        entidadId: id,
+        accion: 'aportar',
+        despues: contribution,
+      })
     })
 
     // El evento va afuera: avisar de una meta alcanzada que la transacción todavía puede
@@ -127,6 +157,17 @@ export class ManageGoalsUseCase {
   }
 
   async delete(id: string): Promise<void> {
-    if (!(await this.goals.delete(id))) throw new NotFoundError(`La meta ${id} no existe.`)
+    // Se lee antes de borrar: después ya no hay a quién preguntarle qué meta era.
+    const meta = await this.goals.findById(id)
+
+    await this.transaction.withTransaction(async () => {
+      if (!(await this.goals.delete(id))) throw new NotFoundError(`La meta ${id} no existe.`)
+      await this.rastro.registrar({
+        entidad: 'meta',
+        entidadId: id,
+        accion: 'eliminar',
+        ...(meta ? { antes: meta.toProps() } : {}),
+      })
+    })
   }
 }

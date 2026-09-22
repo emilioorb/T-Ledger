@@ -5,6 +5,8 @@ import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { SemanticValidationError } from '../../../shared/http/api-error.js'
 import { toMoney } from '../../../shared/http/money.schema.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
+import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import { BucketGuard } from '../../budget/application/bucket-guard.js'
 import { Debt } from '../domain/debt.js'
 import { DEBT_REPOSITORY, type DebtRepository } from '../domain/debt-repository.port.js'
@@ -15,6 +17,8 @@ export class CreateDebtUseCase {
   constructor(
     @Inject(DEBT_REPOSITORY) private readonly debts: DebtRepository,
     private readonly buckets: BucketGuard,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
+    @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
   async execute(input: CreateDebtInput): Promise<Debt> {
@@ -37,7 +41,17 @@ export class CreateDebtUseCase {
     })
     if (isErr(debt)) throw new SemanticValidationError(debt.error.message)
 
-    await this.debts.save(debt.value)
+    // La deuda y su rastro, juntos: guardar una sin el otro deja una deuda que apareció sola.
+    await this.transaction.withTransaction(async () => {
+      await this.debts.save(debt.value)
+      await this.rastro.registrar({
+        entidad: 'deuda',
+        entidadId: debt.value.id,
+        accion: 'crear',
+        despues: debt.value.toProps(),
+      })
+    })
+
     return debt.value
   }
 }

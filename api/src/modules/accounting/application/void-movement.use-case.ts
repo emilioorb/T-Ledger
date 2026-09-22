@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { NotFoundError } from '../../../shared/http/api-error.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
+import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import { MOVEMENT_REPOSITORY, type MovementRepository } from '../domain/movement-repository.port.js'
 import type { PostedMovement } from './create-movement.use-case.js'
 import { MovementPoster } from './movement-poster.js'
@@ -13,6 +14,7 @@ export class VoidMovementUseCase {
     private readonly poster: MovementPoster,
     private readonly guard: PeriodGuard,
     @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
+    @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
   async execute(id: string): Promise<PostedMovement> {
@@ -27,6 +29,9 @@ export class VoidMovementUseCase {
     const voided = movement.void_()
     await this.transaction.withTransaction(async () => {
       await this.movements.save(voided)
+      // Sin `antes`/`despues`: anular no cambia campos, cambia el estado, y eso ya lo dice la
+      // acción. Un diff acá mostraría «status: ACTIVE → VOIDED» y nada más.
+      await this.rastro.registrar({ entidad: 'movimiento', entidadId: id, accion: 'anular' })
       await this.poster.reverse(id)
     })
 

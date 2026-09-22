@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { PrismaModule } from '../../shared/prisma/prisma.module.js'
+import { RastroModule } from '../auditoria/rastro.module.js'
 import { AccountingModule } from '../accounting/accounting.module.js'
 import { BucketGuard } from './application/bucket-guard.js'
 import { EvaluateMonthUseCase } from './application/evaluate-month.use-case.js'
@@ -15,7 +16,7 @@ import { PrismaBudgetModelRepository } from './infrastructure/prisma-budget-mode
 @Module({
   // El presupuesto lee el gasto de la contabilidad: depende de su puerto de asientos,
   // no de sus tablas.
-  imports: [PrismaModule, AccountingModule],
+  imports: [PrismaModule, AccountingModule, RastroModule],
   controllers: [BudgetController, BudgetModelsController],
   providers: [
     { provide: BUDGET_MODEL_REPOSITORY, useClass: PrismaBudgetModelRepository },

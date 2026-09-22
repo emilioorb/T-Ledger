@@ -97,6 +97,11 @@ const periodsStub = (stored: AccountingPeriod[] = []): PeriodRepository => ({
   saveMany: vi.fn(),
 })
 
+// La transacción del test corre el trabajo tal cual: lo que se prueba acá es la regla del
+// cierre, no que Prisma abra una transacción.
+const sinTransaccion = { withTransaction: <T>(run: () => Promise<T>) => run() }
+const rastroStub = () => ({ registrar: vi.fn() })
+
 const snapshotsWith = (
   journal: JournalRepository,
   movements: MovementRepository,
@@ -109,6 +114,8 @@ describe('ClosePeriodUseCase', () => {
     const useCase = new ClosePeriodUseCase(
       periods,
       snapshotsWith(journalStub(), movementsStub(), periods),
+      sinTransaccion,
+      rastroStub(),
     )
 
     const closed = await useCase.execute(septiembre, new Date('2026-10-01T00:00:00.000Z'))
@@ -122,6 +129,8 @@ describe('ClosePeriodUseCase', () => {
     const useCase = new ClosePeriodUseCase(
       periods,
       snapshotsWith(journalStub({ balanced: false }), movementsStub(3), periods),
+      sinTransaccion,
+      rastroStub(),
     )
 
     await expect(useCase.execute(septiembre)).rejects.toBeInstanceOf(SemanticValidationError)
@@ -142,6 +151,8 @@ describe('ClosePeriodUseCase', () => {
     const useCase = new ClosePeriodUseCase(
       periods,
       snapshotsWith(journalStub({ historyBefore: false }), movementsStub(), periods),
+      sinTransaccion,
+      rastroStub(),
     )
 
     const closed = await useCase.execute(septiembre)
@@ -157,7 +168,7 @@ describe('ReopenPeriodUseCase', () => {
       AccountingPeriod.restore(septiembre, 'CLOSED', new Date()),
       AccountingPeriod.restore(octubre, 'CLOSED', new Date()),
     ])
-    const useCase = new ReopenPeriodUseCase(periods)
+    const useCase = new ReopenPeriodUseCase(periods, sinTransaccion, rastroStub())
 
     const reopened = await useCase.execute(septiembre)
 
@@ -168,7 +179,7 @@ describe('ReopenPeriodUseCase', () => {
 
   it('reabrir un mes que ya estaba abierto no toca nada', async () => {
     const periods = periodsStub()
-    const useCase = new ReopenPeriodUseCase(periods)
+    const useCase = new ReopenPeriodUseCase(periods, sinTransaccion, rastroStub())
 
     expect(await useCase.execute(septiembre)).toEqual([])
     expect(periods.saveMany).not.toHaveBeenCalled()

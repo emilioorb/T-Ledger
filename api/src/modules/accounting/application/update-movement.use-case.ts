@@ -7,6 +7,7 @@ import {
 import { toMoney } from '../../../shared/http/money.schema.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
+import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import { MOVEMENT_REPOSITORY, type MovementRepository } from '../domain/movement-repository.port.js'
 import { Movement } from '../domain/movement.js'
 import type { UpdateMovementInput } from '../infrastructure/accounting.schemas.js'
@@ -23,6 +24,7 @@ export class UpdateMovementUseCase {
     private readonly poster: MovementPoster,
     private readonly guard: PeriodGuard,
     @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
+    @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
   // Editar no reescribe el asiento: revierte el vigente y emite uno nuevo, así el mayor
@@ -56,6 +58,13 @@ export class UpdateMovementUseCase {
     const journalEntryId = await this.transaction.withTransaction(async () => {
       await this.poster.reverse(id)
       await this.movements.save(movement.value)
+      await this.rastro.registrar({
+        entidad: 'movimiento',
+        entidadId: id,
+        accion: 'editar',
+        antes: props,
+        despues: movement.value.toProps(),
+      })
       return this.poster.post(movement.value, category)
     })
 

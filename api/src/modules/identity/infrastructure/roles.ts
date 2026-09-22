@@ -20,6 +20,10 @@ const statements = {
   categoria: ['read', 'write'],
   asiento: ['read', 'write'],
   banco: ['read', 'write'],
+  // Solo lectura, y solo del dueño: el registro dice quién tocó qué, y en un libro compartido
+  // eso es información sobre las personas, no sobre la plata. Quien administra a la gente es
+  // el mismo que puede mirar lo que hicieron.
+  auditoria: ['read'],
 } as const
 
 export const ac = createAccessControl(statements)
@@ -59,6 +63,7 @@ export const owner = ac.newRole({
   libro: ['update', 'delete', 'vaciar'],
   member: ['create', 'update', 'delete'],
   invitation: ['create', 'cancel'],
+  auditoria: ['read'],
 })
 
 export const roles = { owner, editor, viewer }

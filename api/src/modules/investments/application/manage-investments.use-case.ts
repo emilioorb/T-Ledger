@@ -9,6 +9,7 @@ import { toMoney } from '../../../shared/http/money.schema.js'
 import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
+import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import { INVESTMENT_MATURED, type InvestmentMatured } from '../domain/investment-events.js'
 import { Investment } from '../domain/investment.js'
 import {
@@ -31,6 +32,7 @@ export class ManageInvestmentsUseCase {
     private readonly accounts: AccountGuard,
     private readonly events: EventEmitter2,
     @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
+    @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
   async list(): Promise<Investment[]> {
@@ -61,7 +63,16 @@ export class ManageInvestmentsUseCase {
     })
     if (isErr(investment)) throw new SemanticValidationError(investment.error.message)
 
-    await this.investments.save(investment.value)
+    await this.transaction.withTransaction(async () => {
+      await this.investments.save(investment.value)
+      await this.rastro.registrar({
+        entidad: 'inversion',
+        entidadId: investment.value.id,
+        accion: 'crear',
+        despues: investment.value.toProps(),
+      })
+    })
+
     return investment.value
   }
 
@@ -87,7 +98,17 @@ export class ManageInvestmentsUseCase {
     })
     if (isErr(investment)) throw new SemanticValidationError(investment.error.message)
 
-    await this.investments.save(investment.value)
+    await this.transaction.withTransaction(async () => {
+      await this.investments.save(investment.value)
+      await this.rastro.registrar({
+        entidad: 'inversion',
+        entidadId: id,
+        accion: 'editar',
+        antes: props,
+        despues: investment.value.toProps(),
+      })
+    })
+
     return investment.value
   }
 
@@ -126,15 +147,33 @@ export class ManageInvestmentsUseCase {
       })
 
       await this.investments.addContribution(id, contribution)
+      // El aporte y no la inversión entera: lo que pasó es que entró este capital.
+      await this.rastro.registrar({
+        entidad: 'inversion',
+        entidadId: id,
+        accion: 'aportar',
+        despues: contribution,
+      })
     })
 
     return updated.value
   }
 
   async delete(id: string): Promise<void> {
-    if (!(await this.investments.delete(id))) {
-      throw new NotFoundError(`La inversión ${id} no existe.`)
-    }
+    // Se lee antes de borrar: después ya no hay a quién preguntarle qué inversión era.
+    const inversion = await this.investments.findById(id)
+
+    await this.transaction.withTransaction(async () => {
+      if (!(await this.investments.delete(id))) {
+        throw new NotFoundError(`La inversión ${id} no existe.`)
+      }
+      await this.rastro.registrar({
+        entidad: 'inversion',
+        entidadId: id,
+        accion: 'eliminar',
+        ...(inversion ? { antes: inversion.toProps() } : {}),
+      })
+    })
   }
 
   // Las inversiones que ya vencieron a una fecha. Se emite un evento por cada una: el

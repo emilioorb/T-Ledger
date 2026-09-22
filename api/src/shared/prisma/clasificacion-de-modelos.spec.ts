@@ -11,7 +11,11 @@ const esquema = readFileSync(
   'utf8',
 )
 
-const modelos = [...esquema.matchAll(/^model (\w+) \{\n([\s\S]*?)^\}/gm)].map(
+// El `\r?` no sobra: `prisma format` reescribe el esquema con los finales de línea de la
+// plataforma, y en Windows eso son CRLF. Sin él la expresión no encontraba **ningún** modelo y
+// esta guardia —la que sostiene el aislamiento entre libros— quedaba desarmada en silencio.
+// Se supo porque el primer test comprueba que el esquema se haya podido leer.
+const modelos = [...esquema.matchAll(/^model (\w+) \{\r?\n([\s\S]*?)^\}/gm)].map(
   ([, nombre, cuerpo]) => ({
     nombre: nombre!,
     tieneBookId: /^\s+bookId\s+String/m.test(cuerpo!),
@@ -47,10 +51,11 @@ describe('todo modelo está clasificado', () => {
     expect([...SIN_LIBRO].filter((nombre) => !nombres.has(nombre))).toEqual([])
   })
 
-  it('son dieciocho los que llevan libro, y ExchangeRate no es uno', () => {
+  it('son diecinueve los que llevan libro, y ExchangeRate no es uno', () => {
     // El número exacto está a propósito: si alguien suma una tabla al libro, este test lo
-    // obliga a pasar por acá y confirmar que era lo que quería.
-    expect(conLibro).toHaveLength(18)
+    // obliga a pasar por acá y confirmar que era lo que quería. El diecinueve es `AuditLog`,
+    // que lleva libro como cualquier otra: el rastro de un libro no se mira desde otro.
+    expect(conLibro).toHaveLength(19)
     expect(conLibro).not.toContain('ExchangeRate')
   })
 })

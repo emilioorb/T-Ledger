@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { PrismaModule } from '../../shared/prisma/prisma.module.js'
+import { RastroModule } from '../auditoria/rastro.module.js'
 import { ExchangeRateStoreModule } from '../money/exchange-rate-store.module.js'
 import { AccountGuard } from './application/account-guard.js'
 import { ClosePeriodUseCase } from './application/close-period.use-case.js'
@@ -48,7 +49,7 @@ import { ReportsController } from './infrastructure/reports.controller.js'
 @Module({
   // El patrimonio consolidado necesita tipos de cambio. Entra por el puerto de valuación,
   // no por el repositorio: contabilidad no sabe qué es un indicador del BCCR.
-  imports: [PrismaModule, ExchangeRateStoreModule],
+  imports: [PrismaModule, ExchangeRateStoreModule, RastroModule],
   controllers: [
     AccountsController,
     CategoriesController,

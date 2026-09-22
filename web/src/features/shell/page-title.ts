@@ -8,6 +8,8 @@ import { copy as projection } from '@/features/projection/copy'
 import { copy as overview } from '@/features/projection/overview-copy'
 import { copy as shell } from '@/features/shell/copy'
 import { copy as guide } from '@/features/shell/guide-copy'
+import { copy as auditoria } from '@/features/auditoria/copy'
+import { copy as identity } from '@/features/identity/copy'
 
 export const ACCOUNTING_LABELS: Record<string, string> = {
   movimientos: accounting.nav.movements,
@@ -50,6 +52,13 @@ export const screenNameFor = (pathname: string): string | null => {
   if (section === 'plan-de-pago') return debts.nav.payoffPlan
   if (section === 'novedades') return shell.nav.releases
   if (section === 'guia') return guide.guide.title
+  if (section === 'auditoria') return auditoria.audit.title
+  // Las pantallas sin sesión también son pantallas. Faltaban, y eso tenía una consecuencia
+  // que no se veía venir: al cerrar la sesión por inactividad, el vigilante navega a
+  // `/entrar` mientras el título todavía se está recalculando, no encontraba la ruta y la
+  // pestaña quedaba diciendo «Esta dirección no existe» encima del formulario de ingreso.
+  if (section === 'entrar') return identity.entrar.tab
+  if (section === 'crear-cuenta') return identity.crear.tab
   // Una ruta que no existe también tiene nombre: la pestaña dice que te perdiste, no el
   // nombre de la app como si estuvieras en algún lado.
   return shell.notFound.title

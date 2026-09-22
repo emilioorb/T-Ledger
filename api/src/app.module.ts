@@ -12,9 +12,27 @@ import { InvestmentsModule } from './modules/investments/investments.module.js'
 import { ProjectionModule } from './modules/projection/projection.module.js'
 import { DebtsModule } from './modules/debts/debts.module.js'
 import { MoneyModule } from './modules/money/money.module.js'
+import { AuditoriaModule } from './modules/auditoria/auditoria.module.js'
 import { PrismaModule } from './shared/prisma/prisma.module.js'
 
 // ScheduleModule.forRoot() va una sola vez: declararlo en más de un módulo duplica
 // los manejadores y el job correría dos veces.
-@Module({ imports: [IdentityModule, AuthModule.forRootAsync({ inject: [AUTH], useFactory: (auth) => ({ auth }) }), ScheduleModule.forRoot(), EventEmitterModule.forRoot(), PrismaModule, DebtsModule, MoneyModule, AccountingModule, BudgetModule, GoalsModule, InvestmentsModule, ProjectionModule, BankingModule] })
+@Module({
+  imports: [
+    IdentityModule,
+    AuthModule.forRootAsync({ inject: [AUTH], useFactory: (auth) => ({ auth }) }),
+    ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
+    PrismaModule,
+    AuditoriaModule,
+    DebtsModule,
+    MoneyModule,
+    AccountingModule,
+    BudgetModule,
+    GoalsModule,
+    InvestmentsModule,
+    ProjectionModule,
+    BankingModule,
+  ],
+})
 export class AppModule {}

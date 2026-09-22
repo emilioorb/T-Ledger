@@ -17,6 +17,7 @@ import { budgetOpenApiPaths } from './modules/budget/infrastructure/budget.opena
 import { goalsOpenApiPaths } from './modules/goals/infrastructure/goals.openapi.js'
 import { investmentsOpenApiPaths } from './modules/investments/infrastructure/investments.openapi.js'
 import { projectionOpenApiPaths } from './modules/projection/infrastructure/projection.openapi.js'
+import { auditoriaOpenApiPaths } from './modules/auditoria/infrastructure/auditoria.openapi.js'
 import { bankingOpenApiPaths } from './modules/banking/infrastructure/banking.openapi.js'
 import { debtsOpenApiPaths } from './modules/debts/infrastructure/debts.openapi.js'
 import { exchangeRatesOpenApiPaths } from './modules/money/infrastructure/exchange-rates.openapi.js'
@@ -30,14 +31,27 @@ const bootstrap = async (): Promise<void> => {
   // Zod siguen viendo el cuerpo (ver ADR-001).
   const app = await NestFactory.create(AppModule, { bodyParser: false })
   app.setGlobalPrefix('api/v1')
-  app.enableCors({ origin: env.CORS_ORIGIN })
+  // `credentials: true` porque la sesión viaja en una cookie: sin esto el navegador la
+  // descarta en cuanto el front está en otro origen, y el síntoma es una sesión que se pierde
+  // en cada recarga sin que nada diga por qué.
+  app.enableCors({ origin: env.CORS_ORIGIN, credentials: true })
   app.useGlobalFilters(new AllExceptionsFilter())
 
   const openapi = createDocument({
     openapi: '3.1.0',
     info: { title: 'Finanzas API', version: '1.0.0' },
     servers: [{ url: '/api/v1' }],
-    paths: { ...debtsOpenApiPaths, ...exchangeRatesOpenApiPaths, ...accountingOpenApiPaths, ...budgetOpenApiPaths, ...goalsOpenApiPaths, ...investmentsOpenApiPaths, ...projectionOpenApiPaths, ...bankingOpenApiPaths },
+    paths: {
+      ...debtsOpenApiPaths,
+      ...exchangeRatesOpenApiPaths,
+      ...accountingOpenApiPaths,
+      ...budgetOpenApiPaths,
+      ...goalsOpenApiPaths,
+      ...investmentsOpenApiPaths,
+      ...projectionOpenApiPaths,
+      ...bankingOpenApiPaths,
+      ...auditoriaOpenApiPaths,
+    },
   })
   app.getHttpAdapter().get('/api/v1/openapi.json', (_req, res) => res.json(openapi))
 

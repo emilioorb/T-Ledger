@@ -4,6 +4,8 @@ import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { toMoney } from '../../../shared/http/money.schema.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
+import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import { BucketGuard } from '../../budget/application/bucket-guard.js'
 import { Debt } from '../domain/debt.js'
 import { DEBT_REPOSITORY, type DebtRepository } from '../domain/debt-repository.port.js'
@@ -14,6 +16,8 @@ export class UpdateDebtUseCase {
   constructor(
     @Inject(DEBT_REPOSITORY) private readonly debts: DebtRepository,
     private readonly buckets: BucketGuard,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
+    @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
   async execute(id: string, input: UpdateDebtInput): Promise<Debt> {
@@ -49,7 +53,17 @@ export class UpdateDebtUseCase {
     })
     if (isErr(updated)) throw new SemanticValidationError(updated.error.message)
 
-    await this.debts.save(updated.value)
+    await this.transaction.withTransaction(async () => {
+      await this.debts.save(updated.value)
+      await this.rastro.registrar({
+        entidad: 'deuda',
+        entidadId: id,
+        accion: 'editar',
+        antes: props,
+        despues: updated.value.toProps(),
+      })
+    })
+
     return updated.value
   }
 }

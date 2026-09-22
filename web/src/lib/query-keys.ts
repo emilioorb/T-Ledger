@@ -61,6 +61,13 @@ export const queryKeys = {
       ['banking', 'reconciliation', bankAccountId, from, to, page] as const,
   },
 
+  // El registro no se invalida desde acá aunque cambie un movimiento: lo que ya pasó no se
+  // reescribe, y una entrada nueva la trae la próxima visita a la pantalla.
+  auditoria: {
+    all: ['auditoria'] as const,
+    list: (consulta: object) => ['auditoria', 'list', consulta] as const,
+  },
+
   projection: {
     all: ['projection'] as const,
     cashFlow: (months: number, currency: string) =>

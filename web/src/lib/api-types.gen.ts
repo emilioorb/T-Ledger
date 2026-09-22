@@ -2438,6 +2438,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/audit-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista quién cambió qué en el libro, del más reciente al más viejo */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    pageSize?: number;
+                    entity?: "movimiento" | "periodo" | "deuda" | "meta" | "inversion" | "presupuesto" | "miembro";
+                    entityId?: string;
+                    userId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Entradas del registro */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EntradaDeRastro"][];
+                    };
+                };
+                /** @description Solo el dueño del libro ve el registro */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3085,6 +3134,25 @@ export interface components {
             /** @enum {string} */
             reason: "EXACT" | "NEAR_DATE" | "REFERENCE";
             ambiguous: boolean;
+        };
+        /** EntradaDeRastro */
+        EntradaDeRastro: {
+            id: string;
+            autor: {
+                id: string;
+                nombre: string;
+            } | null;
+            entity: string;
+            entityId: string;
+            action: string;
+            changes: components["schemas"]["CambioDeRastro"][];
+            createdAt: string;
+        };
+        /** CambioDeRastro */
+        CambioDeRastro: {
+            campo: string;
+            antes: unknown;
+            despues: unknown;
         };
         /** Money */
         MoneyOutput: {

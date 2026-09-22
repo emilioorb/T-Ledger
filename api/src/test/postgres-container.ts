@@ -32,6 +32,31 @@ export const startPostgres = async (): Promise<RunningPostgres> => {
     data: { id: LIBRO_DE_PRUEBA.bookId, name: 'Pruebas', slug: 'pruebas', createdAt: new Date() },
   })
 
+  // Y la persona del libro, por la misma razón: desde el ADR-004 cada cambio escribe su rastro
+  // en la misma transacción, y el rastro apunta a quién lo hizo. Sin este usuario, cualquier
+  // test que guarde algo muere con `ForeignKeyConstraintViolation` en una tabla de la que el
+  // test no sabe nada.
+  //
+  // Va con su membresía como dueño, igual que el contexto que usan los tests: un usuario
+  // suelto, sin libro, no es un estado que exista en la aplicación real.
+  await prisma.authUser.create({
+    data: {
+      id: LIBRO_DE_PRUEBA.userId,
+      name: 'Persona de prueba',
+      email: 'pruebas@tape.test',
+      updatedAt: new Date(),
+    },
+  })
+  await prisma.bookMember.create({
+    data: {
+      id: 'mem_test',
+      organizationId: LIBRO_DE_PRUEBA.bookId,
+      userId: LIBRO_DE_PRUEBA.userId,
+      role: LIBRO_DE_PRUEBA.rol,
+      createdAt: new Date(),
+    },
+  })
+
   // Y nace con su plan de cuentas, como cualquier libro real: al crear uno de verdad lo
   // siembra el evento `libro.creado`. Sin esto, todo caso de uso que valide contra una cuenta
   // contable falla en los tests con un 422 que no tiene nada que ver con lo que se prueba.
