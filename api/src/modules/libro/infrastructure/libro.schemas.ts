@@ -8,3 +8,10 @@ export const vaciarLibroSchema = z
   .meta({ id: 'VaciarLibro', title: 'VaciarLibro' })
 
 export type VaciarLibroInput = z.infer<typeof vaciarLibroSchema>
+
+// La misma prueba que para vaciar, por la misma razón y con más en juego: esto no se deshace.
+export const borrarLibroSchema = z
+  .object({ password: z.string().min(1, { error: 'Hace falta tu contraseña.' }) })
+  .meta({ id: 'BorrarLibro', title: 'BorrarLibro' })
+
+export type BorrarLibroInput = z.infer<typeof borrarLibroSchema>

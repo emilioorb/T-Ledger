@@ -1,14 +1,28 @@
-import { Body, Controller, Get, HttpCode, Post, UnauthorizedException } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { z } from 'zod'
 import { libroActual } from '../../../shared/libro/libro-context.js'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 import { VerificadorDeContrasena } from '../../identity/infrastructure/verificador-de-contrasena.js'
+import { BorrarLibroUseCase } from '../application/borrar-libro.use-case.js'
 import { MisLibrosUseCase } from '../application/mis-libros.use-case.js'
 import { VaciarLibroUseCase } from '../application/vaciar-libro.use-case.js'
 import { totalBorrado } from '../domain/vaciado.js'
 import type { libroPropioResponseSchema, vaciadoResponseSchema } from './libro.responses.js'
-import { vaciarLibroSchema, type VaciarLibroInput } from './libro.schemas.js'
+import {
+  borrarLibroSchema,
+  vaciarLibroSchema,
+  type BorrarLibroInput,
+  type VaciarLibroInput,
+} from './libro.schemas.js'
 
 type VaciadoResponse = z.infer<typeof vaciadoResponseSchema>
 type LibroPropioResponse = z.infer<typeof libroPropioResponseSchema>
@@ -18,6 +32,7 @@ export class LibroController {
   constructor(
     private readonly vaciar: VaciarLibroUseCase,
     private readonly libros: MisLibrosUseCase,
+    private readonly borrar: BorrarLibroUseCase,
     private readonly contrasena: VerificadorDeContrasena,
   ) {}
 
@@ -50,5 +65,20 @@ export class LibroController {
 
     const borrado = await this.vaciar.execute()
     return { borrado, total: totalBorrado(borrado) }
+  }
+
+  // Acá sí `DELETE`: el libro deja de existir, para todos los que estaban adentro.
+  @Permiso('libro', 'delete')
+  @Delete()
+  @HttpCode(204)
+  async remove(
+    @Body(new ZodValidationPipe(borrarLibroSchema)) input: BorrarLibroInput,
+  ): Promise<void> {
+    const { userId } = libroActual('borrar el libro')
+    if (!(await this.contrasena.esLaDe(userId, input.password))) {
+      throw new UnauthorizedException('Esa no es tu contraseña.')
+    }
+
+    await this.borrar.execute()
   }
 }
