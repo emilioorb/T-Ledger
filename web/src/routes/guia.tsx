@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import {
   Banknote,
   BookOpen,
   CalendarCheck,
+  ChevronDown,
   Compass,
   FolderTree,
   LayoutDashboard,
@@ -19,6 +20,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
+import { Card } from '@/components/ui/card'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { SearchInput } from '@/components/search-input'
 import { Button } from '@/components/ui/button'
 import { copy as accounting } from '@/features/accounting/copy'
@@ -292,81 +295,132 @@ const Notes = ({ notes }: { notes: readonly string[] }) => (
   </ul>
 )
 
-const ModuleSection = ({ module, group }: { module: GuideModule; group?: string }) => (
-  <section id={module.id} className="scroll-mt-4 space-y-4">
-    <div className="space-y-1">
-      {group ? <p className="text-xs text-muted-foreground">{group}</p> : null}
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
-          <module.icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-          {module.title}
-        </h2>
-        <Link
-          to={module.to}
-          aria-label={guide.openOf(module.title)}
-          className={cn('shrink-0 text-xs', TEXT_LINK)}
-        >
-          {guide.open}
-        </Link>
-      </div>
-    </div>
-
-    <div className="max-w-[70ch] space-y-4">
-      <Block label={guide.parts.purpose}>
-        <p>{module.purpose}</p>
-      </Block>
-      <Block label={guide.parts.steps}>
-        <Steps steps={module.steps} />
-      </Block>
-      <Block label={guide.parts.notes}>
-        <Notes notes={module.notes} />
-      </Block>
-    </div>
+const Grupo = ({ label, children }: { label: string; children: ReactNode }) => (
+  <section>
+    <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</h2>
+    <ul className="mt-1.5 border-b border-border">{children}</ul>
   </section>
 )
 
-// La primera sección no documenta una pantalla: explica las ideas sin las cuales el resto
-// de la guía sería vocabulario prestado.
-const BasicsSection = () => (
-  <section id={guide.basics.id} className="scroll-mt-4 space-y-4">
-    <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
-      <Compass className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-      {guide.basics.title}
-    </h2>
+interface FilaProps {
+  id: string
+  icon: LucideIcon
+  title: string
+  lede: string
+  abierta: boolean
+  alAbrir: (abierta: boolean) => void
+  children: ReactNode
+}
 
-    <div className="max-w-[70ch] space-y-4">
-      <p className="text-sm">{guide.basics.intro}</p>
+// Cada pantalla es una fila que se abre donde está.
+//
+// Antes la guía era el texto completo de los veintiún módulos, uno debajo del otro, con un
+// índice pegado al costado para poder saltar. Eso son ocho pantallas de scroll y un índice que
+// existía solo porque el contenido no se podía abarcar. Plegado, el mapa entero entra de una
+// mirada, el índice sobra, y el texto aparece únicamente donde se lo pidió.
+//
+// Sin tarjetas: veintiuna tarjetas iguales serían veintiuna cajas alrededor de un renglón, y lo
+// que separa una pantalla de la siguiente ya lo dice el grupo en el que está.
+const Fila = ({ id, icon: Icono, title, lede, abierta, alAbrir, children }: FilaProps) => (
+  <Collapsible open={abierta} onOpenChange={alAbrir} asChild>
+    <li id={id} className="scroll-mt-4 border-t border-border">
+      <CollapsibleTrigger className="group flex w-full items-center gap-3 py-2.5 text-left hover:bg-muted/40">
+        <Icono className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <span className="shrink-0 text-sm font-medium">{title}</span>
 
-      <dl className="space-y-3">
-        {guide.basics.concepts.map((concept) => (
-          <div key={concept.term}>
-            <dt className="text-sm font-medium">{concept.term}</dt>
-            <dd className="mt-0.5 text-sm">{concept.text}</dd>
-          </div>
+        {/* La primera oración del «para qué sirve» y no un resumen aparte: dos textos que
+            dicen lo mismo se separan al primer cambio. Desaparece al abrir porque abajo queda
+            el párrafo entero. */}
+        {abierta ? null : (
+          <span className="hidden min-w-0 flex-1 truncate text-sm text-muted-foreground sm:block">
+            {lede}
+          </span>
+        )}
+
+        <ChevronDown
+          className="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
+          aria-hidden="true"
+        />
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="max-w-[70ch] space-y-4 pb-5 pl-7">{children}</div>
+      </CollapsibleContent>
+    </li>
+  </Collapsible>
+)
+
+// Hasta el primer punto: lo que entra en un renglón sin cortar una idea por la mitad.
+const ledeDe = (texto: string): string => {
+  const punto = texto.indexOf('. ')
+  return punto === -1 ? texto : texto.slice(0, punto + 1)
+}
+
+const Modulo = ({ module }: { module: GuideModule }) => (
+  <>
+    <p className="text-sm">{module.purpose}</p>
+
+    <Block label={guide.parts.steps}>
+      <Steps steps={module.steps} />
+    </Block>
+
+    <Block label={guide.parts.notes}>
+      <Notes notes={module.notes} />
+    </Block>
+
+    <Link
+      to={module.to}
+      aria-label={guide.openOf(module.title)}
+      className={cn('inline-block text-xs', TEXT_LINK)}
+    >
+      {guide.open}
+    </Link>
+  </>
+)
+
+// La primera fila no documenta una pantalla: explica las ideas sin las cuales el resto de la
+// guía sería vocabulario prestado. Por eso es la que arranca abierta.
+const Bases = ({ irA }: { irA: (id: string) => void }) => (
+  <>
+    <p className="text-sm">{guide.basics.intro}</p>
+
+    <dl className="space-y-3">
+      {guide.basics.concepts.map((concept) => (
+        <div key={concept.term}>
+          <dt className="text-sm font-medium">{concept.term}</dt>
+          <dd className="mt-0.5 text-sm">{concept.text}</dd>
+        </div>
+      ))}
+    </dl>
+
+    <Block label={guide.basics.start.label}>
+      <ol className="space-y-1.5">
+        {guide.basics.start.steps.map((step, index) => (
+          <li key={step.text} className="grid grid-cols-[1.25rem_1fr] gap-x-2">
+            <span className="num text-muted-foreground tabular-nums">{index + 1}.</span>
+            <span>
+              {withControls(step.text)}{' '}
+              {/* Un botón y no un ancla: con las filas plegadas, saltar al identificador
+                  dejaría a la persona mirando el renglón cerrado de la pantalla que quería
+                  leer. */}
+              <button
+                type="button"
+                onClick={() => irA(step.to)}
+                className={cn('text-xs', TEXT_LINK)}
+              >
+                {step.link}
+              </button>
+            </span>
+          </li>
         ))}
-      </dl>
-
-      <Block label={guide.basics.start.label}>
-        <ol className="space-y-1.5">
-          {guide.basics.start.steps.map((step, index) => (
-            <li key={step.text} className="grid grid-cols-[1.25rem_1fr] gap-x-2">
-              <span className="num text-muted-foreground tabular-nums">{index + 1}.</span>
-              <span>
-                {withControls(step.text)}{' '}
-                <a href={`#${step.to}`} className={cn('text-xs', TEXT_LINK)}>
-                  {step.link}
-                </a>
-              </span>
-            </li>
-          ))}
-        </ol>
-      </Block>
-    </div>
-  </section>
+      </ol>
+    </Block>
+  </>
 )
 
 const GuideScreen = () => {
   const [query, setQuery] = useState('')
+  const [abierta, setAbierta] = useState<string>(guide.basics.id)
   const searching = query.trim().length > 0
 
   // Un grupo que se queda sin módulos no se muestra: un encabezado sobre nada sería ruido.
@@ -379,8 +433,25 @@ const GuideScreen = () => {
   const matches = groups.reduce((total, group) => total + group.modules.length, 0)
   const nothing = !showBasics && groups.length === 0
 
+  // Con una sola coincidencia no queda nada que elegir: la que sobrevivió es la respuesta, y
+  // pedir un clic más para verla sería cobrar dos veces por la misma búsqueda.
+  const unica = !showBasics && matches === 1 ? groups[0]?.modules[0]?.id : undefined
+
+  useEffect(() => {
+    if (unica) setAbierta(unica)
+  }, [unica])
+
+  const irA = (id: string) => {
+    setAbierta(id)
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  // Una sola abierta a la vez: con tres desplegadas vuelve el muro de texto que esta pantalla
+  // dejó de ser.
+  const alAbrir = (id: string) => (abrir: boolean) => setAbierta(abrir ? id : '')
+
   return (
-    <section className="space-y-6">
+    <Card className="mx-auto max-w-4xl gap-6 px-6 py-8 sm:px-8">
       <header className="max-w-[65ch]">
         <h1 className="text-xl font-semibold tracking-tight">{guide.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{guide.description}</p>
@@ -411,60 +482,42 @@ const GuideScreen = () => {
           }
         />
       ) : (
-        <div className="grid gap-8 lg:grid-cols-[14rem_1fr]">
-          {/* El índice es la única parte que se repite: bajo lg desaparece y el contenido,
-              que ya está en orden, hace de índice por sí solo. */}
-          <nav
-            aria-label={guide.index}
-            className="hidden text-sm lg:sticky lg:top-0 lg:block lg:self-start"
-          >
-            <ul className="space-y-4">
-              {showBasics ? (
-                <li>
-                  <a
-                    href={`#${guide.basics.id}`}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    {guide.basics.title}
-                  </a>
-                </li>
-              ) : null}
+        <div className="space-y-8">
+          {showBasics ? (
+            <Grupo label={guide.groups.basics}>
+              <Fila
+                id={guide.basics.id}
+                icon={Compass}
+                title={guide.basics.title}
+                lede={ledeDe(guide.basics.intro)}
+                abierta={abierta === guide.basics.id}
+                alAbrir={alAbrir(guide.basics.id)}
+              >
+                <Bases irA={irA} />
+              </Fila>
+            </Grupo>
+          ) : null}
 
-              {groups.map((group) => (
-                <li key={group.id}>
-                  <p className="text-xs text-muted-foreground">{group.label}</p>
-                  <ul className="mt-1 space-y-1">
-                    {group.modules.map((module) => (
-                      <li key={module.id}>
-                        <a
-                          href={`#${module.id}`}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          {module.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div className="min-w-0 space-y-10">
-            {showBasics ? <BasicsSection /> : null}
-            {groups.flatMap((group) =>
-              group.modules.map((module, index) => (
-                <ModuleSection
+          {groups.map((group) => (
+            <Grupo key={group.id} label={group.label}>
+              {group.modules.map((module) => (
+                <Fila
                   key={module.id}
-                  module={module}
-                  group={index === 0 ? group.label : undefined}
-                />
-              )),
-            )}
-          </div>
+                  id={module.id}
+                  icon={module.icon}
+                  title={module.title}
+                  lede={ledeDe(module.purpose)}
+                  abierta={abierta === module.id}
+                  alAbrir={alAbrir(module.id)}
+                >
+                  <Modulo module={module} />
+                </Fila>
+              ))}
+            </Grupo>
+          ))}
         </div>
       )}
-    </section>
+    </Card>
   )
 }
 

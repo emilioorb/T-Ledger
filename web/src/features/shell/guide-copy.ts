@@ -27,7 +27,7 @@ export const copy = {
     },
     // El panel no cuelga de ninguna sección en la barra lateral, pero el índice necesita
     // un rótulo: una entrada suelta arriba de los grupos se leería como un error.
-    groups: { home: 'Panel' },
+    groups: { home: 'Panel', basics: 'Empezá acá' },
     open: 'Abrir',
     openOf: (title: string) => `Abrir ${title}`,
     empty: {
