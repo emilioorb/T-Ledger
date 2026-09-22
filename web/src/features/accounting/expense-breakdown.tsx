@@ -27,9 +27,13 @@ interface Props {
   restLabel: string
 }
 
-// Más de cinco renglones y la lista deja de leerse de un vistazo, que es para lo que está.
-// Lo que sobra no se esconde: se junta en una porción, y la barra sigue sumando el total.
-const TOP = 5
+// Tres categorías y el resto agrupado: cuatro renglones. La lista está para contestar «en qué
+// se fue el mes» de un vistazo, y a partir del cuarto nombre eso deja de ser un vistazo y pasa
+// a ser una lectura —para eso está el enlace a los movimientos—.
+//
+// Lo que sobra no se esconde: se junta en una porción que dice cuántas son, y la barra sigue
+// sumando el total, así que los porcentajes nunca mienten.
+const TOP = 4
 
 const groupRest = (slices: ExpenseSlice[], restLabel: string): ExpenseSlice[] => {
   if (slices.length <= TOP) return slices

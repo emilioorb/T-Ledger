@@ -180,7 +180,14 @@ const BudgetScreen = () => {
           <StatGrid>
             <StatCard
               icon={Wallet}
-              className="@xl:col-span-2 @3xl:col-span-3"
+              // El ancho extra solo cuando sobran columnas. La rejilla es `auto-fit` con
+              // columnas de 17rem: a 1129 px entran cuatro, y una primera tarjeta de tres
+              // columnas más las otras tres necesitan seis huecos. El resultado era la última
+              // tarjeta sola en un segundo renglón con media fila vacía al lado.
+              //
+              // 102rem es el ancho a partir del cual entran seis columnas —seis veces 17rem
+              // más los respiros—, que es cuando el ancho extra no le saca el lugar a nadie.
+              className="@[102rem]:col-span-3"
               label={
                 overBucket ? (
                   <span className="text-warning">{copy.budget.overBucket(overBucket.name)}</span>

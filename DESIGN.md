@@ -78,9 +78,11 @@ Contraste medido contra fondo, superficie y superficie elevada de su propio tema
 |---|---|---|
 | Negativo | 6,93 / 6,49 / 5,92 | 6,96 / 6,45 / 5,86 |
 | Positivo | 9,55 / 8,94 / 8,15 | 6,27 / 5,81 / 5,28 |
-| Advertencia | 9,42 / 8,82 / 8,04 | 9,11 / 8,44 / 7,67 |
+| Advertencia | 9,42 / 8,82 / 8,04 | 3,24 / 3,00 / 2,72 |
 
-**La advertencia es naranja, y la separación con el negativo la hace la luminancia.** El naranja comparte familia de matiz con el rojo del negativo, así que para quien no distingue rojo de verde el matiz no alcanza: por eso los dos roles se separan además por claridad —en oscuro 0,78 contra 0,705; en claro 0,40 contra 0,48— y nunca aparecen solos, porque rige la Regla del Signo. El positivo tira a verde azulado para no caer en el verde de terminal, que la sección 6 prohíbe.
+**La advertencia es naranja, y la separación con el negativo la hace la luminancia.** El naranja comparte familia de matiz con el rojo del negativo, así que para quien no distingue rojo de verde el matiz no alcanza: por eso los dos roles se separan además por claridad —en oscuro 0,78 contra 0,705; en claro 0,65 contra 0,48— y nunca aparecen solos, porque rige la Regla del Signo. El positivo tira a verde azulado para no caer en el verde de terminal, que la sección 6 prohíbe.
+
+En claro, la advertencia se fijó en 0,65 y no en el 0,40 que alcanzaba 4,5:1 como texto: el mismo token pinta las barras de progreso, donde el color es el dato y el requisito aplicable es 3:1 (WCAG 1.4.11). Con 0,40 el aviso no se distinguía del neutro mientras una cubeta al lado se veía viva. La contrapartida está aceptada a conciencia: una **cifra** en ámbar sobre claro queda en ~3:1 y no en 4,5:1, y lo que la sostiene es la Regla del Signo —ningún dato viaja solo en el color—.
 
 La prohibición del dorado y el ámbar de la sección 6 sigue en pie y es sobre el color decorativo: el naranja acá no es identidad ni adorno, es un rol semántico con un significado verificable.
 

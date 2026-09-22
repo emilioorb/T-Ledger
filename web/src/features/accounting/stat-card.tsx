@@ -40,7 +40,19 @@ export const StatCard = ({ label, children, hint, icon: Icon, className }: Props
       {label}
     </p>
     {children}
-    {hint ? <p className="max-w-[52ch] text-xs text-muted-foreground">{hint}</p> : null}
+    {/* 75ch y no 52: la tarjeta mide mil cien píxeles y el título los usa todos, mientras el
+        hint se conformaba con cuatrocientos catorce y partía en dos un texto al que le
+        faltaban cincuenta y dos píxeles para entrar entero. Setenta y cinco es el máximo
+        clásico de la medida de lectura —más que eso el ojo se pierde al volver al renglón
+        siguiente—, así que la regla se respeta igual y el hint deja de cortarse de gusto.
+
+        `text-balance` queda para los hints que sí necesitan dos renglones: los reparte parejo
+        en vez de dejar tres palabras colgando. No sirve `text-pretty`, aunque sea el pensado
+        para párrafos: solo rescata la última línea cuando queda una sola palabra, y medido
+        acá daba exactamente el mismo corte que no poner nada. */}
+    {hint ? (
+      <p className="max-w-[75ch] text-xs text-balance text-muted-foreground">{hint}</p>
+    ) : null}
   </Card>
 )
 
