@@ -1,79 +1,111 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { CirclePlus, PenLine, ScrollText, Wrench } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import type { ComponentType } from 'react'
 import { EmptyState } from '@/components/empty-state'
 import { Card } from '@/components/ui/card'
 import { copy } from '@/features/shell/copy'
+import { Brote, Chispas, Fiesta, Llave } from '@/features/shell/ilustraciones'
 import { releases, type Release } from '@/features/shell/release-notes'
 import { formatLongDate } from '@/lib/dates'
 
-interface GroupProps {
+interface GrupoProps {
   label: string
-  icon: LucideIcon
+  icon: ComponentType<{ className?: string }>
   lines: string[]
 }
 
-// El rótulo a la izquierda y las líneas a la derecha: así se puede saltar directo a lo
-// corregido sin leer lo nuevo. Bajo sm la columna se apila, porque siete caracteres de
-// ancho para «Corregido» dejarían el texto en dos palabras por renglón.
-const Group = ({ label, icon: Icon, lines }: GroupProps) =>
+// Un rótulo con su dibujo y sus líneas debajo.
+//
+// Antes esto eran dos columnas de texto largo: la vista saltaba de izquierda a derecha en
+// cada renglón, las filas quedaban desparejas porque unas frases ocupan una línea y otras
+// dos, y el texto llegaba a ciento veinte caracteres de ancho. Una columna sola se lee de
+// corrido.
+const Grupo = ({ label, icon: Icono, lines }: GrupoProps) =>
   lines.length === 0 ? null : (
-    <div className="grid gap-x-6 gap-y-2 py-4 first:pt-0 last:pb-0 sm:grid-cols-[8rem_1fr]">
-      <h3 className="flex items-center gap-1.5 text-xs text-muted-foreground sm:pt-0.5">
-        <Icon className="size-3.5 shrink-0" aria-hidden="true" />
+    <div>
+      <h3 className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {/* Cinco y no cuatro: son dibujos con trazo, y a dieciséis píxeles el brote y la
+            llave se convertían en una mancha. */}
+        <Icono className="size-5 shrink-0" />
         {label}
       </h3>
-      <ul className="grid gap-x-8 gap-y-2 lg:grid-cols-2">
+
+      <ul className="mt-2.5 space-y-1.5">
         {lines.map((line) => (
-          <li key={line} className="text-sm">
-            {line}
+          // El punto va en su propia columna: con `list-disc` la segunda línea de una frase
+          // larga se mete debajo de la viñeta y el bloque pierde el borde izquierdo.
+          <li key={line} className="grid grid-cols-[0.75rem_1fr] text-sm">
+            <span aria-hidden="true" className="text-muted-foreground">
+              ·
+            </span>
+            {/* Sin `text-balance`: reparte el texto entre líneas para dejarlas parejas, y en
+                frases de una o dos líneas eso corta antes de llegar al borde. */}
+            <span>{line}</span>
           </li>
         ))}
       </ul>
     </div>
   )
 
-const ReleaseBlock = ({ release }: { release: Release }) => (
-  <Card size="sm" className="gap-0 px-4">
-    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-      <h2 className="flex items-center gap-2 text-base font-medium tracking-tight">
-        <ScrollText className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        {formatLongDate(release.date)}
-      </h2>
+// Cada entrega abre con su fecha y sigue con lo que cambió.
+//
+// Sin tarjeta. Una tarjeta agrupa cosas que de otro modo se confundirían, y acá lo que separa
+// una entrega de la siguiente es el tiempo: alcanza una regla. Sacarlas quitó dos bordes, dos
+// fondos y el relleno de cada bloque, que era casi todo el ruido de la pantalla.
+const Entrega = ({ release }: { release: Release }) => (
+  <article className="border-t border-border py-10 first:border-t-0 first:pt-0">
+    <header className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <h2 className="text-sm font-medium tracking-tight">{formatLongDate(release.date)}</h2>
 
-      <span className="flex items-baseline gap-3 text-xs text-muted-foreground">
-        {/* La marca es texto y no un punto de color: sin versiones publicadas nunca aparece,
-            y cuando aparezca tiene que decir qué significa sin depender del tono. */}
-        {release.version === __APP_VERSION__ ? <span>{copy.releases.current}</span> : null}
-        {release.version ? <span className="num">v{release.version}</span> : null}
-      </span>
-    </div>
+      {/* La versión en una píldora, como la marca que es: dice a qué build corresponde lo de
+          abajo, no es parte de la frase de la fecha. */}
+      {release.version ? (
+        <span className="num rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+          v{release.version}
+        </span>
+      ) : null}
 
-    <div className="mt-3 divide-y divide-border border-t border-border pt-1">
-      <Group label={copy.releases.added} icon={CirclePlus} lines={release.added} />
-      <Group label={copy.releases.improved} icon={PenLine} lines={release.improved} />
-      <Group label={copy.releases.fixed} icon={Wrench} lines={release.fixed} />
+      {/* Texto y no un punto de color: tiene que decir qué significa sin depender del tono. */}
+      {release.version === __APP_VERSION__ ? (
+        <span className="text-xs text-muted-foreground">{copy.releases.current}</span>
+      ) : null}
+    </header>
+
+    <div className="mt-5 space-y-7">
+      <Grupo label={copy.releases.added} icon={Chispas} lines={release.added} />
+      <Grupo label={copy.releases.improved} icon={Brote} lines={release.improved} />
+      <Grupo label={copy.releases.fixed} icon={Llave} lines={release.fixed} />
     </div>
-  </Card>
+  </article>
 )
 
+// Una columna centrada y angosta, como se lee un texto. Es la excepción a la densidad del
+// resto del producto y está bien que lo sea: las demás pantallas muestran cifras que se
+// escanean, y esta es lo único que se lee de corrido.
 const ReleasesScreen = () => (
-  <section className="space-y-6">
-    <header className="max-w-[65ch]">
-      <h1 className="text-xl font-semibold tracking-tight">{copy.releases.title}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{copy.releases.description}</p>
+  <Card className="mx-auto max-w-2xl gap-10 px-6 py-8 sm:px-8">
+    <header className="flex items-start justify-between gap-6">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">{copy.releases.title}</h1>
+        <p className="mt-2 max-w-[55ch] text-sm text-muted-foreground">
+          {copy.releases.description}
+        </p>
+      </div>
+
+      {/* El dibujo grande acompaña al título y no se repite en cada entrega: una ilustración
+          por pantalla es una decisión, una por bloque es decoración. */}
+      <Fiesta className="hidden w-24 shrink-0 sm:block" />
     </header>
 
     {releases.length === 0 ? (
       <EmptyState title={copy.releases.empty.title} description={copy.releases.empty.description} />
     ) : (
-      <div className="space-y-3">
+      <div>
         {releases.map((release) => (
-          <ReleaseBlock key={release.date} release={release} />
+          <Entrega key={release.date} release={release} />
         ))}
       </div>
     )}
-  </section>
+  </Card>
 )
 
 export const Route = createFileRoute('/novedades')({ component: ReleasesScreen })
