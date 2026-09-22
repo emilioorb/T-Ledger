@@ -54,9 +54,15 @@ export const CuentaT = ({ className }: { className?: string }) => {
                 misma lectura girada noventa grados, porque dos columnas de cuarenta
                 caracteres no entran en 320 píxeles. */}
             <p className="border-l border-border pl-3 text-sm md:border-0 md:pr-8 md:pl-0">
+              <span className="mr-2 text-xs tracking-wide text-muted-foreground uppercase md:hidden">
+                {copy.debe}
+              </span>
               <Linea {...asiento.debe} />
             </p>
             <p className="border-l border-border pl-3 text-sm md:border-0 md:pl-8">
+              <span className="mr-2 text-xs tracking-wide text-muted-foreground uppercase md:hidden">
+                {copy.haber}
+              </span>
               <Linea {...asiento.haber} />
             </p>
           </div>
@@ -68,7 +74,7 @@ export const CuentaT = ({ className }: { className?: string }) => {
           <span className="num tabular-nums block text-right">{total}</span>
         </p>
         <p className="mt-6 border-t-[3px] border-double border-border pt-2 text-sm md:pl-8">
-          <span className="num tabular-nums block text-right md:text-left">{total}</span>
+          <span className="num tabular-nums block text-right">{total}</span>
         </p>
       </div>
     </div>

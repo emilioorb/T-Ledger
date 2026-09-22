@@ -24,7 +24,15 @@ describe('CuentaT', () => {
 
   it('rotula las dos columnas', () => {
     render(<CuentaT />)
-    expect(screen.getByText('Debe')).toBeInTheDocument()
-    expect(screen.getByText('Haber')).toBeInTheDocument()
+    expect(screen.getAllByText('Debe').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Haber').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('el debe va antes que el haber, o la página afirma algo falso', () => {
+    render(<CuentaT />)
+    const debe = screen.getByText('Mercado')
+    const haber = screen.getByText('Efectivo')
+    // eslint-disable-next-line no-bitwise
+    expect(debe.compareDocumentPosition(haber) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })
