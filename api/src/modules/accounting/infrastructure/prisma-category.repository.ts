@@ -27,6 +27,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
       accountCode: category.accountCode,
       sortOrder: category.sortOrder,
       active: category.active,
+      colorIndex: category.colorIndex,
     }
     await this.prisma.client.category.upsert({
       where: { id: category.id },

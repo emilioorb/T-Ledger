@@ -102,11 +102,14 @@ const statusOf = (deviation: Money, allocated: Money): BucketStatus => {
   return deviation.isNegative() ? 'OVER' : 'UNDER'
 }
 
+// El modelo de fábrica no elige colores: los suyos son los que les tocan por su lugar, que es
+// lo que hace que 50/30/20 se vea igual en todos los libros.
 const bucket = (id: string, name: string, percentage: number, isSavings = false): BudgetBucket => ({
   id,
   name,
   percentage: unwrap(Percentage.create(percentage)),
   isSavings,
+  colorIndex: null,
 })
 
 export const FIFTY_THIRTY_TWENTY: BudgetModelProps = {

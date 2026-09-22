@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { ColorPicker, PuntoDeColor } from '@/components/color-picker'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -43,6 +44,7 @@ interface FormValues {
   accountCode: string | null
   active: boolean
   sortOrder: number
+  colorIndex: number | null
 }
 
 const emptyValues: FormValues = {
@@ -51,6 +53,8 @@ const emptyValues: FormValues = {
   accountCode: null,
   active: true,
   sortOrder: 0,
+  // Sin elegir: la lista le da el que le toca por su lugar hasta que alguien decida otro.
+  colorIndex: null,
 }
 
 interface FormProps {
@@ -70,6 +74,7 @@ const CategoryForm = ({ category, postable, pending, onSubmit, onCancel }: FormP
           accountCode: category.accountCode,
           active: category.active,
           sortOrder: category.sortOrder,
+          colorIndex: category.colorIndex,
         }
       : emptyValues,
   )
@@ -91,6 +96,13 @@ const CategoryForm = ({ category, postable, pending, onSubmit, onCancel }: FormP
           onChange={(event) => setValues({ ...values, name: event.target.value })}
         />
       </div>
+
+      <ColorPicker
+        value={values.colorIndex}
+        onChange={(colorIndex) => setValues({ ...values, colorIndex })}
+        label={fields.color.label}
+        autoLabel={fields.color.auto}
+      />
 
       <div className="space-y-1.5">
         <Label htmlFor="kind">{fields.kind.label}</Label>
@@ -152,7 +164,12 @@ interface RowProps {
 // Una categoría es un mapeo, no una fila de tabla: se lee «nombre → cuenta» de un vistazo.
 const CategoryRow = ({ category, accountName, onEdit, onDelete }: RowProps) => (
   <li className={`group flex flex-wrap items-center gap-x-3 gap-y-1 ${FRAME_ROW}`}>
-    <span className="min-w-0 flex-1 truncate text-sm">{category.name}</span>
+    {/* El punto va pegado al nombre y no en una columna propia: identifica a esta categoría,
+        no es un dato que se compare hacia abajo. */}
+    <span className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm">
+      <PuntoDeColor colorIndex={category.colorIndex} posicion={category.sortOrder} />
+      <span className="truncate">{category.name}</span>
+    </span>
     <span className="w-16 shrink-0 text-xs text-muted-foreground">
       {copy.categories.kinds[category.kind]}
     </span>

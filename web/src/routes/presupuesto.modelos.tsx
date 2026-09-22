@@ -17,6 +17,7 @@ import { useBudgetModels, useMonthlyIncome, useSaveBudgetModel } from '@/feature
 import { useAccounts } from '@/features/accounting/use-accounting'
 import { today } from '@/lib/dates'
 import { formatMoney, type MoneyDto } from '@/lib/money'
+import { colorDe, ColorPicker } from '@/components/color-picker'
 import { cn } from '@/lib/utils'
 
 interface BucketDraft {
@@ -26,6 +27,7 @@ interface BucketDraft {
   isSavings: boolean
   accountCodes: string[]
   persisted: boolean
+  colorIndex: number | null
 }
 
 // El id es un detalle de implementación: se deriva del nombre. El de una cubeta ya guardada
@@ -46,6 +48,8 @@ const emptyBucket = (): BucketDraft => ({
   isSavings: false,
   accountCodes: [],
   persisted: false,
+  // Sin elegir: la barra le da el que le toca por su lugar, como siempre.
+  colorIndex: null,
 })
 
 const shareOf = (income: MoneyDto, percentage: string): MoneyDto => {
@@ -78,6 +82,7 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
           isSavings: bucket.isSavings,
           accountCodes: [...bucket.accountCodes],
           persisted: true,
+          colorIndex: bucket.colorIndex,
         }))
       : [emptyBucket()],
   )
@@ -174,7 +179,18 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
                     {fields.inColones(formatMoney(shareOf(income, bucket.percentage)))}
                   </p>
                 ) : null}
-                <Label className="mt-1 flex items-center gap-2 text-xs font-normal">
+                {/* El color respira más que las líneas de texto que lo rodean: son fichas de
+                    veintiocho píxeles, y con la misma separación de un renglón el bloque se
+                    lee como si el «es la cubeta de ahorro» fuera su pie. */}
+                <ColorPicker
+                  className="mt-3"
+                  value={bucket.colorIndex}
+                  onChange={(colorIndex) => update(index, { colorIndex })}
+                  label={fields.color.label}
+                  autoLabel={fields.color.auto}
+                />
+
+                <Label className="mt-3 flex items-center gap-2 text-xs font-normal">
                   <Checkbox
                     checked={bucket.isSavings}
                     onCheckedChange={(checked) => update(index, { isSavings: checked === true })}
@@ -183,8 +199,8 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
                     <span>{fields.isSavings}</span>
                   </Hint>
                 </Label>
-                <p className="mt-1 text-xs text-muted-foreground">{fields.accounts}</p>
-                <div className="mt-1 flex flex-wrap gap-2">
+                <p className="mt-3 text-xs text-muted-foreground">{fields.accounts}</p>
+                <div className="mt-1.5 flex flex-wrap gap-2">
                   {postable.map((account) => (
                     <Label
                       key={account.code}
@@ -247,15 +263,13 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
 // un vistazo y hace comparables dos modelos puestos uno al lado del otro; los porcentajes
 // quedan debajo para el que quiera el dato exacto.
 //
-// Los tramos se distinguen por luminancia y no por matiz. No se toman de la rampa en orden
-// —dos escalones seguidos casi no se diferencian en una barra tan fina— sino salteados, y
-// entre tramo y tramo queda una hendidura del color de la tarjeta para que el límite se vea
-// aunque los tonos se parezcan.
-// El naranja y el verde que la app ya usa, y ningún rojo: una cubeta no es buena ni mala, y
-// en rojo parecería que algo está mal. El nombre va siempre al lado: el color ordena, no informa.
-const TONES = ['bg-bucket-1', 'bg-bucket-2', 'bg-bucket-3', 'bg-bucket-4', 'bg-bucket-5']
-
-const toneOf = (index: number): string => TONES[index % TONES.length] ?? TONES[0]!
+// El color que eligió la cubeta, o el que le toca por su lugar si no eligió ninguno. Entre
+// tramo y tramo queda una hendidura del color de la tarjeta para que el límite se vea aunque
+// dos colores se parezcan.
+//
+// Ninguno de los diez es rojo: una cubeta no es buena ni mala, y en rojo parecería que algo
+// está mal. El nombre va siempre al lado: el color ordena, no informa.
+const toneOf = (index: number, colorIndex?: number | null): string => colorDe(colorIndex, index)
 const ModelCard = ({ model, onEdit }: { model: BudgetModel; onEdit: () => void }) => (
   // La tarjeta entera abre el editor: con una sola acción posible, un botón aparte es un
   // blanco más chico para lo mismo. Teclado incluido, que si no queda fuera del alcance.
@@ -291,8 +305,11 @@ const ModelCard = ({ model, onEdit }: { model: BudgetModel; onEdit: () => void }
       {model.buckets.map((bucket, index) => (
         <span
           key={bucket.id}
-          className={cn('first:rounded-l-sm last:rounded-r-sm', toneOf(index))}
-          style={{ width: `${Number(bucket.percentage)}%` }}
+          className="first:rounded-l-sm last:rounded-r-sm"
+          style={{
+            width: `${Number(bucket.percentage)}%`,
+            backgroundColor: toneOf(index, bucket.colorIndex),
+          }}
         />
       ))}
     </div>
@@ -302,10 +319,8 @@ const ModelCard = ({ model, onEdit }: { model: BudgetModel; onEdit: () => void }
         <li key={bucket.id} className="flex items-baseline justify-between gap-3 text-xs">
           <span className="flex min-w-0 items-baseline gap-1.5">
             <span
-              className={cn(
-                'size-2.5 shrink-0 rounded-[2px] ring-1 ring-foreground/10',
-                toneOf(index),
-              )}
+              className="size-2.5 shrink-0 rounded-[2px] ring-1 ring-foreground/10"
+              style={{ backgroundColor: toneOf(index, bucket.colorIndex) }}
               aria-hidden="true"
             />
             <span className="truncate text-muted-foreground">

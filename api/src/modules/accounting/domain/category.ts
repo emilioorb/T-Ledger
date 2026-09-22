@@ -10,6 +10,9 @@ export interface CategoryProps {
   readonly accountCode: string | null
   readonly sortOrder: number
   readonly active: boolean
+  // Cuál de los diez colores del sistema, por número. `null` es «el que le toque»: el color
+  // se elige, no se exige.
+  readonly colorIndex: number | null
 }
 
 export class Category {
@@ -22,12 +25,27 @@ export class Category {
     return ok(new Category({ ...props, name: props.name.trim() }))
   }
 
-  get id(): string { return this.props.id }
-  get name(): string { return this.props.name }
-  get kind(): CategoryKind { return this.props.kind }
-  get accountCode(): string | null { return this.props.accountCode }
-  get sortOrder(): number { return this.props.sortOrder }
-  get active(): boolean { return this.props.active }
+  get id(): string {
+    return this.props.id
+  }
+  get name(): string {
+    return this.props.name
+  }
+  get kind(): CategoryKind {
+    return this.props.kind
+  }
+  get accountCode(): string | null {
+    return this.props.accountCode
+  }
+  get sortOrder(): number {
+    return this.props.sortOrder
+  }
+  get active(): boolean {
+    return this.props.active
+  }
+  get colorIndex(): number | null {
+    return this.props.colorIndex
+  }
 
   isPostable(): boolean {
     return this.props.accountCode !== null && this.props.active

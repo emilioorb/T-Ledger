@@ -17,6 +17,7 @@ interface BucketRow {
   isSavings: boolean
   sortOrder: number
   accountCodes: string[]
+  colorIndex: number | null
 }
 
 interface ModelRow {
@@ -37,6 +38,7 @@ const toDomain = (row: ModelRow): BudgetModel =>
           name: bucket.name,
           percentage: unwrap(Percentage.create(new Decimal(bucket.percentage.toString()))),
           isSavings: bucket.isSavings,
+          colorIndex: bucket.colorIndex,
         })),
     }),
   )
@@ -103,6 +105,7 @@ export class PrismaBudgetModelRepository implements BudgetModelRepository {
           isSavings: bucket.isSavings,
           sortOrder: index,
           accountCodes: codesOf.get(bucket.id) ?? [],
+          colorIndex: bucket.colorIndex,
         })),
       })
     })

@@ -11,6 +11,10 @@ const percentage = z
   .string()
   .regex(/^\d+(\.\d+)?$/, { error: 'El porcentaje debe ser un decimal no negativo' })
 
+// El mismo rango que en categorías: diez colores numerados desde uno. `null` es «el que le
+// toque por su lugar», que es como se pintaban antes de que se pudieran elegir.
+const colorIndex = z.number().int().min(1).max(10).nullable().default(null)
+
 export const budgetBucketSchema = z
   .object({
     id: nameText,
@@ -18,6 +22,7 @@ export const budgetBucketSchema = z
     percentage,
     isSavings: z.boolean().default(false),
     accountCodes: z.array(accountCode).default([]),
+    colorIndex,
   })
   .meta({ id: 'BudgetBucketInput', title: 'BudgetBucketInput' })
 
@@ -49,6 +54,7 @@ export const budgetModelResponseSchema = z
         percentage: z.string(),
         isSavings: z.boolean(),
         accountCodes: z.array(z.string()),
+        colorIndex: z.number().nullable(),
       }),
     ),
   })

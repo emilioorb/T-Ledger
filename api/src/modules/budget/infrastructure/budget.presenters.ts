@@ -39,6 +39,7 @@ export const toModelResponse = (
       percentage: bucket.percentage.value.toString(),
       isSavings: bucket.isSavings,
       accountCodes: [...(codesOf.get(bucket.id) ?? [])],
+      colorIndex: bucket.colorIndex,
     })),
   }
 }

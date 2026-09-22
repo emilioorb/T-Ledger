@@ -75,6 +75,7 @@ export class ManageBudgetModelsUseCase {
         name: bucket.name,
         percentage: percentage.value,
         isSavings: bucket.isSavings,
+        colorIndex: bucket.colorIndex,
       }
     })
 

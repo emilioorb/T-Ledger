@@ -75,6 +75,12 @@ export const copy = {
       buckets: 'Cubetas',
       addBucket: 'Agregar cubeta',
       removeBucket: (name: string) => `Quitar ${name}`,
+      color: {
+        label: 'Color',
+        // «Automático» y no «ninguno»: la cubeta siempre tiene color; lo que cambia es quién
+        // lo elige.
+        auto: 'Automático',
+      },
       bucketName: 'Nombre',
       // El ejemplo vive con el resto del copy: es texto que el usuario lee.
       bucketNamePlaceholder: 'Necesidades',

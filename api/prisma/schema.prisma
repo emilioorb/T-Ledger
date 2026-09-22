@@ -163,6 +163,8 @@ model Category {
   accountCode String?
   sortOrder   Int          @default(0)
   active      Boolean      @default(true)
+  // El mismo criterio que en las cubetas: el número del color, no el color.
+  colorIndex  Int?
 
   book book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
@@ -229,6 +231,12 @@ model BudgetBucket {
   isSavings    Boolean  @default(false)
   sortOrder    Int      @default(0)
   accountCodes String[]
+  // Cuál de los diez colores del sistema, por número. Se guarda el número y no el color: los
+  // valores cambian con el tema —claro y oscuro tienen su versión de cada uno— y guardar un
+  // hex dejaría una cubeta iluminada en un tema y apagada en el otro.
+  //
+  // Opcional: la cubeta que no eligió ninguno toma el que le corresponde por su lugar.
+  colorIndex   Int?
 
   model BudgetModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
   book  book        @relation(fields: [bookId], references: [id], onDelete: Cascade)

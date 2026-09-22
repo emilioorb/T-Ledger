@@ -62,8 +62,8 @@ describe('PercentageBudgetModel', () => {
       id: 'roto',
       name: 'No suma',
       buckets: [
-        { id: 'a', name: 'A', percentage: pct(50), isSavings: false },
-        { id: 'b', name: 'B', percentage: pct(30), isSavings: false },
+        { id: 'a', name: 'A', percentage: pct(50), isSavings: false, colorIndex: null },
+        { id: 'b', name: 'B', percentage: pct(30), isSavings: false, colorIndex: null },
       ],
     })
 
@@ -78,8 +78,14 @@ describe('PercentageBudgetModel', () => {
           id: 'd',
           name: 'Duplicado',
           buckets: [
-            { id: 'a', name: 'A', percentage: pct(50), isSavings: false },
-            { id: 'a', name: 'A otra vez', percentage: pct(50), isSavings: false },
+            { id: 'a', name: 'A', percentage: pct(50), isSavings: false, colorIndex: null },
+            {
+              id: 'a',
+              name: 'A otra vez',
+              percentage: pct(50),
+              isSavings: false,
+              colorIndex: null,
+            },
           ],
         }),
       ),
@@ -91,9 +97,15 @@ describe('PercentageBudgetModel', () => {
       id: 'propio',
       name: 'A mi manera',
       buckets: [
-        { id: 'fijos', name: 'Fijos', percentage: pct(65), isSavings: false },
-        { id: 'gustos', name: 'Gustos', percentage: pct(15), isSavings: false },
-        { id: 'patrimonio', name: 'Patrimonio', percentage: pct(20), isSavings: true },
+        { id: 'fijos', name: 'Fijos', percentage: pct(65), isSavings: false, colorIndex: null },
+        { id: 'gustos', name: 'Gustos', percentage: pct(15), isSavings: false, colorIndex: null },
+        {
+          id: 'patrimonio',
+          name: 'Patrimonio',
+          percentage: pct(20),
+          isSavings: true,
+          colorIndex: null,
+        },
       ],
     })
 
@@ -107,8 +119,8 @@ describe('PercentageBudgetModel', () => {
           id: 'sin-ahorro',
           name: 'Sin ahorro',
           buckets: [
-            { id: 'a', name: 'A', percentage: pct(50), isSavings: false },
-            { id: 'b', name: 'B', percentage: pct(50), isSavings: false },
+            { id: 'a', name: 'A', percentage: pct(50), isSavings: false, colorIndex: null },
+            { id: 'b', name: 'B', percentage: pct(50), isSavings: false, colorIndex: null },
           ],
         }),
       ),

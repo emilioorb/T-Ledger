@@ -34,6 +34,9 @@ export class ManageCategoriesUseCase {
       accountCode: input.accountCode === undefined ? props.accountCode : input.accountCode,
       sortOrder: input.sortOrder ?? props.sortOrder,
       active: input.active ?? props.active,
+      // `undefined` y no `??`: quien manda `null` está pidiendo volver al color automático, y
+      // con `??` esa elección se perdía contra el color que ya tenía.
+      colorIndex: input.colorIndex === undefined ? props.colorIndex : input.colorIndex,
     })
   }
 

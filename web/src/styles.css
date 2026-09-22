@@ -33,14 +33,60 @@
      de verde, se mantiene y de hecho crece: 0,65 contra 0,48. */
   --warning: oklch(0.65 0.16 65);
 
-  /* Reparto de cubetas: el naranja y el verde que la app ya usa, más matices que completan
-     la familia. Sin rojo: acá el color identifica una cubeta, y una cubeta en rojo diría que
-     está mal cuando ahorrar no lo está. El nombre va siempre al lado del cuadrito. */
-  --bucket-1: oklch(0.72 0.16 65);
-  --bucket-2: oklch(0.7 0.13 165);
-  --bucket-3: oklch(0.62 0.17 305);
-  --bucket-4: oklch(0.63 0.15 250);
-  --bucket-5: oklch(0.7 0.11 195);
+  /* Diez colores para que cada cubeta y cada categoría tenga el suyo. El matiz es lo único
+     que los distingue: la luminancia es la misma en los diez —0,70 acá y 0,77 en oscuro— para
+     que ninguno pese más que otro en una barra apilada, y el croma es el máximo que existe en
+     sRGB a esa luminancia, que varía con el matiz.
+
+     Sin rojo, y no por gusto: el rojo del negativo está en el matiz 25 y el rojo de una paleta
+     cualquiera cae en 29. A cuatro grados el ojo no los separa, y una categoría en rojo se
+     leería como un número en rojo, que en este libro significa «esto está mal». El terracota
+     de 45 conserva el calor sin pisar ese significado.
+
+     Tampoco hay neutros: el gris es el color del texto y el crema el del fondo. Un punto gris
+     diría «sin color asignado», que es otra cosa que un color elegido.
+
+     Los matices están repartidos parejo —33° o 34° entre vecinos— y no elegidos de a uno: la
+     primera versión los puso donde caían los colores «reconocibles» y dejó a terracota,
+     naranja y amarillo a 23° entre sí. En una barra apilada se veían como el mismo color tres
+     veces. Entre el rosa y el terracota queda un tramo de 60° vacío: ahí vive el rojo.
+
+     Sobre fondo claro rondan 2,0–2,4:1 contra la superficie elevada. Es lo que da cualquier
+     color vivo sobre blanco, y alcanza porque el color nunca viaja solo: el nombre va siempre
+     al lado del punto. Forzarlos a 3:1 los convierte en grises —probado: el verde termina en
+     #678d7c—. */
+  --bucket-1: oklch(0.7 0.19 45);
+  --bucket-2: oklch(0.7 0.146 78);
+  --bucket-3: oklch(0.7 0.154 112);
+  --bucket-4: oklch(0.7 0.19 145);
+  --bucket-5: oklch(0.7 0.128 178);
+  --bucket-6: oklch(0.7 0.122 212);
+  --bucket-7: oklch(0.7 0.168 245);
+  --bucket-8: oklch(0.7 0.158 278);
+  --bucket-9: oklch(0.7 0.19 312);
+  --bucket-10: oklch(0.7 0.19 345);
+
+  /* Lo que se dibuja **encima** de una ficha de color. No es `--text`: las diez fichas son
+     claras en los dos temas —0,70 y 0,77— así que la tinta de arriba tiene que ser oscura
+     siempre, y `--text` en tema oscuro es casi blanca. Medido, el tilde de la ficha elegida
+     pasaba de 2,40–2,84:1 a 5,97–9,00:1. Por eso no se redefine en `[data-theme='dark']`. */
+  --ink-on-bucket: oklch(0.215 0.01 65);
+
+  /* Los mismos diez matices, pero **fijos**: no se redefinen en oscuro. Los `--bucket-*`
+     cambian de luminancia con el tema porque ahí el color es un tramo de una barra y tiene
+     que pesar igual sobre cada fondo. El de la mascota no: es su color, y una mascota que
+     cambia de tono al cambiar el tema no se lee como la misma. Se toman los del tema claro,
+     que son los de croma máximo. */
+  --nimbo-1: oklch(0.7 0.19 45);
+  --nimbo-2: oklch(0.7 0.146 78);
+  --nimbo-3: oklch(0.7 0.154 112);
+  --nimbo-4: oklch(0.7 0.19 145);
+  --nimbo-5: oklch(0.7 0.128 178);
+  --nimbo-6: oklch(0.7 0.122 212);
+  --nimbo-7: oklch(0.7 0.168 245);
+  --nimbo-8: oklch(0.7 0.158 278);
+  --nimbo-9: oklch(0.7 0.19 312);
+  --nimbo-10: oklch(0.7 0.19 345);
 
   /* Series de gráfico: rampa de luminancia, no de matiz. La Regla del Gráfico. */
   --chart-1: oklch(0.215 0.01 65);
@@ -65,11 +111,17 @@
   --positive: oklch(0.76 0.11 165);
   --warning: oklch(0.78 0.166 65);
 
-  --bucket-1: oklch(0.78 0.166 65);
-  --bucket-2: oklch(0.76 0.11 165);
-  --bucket-3: oklch(0.735 0.13 305);
-  --bucket-4: oklch(0.74 0.12 250);
-  --bucket-5: oklch(0.76 0.1 195);
+  /* Los mismos diez matices, un punto más claros: sobre fondo oscuro dan 8,7–10,1:1. */
+  --bucket-1: oklch(0.77 0.144 45);
+  --bucket-2: oklch(0.77 0.16 78);
+  --bucket-3: oklch(0.77 0.17 112);
+  --bucket-4: oklch(0.77 0.17 145);
+  --bucket-5: oklch(0.77 0.14 178);
+  --bucket-6: oklch(0.77 0.134 212);
+  --bucket-7: oklch(0.77 0.126 245);
+  --bucket-8: oklch(0.77 0.118 278);
+  --bucket-9: oklch(0.77 0.162 312);
+  --bucket-10: oklch(0.77 0.17 345);
 
   --chart-1: oklch(0.955 0.005 65);
   --chart-2: oklch(0.8 0.008 65);
@@ -129,6 +181,12 @@
   --color-bucket-3: var(--bucket-3);
   --color-bucket-4: var(--bucket-4);
   --color-bucket-5: var(--bucket-5);
+  --color-bucket-6: var(--bucket-6);
+  --color-bucket-7: var(--bucket-7);
+  --color-bucket-8: var(--bucket-8);
+  --color-bucket-9: var(--bucket-9);
+  --color-bucket-10: var(--bucket-10);
+  --color-ink-on-bucket: var(--ink-on-bucket);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
