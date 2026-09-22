@@ -92,6 +92,7 @@ export const copy = {
     credit: 'Haber',
   },
   marco: {
+    inicio: 'Volver al inicio',
     ayuda: '¿Necesitás ayuda?',
     // Un correo de verdad y no un formulario que no existe: si alguien no puede entrar, lo
     // último que necesita es otra pantalla.

@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { ShieldCheckIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { TEXT_LINK } from '@/components/text-link'
@@ -39,7 +40,14 @@ export const MarcoDeIdentidad = ({ gesto, children }: Props) => {
                 derecha—, y eso solo se lee derecho cuando las columnas alinean. Geist Mono ya
                 está cargada para las cifras. */}
             <header className="flex items-center justify-between gap-4">
-              <span className="flex items-center gap-2.5">
+              {/* La marca lleva a la portada, como en cualquier sitio: es la salida de quien
+                  llegó acá sin querer entrar todavía. */}
+              <Link
+                to="/"
+                aria-label={copy.marco.inicio}
+                title={copy.marco.inicio}
+                className="-m-1 flex items-center gap-2.5 rounded-md p-1 transition-opacity hover:opacity-70"
+              >
                 <Bloub
                   gesto={gesto}
                   // En tinta y no del color que alguien eligió: acá Nimbo es la marca, no el
@@ -55,7 +63,7 @@ export const MarcoDeIdentidad = ({ gesto, children }: Props) => {
                 <span className="font-mono text-lg font-medium tracking-tight">
                   {shell.app.name}
                 </span>
-              </span>
+              </Link>
 
               {/* Un correo y no un formulario de soporte: quien no puede entrar ya está
                   trabado, y mandarlo a otra pantalla es trabarlo dos veces. El asunto va
