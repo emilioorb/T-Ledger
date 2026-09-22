@@ -62,4 +62,20 @@ export class PrismaLibroRepository implements LibroRepository {
 
     return resumen
   }
+
+  // Una sola fila y la cascada del esquema se lleva el resto; `borrado.spec.ts` vigila que
+  // cada tabla que cuelga del libro siga cayendo con él. Las sesiones no cuelgan del libro,
+  // solo lo nombran, así que se sueltan a mano en la misma transacción: si no, quien lo tenía
+  // abierto quedaría parado en un libro que ya no existe.
+  async borrar(bookId: string): Promise<void> {
+    const cliente = this.prisma.clientSinFiltroDeLibro
+
+    await cliente.$transaction([
+      cliente.authSession.updateMany({
+        where: { activeOrganizationId: bookId },
+        data: { activeOrganizationId: null },
+      }),
+      cliente.book.delete({ where: { id: bookId } }),
+    ])
+  }
 }

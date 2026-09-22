@@ -111,3 +111,53 @@ describe('vaciar un libro', () => {
     expect(quedan.map((fila) => fila.bookId)).toEqual([LIBRO_DE_PRUEBA.bookId])
   })
 })
+
+describe('borrar un libro', () => {
+  // Un libro propio de este bloque: borrar el de prueba o el ajeno dejaría sin base a los
+  // demás tests del archivo.
+  const DESCARTABLE = 'lib_descartable'
+
+  beforeEach(async () => {
+    await prisma.clientSinFiltroDeLibro.book.create({
+      data: { id: DESCARTABLE, name: 'Descartable', slug: 'descartable', createdAt: new Date() },
+    })
+  })
+
+  it('se lleva el libro y todo lo que tenía adentro', async () => {
+    await prisma.clientSinFiltroDeLibro.category.create({ data: categoria('cat-d', DESCARTABLE) })
+    await prisma.clientSinFiltroDeLibro.movement.create({ data: movimiento('m-d', DESCARTABLE) })
+
+    await repository.borrar(DESCARTABLE)
+
+    expect(await prisma.clientSinFiltroDeLibro.book.findUnique({ where: { id: DESCARTABLE } })).toBeNull()
+    expect(await prisma.clientSinFiltroDeLibro.movement.count({ where: { bookId: DESCARTABLE } })).toBe(0)
+    expect(await prisma.clientSinFiltroDeLibro.category.count({ where: { bookId: DESCARTABLE } })).toBe(0)
+  })
+
+  it('no toca el libro de al lado', async () => {
+    await prisma.clientSinFiltroDeLibro.movement.create({ data: movimiento('m-otro', OTRO.bookId) })
+
+    await repository.borrar(DESCARTABLE)
+
+    expect(await prisma.clientSinFiltroDeLibro.movement.count({ where: { bookId: OTRO.bookId } })).toBe(1)
+  })
+
+  // Una sesión parada en un libro que ya no existe contesta 403 a todo, y la persona no
+  // entiende por qué. Soltarla deja que el middleware elija el libro que le queda.
+  it('suelta las sesiones que lo tenían como activo', async () => {
+    await prisma.clientSinFiltroDeLibro.authSession.create({
+      data: {
+        id: 'ses-d',
+        token: 'tok-d',
+        userId: LIBRO_DE_PRUEBA.userId,
+        expiresAt: new Date(Date.now() + 86_400_000),
+        activeOrganizationId: DESCARTABLE,
+      },
+    })
+
+    await repository.borrar(DESCARTABLE)
+
+    const sesion = await prisma.clientSinFiltroDeLibro.authSession.findUnique({ where: { id: 'ses-d' } })
+    expect(sesion?.activeOrganizationId).toBeNull()
+  })
+})

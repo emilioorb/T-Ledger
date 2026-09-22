@@ -18,6 +18,9 @@ export interface LibroRepository {
   // Borra lo anotado y deja los catálogos. Devuelve cuánto se llevó, por tabla: un botón
   // irreversible sin comprobante es un acto de fe.
   vaciar(): Promise<ResumenDeVaciado>
+
+  // Borra el libro entero, con su gente, sus invitaciones y su registro.
+  borrar(bookId: string): Promise<void>
 }
 
 export const LIBRO_REPOSITORY = Symbol('LIBRO_REPOSITORY')
