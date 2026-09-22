@@ -24,3 +24,6 @@ api/.datos-de-prueba.json
 
 # Los comprobantes cuando no hay R2 configurado: archivos de una máquina, no del repositorio.
 api/.archivos/
+
+# Skills locales de Claude Code: son del equipo de quien las instala, no del proyecto.
+.claude/skills/react-bits-pro/

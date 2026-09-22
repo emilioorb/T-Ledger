@@ -43,10 +43,13 @@ describe('leerNovedades', () => {
   })
 
   it('rechaza un grupo que no existe', () => {
-    expect(() => leerNovedades('## 2026-10-01\n\n### Otro\n\n- x')).toThrow(/«Otro» no es un grupo/)
+    expect(() => leerNovedades('## 2026-10-01 · v1.0.0\n\n### Otro\n\n- x')).toThrow(
+      /«Otro» no es un grupo/,
+    )
   })
 
-  it('rechaza una entrega sin fecha', () => {
-    expect(() => leerNovedades('## Octubre\n')).toThrow(/AAAA-MM-DD/)
+  it('rechaza una entrega sin fecha o sin versión', () => {
+    expect(() => leerNovedades('## Octubre · v1.0.0\n')).toThrow(/AAAA-MM-DD · vX.Y.Z/)
+    expect(() => leerNovedades('## 2026-10-01\n')).toThrow(/AAAA-MM-DD · vX.Y.Z/)
   })
 })

@@ -48,11 +48,9 @@ const Entrega = ({ release }: { release: Release }) => (
 
       {/* La versión en una píldora, como la marca que es: dice a qué build corresponde lo de
           abajo, no es parte de la frase de la fecha. */}
-      {release.version ? (
-        <span className="num rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-          v{release.version}
-        </span>
-      ) : null}
+      <span className="num rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+        v{release.version}
+      </span>
 
       {/* Texto y no un punto de color: tiene que decir qué significa sin depender del tono. */}
       {release.version === __APP_VERSION__ ? (

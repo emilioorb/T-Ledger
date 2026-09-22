@@ -8,9 +8,7 @@ export type Grupo = 'added' | 'improved' | 'fixed'
 
 export interface Release {
   date: string
-  // Solo va donde exista de verdad: las entregas anteriores a la 1.0.0 no tuvieron número, y
-  // para ellas la fecha es el único identificador honesto.
-  version?: string
+  version: string
   grupos: Record<Grupo, string>
 }
 
@@ -20,7 +18,7 @@ const GRUPO_POR_TITULO: Record<string, Grupo> = {
   [copy.releases.fixed]: 'fixed',
 }
 
-const ENTREGA = /^## (\d{4}-\d{2}-\d{2})(?:\s*·\s*v(\S+))?\s*$/
+const ENTREGA = /^## (\d{4}-\d{2}-\d{2})\s*·\s*v(\d+\.\d+\.\d+)\s*$/
 const TITULO_DE_GRUPO = /^### (.+?)\s*$/
 
 // Estricto a propósito: una entrega mal escrita rompe la prueba del archivo, no aparece a
@@ -35,10 +33,12 @@ export const leerNovedades = (markdown: string): Release[] => {
 
     if (linea.startsWith('## ')) {
       const partes = ENTREGA.exec(linea)
-      if (!partes?.[1]) throw new Error(`${donde}: una entrega abre con «## AAAA-MM-DD»`)
+      if (!partes?.[1] || !partes[2]) {
+        throw new Error(`${donde}: una entrega abre con «## AAAA-MM-DD · vX.Y.Z»`)
+      }
       entregas.push({
         date: partes[1],
-        ...(partes[2] ? { version: partes[2] } : {}),
+        version: partes[2],
         grupos: { added: '', improved: '', fixed: '' },
       })
       grupo = null
