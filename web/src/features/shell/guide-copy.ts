@@ -15,7 +15,7 @@ export const copy = {
       'Cómo llevar el control de tu plata con esta app, pantalla por pantalla. Si es la primera vez, empezá por «Cómo funciona esto».',
     index: 'Índice de la guía',
     search: {
-      placeholder: 'Buscar una pantalla o lo que querés hacer',
+      placeholder: 'Buscar una pantalla o tarea',
       label: 'Buscar en la guía',
     },
     matches: (count: number) =>

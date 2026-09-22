@@ -36,6 +36,7 @@ import { copy as guideCopy } from '@/features/shell/guide-copy'
 import { filterRows } from '@/lib/use-table-controls'
 import { TEXT_LINK } from '@/components/text-link'
 import { cn } from '@/lib/utils'
+import { sinMarcas, TextoMarkdown } from '@/features/shell/texto-markdown'
 
 const guide = guideCopy.guide
 
@@ -244,28 +245,20 @@ const GROUPS: GuideGroup[] = [
 // Buscar por nombre no alcanza: quien no sabe cómo se llama la pantalla la busca por lo
 // que hace, que es justamente lo que la guía explica.
 const searchableOf = (module: GuideModule): string =>
-  [module.title, module.purpose, ...module.steps, ...module.notes].join(' ')
+  sinMarcas([module.title, module.purpose, ...module.steps, ...module.notes].join(' '))
 
-const BASICS_SEARCHABLE = [
+const BASICS_SEARCHABLE = sinMarcas([
   guide.basics.title,
   guide.basics.intro,
   ...guide.basics.concepts.flatMap((concept) => [concept.term, concept.text]),
   guide.basics.start.label,
   ...guide.basics.start.steps.map((step) => step.text),
-].join(' ')
+].join(' '))
 
-// El copy marca con ** el texto exacto del control que hay que buscar en pantalla. Vive en
-// el copy y no en el JSX porque el énfasis cae sobre una palabra, no sobre la frase entera.
-const withControls = (text: string): ReactNode[] =>
-  text.split(/\*\*(.+?)\*\*/g).map((part, index) =>
-    index % 2 === 0 ? (
-      part
-    ) : (
-      <strong key={part + String(index)} className="font-medium">
-        {part}
-      </strong>
-    ),
-  )
+// El copy se escribe en Markdown: ** marca el texto exacto del control que hay que buscar en
+// pantalla, y además valen cursivas, código y enlaces. El énfasis cae sobre una palabra y no
+// sobre la frase entera, por eso vive en el copy y no en el JSX.
+const Md = ({ children }: { children: string }) => <TextoMarkdown enLinea>{children}</TextoMarkdown>
 
 const Block = ({ label, children }: { label: string; children: ReactNode }) => (
   <div>
@@ -281,7 +274,9 @@ const Steps = ({ steps }: { steps: readonly string[] }) => (
     {steps.map((step, index) => (
       <li key={step} className="grid grid-cols-[1.25rem_1fr] gap-x-2">
         <span className="num text-muted-foreground tabular-nums">{index + 1}.</span>
-        <span>{withControls(step)}</span>
+        <span>
+          <Md>{step}</Md>
+        </span>
       </li>
     ))}
   </ol>
@@ -290,7 +285,9 @@ const Steps = ({ steps }: { steps: readonly string[] }) => (
 const Notes = ({ notes }: { notes: readonly string[] }) => (
   <ul className="ml-4 list-disc space-y-1.5 marker:text-muted-foreground">
     {notes.map((note) => (
-      <li key={note}>{withControls(note)}</li>
+      <li key={note}>
+        <Md>{note}</Md>
+      </li>
     ))}
   </ul>
 )
@@ -352,13 +349,16 @@ const Fila = ({ id, icon: Icono, title, lede, abierta, alAbrir, children }: Fila
 
 // Hasta el primer punto: lo que entra en un renglón sin cortar una idea por la mitad.
 const ledeDe = (texto: string): string => {
-  const punto = texto.indexOf('. ')
-  return punto === -1 ? texto : texto.slice(0, punto + 1)
+  const limpio = sinMarcas(texto)
+  const punto = limpio.indexOf('. ')
+  return punto === -1 ? limpio : limpio.slice(0, punto + 1)
 }
 
 const Modulo = ({ module }: { module: GuideModule }) => (
   <>
-    <p className="text-sm">{module.purpose}</p>
+    <p className="text-sm">
+      <Md>{module.purpose}</Md>
+    </p>
 
     <Block label={guide.parts.steps}>
       <Steps steps={module.steps} />
@@ -382,13 +382,19 @@ const Modulo = ({ module }: { module: GuideModule }) => (
 // guía sería vocabulario prestado. Por eso es la que arranca abierta.
 const Bases = ({ irA }: { irA: (id: string) => void }) => (
   <>
-    <p className="text-sm">{guide.basics.intro}</p>
+    <p className="text-sm">
+      <Md>{guide.basics.intro}</Md>
+    </p>
 
     <dl className="space-y-3">
       {guide.basics.concepts.map((concept) => (
         <div key={concept.term}>
-          <dt className="text-sm font-medium">{concept.term}</dt>
-          <dd className="mt-0.5 text-sm">{concept.text}</dd>
+          <dt className="text-sm font-medium">
+            <Md>{concept.term}</Md>
+          </dt>
+          <dd className="mt-0.5 text-sm">
+            <Md>{concept.text}</Md>
+          </dd>
         </div>
       ))}
     </dl>
@@ -399,7 +405,7 @@ const Bases = ({ irA }: { irA: (id: string) => void }) => (
           <li key={step.text} className="grid grid-cols-[1.25rem_1fr] gap-x-2">
             <span className="num text-muted-foreground tabular-nums">{index + 1}.</span>
             <span>
-              {withControls(step.text)}{' '}
+              <Md>{step.text}</Md>{' '}
               {/* Un botón y no un ancla: con las filas plegadas, saltar al identificador
                   dejaría a la persona mirando el renglón cerrado de la pantalla que quería
                   leer. */}

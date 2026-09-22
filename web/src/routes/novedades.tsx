@@ -5,12 +5,13 @@ import { Card } from '@/components/ui/card'
 import { copy } from '@/features/shell/copy'
 import { Brote, Chispas, Fiesta, Llave } from '@/features/shell/ilustraciones'
 import { releases, type Release } from '@/features/shell/release-notes'
+import { TextoMarkdown } from '@/features/shell/texto-markdown'
 import { formatLongDate } from '@/lib/dates'
 
 interface GrupoProps {
   label: string
   icon: ComponentType<{ className?: string }>
-  lines: string[]
+  cuerpo: string
 }
 
 // Un rótulo con su dibujo y sus líneas debajo.
@@ -19,8 +20,8 @@ interface GrupoProps {
 // cada renglón, las filas quedaban desparejas porque unas frases ocupan una línea y otras
 // dos, y el texto llegaba a ciento veinte caracteres de ancho. Una columna sola se lee de
 // corrido.
-const Grupo = ({ label, icon: Icono, lines }: GrupoProps) =>
-  lines.length === 0 ? null : (
+const Grupo = ({ label, icon: Icono, cuerpo }: GrupoProps) =>
+  cuerpo === '' ? null : (
     <div>
       <h3 className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {/* Cinco y no cuatro: son dibujos con trazo, y a dieciséis píxeles el brote y la
@@ -29,20 +30,9 @@ const Grupo = ({ label, icon: Icono, lines }: GrupoProps) =>
         {label}
       </h3>
 
-      <ul className="mt-2.5 space-y-1.5">
-        {lines.map((line) => (
-          // El punto va en su propia columna: con `list-disc` la segunda línea de una frase
-          // larga se mete debajo de la viñeta y el bloque pierde el borde izquierdo.
-          <li key={line} className="grid grid-cols-[0.75rem_1fr] text-sm">
-            <span aria-hidden="true" className="text-muted-foreground">
-              ·
-            </span>
-            {/* Sin `text-balance`: reparte el texto entre líneas para dejarlas parejas, y en
-                frases de una o dos líneas eso corta antes de llegar al borde. */}
-            <span>{line}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="mt-2.5 space-y-2">
+        <TextoMarkdown>{cuerpo}</TextoMarkdown>
+      </div>
     </div>
   )
 
@@ -71,9 +61,9 @@ const Entrega = ({ release }: { release: Release }) => (
     </header>
 
     <div className="mt-5 space-y-7">
-      <Grupo label={copy.releases.added} icon={Chispas} lines={release.added} />
-      <Grupo label={copy.releases.improved} icon={Brote} lines={release.improved} />
-      <Grupo label={copy.releases.fixed} icon={Llave} lines={release.fixed} />
+      <Grupo label={copy.releases.added} icon={Chispas} cuerpo={release.grupos.added} />
+      <Grupo label={copy.releases.improved} icon={Brote} cuerpo={release.grupos.improved} />
+      <Grupo label={copy.releases.fixed} icon={Llave} cuerpo={release.grupos.fixed} />
     </div>
   </article>
 )
