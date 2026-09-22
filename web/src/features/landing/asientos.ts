@@ -20,8 +20,10 @@ export interface Asiento {
 // Tres y no seis: son las tres cosas que el producto hace todos los días —gastar, cobrar y
 // abonar— y tres pares es lo que entra en una pantalla sin apretar la tipografía.
 //
-// Las cuentas son las del plan que trae la app, no inventadas: quien entre después va a
-// reconocer los mismos nombres.
+// Los nombres de cuenta van cortos y no como los del catálogo que trae la app, que dice
+// «Efectivo y equivalentes» o «Banco colones»: en la T cada nombre tiene que entrar en un
+// renglón al lado de su cifra, y quien lee esta página todavía no sabe qué es un catálogo de
+// cuentas. Es el mismo criterio de la cinta de la pantalla de entrar, que escribe «Caja».
 export const ASIENTOS: readonly Asiento[] = [
   {
     glosa: 'Gasté 20 mil en el súper',
