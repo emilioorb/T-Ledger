@@ -48,15 +48,16 @@ de los últimos dos años es una grilla bento, y el encargo era salir de ahí.
 │              Vos anotás una cosa. El libro escribe dos.        │
 │         Finanzas personales con contabilidad de partida doble. │
 │                                                                │
-│        DEBE                    │                     HABER     │
-│   ─────────────────────────────┼──────────────────────────     │
-│    «Gasté 20 mil en el súper»  │   Mercado            20 000   │
-│                                │     Efectivo         20 000   │
-│    «Me pagaron el salario»     │   Banco             850 000   │
-│                                │     Salario         850 000   │
-│    «Abono 50 mil a la tarjeta» │   Tarjeta            50 000   │
-│                                │     Banco            50 000   │
-│   ─────────────────────────────┼──────────────────────────     │
+│         DEBE                   │                   HABER       │
+│                                │                               │
+│           «Gasté 20 mil en el súper»                           │
+│    Mercado         ₡20 000,00  │  Efectivo        ₡20 000,00   │
+│                                │                               │
+│            «Me pagaron el salario»                             │
+│    Banco          ₡850 000,00  │  Salario        ₡850 000,00   │
+│                                │                               │
+│          «Abono 50 mil a la tarjeta»                           │
+│    Tarjeta         ₡50 000,00  │  Banco           ₡50 000,00   │
 │                        920 000 │  920 000                      │
 │                        ═══════ │  ═══════                      │
 │            Cuadra siempre, o te dice por qué no.               │
@@ -71,10 +72,20 @@ Lo que la sostiene:
   página; la pata nace de él y muere en la raya de totales. No hay caja, no hay
   tarjeta, no hay fondo distinto. Si se borran esas dos reglas, no queda nada
   que las reemplace: por eso son la composición y no un adorno.
-- **La convención contable es lo que la hace verdadera.** El haber va sangrado
-  bajo el debe, las cifras en mono tabular alineadas a la derecha, y los totales
-  cierran con doble raya. Quien lleva libros lo reconoce al instante; quien no,
-  ve dos columnas que dan igual.
+- **La convención contable es lo que la hace verdadera.** El debe va a la
+  izquierda de la pata y el haber a la derecha, las cifras en mono tabular, y los
+  totales cierran con doble raya. Quien lleva libros lo reconoce al instante;
+  quien no, ve dos columnas que dan igual.
+- **La glosa cruza las dos columnas.** La frase de la persona narra el asiento
+  entero, así que no pertenece a ningún lado: va arriba de su par, de borde a
+  borde. Así el titular se cumple literalmente —una frase arriba, dos
+  anotaciones abajo, una de cada lado—, y la T dice la verdad.
+
+  Corrección sobre el boceto aprobado: ahí las frases estaban bajo el rótulo
+  DEBE y las dos líneas del asiento bajo HABER, que contablemente es falso —las
+  dos son del mismo asiento, una de cada lado—. Se corrigió antes de escribir el
+  plan, porque el argumento entero de esta dirección es que un contador la
+  reconozca.
 - **Los tres pares suman lo mismo de los dos lados.** No es decoración: es la
   demostración de lo que el titular promete, verificable sumando.
 - **Monocromo, cero color.** El botón de entrar se resuelve por luminancia, como
