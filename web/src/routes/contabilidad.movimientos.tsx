@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { Plus, Receipt } from 'lucide-react'
+import { Paperclip, Plus, Receipt } from 'lucide-react'
+import { toast } from 'sonner'
 import { EmptyState } from '@/components/empty-state'
 import { SearchInput } from '@/components/search-input'
 import { FormDialog } from '@/components/form-dialog'
@@ -39,6 +40,8 @@ import { Amount } from '@/features/accounting/amount'
 import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/accounting/copy'
 import { MovementForm, type MovementFormValues } from '@/features/accounting/movement-form'
+import { PuntoDeColor } from '@/components/color-picker'
+import { ComposicionDeMovimientos } from '@/features/accounting/composicion-de-movimientos'
 import { ControlBar, RangeFields } from '@/features/accounting/report-controls'
 import type { Category, Movement, MovementFilters } from '@/features/accounting/types'
 import {
@@ -46,7 +49,9 @@ import {
   usePostableAssets,
   PAGE_SIZE,
   useMovements,
+  useQuitarComprobante,
   useSaveMovement,
+  useSubirComprobante,
   useVoidMovement,
 } from '@/features/accounting/use-accounting'
 import { formatIsoDate, monthEnd, monthStart, today } from '@/lib/dates'
@@ -72,6 +77,20 @@ const Marks = ({ movement }: { movement: Movement }) => {
 
   return (
     <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
+      {/* El comprobante se abre desde la fila y no solo desde el formulario: buscar una
+          factura es justo lo que trae a alguien a esta tabla. */}
+      {movement.receiptKey ? (
+        <a
+          href={`/api/v1/movements/${movement.id}/receipt`}
+          target="_blank"
+          rel="noreferrer"
+          className={cn('flex items-center gap-1', TEXT_LINK)}
+        >
+          <Paperclip className="size-3 shrink-0" aria-hidden="true" />
+          {copy.movements.form.receiptKey.attached}
+        </a>
+      ) : null}
+
       {isVoided ? (
         <span className="text-muted-foreground">{copy.movements.statuses.VOIDED}</span>
       ) : null}
@@ -128,7 +147,18 @@ const MovementTableRow = ({ movement, category, onEdit, onVoid }: RowProps) => {
     <TableRow>
       <TableCell className="num whitespace-nowrap">{formatIsoDate(movement.date)}</TableCell>
       <TableCell className={cn('max-w-0 truncate', struck)}>{movement.counterparty}</TableCell>
-      <TableCell className="text-muted-foreground">{category?.name ?? '—'}</TableCell>
+      {/* El punto es lo que ata la fila a su tramo en la barra de arriba. Va pegado al
+          nombre, que sigue siendo el dato: el color ordena, no informa. */}
+      <TableCell className="text-muted-foreground">
+        {category ? (
+          <span className="flex items-center gap-2">
+            <PuntoDeColor colorIndex={category.colorIndex} posicion={category.sortOrder} />
+            {category.name}
+          </span>
+        ) : (
+          '—'
+        )}
+      </TableCell>
       <TableCell>
         <Marks movement={movement} />
       </TableCell>
@@ -165,7 +195,14 @@ const MovementCard = ({ movement, category, onEdit, onVoid }: RowProps) => {
 
       <div className="mt-0.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs">
         <span className="num text-muted-foreground">{formatIsoDate(movement.date)}</span>
-        <span className="text-muted-foreground">{category?.name ?? '—'}</span>
+        {category ? (
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <PuntoDeColor colorIndex={category.colorIndex} posicion={category.sortOrder} />
+            {category.name}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
         <Marks movement={movement} />
         <span className="ml-auto">
           <Actions movement={movement} onEdit={onEdit} onVoid={onVoid} />
@@ -202,6 +239,8 @@ const MovementsScreen = () => {
   const categories = useCategories()
   const paymentAccounts = usePostableAssets()
   const save = useSaveMovement()
+  const subirComprobante = useSubirComprobante()
+  const quitarComprobante = useQuitarComprobante()
   const voidMovement = useVoidMovement()
 
   const byId = new Map((categories.data ?? []).map((category) => [category.id, category]))
@@ -209,10 +248,23 @@ const MovementsScreen = () => {
   const items = movements.data?.data ?? []
   const hasFilters = kind !== ALL || status !== ALL || categoryId !== ALL || settledSearch !== ''
 
-  const submit = (values: MovementFormValues) =>
+  // El comprobante se sube después de guardar y no antes: al crear un movimiento todavía no
+  // existe el id al que adjuntarlo. Si la subida falla, el movimiento igual quedó guardado, y
+  // eso se dice en vez de dejar creer que se perdió todo.
+  const submit = ({ comprobante, ...values }: MovementFormValues) =>
     save.mutate(
       editing?.movement ? { id: editing.movement.id, input: values } : { input: values },
-      { onSuccess: () => setEditing(null) },
+      {
+        onSuccess: async (movimiento) => {
+          if (comprobante) {
+            await subirComprobante
+              .mutateAsync({ id: movimiento.id, archivo: comprobante })
+              .then(() => toast.success(copy.movements.form.receiptKey.uploaded))
+              .catch(() => toast.error(copy.movements.form.receiptKey.uploadFailed))
+          }
+          setEditing(null)
+        },
+      },
     )
 
   const newButton = (
@@ -247,6 +299,14 @@ const MovementsScreen = () => {
             paymentAccounts={paymentAccounts}
             pending={save.isPending}
             onSubmit={submit}
+            onQuitarComprobante={
+              editing?.movement
+                ? () =>
+                    quitarComprobante.mutate(editing.movement!.id, {
+                      onSuccess: (movimiento) => setEditing({ movement: movimiento }),
+                    })
+                : undefined
+            }
             onCancel={() => setEditing(null)}
           />
         ) : null}
@@ -352,6 +412,10 @@ const MovementsScreen = () => {
         )
       ) : (
         <div className="space-y-4">
+          {/* Arriba de la tabla y no adentro: contesta «en qué se fue esto» antes de que
+              alguien tenga que leer las filas para armárselo en la cabeza. */}
+          <ComposicionDeMovimientos filters={filters} categories={categories.data ?? []} />
+
           <TableFrame className="hidden @3xl:block">
             <Table>
               <TableHeader>

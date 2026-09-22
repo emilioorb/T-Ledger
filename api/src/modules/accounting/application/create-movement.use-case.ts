@@ -41,7 +41,8 @@ export class CreateMovementUseCase {
       counterparty: input.counterparty,
       amount: toMoney(input.amount),
       paymentAccountCode: input.paymentAccountCode,
-      receiptUrl: input.receiptUrl,
+      // Un movimiento nace sin comprobante: se adjunta después, con el archivo.
+      receiptKey: null,
       status: 'ACTIVE',
     })
     if (isErr(movement)) throw new SemanticValidationError(movement.error.message)

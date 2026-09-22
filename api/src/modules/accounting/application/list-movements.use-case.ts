@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import { NotFoundError } from '../../../shared/http/api-error.js'
 import {
   MOVEMENT_REPOSITORY,
+  type CategoryTotal,
   type MovementFilters,
   type MovementRepository,
 } from '../domain/movement-repository.port.js'
@@ -35,6 +36,13 @@ export class ListMovementsUseCase {
     )
 
     return { items: posted, totalItems }
+  }
+
+  // De mayor a menor, que es el orden en que se lee una composición: lo que más pesa
+  // primero. Ordenar acá y no en el cliente evita que dos pantallas lo hagan distinto.
+  async totalsByCategory(filters: MovementFilters): Promise<CategoryTotal[]> {
+    const totals = await this.movements.totalsByCategory(filters)
+    return [...totals].sort((a, b) => Number(b.total.minorUnits - a.total.minorUnits))
   }
 
   async byId(id: string): Promise<PostedMovement> {

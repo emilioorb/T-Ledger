@@ -17,6 +17,7 @@ export const queryKeys = {
       ['accounting', 'accounts-tree', currency, at] as const,
     categories: () => ['accounting', 'categories'] as const,
     movements: (filters: object) => ['accounting', 'movements', filters] as const,
+    movementTotals: (filters: object) => ['accounting', 'movement-totals', filters] as const,
     journal: (from: string, to: string, page: number) =>
       ['accounting', 'journal', from, to, page] as const,
     ledger: (account: string, currency: string, from: string, to: string) =>

@@ -1,0 +1,62 @@
+import { describe, expect, it } from 'vitest'
+import { claveDeComprobante, esDelLibro, revisar, TAMANO_MAXIMO } from './archivo.js'
+
+describe('qué se acepta como comprobante', () => {
+  it('una foto y un PDF pasan', () => {
+    expect(revisar({ mimetype: 'image/jpeg', size: 1_000 })).toBeNull()
+    expect(revisar({ mimetype: 'application/pdf', size: 1_000 })).toBeNull()
+  })
+
+  it('un ejecutable no, aunque lo renombren', () => {
+    // El tipo llega en la petición y lo pone quien sube: la lista cerrada es lo único que
+    // impide que el bucket termine sirviendo cualquier cosa desde nuestro dominio.
+    expect(revisar({ mimetype: 'application/x-msdownload', size: 1_000 })).toBe('tipo')
+    expect(revisar({ mimetype: 'text/html', size: 1_000 })).toBe('tipo')
+  })
+
+  it('pasado el límite no entra', () => {
+    expect(revisar({ mimetype: 'image/png', size: TAMANO_MAXIMO })).toBeNull()
+    expect(revisar({ mimetype: 'image/png', size: TAMANO_MAXIMO + 1 })).toBe('tamano')
+  })
+
+  it('un archivo vacío no es un comprobante', () => {
+    expect(revisar({ mimetype: 'image/png', size: 0 })).toBe('vacio')
+  })
+})
+
+describe('cómo se nombra el archivo guardado', () => {
+  it('lleva el libro adelante, para poder borrar un libro entero por prefijo', () => {
+    const clave = claveDeComprobante('lib_1', 'mov_1', 'image/png', 'abc123')
+
+    expect(clave).toBe('libros/lib_1/comprobantes/mov_1-abc123.png')
+  })
+
+  it('la extensión sale del tipo y no del nombre que traía', () => {
+    expect(claveDeComprobante('l', 'm', 'application/pdf', 'x')).toMatch(/\.pdf$/)
+    expect(claveDeComprobante('l', 'm', 'image/jpeg', 'x')).toMatch(/\.jpg$/)
+  })
+
+  it('dos subidas al mismo movimiento no se pisan', () => {
+    const una = claveDeComprobante('l', 'm', 'image/png', 'aaa')
+    const otra = claveDeComprobante('l', 'm', 'image/png', 'bbb')
+
+    expect(una).not.toBe(otra)
+  })
+})
+
+describe('de qué libro es un comprobante', () => {
+  it('el prefijo dice a quién pertenece', () => {
+    expect(esDelLibro('libros/lib_1/comprobantes/x.png', 'lib_1')).toBe(true)
+    expect(esDelLibro('libros/lib_1/comprobantes/x.png', 'lib_2')).toBe(false)
+  })
+
+  it('un libro cuyo nombre empieza igual que otro no cuela', () => {
+    // Sin la barra final, `lib_1` daría por bueno todo lo de `lib_10`.
+    expect(esDelLibro('libros/lib_10/comprobantes/x.png', 'lib_1')).toBe(false)
+  })
+
+  it('una clave que se sale del árbol tampoco', () => {
+    expect(esDelLibro('../../etc/passwd', 'lib_1')).toBe(false)
+    expect(esDelLibro('libros/otro/../lib_1/x.png', 'lib_1')).toBe(false)
+  })
+})

@@ -11,6 +11,7 @@ import type {
   Category,
   CategoryInput,
   CategoryPatch,
+  CategoryTotal,
   CurrencyCode,
   FinancialPosition,
   GeneralLedger,
@@ -119,6 +120,14 @@ export const useMovements = (filters: MovementFilters, page = 1, pageSize = PAGE
       apiFetch<Paginated<Movement>>(`/movements?${query({ page, pageSize, ...filters })}`),
   })
 
+// El resumen del filtro entero, que es lo que la barra de composición necesita: sumar la
+// página daría porcentajes de veinticinco movimientos presentados como los del mes.
+export const useMovementTotals = (filters: MovementFilters) =>
+  useQuery({
+    queryKey: queryKeys.accounting.movementTotals(filters),
+    queryFn: () => apiFetch<CategoryTotal[]>(`/movements/summary?${query({ ...filters })}`),
+  })
+
 export const useSaveMovement = () => {
   const client = useQueryClient()
   return useMutation({
@@ -134,6 +143,40 @@ export const useSaveMovement = () => {
       else toast.warning(copy.movements.toast.createdUnposted)
       void client.invalidateQueries({ queryKey: queryKeys.accounting.all })
     },
+  })
+}
+
+// El comprobante va por su propio camino: `multipart/form-data` y no JSON, y después de que
+// el movimiento exista. Por eso no entra en `useSaveMovement`, que manda el cuerpo del
+// movimiento entero.
+export const useSubirComprobante = () => {
+  const client = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, archivo }: { id: string; archivo: File }) => {
+      const cuerpo = new FormData()
+      cuerpo.append('archivo', archivo)
+      // Sin `Content-Type` a mano: el navegador tiene que ponerlo con el `boundary` que él
+      // genera, y escribirlo rompe la lectura del lado del servidor.
+      return apiFetch<Movement>(`/movements/${id}/receipt`, { method: 'POST', body: cuerpo })
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.accounting.all })
+    },
+  })
+}
+
+export const useQuitarComprobante = () => {
+  const client = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<Movement>(`/movements/${id}/receipt`, { method: 'DELETE' }),
+    onSuccess: () => {
+      toast.success(copy.movements.form.receiptKey.removed)
+      void client.invalidateQueries({ queryKey: queryKeys.accounting.all })
+    },
+    onError: () => toast.error(copy.movements.form.receiptKey.removeFailed),
   })
 }
 

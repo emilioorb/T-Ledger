@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { longText, nameText, receiptUrl } from '../../../shared/http/text.schema.js'
+import { longText, nameText } from '../../../shared/http/text.schema.js'
 import { isoDate, periodParam } from '../../../shared/http/date.schema.js'
 import { CURRENCIES } from '../../../shared/kernel/currency.js'
 import { moneySchema } from '../../../shared/http/money.schema.js'
@@ -53,12 +53,19 @@ export const accountsTreeQuerySchema = z
   .object({ currency, at: isoDate })
   .meta({ id: 'AccountsTreeQuery', title: 'AccountsTreeQuery' })
 
+// Diez colores, numerados desde uno. El contrato valida el rango porque un número fuera de él
+// pintaría con una variable CSS que no existe, y eso no se ve como un error: se ve como un
+// punto transparente.
+export const COLORES = 10
+const colorIndex = z.number().int().min(1).max(COLORES).nullable()
+
 const categoryFields = {
   name: nameText,
   kind: z.enum(['EXPENSE', 'INCOME']),
   accountCode: accountCode.nullable(),
   sortOrder: z.number().int(),
   active: z.boolean(),
+  colorIndex,
 }
 
 export const createCategorySchema = z
@@ -67,6 +74,7 @@ export const createCategorySchema = z
     accountCode: categoryFields.accountCode.default(null),
     sortOrder: categoryFields.sortOrder.default(0),
     active: categoryFields.active.default(true),
+    colorIndex: categoryFields.colorIndex.default(null),
   })
   .meta({ id: 'CreateCategoryInput', title: 'CreateCategoryInput' })
 
@@ -82,14 +90,16 @@ const movementFields = {
   counterparty: nameText,
   amount: moneySchema,
   paymentAccountCode: accountCode.nullable(),
-  receiptUrl: receiptUrl.nullable(),
 }
+
+// El comprobante no está acá a propósito: no se manda en el cuerpo del movimiento. La clave
+// del archivo la arma el servidor al subirlo, y aceptarla desde afuera sería dejar que alguien
+// apunte un movimiento suyo al comprobante de otro libro con solo escribir su clave.
 
 export const createMovementSchema = z
   .object({
     ...movementFields,
     paymentAccountCode: movementFields.paymentAccountCode.default(null),
-    receiptUrl: movementFields.receiptUrl.default(null),
   })
   .meta({ id: 'CreateMovementInput', title: 'CreateMovementInput' })
 
@@ -108,6 +118,11 @@ export const listMovementsQuerySchema = paginationQuerySchema
     search: nameText.optional(),
   })
   .meta({ id: 'ListMovementsQuery', title: 'ListMovementsQuery' })
+
+// Los mismos filtros que la lista, sin paginación: un resumen de una página no resume nada.
+export const movementTotalsQuerySchema = listMovementsQuerySchema
+  .omit({ page: true, pageSize: true })
+  .meta({ id: 'MovementTotalsQuery', title: 'MovementTotalsQuery' })
 
 export const createJournalEntrySchema = z
   .object({
@@ -169,6 +184,7 @@ export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>
 export type CreateMovementInput = z.infer<typeof createMovementSchema>
 export type UpdateMovementInput = z.infer<typeof updateMovementSchema>
 export type ListMovementsQuery = z.infer<typeof listMovementsQuerySchema>
+export type MovementTotalsQuery = z.infer<typeof movementTotalsQuerySchema>
 export type CreateJournalEntryInput = z.infer<typeof createJournalEntrySchema>
 export type ListJournalEntriesQuery = z.infer<typeof listJournalEntriesQuerySchema>
 export type LedgerQuery = z.infer<typeof ledgerQuerySchema>

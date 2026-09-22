@@ -3,6 +3,7 @@ import { fromMoney } from '../../../shared/http/money.schema.js'
 import type { AccountingPeriod } from '../domain/accounting-period.js'
 import type { Account } from '../domain/account.js'
 import type { Category } from '../domain/category.js'
+import type { CategoryTotal } from '../domain/movement-repository.port.js'
 import type { JournalEntry } from '../domain/journal-entry.js'
 import type { Movement } from '../domain/movement.js'
 import type { CloseBlocker, PeriodSnapshot } from '../domain/period-closing.js'
@@ -15,6 +16,7 @@ import type { TrialBalance } from '../domain/reports/trial-balance.js'
 import type {
   accountResponseSchema,
   categoryResponseSchema,
+  categoryTotalResponseSchema,
   financialPositionResponseSchema,
   incomeStatementResponseSchema,
   journalEntryResponseSchema,
@@ -30,6 +32,7 @@ import type {
 type Account_ = z.infer<typeof accountResponseSchema>
 type Category_ = z.infer<typeof categoryResponseSchema>
 type Movement_ = z.infer<typeof movementResponseSchema>
+type CategoryTotal_ = z.infer<typeof categoryTotalResponseSchema>
 type JournalEntry_ = z.infer<typeof journalEntryResponseSchema>
 type TrialBalance_ = z.infer<typeof trialBalanceResponseSchema>
 type Ledger_ = z.infer<typeof ledgerResponseSchema>
@@ -57,6 +60,7 @@ export const toCategoryResponse = (category: Category): Category_ => ({
   accountCode: category.accountCode,
   sortOrder: category.sortOrder,
   active: category.active,
+  colorIndex: category.colorIndex,
   postable: category.isPostable(),
 })
 
@@ -73,10 +77,15 @@ export const toMovementResponse = (
   counterparty: movement.counterparty,
   amount: fromMoney(movement.amount),
   paymentAccountCode: movement.paymentAccountCode,
-  receiptUrl: movement.receiptUrl,
+  receiptKey: movement.receiptKey,
   status: movement.status,
   posted: journalEntryId !== null,
   journalEntryId,
+})
+
+export const toCategoryTotalResponse = ({ categoryId, total }: CategoryTotal): CategoryTotal_ => ({
+  categoryId,
+  total: fromMoney(total),
 })
 
 export const toJournalEntryResponse = (entry: JournalEntry): JournalEntry_ => ({

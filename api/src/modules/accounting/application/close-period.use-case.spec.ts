@@ -74,6 +74,7 @@ const journalStub = ({
 
 const movementsStub = (unposted = 0, months: PeriodKey[] = []): MovementRepository => ({
   findAll: vi.fn(),
+  totalsByCategory: vi.fn().mockResolvedValue([]),
   findById: vi.fn(),
   findByPaymentAccount: vi.fn().mockResolvedValue([]),
   save: vi.fn(),

@@ -47,7 +47,6 @@ export class LineToMovementUseCase {
         counterparty: input.counterparty ?? line.description,
         amount: { minorUnits: magnitude.minorUnits.toString(), currency: magnitude.currency },
         paymentAccountCode: account.accountCode,
-        receiptUrl: null,
       })
 
       await this.statements.markMatched(lineId, movement.id)

@@ -34,7 +34,27 @@ const movimiento = (id: string, date: Date, status: 'ACTIVE' | 'VOIDED' = 'ACTIV
       counterparty: 'Proveedor',
       amount: crc(20_000_00n),
       paymentAccountCode: '1101',
-      receiptUrl: null,
+      receiptKey: null,
+      status,
+    }),
+  )
+
+const gasto = (
+  id: string,
+  categoryId: string,
+  minorUnits: bigint,
+  status: 'ACTIVE' | 'VOIDED' = 'ACTIVE',
+) =>
+  unwrap(
+    Movement.create({
+      id,
+      date: utc('2026-09-15'),
+      kind: 'EXPENSE',
+      categoryId,
+      counterparty: 'Proveedor',
+      amount: crc(minorUnits),
+      paymentAccountCode: '1101',
+      receiptKey: null,
       status,
     }),
   )
@@ -109,6 +129,107 @@ describe('PrismaMovementRepository', () => {
 
   it('un mes sin movimientos no tiene nada que contar', async () => {
     expect(await repository.countUnposted(septiembre)).toBe(0)
+  })
+
+  // La barra de composición de la pantalla de movimientos se dibuja con esto. Si sumara la
+  // página en vez del filtro, diría porcentajes falsos sobre el conjunto entero y nadie
+  // tendría cómo notarlo.
+  it('suma por categoría todo lo que cumple el filtro, no solo una página', async () => {
+    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.save(gasto('m2', 'cat-1', 5_000_00n))
+    await repository.save(gasto('m3', 'cat-2', 7_000_00n))
+
+    const totals = await repository.totalsByCategory({ range: septiembre })
+
+    expect(totals).toEqual(
+      expect.arrayContaining([
+        { categoryId: 'cat-1', total: crc(15_000_00n) },
+        { categoryId: 'cat-2', total: crc(7_000_00n) },
+      ]),
+    )
+    expect(totals).toHaveLength(2)
+  })
+
+  it('un anulado no suma aunque el filtro pida todos los estados', async () => {
+    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.save(gasto('m2', 'cat-1', 90_000_00n, 'VOIDED'))
+
+    expect(await repository.totalsByCategory({})).toEqual([
+      { categoryId: 'cat-1', total: crc(10_000_00n) },
+    ])
+  })
+
+  // La barra vive arriba de la tabla: si resume activos mientras la tabla lista anulados,
+  // habla de filas que no están. Sin barra es mejor que con una que miente.
+  it('pedir la composición de los anulados no devuelve la de los activos', async () => {
+    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.save(gasto('m2', 'cat-1', 90_000_00n, 'VOIDED'))
+
+    expect(await repository.totalsByCategory({ status: 'VOIDED' })).toEqual([])
+  })
+
+  // Una barra apilada reparte un total entre partes. El salario no es una parte del gasto:
+  // metido en la misma barra se come el setenta por ciento y esconde lo que se venía a ver.
+  it('sin filtro de tipo compone el gasto, no el ingreso', async () => {
+    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.save(
+      unwrap(
+        Movement.create({
+          id: 'm2',
+          date: utc('2026-09-15'),
+          kind: 'INCOME',
+          categoryId: 'cat-salario',
+          counterparty: 'Empresa',
+          amount: crc(1_450_000_00n),
+          paymentAccountCode: '1101',
+          receiptKey: null,
+          status: 'ACTIVE',
+        }),
+      ),
+    )
+
+    expect(await repository.totalsByCategory({})).toEqual([
+      { categoryId: 'cat-1', total: crc(10_000_00n) },
+    ])
+    expect(await repository.totalsByCategory({ kind: 'INCOME' })).toEqual([
+      { categoryId: 'cat-salario', total: crc(1_450_000_00n) },
+    ])
+  })
+
+  it('respeta el filtro de categoría y el rango de fechas', async () => {
+    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.save(gasto('m2', 'cat-2', 90_000_00n))
+
+    expect(await repository.totalsByCategory({ categoryId: 'cat-1' })).toEqual([
+      { categoryId: 'cat-1', total: crc(10_000_00n) },
+    ])
+    expect(
+      await repository.totalsByCategory({ range: unwrap(PeriodKey.of(2026, 8)).range() }),
+    ).toEqual([])
+  })
+
+  it('separa las monedas: sumar colones con dólares daría un número que no existe', async () => {
+    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.save(
+      unwrap(
+        Movement.create({
+          id: 'm2',
+          date: utc('2026-09-15'),
+          kind: 'EXPENSE',
+          categoryId: 'cat-1',
+          counterparty: 'Proveedor',
+          amount: Money.fromMinorUnits(50_00n, 'USD'),
+          paymentAccountCode: '1101',
+          receiptKey: null,
+          status: 'ACTIVE',
+        }),
+      ),
+    )
+
+    const totals = await repository.totalsByCategory({})
+
+    expect(totals).toHaveLength(2)
+    expect(totals.map((total) => total.total.currency).sort()).toEqual(['CRC', 'USD'])
   })
 
   it('lista los meses con movimientos sin repetirlos', async () => {

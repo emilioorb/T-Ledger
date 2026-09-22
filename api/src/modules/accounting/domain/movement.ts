@@ -12,7 +12,7 @@ export interface MovementProps {
   readonly counterparty: string
   readonly amount: Money
   readonly paymentAccountCode: string | null
-  readonly receiptUrl: string | null
+  readonly receiptKey: string | null
   readonly status: MovementStatus
 }
 
@@ -32,15 +32,33 @@ export class Movement {
     return ok(new Movement({ ...props, counterparty: props.counterparty.trim() }))
   }
 
-  get id(): string { return this.props.id }
-  get date(): Date { return this.props.date }
-  get kind(): CategoryKind { return this.props.kind }
-  get categoryId(): string { return this.props.categoryId }
-  get counterparty(): string { return this.props.counterparty }
-  get amount(): Money { return this.props.amount }
-  get paymentAccountCode(): string | null { return this.props.paymentAccountCode }
-  get receiptUrl(): string | null { return this.props.receiptUrl }
-  get status(): MovementStatus { return this.props.status }
+  get id(): string {
+    return this.props.id
+  }
+  get date(): Date {
+    return this.props.date
+  }
+  get kind(): CategoryKind {
+    return this.props.kind
+  }
+  get categoryId(): string {
+    return this.props.categoryId
+  }
+  get counterparty(): string {
+    return this.props.counterparty
+  }
+  get amount(): Money {
+    return this.props.amount
+  }
+  get paymentAccountCode(): string | null {
+    return this.props.paymentAccountCode
+  }
+  get receiptKey(): string | null {
+    return this.props.receiptKey
+  }
+  get status(): MovementStatus {
+    return this.props.status
+  }
 
   isVoided(): boolean {
     return this.props.status === 'VOIDED'

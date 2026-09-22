@@ -184,7 +184,7 @@ model Movement {
   amountMinor        BigInt
   currency           String         @db.Char(3)
   paymentAccountCode String?
-  receiptUrl         String?
+  receiptKey         String?
   status             MovementStatus @default(ACTIVE)
   createdAt          DateTime       @default(now()) @db.Timestamptz(3)
   book               book           @relation(fields: [bookId], references: [id], onDelete: Cascade)

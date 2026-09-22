@@ -49,7 +49,9 @@ export class UpdateMovementUseCase {
       counterparty: input.counterparty ?? props.counterparty,
       amount: input.amount ? toMoney(input.amount) : props.amount,
       paymentAccountCode: input.paymentAccountCode ?? props.paymentAccountCode,
-      receiptUrl: input.receiptUrl ?? props.receiptUrl,
+      // El comprobante no se toca desde acá: tiene sus propios endpoints, porque cambia un
+      // archivo y no un dato del asiento.
+      receiptKey: props.receiptKey,
     })
     if (isErr(movement)) throw new SemanticValidationError(movement.error.message)
 

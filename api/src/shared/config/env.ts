@@ -1,5 +1,27 @@
 import { z } from 'zod'
 
+// Los cuatro datos de R2, opcionales y juntos: o están los cuatro y los comprobantes viven en
+// el bucket, o falta alguno y viven en el disco de esta máquina. Medio configurado no existe,
+// porque un cliente de S3 sin bucket falla recién al subir el primer archivo.
+//
+// Van aparte porque el módulo de archivos no necesita la base ni el secreto de sesión: si les
+// pidiera el entorno entero, montarlo en un test obligaría a inventar una `DATABASE_URL`.
+const archivosFields = {
+  R2_ACCOUNT_ID: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET: z.string().optional(),
+  // Dónde caen los archivos mientras no haya R2. Relativo a donde corre la API.
+  ARCHIVOS_DIR: z.string().default('.archivos'),
+}
+
+const archivosSchema = z.object(archivosFields)
+
+export type EnvDeArchivos = z.infer<typeof archivosSchema>
+
+export const loadArchivosEnv = (source: NodeJS.ProcessEnv): EnvDeArchivos =>
+  archivosSchema.parse(source)
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, { error: 'DATABASE_URL es obligatoria' }),
   PORT: z.coerce.number({ error: 'PORT debe ser un número' }).int().positive().default(3000),

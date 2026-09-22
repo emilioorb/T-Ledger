@@ -1,6 +1,7 @@
 import type { DateRange } from '../../../shared/kernel/date-range.js'
 import type { PeriodKey } from './accounting-period.js'
 import type { CategoryKind } from './category.js'
+import type { Money } from '../../../shared/kernel/money.js'
 import type { Movement, MovementStatus } from './movement.js'
 
 export interface MovementFilters {
@@ -18,11 +19,30 @@ export interface MovementPage {
   readonly totalItems: number
 }
 
+// Cuánto suma una categoría en un filtro. Va por moneda y no por categoría a secas: sumar
+// colones con dólares daría un número que no existe.
+export interface CategoryTotal {
+  readonly categoryId: string
+  readonly total: Money
+}
+
 // No hay `delete`: lo que existe es anular. Ofrecer un borrado en la interfaz del
 // repositorio invitaría a usarlo, y borrar destruye la trazabilidad que justifica
 // llevar contabilidad.
 export interface MovementRepository {
   findAll(filters: MovementFilters, page: number, pageSize: number): Promise<MovementPage>
+
+  // Lo mismo que `findAll` resumido por categoría, y sin paginar: la barra de composición
+  // habla del filtro entero, no de la página que se está viendo. Sumar en el cliente lo que
+  // devuelve una página diría «el 60 % se fue en mercado» sobre veinticinco movimientos de
+  // ciento ochenta, y nadie tiene cómo notar que es mentira.
+  //
+  // Dos reglas que no salen de los filtros. Los anulados no suman, porque un movimiento
+  // anulado no se gastó, y pedir justamente los anulados devuelve vacío: una barra que resume
+  // otras filas que las de la tabla es peor que ninguna barra. Y sin `kind` se resume el
+  // gasto, porque una composición reparte un total entre partes comparables y el salario no
+  // es una parte de lo que se gastó.
+  totalsByCategory(filters: MovementFilters): Promise<CategoryTotal[]>
   findById(id: string): Promise<Movement | null>
 
   // Los candidatos a conciliar de una cuenta y un rango, sin paginar. Conciliar traía la

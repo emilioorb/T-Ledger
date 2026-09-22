@@ -1,5 +1,8 @@
+import { PaperclipIcon } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
+import { TEXT_LINK } from '@/components/text-link'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,8 +25,43 @@ export interface MovementFormValues {
   counterparty: string
   amount: Money
   paymentAccountCode: string | null
-  receiptUrl: string | null
+  // El comprobante viaja aparte del resto: es un archivo, no un dato del asiento, y se sube
+  // después de que el movimiento exista —al crear todavía no hay a qué adjuntarlo—.
+  comprobante?: File | null
 }
+
+// Lo mismo que acepta el servidor. Acá sirve para que el explorador de archivos muestre solo
+// lo que va a pasar, no para validar: eso se comprueba donde no se puede saltar.
+const ACEPTADOS = 'image/jpeg,image/png,image/webp,image/heic,application/pdf'
+
+// El enlace va directo a la API y no por `apiFetch`: el navegador tiene que seguir la
+// redirección al archivo por su cuenta, y en desarrollo el proxy de Vite ya manda `/api` al
+// servidor.
+const ComprobanteGuardado = ({
+  movimiento,
+  onQuitar,
+}: {
+  movimiento: string
+  onQuitar?: () => void
+}) => (
+  <div className="flex items-center gap-2">
+    <a
+      href={`/api/v1/movements/${movimiento}/receipt`}
+      target="_blank"
+      rel="noreferrer"
+      className={cn('flex items-center gap-1.5 text-sm', TEXT_LINK)}
+    >
+      <PaperclipIcon className="size-3.5 shrink-0" aria-hidden="true" />
+      {copy.movements.form.receiptKey.see}
+    </a>
+
+    {onQuitar ? (
+      <Button type="button" variant="ghost" size="sm" onClick={onQuitar}>
+        {copy.movements.form.receiptKey.remove}
+      </Button>
+    ) : null}
+  </div>
+)
 
 interface Props {
   movement?: Movement
@@ -32,6 +70,7 @@ interface Props {
   pending: boolean
   onSubmit: (values: MovementFormValues) => void
   onCancel: () => void
+  onQuitarComprobante?: () => void
 }
 
 const CURRENCIES: CurrencyCode[] = ['CRC', 'USD']
@@ -43,6 +82,7 @@ export const MovementForm = ({
   pending,
   onSubmit,
   onCancel,
+  onQuitarComprobante,
 }: Props) => {
   const [date, setDate] = useState(movement?.date ?? today())
   const [kind, setKind] = useState<CategoryKind>(movement?.kind ?? 'EXPENSE')
@@ -53,7 +93,7 @@ export const MovementForm = ({
   const [paymentAccountCode, setPaymentAccountCode] = useState(
     movement?.paymentAccountCode ?? paymentAccounts[0]?.code ?? '',
   )
-  const [receiptUrl, setReceiptUrl] = useState(movement?.receiptUrl ?? '')
+  const [comprobante, setComprobante] = useState<File | null>(null)
   const [amountError, setAmountError] = useState(false)
 
   const fields = copy.movements.form
@@ -69,7 +109,7 @@ export const MovementForm = ({
         counterparty,
         amount: parseMoneyInput(amount, currency as MoneyCurrency) as Money,
         paymentAccountCode: paymentAccountCode === '' ? null : paymentAccountCode,
-        receiptUrl: receiptUrl.trim() === '' ? null : receiptUrl.trim(),
+        comprobante,
       })
     } catch {
       setAmountError(true)
@@ -186,13 +226,25 @@ export const MovementForm = ({
         </div>
 
         <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="receiptUrl">{fields.receiptUrl.label}</Label>
+          <Label htmlFor="comprobante">{fields.receiptKey.label}</Label>
+
+          {/* El que ya está y el que se va a subir, en el mismo lugar: quien abre a editar un
+              movimiento con factura tiene que verla antes de que se le ofrezca reemplazarla. */}
+          {movement?.receiptKey && comprobante === null ? (
+            <ComprobanteGuardado movimiento={movement.id} onQuitar={onQuitarComprobante} />
+          ) : null}
+
+          {/* Más angosto que la fila: un selector de archivo no tiene nada que alinear a la
+              derecha, y estirado hasta el borde deja un vacío entre el nombre del archivo y
+              el final de la caja. */}
           <Input
-            id="receiptUrl"
-            value={receiptUrl}
-            onChange={(event) => setReceiptUrl(event.target.value)}
+            id="comprobante"
+            type="file"
+            accept={ACEPTADOS}
+            className="h-auto max-w-sm py-1.5 file:mr-3 file:text-xs file:text-muted-foreground"
+            onChange={(evento) => setComprobante(evento.target.files?.[0] ?? null)}
           />
-          <p className="text-xs text-muted-foreground">{fields.receiptUrl.hint}</p>
+          <p className="text-xs text-muted-foreground">{fields.receiptKey.hint}</p>
         </div>
       </div>
 

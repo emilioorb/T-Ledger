@@ -51,17 +51,17 @@ describe('calcularCambios', () => {
   })
 
   it('cuenta un campo que aparece', () => {
-    const cambios = calcularCambios({}, { receiptUrl: 'https://x/y.pdf' })
+    const cambios = calcularCambios({}, { receiptKey: 'https://x/y.pdf' })
 
-    expect(cambios).toEqual([{ campo: 'receiptUrl', antes: undefined, despues: 'https://x/y.pdf' }])
+    expect(cambios).toEqual([{ campo: 'receiptKey', antes: undefined, despues: 'https://x/y.pdf' }])
   })
 
   it('cuenta un campo que desaparece', () => {
     // Recorrer solo las claves de «después» lo dejaría afuera, y quitar un comprobante es
     // exactamente el tipo de cambio por el que alguien va a mirar el rastro.
-    const cambios = calcularCambios({ receiptUrl: 'https://x/y.pdf' }, { receiptUrl: null })
+    const cambios = calcularCambios({ receiptKey: 'https://x/y.pdf' }, { receiptKey: null })
 
-    expect(cambios).toEqual([{ campo: 'receiptUrl', antes: 'https://x/y.pdf', despues: null }])
+    expect(cambios).toEqual([{ campo: 'receiptKey', antes: 'https://x/y.pdf', despues: null }])
   })
 
   it('usa `toJSON` cuando el objeto dice cómo quiere verse', () => {

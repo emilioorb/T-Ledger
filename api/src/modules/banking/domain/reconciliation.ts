@@ -7,7 +7,7 @@ export interface MovementCandidate {
   readonly id: string
   readonly date: Date
   readonly amount: Money
-  readonly receiptUrl: string | null
+  readonly receiptKey: string | null
   readonly kind: 'EXPENSE' | 'INCOME'
 }
 
@@ -46,7 +46,7 @@ const scoreOf = (
   }
 
   const reference = line.reference?.trim()
-  if (reference && candidate.receiptUrl?.includes(reference)) {
+  if (reference && candidate.receiptKey?.includes(reference)) {
     return { score: 70, reason: 'REFERENCE' }
   }
 

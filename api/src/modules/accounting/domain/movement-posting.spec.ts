@@ -30,7 +30,17 @@ const chart = unwrap(
 )
 
 const categoria = (kind: 'EXPENSE' | 'INCOME', accountCode: string | null) =>
-  unwrap(Category.create({ id: 'c1', name: 'Marketing', kind, accountCode, sortOrder: 0, active: true }))
+  unwrap(
+    Category.create({
+      id: 'c1',
+      name: 'Marketing',
+      kind,
+      accountCode,
+      sortOrder: 0,
+      active: true,
+      colorIndex: null,
+    }),
+  )
 
 const movimiento = (overrides: Partial<MovementProps> = {}) =>
   unwrap(
@@ -42,7 +52,7 @@ const movimiento = (overrides: Partial<MovementProps> = {}) =>
       counterparty: 'Anthropic',
       amount: crc(20_000_00n),
       paymentAccountCode: '1101',
-      receiptUrl: null,
+      receiptKey: null,
       status: 'ACTIVE',
       ...overrides,
     }),

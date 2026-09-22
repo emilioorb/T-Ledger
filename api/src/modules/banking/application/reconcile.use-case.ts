@@ -80,7 +80,7 @@ export class ReconcileUseCase {
       id: movement.id,
       date: movement.date,
       amount: movement.amount,
-      receiptUrl: movement.receiptUrl,
+      receiptKey: movement.receiptKey,
       kind: movement.kind,
     }))
 

@@ -28,13 +28,13 @@ const movimiento = (
   id: string,
   date: string,
   minorUnits: bigint,
-  receiptUrl: string | null = null,
+  receiptKey: string | null = null,
   kind: 'EXPENSE' | 'INCOME' = 'EXPENSE',
 ): MovementCandidate => ({
   id,
   date: utc(date),
   amount: crc(minorUnits),
-  receiptUrl,
+  receiptKey,
   kind,
 })
 

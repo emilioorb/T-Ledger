@@ -1,3 +1,6 @@
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { rm } from 'node:fs/promises'
 import type { INestApplication } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import request from 'supertest'
@@ -45,6 +48,13 @@ const crearMovimientoSimple = async () => {
 
 const cerrarHasta = async (period: string) => post(`/periods/${period}/close`).expect(200)
 
+// Un PNG de un píxel, entero y válido. Con un `Buffer.from('x')` el test pasaría igual, pero
+// entonces no estaría probando que un archivo de verdad sobrevive el viaje.
+const PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+  'base64',
+)
+
 const asientoValido = {
   date: '2026-09-16',
   description: 'Asiento manual',
@@ -58,7 +68,12 @@ const asientoValido = {
 // sin contexto la extensión de Prisma corta, que es exactamente lo que queremos.
 beforeEach(entrarEnLibroDePrueba)
 
+// Los comprobantes de este test caen en una carpeta temporal y no en la de desarrollo: se
+// escribe antes de construir el módulo porque el almacenamiento se elige al arrancar.
+const CARPETA_DE_ARCHIVOS = join(tmpdir(), `comprobantes-${Date.now()}`)
+
 beforeAll(async () => {
+  process.env.ARCHIVOS_DIR = CARPETA_DE_ARCHIVOS
   entrarEnLibroDePrueba()
   postgres = await startPostgres()
   const moduleRef = await Test.createTestingModule({ imports: [AccountingModule] })
@@ -74,6 +89,7 @@ beforeAll(async () => {
 }, 180_000)
 
 afterAll(async () => {
+  await rm(CARPETA_DE_ARCHIVOS, { recursive: true, force: true })
   await app.close()
   await postgres.stop()
 })
@@ -313,6 +329,101 @@ describe('flujo completo de contabilidad', () => {
 
     expect(encontrados.body.pagination.totalItems).toBe(1)
     expect(vacios.body.pagination.totalItems).toBe(0)
+  })
+
+  // `summary` tiene que resolverse como ruta propia y no como el identificador de un
+  // movimiento. Si alguien la declara debajo de `:id`, esto responde 404 diciendo que el
+  // movimiento «summary» no existe, y la barra de composición se queda vacía sin explicar por
+  // qué.
+  it('el resumen por categoría suma el filtro entero y deja afuera los anulados', async () => {
+    const software = await crearCategoria({
+      name: 'Software',
+      kind: 'EXPENSE',
+      accountCode: '6100',
+    })
+    const mercado = await crearCategoria({ name: 'Mercado', kind: 'EXPENSE', accountCode: '6100' })
+
+    await crearMovimientoRaw({ categoryId: software.id }).expect(201)
+    await crearMovimientoRaw({
+      categoryId: mercado.id,
+      amount: { minorUnits: '500000', currency: 'CRC' },
+    }).expect(201)
+    const anulado = (await crearMovimientoRaw({
+      categoryId: software.id,
+      amount: { minorUnits: '9900000', currency: 'CRC' },
+    }).expect(201)) as { body: { id: string } }
+    await post(`/movements/${anulado.body.id}/void`).expect(200)
+
+    const resumen = await get('/movements/summary?from=2026-09-01&to=2026-09-30').expect(200)
+
+    expect(resumen.body).toEqual([
+      { categoryId: software.id, total: { minorUnits: '2000000', currency: 'CRC' } },
+      { categoryId: mercado.id, total: { minorUnits: '500000', currency: 'CRC' } },
+    ])
+  })
+
+  it('el resumen respeta los mismos filtros que la lista', async () => {
+    const categoria = await crearCategoria({
+      name: 'Software',
+      kind: 'EXPENSE',
+      accountCode: '6100',
+    })
+    await crearMovimientoRaw({ categoryId: categoria.id }).expect(201)
+
+    const fuera = await get('/movements/summary?from=2026-08-01&to=2026-08-31').expect(200)
+    const porTexto = await get('/movements/summary?search=zzz').expect(200)
+
+    expect(fuera.body).toEqual([])
+    expect(porTexto.body).toEqual([])
+  })
+
+  // El comprobante ya no es un campo de texto con una URL: es un archivo que se sube. Lo que
+  // este test fija es que la clave la arme el servidor y lleve el libro adelante, porque eso
+  // es lo que impide que un movimiento apunte al comprobante de otra familia.
+  it('sube el comprobante de un movimiento y lo deja apuntado', async () => {
+    const { id } = await crearMovimientoSimple()
+
+    const respuesta = await request(app.getHttpServer())
+      .post(`${BASE}/movements/${id}/receipt`)
+      .attach('archivo', PNG, { filename: 'factura.png', contentType: 'image/png' })
+      .expect(200)
+
+    expect(respuesta.body.receiptKey).toMatch(/^libros\/lib_test\/comprobantes\//)
+    // Sigue contabilizado: adjuntar una foto no toca el asiento.
+    expect(respuesta.body.posted).toBe(true)
+  })
+
+  it('un ejecutable no es un comprobante', async () => {
+    const { id } = await crearMovimientoSimple()
+
+    await request(app.getHttpServer())
+      .post(`${BASE}/movements/${id}/receipt`)
+      .attach('archivo', Buffer.from('MZ'), {
+        filename: 'virus.exe',
+        contentType: 'application/x-msdownload',
+      })
+      .expect(400)
+
+    const movimiento = await get(`/movements/${id}`).expect(200)
+    expect(movimiento.body.receiptKey).toBeNull()
+  })
+
+  it('quitar el comprobante lo desapunta', async () => {
+    const { id } = await crearMovimientoSimple()
+    await request(app.getHttpServer())
+      .post(`${BASE}/movements/${id}/receipt`)
+      .attach('archivo', PNG, { filename: 'factura.png', contentType: 'image/png' })
+      .expect(200)
+
+    const respuesta = await del(`/movements/${id}/receipt`).expect(200)
+
+    expect(respuesta.body.receiptKey).toBeNull()
+  })
+
+  it('pedir el comprobante de un movimiento que no lo tiene responde 404', async () => {
+    const { id } = await crearMovimientoSimple()
+
+    await get(`/movements/${id}/receipt`).expect(404)
   })
 
   it('el patrimonio consolidado separa lo que hizo el tipo de cambio', async () => {

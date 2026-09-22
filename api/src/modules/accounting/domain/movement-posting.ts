@@ -53,7 +53,7 @@ export const postingFor = (
       id: entryId,
       date: movement.date,
       description: `${category.name} · ${movement.counterparty}`,
-      reference: movement.receiptUrl,
+      reference: movement.receiptKey,
       lines,
       sourceMovementId: movement.id,
       reversesEntryId: null,

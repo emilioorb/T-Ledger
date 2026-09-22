@@ -42,6 +42,9 @@ export const categoryResponseSchema = z
     accountCode: z.string().nullable(),
     sortOrder: z.number(),
     active: z.boolean(),
+    // Cuál de los diez colores, por número. `null` cuando no se eligió: la pantalla le da el
+    // que le toca, y así una categoría sin color no se ve rota, se ve sin elegir.
+    colorIndex: z.number().nullable(),
     postable: z.boolean(),
   })
   .meta({ id: 'Category', title: 'Category' })
@@ -55,12 +58,21 @@ export const movementResponseSchema = z
     counterparty: z.string(),
     amount: moneySchema,
     paymentAccountCode: z.string().nullable(),
-    receiptUrl: z.string().nullable(),
+    receiptKey: z.string().nullable(),
     status: z.enum(['ACTIVE', 'VOIDED']),
     posted: z.boolean(),
     journalEntryId: z.string().nullable(),
   })
   .meta({ id: 'Movement', title: 'Movement' })
+
+// Lo que una categoría suma dentro de un filtro. Sin nombre ni color: el catálogo de
+// categorías ya viaja a la pantalla, y repetirlo acá sería dos fuentes para el mismo dato.
+export const categoryTotalResponseSchema = z
+  .object({
+    categoryId: z.string(),
+    total: moneySchema,
+  })
+  .meta({ id: 'CategoryTotal', title: 'CategoryTotal' })
 
 export const journalEntryResponseSchema = z
   .object({

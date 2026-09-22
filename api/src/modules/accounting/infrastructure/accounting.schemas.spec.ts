@@ -24,30 +24,9 @@ describe('esquemas de actualización', () => {
   })
 })
 
-describe('el comprobante de un movimiento', () => {
-  const conComprobante = (receiptUrl: string) =>
-    createMovementSchema.safeParse({
-      date: '2026-09-21',
-      kind: 'EXPENSE',
-      categoryId: 'cat-1',
-      counterparty: 'Automercado',
-      amount: { minorUnits: '1000000', currency: 'CRC' },
-      receiptUrl,
-    })
-
-  it('acepta una dirección http, https o una ruta del propio servidor', () => {
-    expect(conComprobante('https://drive.example.com/factura.pdf').success).toBe(true)
-    expect(conComprobante('http://localhost:9000/factura.pdf').success).toBe(true)
-    expect(conComprobante('/comprobantes/factura.pdf').success).toBe(true)
-  })
-
-  // Hoy no se renderiza como enlace; el día que se muestre, esto sería XSS almacenado.
-  it('rechaza un protocolo que puede ejecutar código', () => {
-    expect(conComprobante('javascript:alert(1)').success).toBe(false)
-    expect(conComprobante('data:text/html,<script>alert(1)</script>').success).toBe(false)
-    expect(conComprobante('//evil.example.com/x.pdf').success).toBe(false)
-  })
-})
+// El comprobante ya no viaja en el cuerpo del movimiento: se sube como archivo y la clave la
+// arma el servidor. Los casos que probaban que una URL `javascript:` no pasara se fueron con
+// el campo, porque ahora no hay ninguna URL que alguien pueda escribir.
 
 describe('esquemas de creación', () => {
   it('una cuenta nueva sin jerarquía queda activa, en la raíz y de primera', () => {
@@ -63,14 +42,28 @@ describe('esquemas de creación', () => {
     })
   })
 
-  it('una categoría nueva queda activa y sin cuenta contable', () => {
+  it('una categoría nueva queda activa, sin cuenta contable y sin color elegido', () => {
     expect(createCategorySchema.parse({ name: 'Mercado', kind: 'EXPENSE' })).toEqual({
       name: 'Mercado',
       kind: 'EXPENSE',
       accountCode: null,
       sortOrder: 0,
       active: true,
+      // Sin color no es un error: la pantalla le da el que le toca, y quien quiera elegirlo
+      // lo elige después.
+      colorIndex: null,
     })
+  })
+
+  it('no acepta un color fuera de los diez', () => {
+    // Un número de más pintaría con una variable CSS que no existe, y eso no se ve como un
+    // error: se ve como un punto transparente.
+    expect(() =>
+      createCategorySchema.parse({ name: 'M', kind: 'EXPENSE', colorIndex: 11 }),
+    ).toThrow()
+    expect(() =>
+      createCategorySchema.parse({ name: 'M', kind: 'EXPENSE', colorIndex: 0 }),
+    ).toThrow()
   })
 
   it('un movimiento nuevo queda sin cuenta de pago ni comprobante', () => {
@@ -83,6 +76,5 @@ describe('esquemas de creación', () => {
     })
 
     expect(movimiento.paymentAccountCode).toBeNull()
-    expect(movimiento.receiptUrl).toBeNull()
   })
 })

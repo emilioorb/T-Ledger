@@ -82,6 +82,7 @@ export interface CategoryRow {
   accountCode: string | null
   sortOrder: number
   active: boolean
+  colorIndex: number | null
 }
 
 export const categoryToDomain = (row: CategoryRow): Category =>
@@ -93,6 +94,7 @@ export const categoryToDomain = (row: CategoryRow): Category =>
       accountCode: row.accountCode,
       sortOrder: row.sortOrder,
       active: row.active,
+      colorIndex: row.colorIndex,
     }),
   )
 
@@ -105,7 +107,7 @@ export interface MovementRow {
   amountMinor: bigint
   currency: string
   paymentAccountCode: string | null
-  receiptUrl: string | null
+  receiptKey: string | null
   status: string
 }
 
@@ -119,7 +121,7 @@ export const movementToDomain = (row: MovementRow): Movement =>
       counterparty: row.counterparty,
       amount: Money.fromMinorUnits(row.amountMinor, row.currency as CurrencyCode),
       paymentAccountCode: row.paymentAccountCode,
-      receiptUrl: row.receiptUrl,
+      receiptKey: row.receiptKey,
       status: row.status as MovementStatus,
     }),
   )

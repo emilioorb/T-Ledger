@@ -15,7 +15,7 @@ const props = (overrides: Partial<MovementProps> = {}): MovementProps => ({
   counterparty: 'Anthropic',
   amount: crc(20_000_00n),
   paymentAccountCode: '1101',
-  receiptUrl: null,
+  receiptKey: null,
   status: 'ACTIVE',
   ...overrides,
 })
@@ -52,15 +52,35 @@ describe('Category', () => {
   it('es contabilizable solo si tiene cuenta y está activa', () => {
     const base = { id: 'c1', name: 'Marketing', kind: 'EXPENSE' as const, sortOrder: 0 }
 
-    expect(unwrap(Category.create({ ...base, accountCode: '6210', active: true })).isPostable()).toBe(true)
-    expect(unwrap(Category.create({ ...base, accountCode: null, active: true })).isPostable()).toBe(false)
-    expect(unwrap(Category.create({ ...base, accountCode: '6210', active: false })).isPostable()).toBe(false)
+    expect(
+      unwrap(
+        Category.create({ ...base, accountCode: '6210', active: true, colorIndex: null }),
+      ).isPostable(),
+    ).toBe(true)
+    expect(
+      unwrap(
+        Category.create({ ...base, accountCode: null, active: true, colorIndex: null }),
+      ).isPostable(),
+    ).toBe(false)
+    expect(
+      unwrap(
+        Category.create({ ...base, accountCode: '6210', active: false, colorIndex: null }),
+      ).isPostable(),
+    ).toBe(false)
   })
 
   it('rechaza un nombre vacío', () => {
     expect(
       isErr(
-        Category.create({ id: 'c1', name: ' ', kind: 'EXPENSE', accountCode: null, sortOrder: 0, active: true }),
+        Category.create({
+          id: 'c1',
+          name: ' ',
+          kind: 'EXPENSE',
+          accountCode: null,
+          sortOrder: 0,
+          active: true,
+          colorIndex: null,
+        }),
       ),
     ).toBe(true)
   })

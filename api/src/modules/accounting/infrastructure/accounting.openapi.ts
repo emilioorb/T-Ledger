@@ -12,6 +12,7 @@ import {
   listAccountsQuerySchema,
   listJournalEntriesQuerySchema,
   listMovementsQuerySchema,
+  movementTotalsQuerySchema,
   trialBalanceQuerySchema,
   updateAccountSchema,
   updateCategorySchema,
@@ -20,6 +21,7 @@ import {
 import {
   accountResponseSchema,
   categoryResponseSchema,
+  categoryTotalResponseSchema,
   financialPositionResponseSchema,
   incomeStatementResponseSchema,
   netWorthResponseSchema,
@@ -105,12 +107,49 @@ export const accountingOpenApiPaths: ZodOpenApiPathsObject = {
       responses: { 201: { description: 'Movimiento registrado', ...json(movementResponseSchema) } },
     },
   },
+  '/movements/summary': {
+    get: {
+      summary: 'Suma por categoría de los movimientos que cumplen el filtro, sin paginar',
+      requestParams: { query: movementTotalsQuerySchema },
+      responses: {
+        200: { description: 'Totales por categoría', ...json(categoryTotalResponseSchema.array()) },
+      },
+    },
+  },
   '/movements/{id}': {
-    get: { summary: 'Devuelve un movimiento', responses: { 200: { description: 'Movimiento', ...json(movementResponseSchema) } } },
+    get: {
+      summary: 'Devuelve un movimiento',
+      responses: { 200: { description: 'Movimiento', ...json(movementResponseSchema) } },
+    },
     patch: {
       summary: 'Corrige un movimiento: revierte su asiento vigente y emite uno nuevo',
       requestBody: json(updateMovementSchema),
       responses: { 200: { description: 'Movimiento corregido', ...json(movementResponseSchema) } },
+    },
+  },
+  '/movements/{id}/receipt': {
+    post: {
+      summary: 'Sube el comprobante de un movimiento: una foto o un PDF, hasta 5 MB',
+      requestBody: {
+        content: {
+          'multipart/form-data': {
+            schema: {
+              type: 'object',
+              properties: { archivo: { type: 'string', format: 'binary' } },
+              required: ['archivo'],
+            },
+          },
+        },
+      },
+      responses: { 200: { description: 'Movimiento con su comprobante', ...json(movementResponseSchema) } },
+    },
+    get: {
+      summary: 'Redirige al comprobante, con un enlace que vence en minutos',
+      responses: { 302: { description: 'Al archivo' } },
+    },
+    delete: {
+      summary: 'Quita el comprobante de un movimiento',
+      responses: { 200: { description: 'Movimiento sin comprobante', ...json(movementResponseSchema) } },
     },
   },
   '/movements/{id}/void': {

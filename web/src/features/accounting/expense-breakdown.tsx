@@ -1,23 +1,18 @@
+import { colorDe } from '@/components/color-picker'
 import { Amount } from './amount'
+import { BarraDeComposicion } from './barra-de-composicion'
 import type { Money } from './types'
 
 export interface ExpenseSlice {
   id: string
   name: string
   amount: Money
+  // El color que eligió la categoría, y su lugar en el catálogo para cuando no eligió
+  // ninguno. Sin esto, la categoría con su punto azul en el catálogo salía naranja acá: la
+  // misma plata con dos colores en dos pantallas, que es lo que el color venía a evitar.
+  colorIndex?: number | null
+  posicion?: number
 }
-
-// Los mismos cinco tonos de las cubetas del presupuesto: si el gasto de una categoría y el
-// de su cubeta se pintaran distinto, la misma plata tendría dos colores en dos pantallas.
-const TONES = [
-  'var(--bucket-1)',
-  'var(--bucket-2)',
-  'var(--bucket-3)',
-  'var(--bucket-4)',
-  'var(--bucket-5)',
-]
-
-const toneOf = (index: number): string => TONES[index % TONES.length] ?? TONES[0]!
 
 interface Props {
   slices: ExpenseSlice[]
@@ -64,21 +59,23 @@ export const ExpenseBreakdown = ({ slices, total, label, totalLabel, restLabel }
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex h-2 w-full overflow-hidden rounded-sm" role="img" aria-label={label}>
-        {shown.map((slice, index) => (
-          <div
-            key={slice.id}
-            style={{ width: `${share(slice.amount) * 100}%`, backgroundColor: toneOf(index) }}
-          />
-        ))}
-      </div>
+      <BarraDeComposicion
+        label={label}
+        tramos={shown.map((slice, index) => ({
+          id: slice.id,
+          nombre: slice.name,
+          parte: share(slice.amount),
+          colorIndex: slice.colorIndex ?? null,
+          posicion: slice.posicion ?? index,
+        }))}
+      />
 
       <ul className="mt-4 space-y-2">
         {shown.map((slice, index) => (
           <li key={slice.id} className="flex items-baseline gap-2 text-sm">
             <span
               className="size-2 shrink-0 translate-y-px rounded-[2px]"
-              style={{ backgroundColor: toneOf(index) }}
+              style={{ backgroundColor: colorDe(slice.colorIndex, slice.posicion ?? index) }}
               aria-hidden="true"
             />
             <span className="min-w-0 flex-1 truncate">{slice.name}</span>

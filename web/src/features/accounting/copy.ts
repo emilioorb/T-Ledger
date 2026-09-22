@@ -106,6 +106,12 @@ export const copy = {
     new: 'Nueva categoría',
     edit: (name: string) => `Editar ${name}`,
     form: {
+      color: {
+        label: 'Color',
+        // «Automático» y no «ninguno»: la categoría siempre tiene color, lo que cambia es
+        // quién lo elige.
+        auto: 'Automático',
+      },
       createTitle: 'Nueva categoría',
       editTitle: 'Editar categoría',
       name: { label: 'Nombre' },
@@ -135,6 +141,10 @@ export const copy = {
   movements: {
     title: 'Movimientos',
     description: 'Lo que entró y lo que salió. Cada uno genera su asiento solo.',
+    composition: {
+      label: (partes: string[]) => partes.join(', '),
+      uncategorized: 'Sin categoría',
+    },
     columns: {
       date: 'Fecha',
       counterparty: 'Quién',
@@ -177,7 +187,17 @@ export const copy = {
         label: 'Cuenta de pago',
         hint: 'De dónde salió o a dónde entró la plata.',
       },
-      receiptUrl: { label: 'Comprobante', hint: 'Enlace a la factura o al recibo. Opcional.' },
+      receiptKey: {
+        label: 'Comprobante',
+        hint: 'Una foto o un PDF de la factura, hasta 5 MB. Opcional.',
+        see: 'Ver el que está',
+        remove: 'Quitarlo',
+        attached: 'Comprobante',
+        uploaded: 'Comprobante guardado.',
+        uploadFailed: 'El movimiento se guardó, pero el comprobante no se pudo subir.',
+        removed: 'Comprobante quitado.',
+        removeFailed: 'No se pudo quitar el comprobante.',
+      },
       editNote: 'Editar no reescribe el asiento: revierte el vigente y emite uno nuevo.',
     },
     empty: {
