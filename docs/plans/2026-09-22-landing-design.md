@@ -136,8 +136,12 @@ cuenta, escribime.»
   la misma lectura girada noventa grados.
 - **Teclado:** dos paradas, en el orden en que se leen. El modal atrapa el foco
   y cierra con Escape, que ya lo da el diálogo del sistema.
-- **Tema:** respeta el guardado, y si no hay, el del sistema. Sin interruptor
-  propio: el ajuste vive en la pantalla de cuenta y duplicarlo sería tener dos.
+- **Tema: papel blanco fijo**, sea cual sea la preferencia guardada, igual que
+  `/entrar` y `/crear-cuenta`. Las tres son la misma superficie —papel y tinta—
+  y el botón de entrar lleva de una a la otra: con la landing en oscuro, tocarlo
+  encandila. Se fuerza antes del primer pintado, no en un efecto normal, o la
+  pantalla asoma un cuadro con el tema viejo y parpadea. Al salir, el documento
+  vuelve a la preferencia de la persona.
 - **Cero peso nuevo.** Sin imágenes, sin fuentes nuevas, sin librerías.
 
 ## Sin React Bits
