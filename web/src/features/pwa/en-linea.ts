@@ -12,7 +12,3 @@ const suscribir = (avisar: () => void) => {
 const conectado = () => navigator.onLine
 
 export const useEnLinea = (): boolean => useSyncExternalStore(suscribir, conectado)
-
-// Un `fetch` que no llega al servidor falla con TypeError, no con una respuesta: es la única
-// forma de distinguir «no hay red» de «el servidor dijo que no».
-export const esFaltaDeRed = (error: unknown): boolean => error instanceof TypeError

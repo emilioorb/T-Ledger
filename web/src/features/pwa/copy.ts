@@ -7,9 +7,13 @@ export const copy = {
     texto:
       'Tu libro vive en el servidor y no se guarda en este dispositivo. Apenas vuelva la red, la pantalla carga sola.',
   },
+  pantallaSinServidor: {
+    titulo: 'No pudimos llegar al servidor',
+    texto: 'Hay red, pero el servidor no respondió. Probá de nuevo en un momento.',
+  },
   pantallaConError: {
     titulo: 'No se pudo cargar esta pantalla',
     texto: 'Algo falló al traerla. Probá de nuevo en un momento.',
-    reintentar: 'Reintentar',
   },
+  reintentar: 'Reintentar',
 } as const

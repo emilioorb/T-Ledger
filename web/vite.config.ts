@@ -25,6 +25,8 @@ export default defineConfig({
       // por tema del sistema.
       pwaAssets: { config: true, injectThemeColor: false },
       manifest: {
+        // La identidad de la app instalada: fija, para que cambiar start_url no la duplique.
+        id: '/',
         name: 'T-Ledger',
         short_name: 'T-Ledger',
         description: 'Finanzas personales con contabilidad de partida doble.',
@@ -40,7 +42,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // La imagen para compartir en redes: la app nunca la muestra.
         globIgnores: ['og.png'],
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api(\/|$)/],
       },
     }),
   ],

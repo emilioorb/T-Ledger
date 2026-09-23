@@ -1,5 +1,6 @@
 import { organizationClient } from 'better-auth/client/plugins'
 import { createAuthClient } from 'better-auth/react'
+import { fetchAlServidor } from '@/lib/api'
 import { controlDeAcceso, rolesDelLibro } from './roles'
 
 // El único archivo del front que habla con Better Auth. Sus rutas quedan fuera del contrato
@@ -19,6 +20,9 @@ import { controlDeAcceso, rolesDelLibro } from './roles'
 // React: la variante de React es la que trae los hooks reactivos de sesión.
 export const auth = createAuthClient({
   baseURL: import.meta.env.VITE_API_URL ?? window.location.origin,
+  // El mismo fetch que el resto de la API: un pedido de sesión sin red falla como ErrorDeRed,
+  // que es lo que la pantalla de error necesita para distinguirlo de un bug.
+  fetchOptions: { customFetchImpl: fetchAlServidor },
   plugins: [organizationClient({ ac: controlDeAcceso, roles: rolesDelLibro })],
 })
 

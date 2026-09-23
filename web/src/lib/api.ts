@@ -16,7 +16,27 @@ export class ApiError extends Error {
   }
 }
 
-const isApiErrorBody = (value: unknown): value is ApiErrorBody =>
+// El pedido no llegó al servidor: sin red, DNS, servidor inalcanzable. Es distinto de una
+// respuesta de error, y distinto de un TypeError del código, que también es TypeError.
+export class ErrorDeRed extends Error {
+  constructor(cause?: unknown) {
+    super('No se pudo llegar al servidor', { cause })
+    this.name = 'ErrorDeRed'
+  }
+}
+
+// Marca la falta de red en el único punto donde se la puede saber con certeza: un `fetch` que
+// rechaza no llegó a tener respuesta. Adivinarla después por el tipo o el mensaje del error
+// confundía bugs del código con cortes de red.
+export const fetchAlServidor: typeof fetch = async (input, init) => {
+  try {
+    return await fetch(input, init)
+  } catch (error) {
+    throw new ErrorDeRed(error)
+  }
+}
+
+const isApiErrorBody =(value: unknown): value is ApiErrorBody =>
   typeof value === 'object' &&
   value !== null &&
   'error' in value &&
@@ -26,7 +46,7 @@ export const apiFetch = async <T>(path: string, init?: RequestInit): Promise<T> 
   // Con FormData el navegador pone su propio content-type con el boundary: fijarlo a mano
   // rompería la subida del archivo.
   const isFormData = init?.body instanceof FormData
-  const response = await fetch(`/api/v1${path}`, {
+  const response = await fetchAlServidor(`/api/v1${path}`, {
     ...init,
     headers: isFormData
       ? { ...init?.headers }

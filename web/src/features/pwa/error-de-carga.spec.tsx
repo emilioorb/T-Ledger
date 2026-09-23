@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ApiError, ErrorDeRed } from '@/lib/api'
 import { ErrorDeCarga } from './error-de-carga'
 
 const invalidate = vi.hoisted(() => vi.fn(async () => {}))
@@ -12,7 +13,19 @@ vi.mock('@tanstack/react-router', async (original) => ({
   useRouter: () => ({ invalidate }),
 }))
 
-const sinRed = (sin: boolean) => vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(!sin)
+const conRed = (hay: boolean) => vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(hay)
+
+const volverALaRed = () =>
+  act(() => {
+    conRed(true)
+    window.dispatchEvent(new Event('online'))
+  })
+
+const cortarLaRed = () =>
+  act(() => {
+    conRed(false)
+    window.dispatchEvent(new Event('offline'))
+  })
 
 describe('ErrorDeCarga', () => {
   beforeEach(() => {
@@ -21,65 +34,70 @@ describe('ErrorDeCarga', () => {
   })
   afterEach(() => vi.restoreAllMocks())
 
-  it('sin red lo dice en castellano, no como un error de la app', () => {
-    sinRed(true)
-
-    render(<ErrorDeCarga error={new TypeError('Failed to fetch')} reset={() => {}} />)
-
-    expect(screen.getByRole('heading', { name: 'Sin conexión' })).toBeInTheDocument()
-    expect(screen.queryByText('Failed to fetch')).not.toBeInTheDocument()
-  })
-
-  it('cuando vuelve la red reintenta solo', () => {
-    sinRed(true)
-    render(<ErrorDeCarga error={new TypeError('Failed to fetch')} reset={() => {}} />)
-    expect(invalidate).not.toHaveBeenCalled()
-
-    act(() => {
-      sinRed(false)
-      window.dispatchEvent(new Event('online'))
-    })
-
-    expect(invalidate).toHaveBeenCalled()
-  })
-
-  it('un fetch que no llegó al servidor también es falta de red, aunque el navegador diga que hay', () => {
-    sinRed(false)
-
-    render(<ErrorDeCarga error={new TypeError('Failed to fetch')} reset={() => {}} />)
+  it('sin red lo dice en castellano, sin botón, y reintenta sola cuando vuelve', () => {
+    conRed(false)
+    render(<ErrorDeCarga error={new ErrorDeRed()} reset={() => {}} />)
 
     expect(screen.getByRole('heading', { name: 'Sin conexión' })).toBeInTheDocument()
-  })
-
-  it('con red pero sin respuesta no reintenta solo: sería un bucle contra el servidor', () => {
-    sinRed(false)
-
-    render(<ErrorDeCarga error={new TypeError('Failed to fetch')} reset={() => {}} />)
-
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
     expect(invalidate).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+
+    volverALaRed()
+
     expect(invalidate).toHaveBeenCalledTimes(1)
+    expect(reportar).not.toHaveBeenCalled()
   })
 
-  it('cualquier otro error se reintenta a mano', () => {
-    sinRed(false)
-    render(<ErrorDeCarga error={new Error('boom')} reset={() => {}} />)
+  it('sin red, cualquier error se explica como falta de red', () => {
+    conRed(false)
+
+    render(<ErrorDeCarga error={new ApiError(500, 'X', 'boom')} reset={() => {}} />)
+
+    expect(screen.getByRole('heading', { name: 'Sin conexión' })).toBeInTheDocument()
+  })
+
+  it('con red pero sin llegar al servidor no promete cargar sola ni reintenta en bucle', () => {
+    conRed(true)
+    render(<ErrorDeCarga error={new ErrorDeRed()} reset={() => {}} />)
+
+    expect(screen.getByRole('heading', { name: 'No pudimos llegar al servidor' })).toBeInTheDocument()
+    expect(invalidate).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+
+    expect(invalidate).toHaveBeenCalledTimes(1)
+    expect(reportar).not.toHaveBeenCalled()
+  })
+
+  it('un TypeError del código es un error de verdad: se muestra como tal y se reporta', () => {
+    conRed(true)
+    const error = new TypeError("Cannot read properties of undefined (reading 'map')")
+
+    render(<ErrorDeCarga error={error} reset={() => {}} />)
 
     expect(screen.getByRole('heading', { name: 'No se pudo cargar esta pantalla' })).toBeInTheDocument()
+    expect(reportar).toHaveBeenCalledWith(error)
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
-
     expect(invalidate).toHaveBeenCalled()
   })
 
-  it('reporta los errores de verdad, no los cortes de red', () => {
-    sinRed(false)
-    const error = new Error('boom')
-    const { unmount } = render(<ErrorDeCarga error={error} reset={() => {}} />)
-    expect(reportar).toHaveBeenCalledWith(error)
-    unmount()
-    reportar.mockClear()
+  it('reporta cada error una sola vez aunque la red vaya y vuelva', () => {
+    conRed(true)
+    render(<ErrorDeCarga error={new Error('boom')} reset={() => {}} />)
 
-    render(<ErrorDeCarga error={new TypeError('Failed to fetch')} reset={() => {}} />)
-    expect(reportar).not.toHaveBeenCalled()
+    cortarLaRed()
+    volverALaRed()
+
+    expect(reportar).toHaveBeenCalledTimes(1)
+  })
+
+  it('ocupa la pantalla solo cuando falla la raíz; dentro de la app no abre otro main', () => {
+    conRed(true)
+    const { unmount } = render(<ErrorDeCarga error={new Error('boom')} reset={() => {}} pantallaCompleta />)
+    expect(screen.getByRole('main')).toBeInTheDocument()
+    unmount()
+
+    render(<ErrorDeCarga error={new Error('boom')} reset={() => {}} />)
+    expect(screen.queryByRole('main')).not.toBeInTheDocument()
   })
 })

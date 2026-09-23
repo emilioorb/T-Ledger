@@ -8,6 +8,22 @@ Cada entrega abre con `## AAAA-MM-DD · vX.Y.Z` y lleva hasta tres grupos: `### 
 listas anidadas y tablas. La negrita marca **de qué** habla cada nota, para recorrer la lista
 sin leerla entera. Lo que está antes de la primera entrega, como este texto, no se muestra.
 
+## 2026-09-23 · v1.1.0
+
+### Nuevo
+
+- **T-Ledger se instala como app** en el teléfono y en la compu: abre en su propia ventana,
+  sin la barra del navegador, y arranca rápido porque la interfaz queda guardada.
+- **Nimbo es el ícono**, tímido, en blanco sobre negro. También en la pestaña del navegador.
+- **Aviso de versión nueva.** Después de cada entrega la app lo dice y se actualiza cuando
+  tocás «Actualizar», nunca sola: lo que estés escribiendo no se pierde.
+
+### Mejorado
+
+- **Sin conexión, la app lo explica** en vez de quedarse cargando, y vuelve sola cuando
+  vuelve la red. Tus cifras no se guardan en el dispositivo: siguen solo en el servidor.
+- **Si una pantalla no puede cargar**, lo dice en castellano y ofrece reintentar.
+
 ## 2026-09-22 · v1.0.0
 
 ### Nuevo

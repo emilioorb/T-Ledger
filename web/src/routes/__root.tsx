@@ -18,6 +18,7 @@ import { recuerdoDeSesion } from '@/features/identity/recuerdo-de-sesion'
 import { MarcoPublico } from '@/features/identity/marco-publico'
 import { AvisoDeVersion } from '@/features/pwa/aviso-de-version'
 import { AvisoSinConexion } from '@/features/pwa/aviso-sin-conexion'
+import { ErrorDeCarga } from '@/features/pwa/error-de-carga'
 import { VigilanteDeSesion } from '@/features/identity/vigilante-de-sesion'
 import { copy as shell } from '@/features/shell/copy'
 import { copy as shortcuts } from '@/features/shortcuts/copy'
@@ -130,7 +131,6 @@ const Shell = () => {
       </SidebarInset>
 
       <ShortcutsSheet open={helpOpen} onOpenChange={setHelpOpen} />
-      <Toaster position="bottom-right" />
     </SidebarProvider>
   )
 }
@@ -193,6 +193,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       throw redirect({ to: '/entrar', search: { redirigirA: location.href } })
     }
   },
+  errorComponent: (props) => <ErrorDeCarga {...props} pantallaCompleta />,
   component: () => {
     // Se pregunta por los **matches** y no por `location.pathname`, aunque el pathname sea más
     // directo de leer. El `Outlet` de abajo renderiza los matches; el pathname cambia apenas
@@ -206,40 +207,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       select: (estado) => estado.matches.some((match) => esPublica(match.routeId)),
     })
 
-    // Los avisos de la app instalada van en los dos lados: una versión nueva o un corte de red
-    // pasan igual con sesión que sin ella.
-    const avisosDeLaApp = (
-      <>
-        <AvisoDeVersion />
-        <AvisoSinConexion />
-      </>
-    )
-
-    if (enPublica) {
-      return (
-        <TooltipProvider delayDuration={300}>
-          {avisosDeLaApp}
-          {/* También acá: el título de la pestaña es lo primero que lee un lector de pantalla
-              al cambiar de ruta, y sin esto las pantallas sin sesión heredaban el título de
-              donde vinieras. */}
-          <DocumentTitle />
-          <MarcoPublico>
-            <Outlet />
-          </MarcoPublico>
-          <Toaster position="bottom-right" />
-        </TooltipProvider>
-      )
-    }
-
-    // El vigilante va del lado privado y no envolviendo todo: en la pantalla de entrar no hay
-    // sesión que cerrar, y un reloj corriendo ahí sería un temporizador vigilando a nadie.
+    // Los avisos y el Toaster van una sola vez, afuera de las dos ramas: con un Toaster en cada
+    // lado, entrar o salir de la sesión montaba uno nuevo y vacío, y el aviso de versión nueva
+    // que ya estaba en pantalla desaparecía hasta la próxima recarga.
     return (
       <TooltipProvider delayDuration={300}>
-        {avisosDeLaApp}
-        <PrimaryActionProvider>
-          <Shell />
-          <VigilanteDeSesion />
-        </PrimaryActionProvider>
+        <AvisoDeVersion />
+        <AvisoSinConexion />
+        {enPublica ? (
+          <>
+            {/* También acá: el título de la pestaña es lo primero que lee un lector de
+                pantalla al cambiar de ruta, y sin esto las pantallas sin sesión heredaban el
+                título de donde vinieras. */}
+            <DocumentTitle />
+            <MarcoPublico>
+              <Outlet />
+            </MarcoPublico>
+          </>
+        ) : (
+          // El vigilante va del lado privado y no envolviendo todo: en la pantalla de entrar
+          // no hay sesión que cerrar, y un reloj corriendo ahí sería un temporizador vigilando
+          // a nadie.
+          <PrimaryActionProvider>
+            <Shell />
+            <VigilanteDeSesion />
+          </PrimaryActionProvider>
+        )}
+        <Toaster position="bottom-right" />
       </TooltipProvider>
     )
   },
