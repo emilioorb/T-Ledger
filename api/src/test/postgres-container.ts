@@ -25,11 +25,10 @@ export const startPostgres = async (): Promise<RunningPostgres> => {
 
   return {
     url: url.toString(),
-    stop: async () => {
-      const cierre = new pg.Client({ connectionString: servidor })
-      await cierre.connect()
-      await cierre.query(`DROP DATABASE IF EXISTS "${base}" WITH (FORCE)`)
-      await cierre.end()
-    },
+    // No borra nada: el contenedor entero se va al final de la suite, con todas las bases
+    // adentro. Borrarla acá era un `DROP DATABASE ... WITH (FORCE)` por archivo, y con la suite
+    // en paralelo —y los hashes de contraseña comiéndose la CPU— pasaba de los diez segundos
+    // de un `afterAll` y hacía fallar un archivo cuyos tests habían pasado todos.
+    stop: async () => {},
   }
 }
