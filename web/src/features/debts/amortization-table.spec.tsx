@@ -58,3 +58,17 @@ describe('AmortizationTable de una deuda real', () => {
     expect(screen.queryByText(copy.schedule.columns.status)).toBeNull()
   })
 })
+
+describe('el color de cada estado', () => {
+  it('verde pagada, amarillo pendiente y rojo atrasada', () => {
+    const filas = [
+      { ...installments[0]!, status: 'PAID' as const, paidOn: '2026-02-14', withMovement: true },
+      { ...installments[1]!, status: 'OVERDUE' as const, paidOn: null, withMovement: false },
+      { ...installments[2]!, status: 'PENDING' as const, paidOn: null, withMovement: false },
+    ]
+    render(<AmortizationTable installments={filas} />)
+    expect(screen.getAllByText(copy.schedule.status.PAID)[0]).toHaveClass('text-positive')
+    expect(screen.getAllByText(copy.schedule.status.PENDING)[0]).toHaveClass('text-warning')
+    expect(screen.getAllByText(copy.schedule.status.OVERDUE)[0]).toHaveClass('text-negative')
+  })
+})

@@ -86,7 +86,7 @@ export const PagosDeLaDeuda = ({ debt, installments }: Props) => {
           {copy.pagos.next(siguiente.number, formatIsoDate(siguiente.dueDate))}{' '}
           <Amount money={siguiente.payment} emphasis="strong" />
           {siguiente.status === 'OVERDUE' ? (
-            <span className="ml-2 font-medium text-warning">{copy.pagos.overdue}</span>
+            <span className="ml-2 font-medium text-negative">{copy.pagos.overdue}</span>
           ) : null}
         </p>
       ) : (

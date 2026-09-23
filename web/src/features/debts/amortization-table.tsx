@@ -24,19 +24,19 @@ interface Props {
   installments: Fila[]
 }
 
+// Verde lo saldado, amarillo lo que viene y rojo lo que se pasó de fecha sin pagar: el mismo
+// semáforo que usa el resto de la app para un dato bien, a vigilar y mal.
+const COLOR_DEL_ESTADO = {
+  PAID: 'text-positive',
+  PENDING: 'text-warning',
+  OVERDUE: 'font-medium text-negative',
+} as const
+
 const Estado = ({ fila, sigue }: { fila: Fila; sigue: boolean }) => {
   if (!fila.status) return null
   return (
     <span className="inline-flex flex-wrap items-baseline gap-x-1.5 text-xs">
-      <span
-        className={
-          fila.status === 'OVERDUE'
-            ? 'font-medium text-warning'
-            : fila.status === 'PAID'
-              ? 'text-muted-foreground'
-              : undefined
-        }
-      >
+      <span className={COLOR_DEL_ESTADO[fila.status]}>
         {copy.schedule.status[fila.status]}
       </span>
       {fila.status === 'PAID' && fila.withMovement === false ? (
