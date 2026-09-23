@@ -69,3 +69,4 @@ difieren, manda este archivo.
 | ID | Regla | Dónde | Motivo | Dueño | Vence |
 |---|---|---|---|---|---|
 | E1 | Dependencias | `api`: `deepmerge-ts` 7.1.5 (GHSA-ggr8-5vv4-36mx, alta) | La fija `@prisma/config` y solo mezcla nuestro `prisma.config.ts`, que no es entrada de terceros. El arreglo es la 8.0.0, fuera del rango de Prisma 7. Anotada también en `api/osv-scanner.toml`. | Emilio | 2026-12-22 |
+| E2 | PageSpeed móvil de la portada, TBT (anotado 20 ms, no sube) | `/` | Con el prerender, el primer pintado pasó de ~4 s a ~1,5 s y la evaluación del JavaScript quedó dentro de la ventana del TBT (antes corría con la pantalla en blanco): 120 / 50 / 490 ms. Traza del 2026-09-23 con CPU 4×, exceso sobre 50 ms después del FCP: fondo 3D ~690 ms, bundle de entrada ~750 ms, hidratación ~410 ms. | Emilio | 2026-12-22 |
