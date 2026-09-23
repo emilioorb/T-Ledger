@@ -6,6 +6,7 @@ import {
   Percent,
   TableProperties,
   Timer,
+  Landmark,
   Wallet,
 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,6 +16,7 @@ import { AmortizationTable } from '@/features/debts/amortization-table'
 import { PagosDeLaDeuda } from '@/features/debts/pagos-de-la-deuda'
 import { BalanceChart } from '@/features/debts/balance-chart'
 import { copy } from '@/features/debts/copy'
+import { cuotasRestantes } from '@/features/debts/cuotas-restantes'
 import { ErrorState } from '@/components/error-state'
 import { ExtraPaymentSimulator } from '@/features/debts/extra-payment-simulator'
 import { useDebt, useSchedule } from '@/features/debts/use-debts'
@@ -86,7 +88,21 @@ const DebtDetail = () => {
             <p className="num block text-left text-2xl">{data.annualRate} %</p>
           </StatCard>
 
-          <StatCard icon={Timer} label={copy.detail.term}>
+          <StatCard
+            icon={Landmark}
+            label={copy.detail.outstanding}
+            hint={copy.detail.outstandingHint}
+          >
+            <Amount money={data.outstanding} className="block text-left text-2xl" />
+          </StatCard>
+
+          <StatCard
+            icon={Timer}
+            label={copy.detail.term}
+            {...(schedule.data
+              ? { hint: copy.detail.remaining(cuotasRestantes(schedule.data.installments)) }
+              : {})}
+          >
             <p className="num block text-left text-2xl">
               {copy.simulator.results.months(data.termMonths)}
             </p>

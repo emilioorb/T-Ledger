@@ -207,6 +207,10 @@ export const copy = {
     principal: 'Capital',
     rate: 'Tasa anual',
     term: 'Plazo',
+    remaining: (cuotas: number) =>
+      cuotas === 0 ? 'Ya no quedan cuotas.' : cuotas === 1 ? 'Queda 1 cuota.' : `Quedan ${cuotas} cuotas.`,
+    outstanding: 'Saldo pendiente',
+    outstandingHint: 'Lo que falta pagar de capital después de la última cuota pagada.',
     payoffDate: 'Libre en',
     monthlyPayment: 'Cuota',
     paymentHint: 'Lo mismo todos los meses hasta la última.',
