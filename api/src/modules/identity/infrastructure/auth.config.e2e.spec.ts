@@ -6,6 +6,10 @@ import { LIBRO_DE_PRUEBA } from '../../../shared/libro/libro-de-prueba.js'
 import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { crearAuth, type Auth } from './auth.config.js'
 
+// Cada test registra y entra con contraseña, y el hash de Better Auth (scrypt) es caro a
+// propósito. Con la suite entera en paralelo no alcanzan los 5 s por defecto.
+const HASHEO = 20_000
+
 let postgres: RunningPostgres
 let prisma: PrismaClient
 let auth: Auth
@@ -29,7 +33,7 @@ afterAll(async () => {
   await postgres?.stop()
 })
 
-describe('registro', () => {
+describe('registro', { timeout: HASHEO }, () => {
   it('toda cuenta nueva nace dueña de su libro personal, con el plan de cuentas pedido', async () => {
     // La instancia ya tiene cuenta, así que solo entra quien trae invitación: el caso en que
     // antes quedaba adentro del libro ajeno y sin uno propio.
@@ -81,7 +85,7 @@ const invitar = (id: string, email: string) =>
     },
   })
 
-describe('el dueño de un libro', () => {
+describe('el dueño de un libro', { timeout: HASHEO }, () => {
   // Better Auth decide el renombre con su propio permiso, `organization: update`, no con el
   // `libro: update` del dominio. Sin él, el dueño recibía 403 en cada intento.
   it('le puede cambiar el nombre', async () => {
@@ -102,7 +106,7 @@ describe('el dueño de un libro', () => {
   })
 })
 
-describe('una sesión nueva', () => {
+describe('una sesión nueva', { timeout: HASHEO }, () => {
   // Con dos libros o más, una sesión sin libro activo recibía 403 en cada consulta: el servidor
   // no tiene a cuál atribuirla. La pantalla quedaba vacía hasta que el navegador elegía uno.
   it('nace parada en el libro más viejo de la persona', async () => {

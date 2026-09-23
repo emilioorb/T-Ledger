@@ -55,6 +55,19 @@ export const crearAuth = (
     // Lo que no se hace es apagar la comprobación con `disableOriginCheck`: eso desactiva
     // también la protección CSRF y deja pasar cualquier URL en las redirecciones.
     trustedOrigins: [env.CORS_ORIGIN],
+    // Con qué IP cuenta el límite de peticiones. Better Auth solo mira `x-forwarded-for` y
+    // descarta las cadenas con varios saltos, que es lo que llega detrás de Vercel y el borde
+    // de Railway: sin esto, todo el mundo compartía un único cupo por ruta, y tres intentos de
+    // entrar de cualquiera trababan el ingreso de todos. Medido en producción:
+    // - por Vercel, la del cliente viene en `x-vercel-forwarded-for` (Vercel la reescribe
+    //   aunque el cliente mande otra), y `x-real-ip` es la de salida de Vercel;
+    // - directo a Railway, la del cliente viene en `x-real-ip`.
+    // Quien llame directo a Railway puede inventarse la primera; Vercel no documenta cómo
+    // verificar que una petición reescrita pasó por su proxy.
+    // https://www.better-auth.com/docs/concepts/rate-limit#connecting-ip-address
+    advanced: {
+      ipAddress: { ipAddressHeaders: ['x-vercel-forwarded-for', 'x-real-ip'] },
+    },
     // Quién ejecuta, guardado antes de que corra el endpoint. Es lo que les falta a los
     // ganchos de organización para poder firmar un cambio de rol o una expulsión: ellos
     // reciben al afectado, no a la sesión. Acá sí se puede pedir, y el gancho corre en la
