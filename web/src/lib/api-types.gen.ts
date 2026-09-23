@@ -3124,6 +3124,8 @@ export interface components {
             priority: number;
             /** @default null */
             accountCode: string | null;
+            /** @default true */
+            active: boolean;
         };
         /** UpdateGoalInput */
         UpdateGoalInput: {
@@ -3132,6 +3134,7 @@ export interface components {
             desiredDate?: string;
             priority?: number;
             accountCode?: string | null;
+            active?: boolean;
         };
         /** CreateContributionInput */
         CreateContributionInput: {
@@ -3521,6 +3524,7 @@ export interface components {
             desiredDate: string;
             priority: number;
             accountCode: string | null;
+            active: boolean;
             contributed: components["schemas"]["MoneyOutput"];
             remaining: components["schemas"]["MoneyOutput"];
             progress: string;

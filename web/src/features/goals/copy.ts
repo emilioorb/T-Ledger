@@ -30,6 +30,12 @@ export const copy = {
     delete: (name: string) => `Borrar ${name}`,
     contribute: 'Aportar',
     deleteShort: 'Borrar',
+    paused: 'En pausa',
+    pausedNote: 'No pide aporte mientras esté en pausa.',
+    pause: 'Pausar',
+    resume: 'Reactivar',
+    pauseLabel: (name: string) => `Pausar ${name}`,
+    resumeLabel: (name: string) => `Reactivar ${name}`,
     progressLabel: (contributed: string, target: string) => `${contributed} aportados de ${target}`,
     detail: {
       missing: 'Faltan',

@@ -41,6 +41,7 @@ import type { ReportNode } from '@/features/accounting/types'
 import { copy as budgetCopy } from '@/features/budget/copy'
 import { sinModeloActivo } from '@/features/budget/sin-modelo-activo'
 import { useBudgetEvaluation } from '@/features/budget/use-budget'
+import { metasPendientes } from '@/features/goals/metas-pendientes'
 import { useDebts } from '@/features/debts/use-debts'
 import { copy as goalsCopy } from '@/features/goals/copy'
 import { useGoals } from '@/features/goals/use-goals'
@@ -218,7 +219,7 @@ const DashboardScreen = () => {
   const nextFreed = flows.find((flow) => flow.freed.length > 0)
   const maturing = flows.find((flow) => !flow.maturingInvestments.minorUnits.startsWith('0'))
 
-  const pending = [...(goals.data ?? [])].filter((goal) => !goal.reached)
+  const pending = metasPendientes(goals.data ?? [])
   const nearestGoal = pending
     .filter((goal) => goal.projectedDate !== null)
     .sort((a, b) => (a.projectedDate ?? '').localeCompare(b.projectedDate ?? ''))[0]

@@ -181,6 +181,7 @@ interface CardProps {
   onEdit: () => void
   onDelete: () => void
   onContribute: () => void
+  onToggle: () => void
 }
 
 // Lo que se lee primero no es el porcentaje sino si llega: la fecha proyectada contra la
@@ -193,6 +194,7 @@ const progressOf = (goal: Goal): number => {
 }
 
 const GoalStatus = ({ goal }: { goal: Goal }) => {
+  if (!goal.active) return <span className="text-muted-foreground">{copy.goals.paused}</span>
   if (goal.reached) return <span className="text-positive">{copy.goals.reached}</span>
   if (goal.projectedDate === null)
     return (
@@ -225,11 +227,12 @@ const GoalAction = ({ children, label, onClick }: ActionProps) => (
   </Button>
 )
 
-const GoalBlock = ({ goal, onEdit, onDelete, onContribute }: CardProps) => {
+const GoalBlock = ({ goal, onEdit, onDelete, onContribute, onToggle }: CardProps) => {
   const progress = progressOf(goal)
 
   return (
-    <Card size="sm" className="gap-0 px-4">
+    // En pausa se atenúa pero sigue legible: el avance guardado importa para cuando vuelva.
+    <Card size="sm" className={cn('gap-0 px-4', !goal.active && 'opacity-70')}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="min-w-0 truncate text-base font-medium tracking-tight">
           <Link
@@ -278,7 +281,9 @@ const GoalBlock = ({ goal, onEdit, onDelete, onContribute }: CardProps) => {
       </div>
 
       <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-3">
-        {goal.reached ? (
+        {!goal.active ? (
+          <span className="text-xs text-muted-foreground">{copy.goals.pausedNote}</span>
+        ) : goal.reached ? (
           <span className="text-xs text-muted-foreground">{copy.goals.reachedNote}</span>
         ) : (
           <Hint text={copy.goals.requiredHint}>
@@ -290,7 +295,15 @@ const GoalBlock = ({ goal, onEdit, onDelete, onContribute }: CardProps) => {
         )}
 
         <div className="-mr-2 flex shrink-0 gap-0.5">
-          <GoalAction onClick={onContribute}>{copy.goals.contribute}</GoalAction>
+          {goal.active ? (
+            <GoalAction onClick={onContribute}>{copy.goals.contribute}</GoalAction>
+          ) : null}
+          <GoalAction
+            label={goal.active ? copy.goals.pauseLabel(goal.name) : copy.goals.resumeLabel(goal.name)}
+            onClick={onToggle}
+          >
+            {goal.active ? copy.goals.pause : copy.goals.resume}
+          </GoalAction>
           <GoalAction label={copy.goals.edit(goal.name)} onClick={onEdit}>
             {copy.common.edit}
           </GoalAction>
@@ -492,6 +505,7 @@ const GoalsScreen = () => {
               onEdit={() => setEditing({ goal })}
               onDelete={() => setDeleting(goal)}
               onContribute={() => setContributing(goal)}
+              onToggle={() => save.mutate({ id: goal.id, input: { active: !goal.active } })}
             />
           ))}
         </div>
