@@ -53,9 +53,9 @@ repetir, `?psi=2`, `?psi=3`.
 
 | Etapa | Comando | Qué incluye | Tiempo en esta máquina |
 |---|---|---|---|
-| Edición | `npm run check:fast` | guardia del piso, gitleaks, oxlint | ~5 s |
-| Fin de tarea | `npm run check:task` | lo anterior, tipos, lint de la api, tests relacionados con el diff y su cobertura | ~90 s si toca un solo proyecto; más si toca la api (Postgres en contenedor) |
-| Antes del push | `npm run check:full` | tipos, suites completas, trinquete, seguridad, bundle, accesibilidad | ~10 min |
+| Edición | `npm run check:fast` | guardia del piso, gitleaks, oxlint | ~9 s (medido) |
+| Fin de tarea | `npm run check:task` | lo anterior, tipos, lint de la api, tests relacionados con el diff y su cobertura | ~85 s con un cambio de código (medido); si el diff toca configs o `package.json`, Vitest corre las suites enteras y son ~7 min |
+| Antes del push | `npm run check:full` | tipos, suites completas, trinquete, seguridad, bundle, accesibilidad | ~13 min (medido) |
 
 `gitleaks` y `osv-scanner` están instalados con winget (`Gitleaks.Gitleaks`, `Google.OSVScanner`).
 No hay CI: `check:full` corre a mano antes de cada push. Estos scripts reflejan esta tabla; si
