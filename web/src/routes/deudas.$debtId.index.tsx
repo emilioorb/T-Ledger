@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Amount } from '@/features/accounting/amount'
 import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { AmortizationTable } from '@/features/debts/amortization-table'
+import { PagosDeLaDeuda } from '@/features/debts/pagos-de-la-deuda'
 import { BalanceChart } from '@/features/debts/balance-chart'
 import { copy } from '@/features/debts/copy'
 import { ErrorState } from '@/components/error-state'
@@ -97,6 +98,11 @@ const DebtDetail = () => {
           </StatCard>
         </StatGrid>
       </div>
+
+      {/* Solo lo que se debe lleva pagos: lo que te deben va por calendario. */}
+      {data.direction === 'BORROWED' && schedule.data ? (
+        <PagosDeLaDeuda debt={data} installments={schedule.data.installments} />
+      ) : null}
 
       <section aria-labelledby="tabla" className="space-y-3">
         <h2 id="tabla" className="flex items-center gap-2 text-base font-medium tracking-tight">

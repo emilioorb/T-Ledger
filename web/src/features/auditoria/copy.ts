@@ -33,6 +33,7 @@ export const copy = {
       crear: 'creó',
       editar: 'editó',
       aportar: 'aportó a',
+      pagar: 'pagó una cuota de',
       eliminar: 'eliminó',
       anular: 'anuló',
       cerrar: 'cerró',

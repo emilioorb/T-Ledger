@@ -180,7 +180,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Devuelve la tabla de amortización completa */
+        /** Devuelve la tabla de amortización, con el estado de cada cuota */
         get: {
             parameters: {
                 query?: never;
@@ -196,7 +196,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["AmortizationSchedule"];
+                        "application/json": components["schemas"]["DebtSchedule"];
                     };
                 };
             };
@@ -204,6 +204,136 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/debts/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Paga la siguiente cuota y registra su gasto en la contabilidad */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PagarCuotaInput"];
+                };
+            };
+            responses: {
+                /** @description Deuda con la cuota pagada */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Debt"];
+                    };
+                };
+                /** @description El mes del pago está cerrado */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No quedan cuotas o la fecha es anterior al último pago */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/debts/{id}/payments/settled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Salda la siguiente cuota sin movimiento, para lo pagado antes de llevar el libro */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MarcarCuotaPagadaInput"];
+                };
+            };
+            responses: {
+                /** @description Deuda con la cuota saldada */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Debt"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/debts/{id}/payments/last": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Deshace el último pago y anula su movimiento, si tiene */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deuda sin ese pago */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Debt"];
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -2863,6 +2993,16 @@ export interface components {
             direction?: "BORROWED" | "LENT";
             budgetBucket?: string | null;
         };
+        /** PagarCuotaInput */
+        PagarCuotaInput: {
+            date: string;
+            paymentAccountCode: string;
+            categoryId: string;
+        };
+        /** MarcarCuotaPagadaInput */
+        MarcarCuotaPagadaInput: {
+            date: string;
+        };
         /** SimulateExtraPaymentInput */
         SimulateExtraPaymentInput: {
             amount: components["schemas"]["Money"];
@@ -3119,6 +3259,34 @@ export interface components {
                 monthlyPayment: components["schemas"]["MoneyOutput"];
             }[];
         };
+        /** DebtSchedule */
+        DebtSchedule: {
+            installments: components["schemas"]["DebtInstallment"][];
+            totalInterest: components["schemas"]["MoneyOutput"];
+            totalPaid: components["schemas"]["MoneyOutput"];
+        };
+        /** DebtInstallment */
+        DebtInstallment: {
+            number: number;
+            dueDate: string;
+            payment: components["schemas"]["MoneyOutput"];
+            principal: components["schemas"]["MoneyOutput"];
+            interest: components["schemas"]["MoneyOutput"];
+            balance: components["schemas"]["MoneyOutput"];
+            /** @enum {string} */
+            status: "PAID" | "OVERDUE" | "PENDING";
+            paidOn: string | null;
+            withMovement: boolean;
+        };
+        /** ExtraPaymentProjection */
+        ExtraPaymentProjection: {
+            baseline: components["schemas"]["AmortizationSchedule"];
+            withExtraPayment: components["schemas"]["AmortizationSchedule"];
+            extraPayment: components["schemas"]["MoneyOutput"];
+            interestSaved: components["schemas"]["MoneyOutput"];
+            monthsSaved: number;
+            totalPaidWithExtra: components["schemas"]["MoneyOutput"];
+        };
         /** AmortizationSchedule */
         AmortizationSchedule: {
             installments: components["schemas"]["Installment"][];
@@ -3133,15 +3301,6 @@ export interface components {
             principal: components["schemas"]["MoneyOutput"];
             interest: components["schemas"]["MoneyOutput"];
             balance: components["schemas"]["MoneyOutput"];
-        };
-        /** ExtraPaymentProjection */
-        ExtraPaymentProjection: {
-            baseline: components["schemas"]["AmortizationSchedule"];
-            withExtraPayment: components["schemas"]["AmortizationSchedule"];
-            extraPayment: components["schemas"]["MoneyOutput"];
-            interestSaved: components["schemas"]["MoneyOutput"];
-            monthsSaved: number;
-            totalPaidWithExtra: components["schemas"]["MoneyOutput"];
         };
         /** ExchangeRate */
         ExchangeRate: {

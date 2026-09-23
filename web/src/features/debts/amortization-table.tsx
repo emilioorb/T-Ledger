@@ -13,11 +13,46 @@ import { formatIsoDate } from '@/lib/dates'
 import { TableFrame } from '@/components/table-frame'
 import { useTableControls, type SortValue } from '@/lib/use-table-controls'
 import { copy } from './copy'
-import type { Installment } from './types'
+import type { DebtInstallment, Installment } from './types'
 import { Amount } from '@/features/accounting/amount'
 
+// La tabla de una deuda real trae el estado de cada cuota; la de una simulación no, porque ahí
+// no se pagó nada todavía. Con estado aparece la columna; sin él, la tabla queda como siempre.
+type Fila = Installment & Partial<Pick<DebtInstallment, 'status' | 'paidOn' | 'withMovement'>>
+
 interface Props {
-  installments: Installment[]
+  installments: Fila[]
+}
+
+const Estado = ({ fila, sigue }: { fila: Fila; sigue: boolean }) => {
+  if (!fila.status) return null
+  return (
+    <span className="inline-flex flex-wrap items-baseline gap-x-1.5 text-xs">
+      <span
+        className={
+          fila.status === 'OVERDUE'
+            ? 'font-medium text-warning'
+            : fila.status === 'PAID'
+              ? 'text-muted-foreground'
+              : undefined
+        }
+      >
+        {copy.schedule.status[fila.status]}
+      </span>
+      {fila.status === 'PAID' && fila.withMovement === false ? (
+        <>
+          <span aria-hidden="true">·</span>
+          <span className="text-muted-foreground">{copy.schedule.status.settled}</span>
+        </>
+      ) : null}
+      {sigue ? (
+        <>
+          <span aria-hidden="true">·</span>
+          <span className="font-medium">{copy.schedule.status.next}</span>
+        </>
+      ) : null}
+    </span>
+  )
 }
 
 const columns = copy.schedule.columns
@@ -25,13 +60,13 @@ const columns = copy.schedule.columns
 // Sin búsqueda: una tabla de amortización se recorre en orden, no se consulta por palabra.
 // Ordenar por interés o saldo sí responde preguntas reales.
 const sortable = {
-  number: (i: Installment) => i.number,
-  dueDate: (i: Installment) => i.dueDate,
-  payment: (i: Installment) => BigInt(i.payment.minorUnits),
-  principal: (i: Installment) => BigInt(i.principal.minorUnits),
-  interest: (i: Installment) => BigInt(i.interest.minorUnits),
-  balance: (i: Installment) => BigInt(i.balance.minorUnits),
-} satisfies Record<string, (i: Installment) => SortValue>
+  number: (i: Fila) => i.number,
+  dueDate: (i: Fila) => i.dueDate,
+  payment: (i: Fila) => BigInt(i.payment.minorUnits),
+  principal: (i: Fila) => BigInt(i.principal.minorUnits),
+  interest: (i: Fila) => BigInt(i.interest.minorUnits),
+  balance: (i: Fila) => BigInt(i.balance.minorUnits),
+} satisfies Record<string, (i: Fila) => SortValue>
 
 type ColumnKey = keyof typeof sortable
 
@@ -39,7 +74,11 @@ type ColumnKey = keyof typeof sortable
 // dentro de un contenedor con overflow-x en un teléfono es ilegible. Se alternan con las
 // utilidades responsivas de Tailwind, no midiendo el ancho con JavaScript.
 export const AmortizationTable = ({ installments }: Props) => {
-  const table = useTableControls<Installment, ColumnKey>({
+  const conEstado = installments.some((fila) => fila.status !== undefined)
+  // La que sigue es la primera sin pagar, aunque esté atrasada: los pagos van en orden.
+  const siguiente = installments.find((fila) => fila.status !== undefined && fila.status !== 'PAID')?.number
+
+  const table = useTableControls<Fila, ColumnKey>({
     rows: installments,
     columns: sortable,
     initial: { key: 'number', direction: 'asc' },
@@ -85,6 +124,7 @@ export const AmortizationTable = ({ installments }: Props) => {
                 {th('principal', columns.principal)}
                 {th('interest', columns.interest)}
                 {th('balance', columns.balance)}
+                {conEstado ? <TableHead scope="col">{columns.status}</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -104,6 +144,11 @@ export const AmortizationTable = ({ installments }: Props) => {
                   <TableCell>
                     <Amount money={installment.balance} className="block" />
                   </TableCell>
+                  {conEstado ? (
+                    <TableCell>
+                      <Estado fila={installment} sigue={installment.number === siguiente} />
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               ))}
             </TableBody>
@@ -137,6 +182,11 @@ export const AmortizationTable = ({ installments }: Props) => {
               </span>
               <span className="num num-right text-sm">{formatIsoDate(installment.dueDate)}</span>
             </div>
+            {conEstado ? (
+              <div className="mt-1">
+                <Estado fila={installment} sigue={installment.number === siguiente} />
+              </div>
+            ) : null}
             <dl className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <dt className="text-muted-foreground">{columns.payment}</dt>
               <dd>

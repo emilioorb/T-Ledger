@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { AmortizationTable } from './amortization-table'
+import { copy } from './copy'
 
 const crc = (minorUnits: string) => ({ minorUnits, currency: 'CRC' as const })
 
@@ -30,5 +31,30 @@ describe('AmortizationTable', () => {
   it('no rompe con una tabla vacía', () => {
     render(<AmortizationTable installments={[]} />)
     expect(screen.getByRole('table')).toBeInTheDocument()
+  })
+})
+
+describe('AmortizationTable de una deuda real', () => {
+  const conEstado = [
+    { ...installments[0]!, status: 'PAID' as const, paidOn: '2026-02-14', withMovement: true },
+    { ...installments[1]!, status: 'OVERDUE' as const, paidOn: null, withMovement: false },
+    { ...installments[2]!, status: 'PENDING' as const, paidOn: null, withMovement: false },
+  ]
+
+  it('dice de cada cuota si está pagada o atrasada', () => {
+    render(<AmortizationTable installments={conEstado} />)
+    expect(screen.getAllByText(copy.schedule.status.PAID).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(copy.schedule.status.OVERDUE).length).toBeGreaterThan(0)
+  })
+
+  it('marca la que sigue: la primera sin pagar', () => {
+    render(<AmortizationTable installments={conEstado} />)
+    // La segunda está atrasada: esa es la que sigue, aunque haya vencido.
+    expect(screen.getAllByText(copy.schedule.status.next).length).toBeGreaterThan(0)
+  })
+
+  it('una simulación, sin estados, no muestra la columna', () => {
+    render(<AmortizationTable installments={installments} />)
+    expect(screen.queryByText(copy.schedule.columns.status)).toBeNull()
   })
 })

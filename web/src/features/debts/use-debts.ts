@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { apiFetch } from '@/lib/api'
+import { ApiError, apiFetch } from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import { copy } from './copy'
 import type {
@@ -12,7 +12,8 @@ import type {
   PayoffPlan,
   PayoffStrategy,
   Projection,
-  Schedule,
+  DebtSchedule,
+  PagarCuotaInput,
   SimulateInput,
 } from './types'
 
@@ -38,7 +39,7 @@ export const useDebt = (id: string) =>
 export const useSchedule = (id: string) =>
   useQuery({
     queryKey: queryKeys.debts.schedule(id),
-    queryFn: () => apiFetch<Schedule>(`/debts/${id}/schedule`),
+    queryFn: () => apiFetch<DebtSchedule>(`/debts/${id}/schedule`),
   })
 
 export const usePayoffPlan = (strategy: PayoffStrategy) =>
@@ -92,3 +93,61 @@ export const useSimulateExtraPayment = (id: string) =>
         body: JSON.stringify(input),
       }),
   })
+
+// Un pago mueve tres cosas a la vez: la deuda (su saldo y su tabla), la contabilidad (el gasto
+// y su asiento) y el presupuesto (la cubeta que la cuota consume).
+const useRefrescarTrasPagar = () => {
+  const client = useQueryClient()
+  return () =>
+    Promise.all([
+      client.invalidateQueries({ queryKey: queryKeys.debts.all }),
+      client.invalidateQueries({ queryKey: queryKeys.accounting.all }),
+      client.invalidateQueries({ queryKey: queryKeys.budget.all }),
+    ])
+}
+
+export const usePagarCuota = (id: string) => {
+  const refrescar = useRefrescarTrasPagar()
+  return useMutation({
+    mutationFn: (input: PagarCuotaInput) =>
+      apiFetch<Debt>(`/debts/${id}/payments`, { method: 'POST', body: JSON.stringify(input) }),
+    onSuccess: async () => {
+      toast.success(copy.pagos.toast.paid)
+      await refrescar()
+    },
+    onError: (error: unknown) => toast.error(motivoDelRechazo(error)),
+  })
+}
+
+export const useSaldarCuota = (id: string) => {
+  const refrescar = useRefrescarTrasPagar()
+  return useMutation({
+    mutationFn: (date: string) =>
+      apiFetch<Debt>(`/debts/${id}/payments/settled`, { method: 'POST', body: JSON.stringify({ date }) }),
+    onSuccess: async () => {
+      toast.success(copy.pagos.toast.settled)
+      await refrescar()
+    },
+    onError: (error: unknown) => toast.error(motivoDelRechazo(error)),
+  })
+}
+
+export const useDeshacerPago = (id: string) => {
+  const refrescar = useRefrescarTrasPagar()
+  return useMutation({
+    mutationFn: () => apiFetch<Debt>(`/debts/${id}/payments/last`, { method: 'DELETE' }),
+    onSuccess: async () => {
+      toast.success(copy.pagos.toast.undone)
+      await refrescar()
+    },
+    onError: (error: unknown) => toast.error(motivoDelRechazo(error)),
+  })
+}
+
+// Por el `status`: el 409 es el mes cerrado y el 422 lo que el servidor explica con palabras
+// que la persona entiende —no quedan cuotas, la fecha es anterior al último pago—.
+const motivoDelRechazo = (error: unknown): string => {
+  if (error instanceof ApiError && error.status === 409) return copy.pagos.toast.closedPeriod
+  if (error instanceof ApiError && error.status === 422) return error.message
+  return copy.pagos.toast.failed
+}
