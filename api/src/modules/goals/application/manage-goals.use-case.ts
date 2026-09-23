@@ -49,6 +49,7 @@ export class ManageGoalsUseCase {
       desiredDate: utc(input.desiredDate),
       priority: input.priority,
       accountCode: input.accountCode,
+      active: input.active,
       contributions: [],
     })
     if (isErr(goal)) throw new SemanticValidationError(goal.error.message)
@@ -76,6 +77,7 @@ export class ManageGoalsUseCase {
       desiredDate: input.desiredDate ? utc(input.desiredDate) : props.desiredDate,
       priority: input.priority ?? props.priority,
       accountCode: input.accountCode === undefined ? props.accountCode : input.accountCode,
+      active: input.active ?? props.active ?? true,
     })
     if (isErr(goal)) throw new SemanticValidationError(goal.error.message)
 

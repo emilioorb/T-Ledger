@@ -22,6 +22,7 @@ interface GoalRow {
   desiredDate: Date
   priority: number
   accountCode: string | null
+  active: boolean
   contributions: ContributionRow[]
 }
 
@@ -34,6 +35,7 @@ const toDomain = (row: GoalRow): Goal =>
       desiredDate: row.desiredDate,
       priority: row.priority,
       accountCode: row.accountCode,
+      active: row.active,
       contributions: row.contributions.map((contribution) => ({
         id: contribution.id,
         date: contribution.date,
@@ -77,6 +79,7 @@ export class PrismaGoalRepository implements GoalRepository {
       desiredDate: goal.desiredDate,
       priority: goal.priority,
       accountCode: goal.accountCode,
+      active: goal.active,
     }
     await this.prisma.client.goal.upsert({
       where: { id: goal.id },

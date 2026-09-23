@@ -12,6 +12,9 @@ export interface GoalProps {
   readonly priority: number
   readonly accountCode: string | null
   readonly contributions: readonly Contribution[]
+  // Una meta en pausa conserva lo aportado pero no pide plata: sale de la proyección y del
+  // tablero hasta que se reactive. Opcional al crear: nace activa.
+  readonly active?: boolean
 }
 
 const HUNDRED = 100
@@ -71,6 +74,13 @@ export class Goal {
   get contributions(): readonly Contribution[] {
     return this.props.contributions
   }
+  get active(): boolean {
+    return this.props.active ?? true
+  }
+
+  withActive(active: boolean): Goal {
+    return new Goal({ ...this.props, active })
+  }
 
   contributed(): Money {
     return this.props.contributions.reduce(
@@ -97,6 +107,7 @@ export class Goal {
   // Lo que hay que poner por mes para llegar a la fecha deseada. Si la fecha ya pasó,
   // el saldo completo de una vez: no hay meses entre los que repartirlo.
   requiredMonthlyContribution(from: Date): Money {
+    if (!this.active) return Money.zero(this.props.target.currency)
     const remaining = this.remaining()
     if (remaining.isZero()) return remaining
 
@@ -131,6 +142,7 @@ export class Goal {
   }
 
   addContribution(contribution: Contribution): Result<Goal, RangeError> {
+    if (!this.active) return err(new RangeError('La meta está en pausa: reactivala para aportar'))
     return Goal.create({
       ...this.props,
       contributions: [...this.props.contributions, contribution],

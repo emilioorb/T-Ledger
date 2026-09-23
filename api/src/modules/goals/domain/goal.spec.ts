@@ -107,3 +107,24 @@ describe('Goal', () => {
     expect(conAporte.contributed().minorUnits).toBe(1_500_000_00n)
   })
 })
+
+describe('una meta en pausa', () => {
+  const enPausa = unwrap(Goal.create({ ...props, active: false }))
+
+  it('nace activa si no se dice lo contrario', () => {
+    expect(meta().active).toBe(true)
+  })
+
+  it('no exige aporte mensual: sale de la proyección mientras está pausada', () => {
+    expect(enPausa.requiredMonthlyContribution(utc('2026-09-01')).isZero()).toBe(true)
+  })
+
+  it('no acepta aportes', () => {
+    expect(isErr(enPausa.addContribution(aporte('2026-09-01', 100_00n)))).toBe(true)
+  })
+
+  it('al reactivarla vuelve a pedir lo que falta', () => {
+    const reactivada = enPausa.withActive(true)
+    expect(reactivada.requiredMonthlyContribution(utc('2026-09-01')).isZero()).toBe(false)
+  })
+})

@@ -286,6 +286,8 @@ model Goal {
   desiredDate DateTime @db.Date
   priority    Int      @default(0)
   accountCode String?
+  // En pausa: conserva lo aportado pero no pide plata ni acepta aportes.
+  active      Boolean  @default(true)
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
 
   contributions GoalContribution[]

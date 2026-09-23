@@ -18,6 +18,7 @@ const goalFields = {
   desiredDate: isoDate,
   priority: z.number().int().min(0),
   accountCode: accountCode.nullable(),
+  active: z.boolean(),
 }
 
 export const createGoalSchema = z
@@ -25,6 +26,7 @@ export const createGoalSchema = z
     ...goalFields,
     priority: goalFields.priority.default(0),
     accountCode: goalFields.accountCode.default(null),
+    active: goalFields.active.default(true),
   })
   .meta({ id: 'CreateGoalInput', title: 'CreateGoalInput' })
 
@@ -47,6 +49,7 @@ export const goalResponseSchema = z
     desiredDate: isoDate,
     priority: z.number(),
     accountCode: z.string().nullable(),
+    active: z.boolean(),
     contributed: moneySchema,
     remaining: moneySchema,
     progress: z.string(),

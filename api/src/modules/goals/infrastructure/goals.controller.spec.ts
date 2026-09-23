@@ -175,3 +175,20 @@ describe('metas', () => {
     expect(await prisma.goalContribution.count()).toBe(0)
   })
 })
+
+describe('una meta en pausa', () => {
+  const pausar = (id: string, active: boolean) =>
+    request(app.getHttpServer()).patch(`${BASE}/goals/${id}`).send({ active })
+
+  it('deja de pedir aporte mensual y no acepta aportes; al reactivarla vuelve', async () => {
+    const meta = await crearMeta()
+
+    const pausada = await pausar(meta.id, false).expect(200)
+    expect(pausada.body).toMatchObject({ active: false })
+    expect(pausada.body.requiredMonthlyContribution.minorUnits).toBe('0')
+    await post(`/goals/${meta.id}/contributions`, aporte('100000')).expect(422)
+
+    const reactivada = await pausar(meta.id, true).expect(200)
+    expect(reactivada.body.requiredMonthlyContribution.minorUnits).not.toBe('0')
+  })
+})
