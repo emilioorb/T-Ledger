@@ -1,0 +1,5 @@
+# Excepción E1 de CONSTRAINTS.md: mismo motivo y mismo vencimiento.
+[[IgnoredVulns]]
+id = "GHSA-ggr8-5vv4-36mx"
+ignoreUntil = 2026-12-22
+reason = "deepmerge-ts 7.1.5 lo fija @prisma/config; solo mezcla nuestro prisma.config.ts, que no es entrada de terceros. El arreglo es la 8.0.0, fuera del rango de Prisma 7."

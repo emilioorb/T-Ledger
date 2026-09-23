@@ -1,0 +1,17 @@
+{
+  "name": "t-ledger",
+  "private": true,
+  "description": "Los chequeos de CONSTRAINTS.md. Cada proyecto (api, web) tiene sus propias dependencias.",
+  "scripts": {
+    "check:fast": "node scripts/guardia-del-piso.mjs && gitleaks git --pre-commit --redact --no-banner . && cd web && npx oxlint src",
+    "check:task": "npm run check:fast && npm run check:task:web && npm run check:task:api && node scripts/cobertura-de-lo-nuevo.mjs",
+    "check:task:web": "cd web && npx tsc -b --noEmit && npx vitest run --changed origin/main --coverage --passWithNoTests",
+    "check:task:api": "cd api && npx tsc --noEmit --incremental --tsBuildInfoFile node_modules/.tmp/tsc.tsbuildinfo && npx eslint --cache --cache-location node_modules/.tmp/eslintcache . && npx vitest run --changed origin/main --coverage --passWithNoTests",
+    "check:full": "npm run check:fast && npm run check:full:tipos && npm run check:full:tests && npm run check:full:seguridad && npm run check:full:rendimiento && npm run check:full:accesibilidad",
+    "check:full:tipos": "cd web && npx tsc -b --noEmit && cd ../api && npx tsc --noEmit --incremental --tsBuildInfoFile node_modules/.tmp/tsc.tsbuildinfo && npx eslint --cache --cache-location node_modules/.tmp/eslintcache .",
+    "check:full:tests": "cd web && npx vitest run --coverage && cd ../api && npx vitest run --coverage && cd .. && node scripts/cobertura-del-proyecto.mjs && node scripts/cobertura-de-lo-nuevo.mjs",
+    "check:full:seguridad": "gitleaks git --redact --no-banner --log-opts=origin/main..HEAD . && (osv-scanner scan source -r . || echo AVISO: osv-scanner encontro vulnerabilidades sin excepcion)",
+    "check:full:rendimiento": "cd web && npx vite build && (npx size-limit || echo AVISO: el bundle supero su presupuesto)",
+    "check:full:accesibilidad": "cd web && (node scripts/accesibilidad.mjs || echo AVISO: axe encontro violaciones graves)"
+  }
+}

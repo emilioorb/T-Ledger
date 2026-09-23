@@ -1,0 +1,5 @@
+[
+  { "name": "JS de entrada", "path": "dist/assets/index-*.js", "limit": "131.3 kB" },
+  { "name": "CSS", "path": "dist/assets/index-*.css", "limit": "17.7 kB" },
+  { "name": "Fondo 3D", "path": "dist/assets/fondo-de-puntos-*.js", "limit": "195.6 kB" }
+]
