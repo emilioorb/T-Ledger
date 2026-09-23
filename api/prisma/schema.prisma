@@ -41,9 +41,28 @@ model Debt {
   createdAt      DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
   book           book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  payments       DebtPayment[]
 
   @@index([bookId, direction])
   @@map("debts")
+}
+
+// El pago de una cuota. `movementId` es nulo cuando se pagó antes de llevar el libro: la cuota
+// está saldada, pero no hay movimiento que la respalde.
+model DebtPayment {
+  id                String   @id @default(uuid(7))
+  bookId            String
+  debtId            String
+  installmentNumber Int
+  date              DateTime @db.Date
+  movementId        String?
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  debt              Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  book              book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([debtId, installmentNumber])
+  @@index([bookId, debtId])
+  @@map("debt_payments")
 }
 
 model ExchangeRate {
@@ -537,6 +556,7 @@ model book {
   bookmembers             bookMember[]
   bookinvitations         bookInvitation[]
   debts                   Debt[]
+  debtPayments            DebtPayment[]
   accounts                Account[]
   journalEntries          JournalEntry[]
   journalLines            JournalLine[]

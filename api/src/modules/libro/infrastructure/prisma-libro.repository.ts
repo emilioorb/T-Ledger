@@ -10,8 +10,8 @@ export class PrismaLibroRepository implements LibroRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   // Una entrada por tabla y no `client[tabla].deleteMany()`: el acceso por índice produce la
-  // unión de las doce firmas de Prisma, que no son compatibles entre sí, y TypeScript la
-  // rechaza. Escrito así el compilador exige que estén las doce —lo pide `Record`— y el orden
+  // unión de las trece firmas de Prisma, que no son compatibles entre sí, y TypeScript la
+  // rechaza. Escrito así el compilador exige que estén las trece —lo pide `Record`— y el orden
   // lo sigue mandando `SE_BORRA`, que es la única lista.
   private borradoresDe(): Record<TablaQueSeBorra, Borrado> {
     const cliente = this.prisma.client
@@ -25,6 +25,7 @@ export class PrismaLibroRepository implements LibroRepository {
       goal: () => cliente.goal.deleteMany({}),
       investmentContribution: () => cliente.investmentContribution.deleteMany({}),
       investment: () => cliente.investment.deleteMany({}),
+      debtPayment: () => cliente.debtPayment.deleteMany({}),
       debt: () => cliente.debt.deleteMany({}),
       budgetIncome: () => cliente.budgetIncome.deleteMany({}),
       bankLine: () => cliente.bankLine.deleteMany({}),

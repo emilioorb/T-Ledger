@@ -11,6 +11,16 @@ import {
 
 export type DebtDirection = 'BORROWED' | 'LENT'
 
+// El pago de una cuota. Sin movimiento cuando se pagó antes de llevar el libro: la cuota está
+// saldada, pero no hay asiento que la respalde.
+export interface DebtPayment {
+  readonly installmentNumber: number
+  readonly date: Date
+  readonly movementId: string | null
+}
+
+export type InstallmentStatus = 'PAID' | 'OVERDUE' | 'PENDING'
+
 export interface DebtProps {
   readonly id: string
   readonly name: string
@@ -22,6 +32,9 @@ export interface DebtProps {
   readonly kind: DebtKind
   readonly direction: DebtDirection
   readonly budgetBucket: string | null
+  // Opcional al crear: una deuda nueva no tiene pagos. En orden y sin huecos: el pago n es el
+  // de la cuota n.
+  readonly payments?: readonly DebtPayment[]
 }
 
 export class Debt {
@@ -62,6 +75,7 @@ export class Debt {
   get kind(): DebtKind { return this.props.kind }
   get direction(): DebtDirection { return this.props.direction }
   get budgetBucket(): string | null { return this.props.budgetBucket }
+  get payments(): readonly DebtPayment[] { return this.props.payments ?? [] }
 
   isBorrowed(): boolean { return this.props.direction === 'BORROWED' }
 
@@ -77,10 +91,64 @@ export class Debt {
     return last.dueDate
   }
 
+  // Lo que se debe baja con los pagos registrados, no con el calendario: una cuota vencida sin
+  // pagar se sigue debiendo. Lo que te deben va por calendario, porque de eso no hay pagos.
   balanceAt(date: Date): Money {
     const installments = this.schedule().installments
-    const due = installments.filter((installment) => installment.dueDate.getTime() <= date.getTime())
-    return due.at(-1)?.balance ?? this.props.principal
+    const saldadas = this.isLent()
+      ? installments.filter((installment) => installment.dueDate.getTime() <= date.getTime()).length
+      : this.payments.filter((payment) => payment.date.getTime() <= date.getTime()).length
+    return installments[saldadas - 1]?.balance ?? this.props.principal
+  }
+
+  installmentStatuses(today: Date): InstallmentStatus[] {
+    const pagadas = this.payments.length
+    return this.schedule().installments.map((installment, index) => {
+      if (index < pagadas) return 'PAID'
+      return installment.dueDate.getTime() < today.getTime() ? 'OVERDUE' : 'PENDING'
+    })
+  }
+
+  // Siempre la siguiente cuota: pagar la tercera con la segunda debiéndose dejaría un saldo que
+  // no corresponde a ninguna fila de la tabla.
+  registerPayment(payment: { date: Date; movementId: string | null }): Result<Debt, RangeError> {
+    const siguiente = this.payments.length + 1
+    if (siguiente > this.schedule().installments.length) {
+      return err(new RangeError('La deuda ya no tiene cuotas por pagar'))
+    }
+    const ultimo = this.payments.at(-1)
+    if (ultimo && payment.date.getTime() < ultimo.date.getTime()) {
+      return err(new RangeError('Un pago no puede tener fecha anterior al último registrado'))
+    }
+    return ok(
+      new Debt({
+        ...this.props,
+        payments: [...this.payments, { installmentNumber: siguiente, ...payment }],
+      }),
+    )
+  }
+
+  // Para una deuda que se carga ya empezada: lo vencido antes de cargarla se pagó sin que el
+  // libro existiera, así que queda saldado sin movimiento. Solo tiene sentido sobre una deuda
+  // sin pagos, que es como sale de `create`.
+  settleDueBefore(date: Date): Debt {
+    const vencidas = this.schedule().installments.filter(
+      (installment) => installment.dueDate.getTime() <= date.getTime(),
+    )
+    return new Debt({
+      ...this.props,
+      payments: vencidas.map((installment) => ({
+        installmentNumber: installment.number,
+        date: installment.dueDate,
+        movementId: null,
+      })),
+    })
+  }
+
+  undoLastPayment(): Result<{ debt: Debt; undone: DebtPayment }, RangeError> {
+    const undone = this.payments.at(-1)
+    if (!undone) return err(new RangeError('La deuda no tiene pagos para deshacer'))
+    return ok({ debt: new Debt({ ...this.props, payments: this.payments.slice(0, -1) }), undone })
   }
 
   installmentDueIn(year: number, month: number): Money {

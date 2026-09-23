@@ -23,6 +23,7 @@ export const SE_BORRA = [
   'goal',
   'investmentContribution',
   'investment',
+  'debtPayment',
   'debt',
   'budgetIncome',
   'bankLine',

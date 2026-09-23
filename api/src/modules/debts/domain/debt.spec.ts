@@ -33,8 +33,9 @@ describe('Debt', () => {
     expect(debt.payoffDate().toISOString()).toBe('2026-04-15T00:00:00.000Z')
   })
 
-  it('reporta el saldo a una fecha dada', () => {
-    const debt = unwrap(Debt.create(props()))
+  // Lo que te deben sigue por calendario: no hay de dónde saber cuándo te pagaron.
+  it('un préstamo otorgado reporta el saldo por calendario', () => {
+    const debt = unwrap(Debt.create(props({ direction: 'LENT', budgetBucket: null })))
     expect(debt.balanceAt(utc('2026-01-01')).minorUnits).toBe(10_000_000n)
     expect(debt.balanceAt(utc('2026-02-20')).minorUnits).toBe(6_699_779n)
     expect(debt.balanceAt(utc('2027-01-01')).minorUnits).toBe(0n)

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { Money } from '../../../shared/kernel/money.js'
@@ -10,6 +12,8 @@ import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
 const utc = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
+
+const MIGRACION = '20260923110826_pagos_de_deudas'
 
 let postgres: RunningPostgres
 let prisma: PrismaService
@@ -147,5 +151,55 @@ describe('PrismaDebtRepository', () => {
     await repository.save(debt)
     expect(await repository.delete(debt.id)).toBe(true)
     expect(await repository.findById(debt.id)).toBeNull()
+  })
+})
+
+describe('los pagos de una deuda', () => {
+  beforeEach(async () => {
+    await prisma.debtPayment.deleteMany({ where: {} })
+    await prisma.debt.deleteMany({ where: {} })
+  })
+
+  it('viajan con la deuda: se guardan y se recargan en orden', async () => {
+    const pagada = unwrap(
+      unwrap(conape().registerPayment({ date: utc('2026-02-15'), movementId: null })).registerPayment({
+        date: utc('2026-03-15'),
+        movementId: 'mov-2',
+      }),
+    )
+
+    await repository.save(pagada)
+    const recargada = await repository.findById(pagada.id)
+
+    expect(recargada?.payments).toEqual(pagada.payments)
+  })
+
+  it('un pago deshecho desaparece al guardar', async () => {
+    const pagada = unwrap(conape().registerPayment({ date: utc('2026-02-15'), movementId: null }))
+    await repository.save(pagada)
+
+    await repository.save(unwrap(pagada.undoLastPayment()).debt)
+
+    expect((await repository.findById(pagada.id))?.payments).toEqual([])
+  })
+
+  // El relleno de la migración: lo que ya estaba cargado conserva el saldo que se veía antes,
+  // cuando toda cuota vencida contaba como pagada.
+  it('la migración da por pagadas las cuotas vencidas de las deudas propias, y nada más', async () => {
+    const hoy = new Date()
+    const haceTresMeses = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth() - 3, 10))
+    const propia = unwrap(Debt.create({ ...conape().toProps(), startDate: haceTresMeses }))
+    const otorgada = unwrap(Debt.create({ ...prestamoOtorgado().toProps(), startDate: haceTresMeses }))
+    await repository.save(propia)
+    await repository.save(otorgada)
+
+    const migracion = readFileSync(
+      fileURLToPath(new URL(`../../../../prisma/migrations/${MIGRACION}/migration.sql`, import.meta.url)),
+      'utf8',
+    )
+    await prisma.$executeRawUnsafe(migracion.slice(migracion.indexOf('INSERT INTO "debt_payments"')))
+
+    expect((await repository.findById(propia.id))?.payments.map((p) => p.installmentNumber)).toEqual([1, 2, 3])
+    expect((await repository.findById(otorgada.id))?.payments).toEqual([])
   })
 })

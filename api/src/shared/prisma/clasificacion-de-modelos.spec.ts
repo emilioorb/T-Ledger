@@ -51,11 +51,12 @@ describe('todo modelo está clasificado', () => {
     expect([...SIN_LIBRO].filter((nombre) => !nombres.has(nombre))).toEqual([])
   })
 
-  it('son diecinueve los que llevan libro, y ExchangeRate no es uno', () => {
+  it('son veinte los que llevan libro, y ExchangeRate no es uno', () => {
     // El número exacto está a propósito: si alguien suma una tabla al libro, este test lo
     // obliga a pasar por acá y confirmar que era lo que quería. El diecinueve es `AuditLog`,
-    // que lleva libro como cualquier otra: el rastro de un libro no se mira desde otro.
-    expect(conLibro).toHaveLength(19)
+    // que lleva libro como cualquier otra: el rastro de un libro no se mira desde otro. El
+    // veinte es `DebtPayment`: los pagos de una deuda son del libro de la deuda.
+    expect(conLibro).toHaveLength(20)
     expect(conLibro).not.toContain('ExchangeRate')
   })
 })

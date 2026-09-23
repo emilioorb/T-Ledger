@@ -3,7 +3,7 @@ import { isCurrencyCode } from '../../../shared/kernel/currency.js'
 import { InterestRate, type Compounding } from '../../../shared/kernel/interest-rate.js'
 import { Money } from '../../../shared/kernel/money.js'
 import { unwrap } from '../../../shared/kernel/result.js'
-import type { DebtDirection } from '../domain/debt.js'
+import type { DebtDirection, DebtPayment } from '../domain/debt.js'
 import { Debt } from '../domain/debt.js'
 import type { DebtKind } from '../domain/debt-kind.js'
 
@@ -20,6 +20,7 @@ export interface DebtRow {
   kind: DebtKind
   direction: DebtDirection
   budgetBucket: string | null
+  payments?: { installmentNumber: number; date: Date; movementId: string | null }[]
 }
 
 export const toDomain = (row: DebtRow): Debt => {
@@ -39,11 +40,16 @@ export const toDomain = (row: DebtRow): Debt => {
       kind: row.kind,
       direction: row.direction,
       budgetBucket: row.budgetBucket,
+      payments: (row.payments ?? []).map(
+        ({ installmentNumber, date, movementId }): DebtPayment => ({ installmentNumber, date, movementId }),
+      ),
     }),
   )
 }
 
-export const toRow = (debt: Debt): Omit<DebtRow, 'annualRate'> & { annualRate: string } => ({
+export const toRow = (
+  debt: Debt,
+): Omit<DebtRow, 'annualRate' | 'payments'> & { annualRate: string } => ({
   id: debt.id,
   name: debt.name,
   counterparty: debt.counterparty,

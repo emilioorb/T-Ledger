@@ -41,17 +41,21 @@ export class CreateDebtUseCase {
     })
     if (isErr(debt)) throw new SemanticValidationError(debt.error.message)
 
+    // Quien carga un préstamo que ya viene pagando no tiene cómo registrar las cuotas de antes:
+    // esas quedan saldadas, y desde acá se registra cada pago de verdad.
+    const cargada = debt.value.isBorrowed() ? debt.value.settleDueBefore(new Date()) : debt.value
+
     // La deuda y su rastro, juntos: guardar una sin el otro deja una deuda que apareció sola.
     await this.transaction.withTransaction(async () => {
-      await this.debts.save(debt.value)
+      await this.debts.save(cargada)
       await this.rastro.registrar({
         entidad: 'deuda',
-        entidadId: debt.value.id,
+        entidadId: cargada.id,
         accion: 'crear',
-        despues: debt.value.toProps(),
+        despues: cargada.toProps(),
       })
     })
 
-    return debt.value
+    return cargada
   }
 }
