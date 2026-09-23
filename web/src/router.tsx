@@ -2,6 +2,7 @@ import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { NotFound } from './components/not-found'
+import { ErrorDeCarga } from './features/pwa/error-de-carga'
 import { ApiError } from './lib/api'
 import { routeTree } from './routeTree.gen'
 
@@ -28,6 +29,7 @@ export const router = createRouter({
   context: { queryClient },
   defaultPreloadStaleTime: 0,
   defaultNotFoundComponent: NotFound,
+  defaultErrorComponent: ErrorDeCarga,
 })
 
 declare module '@tanstack/react-router' {

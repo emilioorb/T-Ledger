@@ -55,6 +55,12 @@ export const identificar = (id: string): void => {
   Sentry.setUser({ id })
 }
 
+// Para los errores que atrapa una pantalla de error: al quedar atrapados, los manejadores
+// globales de Sentry no los ven.
+export const reportar = (error: unknown): void => {
+  Sentry.captureException(error)
+}
+
 export const olvidarQuienEra = (): void => {
   Sentry.setUser(null)
 }
