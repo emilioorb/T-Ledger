@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# La portada renderizada al compilar (build SSR intermedio)
+.prerender

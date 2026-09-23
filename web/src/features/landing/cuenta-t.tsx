@@ -1,9 +1,11 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { formatMoney } from '@/lib/money'
+import { useHidratado } from '@/lib/use-hidratado'
 import { cn } from '@/lib/utils'
 import { ASIENTOS, type Renglon } from './asientos'
 import { copy } from './copy'
 import { PATA } from './pata'
+import { useDesfaseDeHidratacion } from './desfase-de-hidratacion'
 import { finDe, useSumadora, type Paso } from './sumadora'
 
 type Lado = 'debe' | 'haber'
@@ -73,26 +75,45 @@ const Glosa = ({ children, retraso }: { children: ReactNode; retraso: number }) 
 
 // El total corre desde que aparece la T, como la tira de una sumadora. La doble raya se traza
 // recién cuando dejó de correr: se cierra una cuenta que ya dio, no una que todavía suma.
+//
+// En el HTML prerenderizado el total estaría quieto en cero: ocupa su lugar, para que nada se
+// corra, pero no se ve ni anima hasta que la cuenta corre. Ahí entra con su animación, sin la
+// parte de la coreografía que ya pasó (`desfase`): si el JavaScript llegó tarde, aparece con un
+// fundido y no de golpe.
 const Total = ({
   lado,
   monto,
   aparece,
   raya,
+  visible,
+  desfase,
 }: {
   lado: Lado
   monto: string
   aparece: number
   raya: number
+  visible: boolean
+  desfase: number
 }) => (
-  <div className={cn('flex pt-[clamp(0.5rem,2.2dvh,1.5rem)]', MEDIA[lado], lado === 'debe' ? 'justify-end' : 'justify-start')}>
+  <div
+    className={cn(
+      'flex pt-[clamp(0.5rem,2.2dvh,1.5rem)]',
+      MEDIA[lado],
+      lado === 'debe' ? 'justify-end' : 'justify-start',
+      !visible && 'invisible',
+    )}
+  >
     <p
-      className={cn('asiento-entra num relative pt-2 text-right text-sm', CIFRA)}
-      style={retrasado(aparece)}
+      className={cn('num relative pt-2 text-right text-sm', CIFRA, visible && 'asiento-entra')}
+      style={visible ? retrasado(Math.max(0, aparece - desfase)) : undefined}
     >
       <span
         aria-hidden="true"
-        className="raya-se-traza absolute inset-x-0 top-0 border-t-[3px] border-double border-foreground/40"
-        style={retrasado(raya)}
+        className={cn(
+          'absolute inset-x-0 top-0 border-t-[3px] border-double border-foreground/40',
+          visible && 'raya-se-traza',
+        )}
+        style={visible ? retrasado(Math.max(0, raya - desfase)) : undefined}
       />
       {monto}
     </p>
@@ -120,7 +141,9 @@ const CIERRA = finDe(PASOS)
 export const CuentaT = ({ className }: { className?: string }) => {
   const [encendido, setEncendido] = useState<number | null>(null)
 
-  const marca = useSumadora(PASOS)
+  const desfase = useDesfaseDeHidratacion()
+  const marca = useSumadora(PASOS, desfase)
+  const hidratado = useHidratado()
   const total = formatMoney({ minorUnits: `${String(marca)}00`, currency: 'CRC' })
 
   return (
@@ -147,8 +170,8 @@ export const CuentaT = ({ className }: { className?: string }) => {
 
       {/* La doble raya del cierre: `border-double` es la que usa la contabilidad desde que
           los libros eran de papel, y acá es el remate de la pata. */}
-      <Total lado="debe" monto={total} aparece={PRIMERA_GLOSA} raya={CIERRA} />
-      <Total lado="haber" monto={total} aparece={PRIMERA_GLOSA} raya={CIERRA} />
+      <Total lado="debe" monto={total} aparece={PRIMERA_GLOSA} raya={CIERRA} visible={hidratado} desfase={desfase} />
+      <Total lado="haber" monto={total} aparece={PRIMERA_GLOSA} raya={CIERRA} visible={hidratado} desfase={desfase} />
 
       <p
         className="asiento-entra col-span-2 px-3 py-[clamp(0.375rem,1.3dvh,1rem)] text-center text-sm text-muted-foreground"

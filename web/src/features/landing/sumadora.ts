@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useHidratado } from '@/lib/use-hidratado'
 
 // Un paso de la sumadora: en qué momento entra un asiento y a cuánto llega el acumulado.
 export interface Paso {
@@ -27,14 +28,22 @@ export const finDe = (pasos: readonly Paso[]): number => (pasos.at(-1)?.en ?? 0)
 
 const pideCalma = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
-// La marca de la sumadora cuadro a cuadro. Quien pidió menos movimiento ve el total de una.
-export const useSumadora = (pasos: readonly Paso[]): number => {
+// La marca de la sumadora cuadro a cuadro. Quien pidió menos movimiento ve el total de una,
+// salvo al hidratar la portada prerenderizada, cuyo HTML trae cero: ahí el total llega en el
+// efecto. `desfase` es cuánto hace que arrancaron las animaciones de ese HTML (0 si la portada
+// se creó en el navegador): la cuenta va con ellas, y si el JavaScript llegó tarde, salta a
+// donde tendría que ir.
+export const useSumadora = (pasos: readonly Paso[], desfase: number): number => {
   const final = pasos.at(-1)?.hasta ?? 0
-  const [marca, setMarca] = useState(() => (pideCalma() ? final : 0))
+  const hidratado = useHidratado()
+  const [marca, setMarca] = useState(() => (hidratado && pideCalma() ? final : 0))
 
   useEffect(() => {
-    if (pideCalma()) return
-    const inicio = performance.now()
+    if (pideCalma()) {
+      setMarca(final)
+      return
+    }
+    const inicio = performance.now() - desfase
     const fin = finDe(pasos)
     let cuadro = 0
     const tirar = () => {
@@ -44,7 +53,7 @@ export const useSumadora = (pasos: readonly Paso[]): number => {
     }
     cuadro = requestAnimationFrame(tirar)
     return () => cancelAnimationFrame(cuadro)
-  }, [pasos])
+  }, [pasos, final, desfase])
 
   return marca
 }

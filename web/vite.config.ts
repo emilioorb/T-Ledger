@@ -2,11 +2,49 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { build, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 import pkg from './package.json' with { type: 'json' }
+import { aplicacionDesde } from './src/prerender/aplicacion-desde.ts'
+import { inyectarPortada } from './src/prerender/inyectar-portada.ts'
 
-export default defineConfig({
+// Arma las dos puertas sobre el index.html ya compilado: index.html, con la portada
+// renderizada, para `/`; y app.html, sin portada, para el resto de las rutas (lo reescribe
+// vercel.json). La portada sale de un build SSR que este mismo plugin corre en cada build, así
+// nunca se cuela una de un build anterior. En generateBundle, antes de que la PWA arme el
+// precache. https://vite.dev/guide/ssr#pre-rendering-ssg
+const SALIDA_DEL_PRERENDER = path.resolve(import.meta.dirname, '.prerender')
+
+const portadaPrerenderizada = (): Plugin => ({
+  name: 't-ledger:portada-prerenderizada',
+  apply: 'build',
+  enforce: 'post',
+  async generateBundle(_, bundle) {
+    const index = bundle['index.html']
+    if (index?.type !== 'asset') throw new Error('El build no emitió index.html')
+    await build({
+      configFile: path.resolve(import.meta.dirname, 'vite.config.ts'),
+      logLevel: 'warn',
+      build: {
+        ssr: 'src/prerender/entrada.tsx',
+        outDir: SALIDA_DEL_PRERENDER,
+        emptyOutDir: true,
+        copyPublicDir: false,
+      },
+    })
+    const entrada = pathToFileURL(path.join(SALIDA_DEL_PRERENDER, 'entrada.js')).href
+    const { renderizarPortada } = (await import(entrada)) as {
+      renderizarPortada: () => Promise<string>
+    }
+    const plantilla = String(index.source)
+    index.source = inyectarPortada(plantilla, await renderizarPortada())
+    this.emitFile({ type: 'asset', fileName: 'app.html', source: aplicacionDesde(plantilla) })
+  },
+})
+
+export default defineConfig(({ isSsrBuild }) => ({
   // La versión y el año, para que el pie de página no los repita a mano.
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
@@ -18,6 +56,9 @@ export default defineConfig({
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),
     react(),
     tailwindcss(),
+    !isSsrBuild && portadaPrerenderizada(),
+    // El build SSR solo renderiza la portada: el service worker es cosa del build de cliente.
+    !isSsrBuild &&
     VitePWA({
       // Avisa y espera: recargar sola haría perder un formulario a medio llenar.
       registerType: 'prompt',
@@ -31,7 +72,9 @@ export default defineConfig({
         short_name: 'T-Ledger',
         description: 'Finanzas personales con contabilidad de partida doble.',
         lang: 'es',
-        start_url: '/',
+        // Quien instala la app es quien la usa: abre en el tablero y no pasa por la portada, que
+        // con sesión solo redirigiría.
+        start_url: '/tablero',
         display: 'standalone',
         background_color: '#0e0c0a',
         theme_color: '#0e0c0a',
@@ -43,10 +86,24 @@ export default defineConfig({
         // La imagen para compartir en redes: la app nunca la muestra.
         globIgnores: ['og.png'],
         navigateFallbackDenylist: [/^\/api(\/|$)/],
+        // Sin red, cualquier ruta abre app.html, que llega vacío. index.html trae la portada
+        // escrita y solo corresponde a `/`, que el precache ya sirve por su cuenta.
+        navigateFallback: 'app.html',
+        // `/?ref=…` tiene que abrir index.html, con su portada, y no caer en app.html. Los assets
+        // llevan hash en el nombre: ninguno depende de su query.
+        ignoreURLParametersMatching: [/.*/],
       },
     }),
   ],
-  resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
+  resolve: {
+    alias: {
+      '@': path.resolve(import.meta.dirname, 'src'),
+      // En el build SSR no hay plugin de PWA que resuelva su módulo virtual.
+      ...(isSsrBuild && {
+        'virtual:pwa-register/react': path.resolve(import.meta.dirname, 'src/features/pwa/registro-en-servidor.ts'),
+      }),
+    },
+  },
   // API_URL permite apuntar a otro puerto sin tocar el archivo, cuando el 3000 está tomado.
   server: { proxy: { '/api': process.env.API_URL ?? 'http://localhost:3000' } },
   test: {
@@ -63,4 +120,4 @@ export default defineConfig({
       reporter: ['text-summary', 'json-summary', 'lcov'],
     },
   },
-})
+}))

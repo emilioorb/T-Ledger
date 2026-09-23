@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-theme="dark">
+<html lang="es" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,6 +23,9 @@
     <meta name="twitter:title" content="T-Ledger" />
     <meta name="twitter:description" content="Partida doble de verdad para tu libro personal, el de pareja y el de la familia. Presupuesto, deudas, metas e inversiones que cuadran, y cada cifra se rastrea hasta su origen." />
     <meta name="twitter:image" content="https://t-ledger.vercel.app/og.png" />
+    <!-- Antes del primer pintado: el tema de la portada, o al tablero si este navegador tuvo
+         sesión. Externo porque la CSP no admite scripts inline. -->
+    <script src="/antes-de-pintar.js"></script>
   </head>
   <body>
     <div id="root"></div>

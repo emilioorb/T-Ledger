@@ -47,12 +47,15 @@ export const seguirAlSistema = (): (() => void) => {
   return () => consulta.removeEventListener('change', alCambiar)
 }
 
+// Exportada porque public/antes-de-pintar.js la lee antes de que exista la app.
+export const CLAVE_DEL_TEMA_DE_ENTRADA = `${STORAGE_KEY}.entrada`
+
 // El tema de las pantallas de antes de entrar —la landing, entrar y crear cuenta—, aparte del
 // de adentro: abren en papel blanco y no en el oscuro de la app, y quien lo cambia en la
 // landing espera que el formulario de entrar lo siga. No pinta el documento al cambiar: cada
 // pantalla lo aplica con `forceTheme`, que al salir devuelve la preferencia de adentro.
 export const temaDeEntrada = crearAjuste<Theme>(
-  `${STORAGE_KEY}.entrada`,
+  CLAVE_DEL_TEMA_DE_ENTRADA,
   (guardado) => (guardado === 'dark' ? 'dark' : 'light'),
   (valor) => valor,
 )
