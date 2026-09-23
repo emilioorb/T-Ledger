@@ -74,8 +74,12 @@ for (const { archivo: en, texto } of quitadas) {
   if (esTest(en) && /\bexpect\b|\bassert\b/.test(texto)) marcar('asercion-quitada', en, texto)
 }
 
-const borrados = (git(['diff', '--name-only', '--diff-filter=D', mergeBase, '--']) ?? '').split('\n')
-for (const en of borrados) if (esTest(en)) marcar('test-borrado', en, en)
+// Un test que cambió de extensión (.ts → .tsx) no está borrado, aunque cambie tanto que git no
+// lo reconozca como renombre.
+const sigueConOtraExtension = (en) =>
+  ['.ts', '.tsx', '.js', '.jsx'].some((extension) => existsSync(en.replace(/\.[jt]sx?$/, extension)))
+const borrados = (git(['diff', '--name-only', '--diff-filter=D', '-M', mergeBase, '--']) ?? '').split('\n')
+for (const en of borrados) if (esTest(en) && !sigueConOtraExtension(en)) marcar('test-borrado', en, en)
 
 // CONSTRAINTS.md: una fila de excepción nueva, o un número que bajó en una fila que siguió.
 const numeros = (s) => (s.match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => Number(n.replace(',', '.')))

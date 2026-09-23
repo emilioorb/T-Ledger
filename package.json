@@ -11,7 +11,7 @@
     "check:full:tipos": "cd web && npx tsc -b --noEmit && cd ../api && npx tsc --noEmit --incremental --tsBuildInfoFile node_modules/.tmp/tsc.tsbuildinfo && npx eslint --cache --cache-location node_modules/.tmp/eslintcache .",
     "check:full:tests": "cd web && npx vitest run --coverage && cd ../api && npx vitest run --coverage && cd .. && node scripts/cobertura-del-proyecto.mjs && node scripts/cobertura-de-lo-nuevo.mjs",
     "check:full:seguridad": "gitleaks git --redact --no-banner --log-opts=origin/main..HEAD . && (osv-scanner scan source -r . || echo AVISO: osv-scanner encontro vulnerabilidades sin excepcion)",
-    "check:full:rendimiento": "cd web && npx vite build && (npx size-limit || echo AVISO: el bundle supero su presupuesto)",
+    "check:full:rendimiento": "cd web && npx vite build && node scripts/prerender.mjs && (npx size-limit || echo AVISO: el bundle supero su presupuesto)",
     "check:full:accesibilidad": "cd web && (node scripts/accesibilidad.mjs || echo AVISO: axe encontro violaciones graves)"
   }
 }
