@@ -117,6 +117,31 @@ export const copy = {
     chartLabel: 'Saldo de la deuda cuota a cuota, desde el capital original hasta cero.',
   },
 
+  notas: {
+    open: 'Notas',
+    title: 'Notas',
+    hint: 'Lo que conviene recordar de esta deuda. Admite formato: ## títulos, - listas, **negritas**.',
+    empty: 'Todavía no hay notas.',
+    edit: 'Editar',
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    label: 'Notas',
+    saved: 'Notas guardadas.',
+    failed: 'No se pudieron guardar las notas.',
+    document: {
+      title: 'Contrato',
+      none: 'No hay ningún documento adjunto.',
+      view: 'Ver el contrato',
+      attach: 'Adjuntar contrato',
+      replace: 'Reemplazar',
+      remove: 'Quitar',
+      hint: 'PDF o foto, hasta 20 MB.',
+      uploaded: 'Contrato adjuntado.',
+      removed: 'Contrato quitado.',
+      failed: 'No se pudo subir el documento.',
+    },
+  },
+
   pagos: {
     title: 'Pagos',
     next: (numero: number, fecha: string) => `Sigue la cuota ${numero}, que vence el ${fecha}.`,

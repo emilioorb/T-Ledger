@@ -16,7 +16,9 @@ export const createDebtSchema = z
     kind: z.enum(DEBT_KINDS),
     direction: z.enum(['BORROWED', 'LENT']),
     budgetBucket: nameText.nullable(),
-    notes: z.string().max(20_000).nullable().default(null),
+    // Opcional y no con valor por omisión: con `.default()` el contrato generado la marca como
+    // obligatoria para quien crea una deuda, y nadie tiene notas al crearla.
+    notes: z.string().max(20_000).nullable().optional(),
   })
   .meta({ id: 'CreateDebtInput', title: 'CreateDebtInput' })
 

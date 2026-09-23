@@ -38,7 +38,7 @@ export class CreateDebtUseCase {
       kind: input.kind,
       direction: input.direction,
       budgetBucket: input.budgetBucket,
-      notes: input.notes,
+      notes: input.notes ?? null,
     })
     if (isErr(debt)) throw new SemanticValidationError(debt.error.message)
 

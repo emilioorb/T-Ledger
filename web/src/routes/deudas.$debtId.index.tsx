@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Amount } from '@/features/accounting/amount'
 import { StatCard, StatGrid } from '@/features/accounting/stat-card'
 import { AmortizationTable } from '@/features/debts/amortization-table'
+import { NotasDeLaDeuda } from '@/features/debts/notas-de-la-deuda'
 import { PagosDeLaDeuda } from '@/features/debts/pagos-de-la-deuda'
 import { BalanceChart } from '@/features/debts/balance-chart'
 import { copy } from '@/features/debts/copy'
@@ -56,7 +57,10 @@ const DebtDetail = () => {
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        <h1 className="text-xl font-semibold tracking-tight">{data.name}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-xl font-semibold tracking-tight">{data.name}</h1>
+          <NotasDeLaDeuda debtId={data.id} notes={data.notes} hasDocument={data.hasDocument} />
+        </div>
 
         {/* La cuota es lo que se paga todos los meses: esa abre la pantalla, y la fecha en
             que la deuda deja de existir va al lado. El resto son datos de apoyo. */}

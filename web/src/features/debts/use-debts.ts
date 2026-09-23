@@ -151,3 +151,46 @@ const motivoDelRechazo = (error: unknown): string => {
   if (error instanceof ApiError && error.status === 422) return error.message
   return copy.pagos.toast.failed
 }
+
+export const useGuardarNotas = (id: string) => {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (notes: string | null) =>
+      apiFetch<Debt>(`/debts/${id}`, { method: 'PATCH', body: JSON.stringify({ notes }) }),
+    onSuccess: async () => {
+      toast.success(copy.notas.saved)
+      await client.invalidateQueries({ queryKey: queryKeys.debts.all })
+    },
+    onError: () => toast.error(copy.notas.failed),
+  })
+}
+
+export const useSubirDocumento = (id: string) => {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (archivo: File) => {
+      const cuerpo = new FormData()
+      cuerpo.append('archivo', archivo)
+      // Sin `Content-Type` a mano: el navegador lo pone con el `boundary` que genera.
+      return apiFetch<Debt>(`/debts/${id}/document`, { method: 'POST', body: cuerpo })
+    },
+    onSuccess: async () => {
+      toast.success(copy.notas.document.uploaded)
+      await client.invalidateQueries({ queryKey: queryKeys.debts.all })
+    },
+    // El 400 trae el motivo en palabras: tipo, tamaño o archivo vacío.
+    onError: (error: unknown) =>
+      toast.error(error instanceof ApiError && error.status === 400 ? error.message : copy.notas.document.failed),
+  })
+}
+
+export const useQuitarDocumento = (id: string) => {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiFetch<Debt>(`/debts/${id}/document`, { method: 'DELETE' }),
+    onSuccess: async () => {
+      toast.success(copy.notas.document.removed)
+      await client.invalidateQueries({ queryKey: queryKeys.debts.all })
+    },
+  })
+}

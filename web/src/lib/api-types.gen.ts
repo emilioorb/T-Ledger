@@ -303,6 +303,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/debts/{id}/document": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Redirige al enlace firmado del documento */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Enlace de lectura */
+                302: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Sin documento */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Adjunta el contrato de la deuda (PDF o foto, hasta 20 MB) en multipart/form-data, campo `archivo` */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deuda con documento */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Debt"];
+                    };
+                };
+                /** @description El archivo no es un PDF o una foto, está vacío o pesa de más */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Quita el documento de la deuda */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deuda sin documento */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Debt"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/debts/{id}/payments/last": {
         parameters: {
             query?: never;
@@ -2970,6 +3058,7 @@ export interface components {
             /** @enum {string} */
             direction: "BORROWED" | "LENT";
             budgetBucket: string | null;
+            notes?: string | null;
         };
         /** Money */
         Money: {
@@ -2992,6 +3081,7 @@ export interface components {
             /** @enum {string} */
             direction?: "BORROWED" | "LENT";
             budgetBucket?: string | null;
+            notes?: string | null;
         };
         /** PagarCuotaInput */
         PagarCuotaInput: {
@@ -3246,6 +3336,8 @@ export interface components {
             /** @enum {string} */
             direction: "BORROWED" | "LENT";
             budgetBucket: string | null;
+            notes: string | null;
+            hasDocument: boolean;
             monthlyPayment: components["schemas"]["MoneyOutput"];
             totalInterest: components["schemas"]["MoneyOutput"];
             payoffDate: string;
