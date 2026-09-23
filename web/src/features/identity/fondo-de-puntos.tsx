@@ -51,6 +51,7 @@ export const FondoDePuntos = ({ tema }: { tema: Theme }) => {
         colorTo={tinta}
         cursorInteraction={false}
         vignette={0.35}
+        dpr={1}
         onReady={() => setListo(true)}
       />
     </div>
