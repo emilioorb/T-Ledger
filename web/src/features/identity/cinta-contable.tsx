@@ -1,5 +1,5 @@
 import { copy } from './copy'
-import { usarCinta } from './usar-cinta'
+import { useCinta } from './use-cinta'
 
 // El rollo de papel que da nombre al producto. Sube sin fin, con asientos de verdad impresos
 // en dos columnas, y los dos extremos desvanecidos para que se lea como una cinta que sigue
@@ -127,7 +127,7 @@ const Renglon = ({ asiento }: { asiento: Asiento }) => (
 )
 
 export const CintaContable = () => {
-  const { zona, rollo } = usarCinta<HTMLDivElement, HTMLDivElement>()
+  const { zona, rollo } = useCinta<HTMLDivElement, HTMLDivElement>()
 
   return (
     // `aria-hidden` porque es la ilustración del titular, no información: leída en voz alta es

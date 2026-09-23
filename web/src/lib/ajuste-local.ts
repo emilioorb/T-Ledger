@@ -43,7 +43,7 @@ export const crearAjuste = <T>(
     avisar()
   }
 
-  const usar = (): T =>
+  const useAjuste = (): T =>
     useSyncExternalStore(
       (suscriptor) => {
         suscriptores.add(suscriptor)
@@ -55,5 +55,5 @@ export const crearAjuste = <T>(
       () => interpretar(null),
     )
 
-  return { leer, poner, usar }
+  return { leer, poner, usar: useAjuste }
 }

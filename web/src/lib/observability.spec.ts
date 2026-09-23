@@ -94,7 +94,7 @@ describe('iniciarObservabilidad', () => {
 
     const opciones = vi.mocked(Sentry.init).mock.calls[0]?.[0]
     expect(opciones?.defaultIntegrations).toBe(false)
-    const nombres = (opciones?.integrations as { name: string }[]).map((i) => i.name)
+    const nombres = ((opciones?.integrations ?? []) as { name: string }[]).map((i) => i.name)
     expect(nombres).toContain('GlobalHandlers')
     expect(nombres).not.toContain('Breadcrumbs')
     expect(nombres).not.toContain('BrowserSession')

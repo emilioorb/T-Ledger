@@ -158,6 +158,50 @@ const VIGENCIA_DE_LA_SESION = 30_000
 
 const SESION = ['sesion'] as const
 
+const Raiz = () => {
+  // Se pregunta por los **matches** y no por `location.pathname`, aunque el pathname sea más
+  // directo de leer. El `Outlet` de abajo renderiza los matches; el pathname cambia apenas
+  // arranca la navegación, mientras el match del destino todavía está resolviendo su
+  // `beforeLoad` —que acá pregunta la sesión al servidor y tarda—. En esa ventana los dos no
+  // coinciden, y como el layout se elegía con uno y el contenido con el otro, al entrar se
+  // veían **las dos cosas a la vez**: la barra lateral del tablero alrededor del formulario
+  // de ingreso, medida en 720 ms. Preguntando por lo mismo que se renderiza, no pueden
+  // diferir.
+  const enPublica = useRouterState({
+    select: (estado) => estado.matches.some((match) => esPublica(match.routeId)),
+  })
+
+  // Los avisos y el Toaster van una sola vez, afuera de las dos ramas: con un Toaster en cada
+  // lado, entrar o salir de la sesión montaba uno nuevo y vacío, y el aviso de versión nueva
+  // que ya estaba en pantalla desaparecía hasta la próxima recarga.
+  return (
+    <TooltipProvider delayDuration={300}>
+      <AvisoDeVersion />
+      <AvisoSinConexion />
+      {enPublica ? (
+        <>
+          {/* También acá: el título de la pestaña es lo primero que lee un lector de
+              pantalla al cambiar de ruta, y sin esto las pantallas sin sesión heredaban el
+              título de donde vinieras. */}
+          <DocumentTitle />
+          <MarcoPublico>
+            <Outlet />
+          </MarcoPublico>
+        </>
+      ) : (
+        // El vigilante va del lado privado y no envolviendo todo: en la pantalla de entrar
+        // no hay sesión que cerrar, y un reloj corriendo ahí sería un temporizador vigilando
+        // a nadie.
+        <PrimaryActionProvider>
+          <Shell />
+          <VigilanteDeSesion />
+        </PrimaryActionProvider>
+      )}
+      <Toaster position="bottom-right" />
+    </TooltipProvider>
+  )
+}
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   // Sin sesión no se entra a ningún lado. Antes la app dejaba pasar y cada consulta devolvía
   // 401: el resultado era el esqueleto completo con todos los paneles rotos, que es peor que
@@ -194,47 +238,5 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     }
   },
   errorComponent: (props) => <ErrorDeCarga {...props} pantallaCompleta />,
-  component: () => {
-    // Se pregunta por los **matches** y no por `location.pathname`, aunque el pathname sea más
-    // directo de leer. El `Outlet` de abajo renderiza los matches; el pathname cambia apenas
-    // arranca la navegación, mientras el match del destino todavía está resolviendo su
-    // `beforeLoad` —que acá pregunta la sesión al servidor y tarda—. En esa ventana los dos no
-    // coinciden, y como el layout se elegía con uno y el contenido con el otro, al entrar se
-    // veían **las dos cosas a la vez**: la barra lateral del tablero alrededor del formulario
-    // de ingreso, medida en 720 ms. Preguntando por lo mismo que se renderiza, no pueden
-    // diferir.
-    const enPublica = useRouterState({
-      select: (estado) => estado.matches.some((match) => esPublica(match.routeId)),
-    })
-
-    // Los avisos y el Toaster van una sola vez, afuera de las dos ramas: con un Toaster en cada
-    // lado, entrar o salir de la sesión montaba uno nuevo y vacío, y el aviso de versión nueva
-    // que ya estaba en pantalla desaparecía hasta la próxima recarga.
-    return (
-      <TooltipProvider delayDuration={300}>
-        <AvisoDeVersion />
-        <AvisoSinConexion />
-        {enPublica ? (
-          <>
-            {/* También acá: el título de la pestaña es lo primero que lee un lector de
-                pantalla al cambiar de ruta, y sin esto las pantallas sin sesión heredaban el
-                título de donde vinieras. */}
-            <DocumentTitle />
-            <MarcoPublico>
-              <Outlet />
-            </MarcoPublico>
-          </>
-        ) : (
-          // El vigilante va del lado privado y no envolviendo todo: en la pantalla de entrar
-          // no hay sesión que cerrar, y un reloj corriendo ahí sería un temporizador vigilando
-          // a nadie.
-          <PrimaryActionProvider>
-            <Shell />
-            <VigilanteDeSesion />
-          </PrimaryActionProvider>
-        )}
-        <Toaster position="bottom-right" />
-      </TooltipProvider>
-    )
-  },
+  component: Raiz,
 })

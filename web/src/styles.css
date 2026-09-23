@@ -428,7 +428,7 @@
     transform-box: fill-box;
   }
 
-  /* La cinta. El movimiento lo maneja `usar-cinta.ts` por la Web Animations API —CSS no
+  /* La cinta. El movimiento lo maneja `use-cinta.ts` por la Web Animations API —CSS no
      sabe frenar de a poco ni cambiar de velocidad sin saltar—, así que acá queda solo lo
      que es presentación.
 

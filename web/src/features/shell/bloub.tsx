@@ -83,7 +83,7 @@ const CIERRE = 90
 // detrás del párpado y los abre con la cara nueva. Vale para los dos usos del avatar —acá y
 // el del tablero, que cambia de ánimo cuando cambian las cifras—, así que vive adentro del
 // componente y nadie tiene que acordarse de pedirlo.
-const usarParpadeoDeCambio = (gesto: NombreDeGesto) => {
+const useParpadeoDeCambio = (gesto: NombreDeGesto) => {
   const [visible, setVisible] = useState(gesto)
   const [cerrado, setCerrado] = useState(false)
 
@@ -110,7 +110,7 @@ interface Props {
 }
 
 export const Bloub = ({ gesto = 'neutro', color, className }: Props) => {
-  const { visible, cerrado } = usarParpadeoDeCambio(gesto)
+  const { visible, cerrado } = useParpadeoDeCambio(gesto)
   const { izq, der, parpado = 1 }: Gesto = GESTOS[visible]
   const elegido = colorDeNimbo.usar()
   const pintado = color === undefined ? elegido : color

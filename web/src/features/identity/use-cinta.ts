@@ -27,7 +27,7 @@ interface Cinta<Z extends HTMLElement, R extends HTMLElement> {
   rollo: RefObject<R | null>
 }
 
-export const usarCinta = <Z extends HTMLElement, R extends HTMLElement>(): Cinta<Z, R> => {
+export const useCinta = <Z extends HTMLElement, R extends HTMLElement>(): Cinta<Z, R> => {
   const zona = useRef<Z>(null)
   const rollo = useRef<R>(null)
 
