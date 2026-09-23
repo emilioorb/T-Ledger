@@ -1,7 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 import { NotFoundError } from '../../../shared/http/api-error.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
+import { MOVIMIENTO_ANULANDOSE, type MovimientoAnulandose } from '../accounting.events.js'
 import { MOVEMENT_REPOSITORY, type MovementRepository } from '../domain/movement-repository.port.js'
 import type { PostedMovement } from './create-movement.use-case.js'
 import { MovementPoster } from './movement-poster.js'
@@ -15,6 +17,7 @@ export class VoidMovementUseCase {
     private readonly guard: PeriodGuard,
     @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
     @Inject(RASTRO) private readonly rastro: Rastro,
+    private readonly eventos: EventEmitter2,
   ) {}
 
   async execute(id: string): Promise<PostedMovement> {
@@ -28,6 +31,8 @@ export class VoidMovementUseCase {
     // anulado con sus asientos vivos, que es la peor combinación: el mayor sigue contándolo.
     const voided = movement.void_()
     await this.transaction.withTransaction(async () => {
+      // Primero el aviso: si quien escucha frena la anulación, no se llegó a escribir nada.
+      await this.eventos.emitAsync(MOVIMIENTO_ANULANDOSE, { movementId: id } satisfies MovimientoAnulandose)
       await this.movements.save(voided)
       // Sin `antes`/`despues`: anular no cambia campos, cambia el estado, y eso ya lo dice la
       // acción. Un diff acá mostraría «status: ACTIVE → VOIDED» y nada más.

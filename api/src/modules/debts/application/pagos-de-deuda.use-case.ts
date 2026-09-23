@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { ConflictException, Inject, Injectable } from '@nestjs/common'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { fromMoney } from '../../../shared/http/money.schema.js'
 import { isErr, type Result } from '../../../shared/kernel/result.js'
@@ -76,11 +76,31 @@ export class PagosDeDeudaUseCase {
     const debt = await this.propia(id)
     const { debt: sinElUltimo, undone } = oFallar(debt.undoLastPayment())
 
+    // Primero la deuda y después el gasto: al anularlo, contabilidad avisa y `alAnularSuGasto`
+    // ya no encuentra el pago. Al revés lo desharía dos veces, con dos rastros.
     await this.transaction.withTransaction(async () => {
-      if (undone.movementId) await this.anularMovimiento.execute(undone.movementId)
       await this.guardar(sinElUltimo, 'anular', debt)
+      if (undone.movementId) await this.anularMovimiento.execute(undone.movementId)
     })
     return sinElUltimo
+  }
+
+  // Cuando alguien anula desde Movimientos el gasto de una cuota: la cuota vuelve a quedar sin
+  // pagar, dentro de la misma transacción. Solo si es la última pagada: los pagos van en orden,
+  // y deshacer una del medio dejaría una tabla que no corresponde a ninguna fila. En ese caso
+  // se frena la anulación entera.
+  async alAnularSuGasto(movementId: string): Promise<void> {
+    const debt = await this.debts.findByPaymentMovement(movementId)
+    if (!debt) return
+
+    const { debt: sinElUltimo, undone } = oFallar(debt.undoLastPayment())
+    if (undone.movementId !== movementId) {
+      const cuota = debt.payments.find((pago) => pago.movementId === movementId)?.installmentNumber
+      throw new ConflictException(
+        `Ese gasto pagó la cuota ${cuota} de «${debt.name}», y después hay cuotas pagadas. Deshacé los pagos desde la deuda, del último para atrás.`,
+      )
+    }
+    await this.guardar(sinElUltimo, 'anular', debt)
   }
 
   private async propia(id: string): Promise<Debt> {

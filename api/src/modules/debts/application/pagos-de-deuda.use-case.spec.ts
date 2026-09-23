@@ -41,6 +41,7 @@ const armar = (inicial: Debt) => {
   const debts: DebtRepository = {
     findAll: vi.fn(),
     findById: vi.fn(async () => guardada),
+    findByPaymentMovement: vi.fn(async () => null),
     save: vi.fn(async (debt: Debt) => {
       guardada = debt
     }),

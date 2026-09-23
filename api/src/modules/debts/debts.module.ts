@@ -6,6 +6,7 @@ import { RastroModule } from '../auditoria/rastro.module.js'
 import { BudgetModule } from '../budget/budget.module.js'
 import { CreateDebtUseCase } from './application/create-debt.use-case.js'
 import { DeleteDebtUseCase } from './application/delete-debt.use-case.js'
+import { DeshacerPagoAlAnular } from './application/deshacer-pago-al-anular.listener.js'
 import { DocumentoDeDeudaUseCase } from './application/documento-de-deuda.use-case.js'
 import { GetDebtUseCase } from './application/get-debt.use-case.js'
 import { GetPayoffPlanUseCase } from './application/get-payoff-plan.use-case.js'
@@ -36,6 +37,7 @@ import { PrismaDebtRepository } from './infrastructure/prisma-debt.repository.js
     GetPayoffPlanUseCase,
     PagosDeDeudaUseCase,
     DocumentoDeDeudaUseCase,
+    DeshacerPagoAlAnular,
   ],
   exports: [DEBT_REPOSITORY],
 })

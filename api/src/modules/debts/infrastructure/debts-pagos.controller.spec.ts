@@ -1,3 +1,4 @@
+import { EventEmitterModule } from '@nestjs/event-emitter'
 import { Test } from '@nestjs/testing'
 import type { INestApplication } from '@nestjs/common'
 import request from 'supertest'
@@ -43,7 +44,7 @@ beforeEach(entrarEnLibroDePrueba)
 beforeAll(async () => {
   entrarEnLibroDePrueba()
   postgres = await startPostgres()
-  const moduleRef = await Test.createTestingModule({ imports: [DebtsModule] })
+  const moduleRef = await Test.createTestingModule({ imports: [EventEmitterModule.forRoot(), DebtsModule] })
     .overrideProvider(PrismaService)
     .useValue(new PrismaService(postgres.url))
     .compile()
@@ -116,6 +117,12 @@ describe('DELETE /api/v1/debts/:id/payments/last', () => {
     expect(deshecho.body.outstanding.minorUnits).toBe('10000000')
     const [movimiento] = await prisma.movement.findMany({ where: {} })
     expect(movimiento?.status).toBe('VOIDED')
+    // Una sola vez: deshacer desde la deuda anula el gasto, y contabilidad avisa; si el aviso
+    // volviera a deshacer el pago, el registro contaría la misma anulación dos veces.
+    const anulaciones = await prisma.auditLog.count({
+      where: { entity: 'deuda', entityId: deuda.id, action: 'anular' },
+    })
+    expect(anulaciones).toBe(1)
   })
 })
 
@@ -129,5 +136,53 @@ describe('POST /api/v1/debts/:id/payments/settled', () => {
     expect(await prisma.movement.count({ where: {} })).toBe(0)
     const tabla = await http().get(`/api/v1/debts/${deuda.id}/schedule`)
     expect(tabla.body.installments[0]).toMatchObject({ status: 'PAID', withMovement: false })
+  })
+})
+
+describe('anular desde Movimientos el gasto de una cuota', () => {
+  const anular = (movementId: string) => http().post(`/api/v1/movements/${movementId}/void`)
+  const gastoDe = async (debtId: string, cuota: number) =>
+    (await prisma.debtPayment.findFirstOrThrow({ where: { debtId, installmentNumber: cuota } })).movementId!
+
+  it('deshace el pago de la cuota: la deuda y el libro vuelven a decir lo mismo', async () => {
+    const { body: deuda } = await http().post('/api/v1/debts').send(tresCuotas)
+    await pagar(deuda.id, hoy)
+
+    const anulado = await anular(await gastoDe(deuda.id, 1))
+
+    expect(anulado.status).toBe(200)
+    const { body: despues } = await http().get(`/api/v1/debts/${deuda.id}`)
+    expect(despues.outstanding.minorUnits).toBe('10000000')
+    expect(await prisma.debtPayment.count({ where: {} })).toBe(0)
+  })
+
+  // Los pagos van en orden: deshacer la cuota 1 con la 2 pagada dejaría una tabla sin sentido.
+  it('no deja anular el gasto de una cuota que no es la última pagada', async () => {
+    const { body: deuda } = await http().post('/api/v1/debts').send(tresCuotas)
+    await pagar(deuda.id, hoy)
+    await pagar(deuda.id, hoy)
+    const primero = await gastoDe(deuda.id, 1)
+
+    const anulado = await anular(primero)
+
+    expect(anulado.status).toBe(409)
+    expect((await prisma.movement.findUniqueOrThrow({ where: { id: primero } })).status).toBe('ACTIVE')
+    expect(await prisma.debtPayment.count({ where: {} })).toBe(2)
+  })
+
+  it('un gasto que no pagó ninguna cuota se anula como siempre', async () => {
+    const { body: deuda } = await http().post('/api/v1/debts').send(tresCuotas)
+    await http().post(`/api/v1/debts/${deuda.id}/payments/settled`).send({ date: hoy })
+    const suelto = await http().post('/api/v1/movements').send({
+      date: hoy,
+      kind: 'EXPENSE',
+      categoryId: 'cat-prestamos',
+      counterparty: 'Otro',
+      amount: { minorUnits: '100', currency: 'CRC' },
+      paymentAccountCode: '1101',
+    })
+
+    expect((await anular(suelto.body.id)).status).toBe(200)
+    expect(await prisma.debtPayment.count({ where: {} })).toBe(1)
   })
 })

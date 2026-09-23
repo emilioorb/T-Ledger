@@ -31,6 +31,14 @@ export class PrismaDebtRepository implements DebtRepository {
     return row ? toDomain(row as DebtRow) : null
   }
 
+  async findByPaymentMovement(movementId: string): Promise<Debt | null> {
+    const row = await this.prisma.client.debt.findFirst({
+      where: { payments: { some: { movementId } } },
+      include: conPagos,
+    })
+    return row ? toDomain(row as DebtRow) : null
+  }
+
   async save(debt: Debt): Promise<void> {
     const row = toRow(debt)
     const { id, ...rest } = row

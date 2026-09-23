@@ -1,3 +1,4 @@
+import { EventEmitterModule } from '@nestjs/event-emitter'
 import type { INestApplication } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import request from 'supertest'
@@ -50,7 +51,7 @@ beforeEach(entrarEnLibroDePrueba)
 beforeAll(async () => {
   entrarEnLibroDePrueba()
   postgres = await startPostgres()
-  const moduleRef = await Test.createTestingModule({ imports: [AccountingModule] })
+  const moduleRef = await Test.createTestingModule({ imports: [EventEmitterModule.forRoot(), AccountingModule] })
     .overrideProvider(PrismaService)
     .useValue(new PrismaService(postgres.url))
     .compile()

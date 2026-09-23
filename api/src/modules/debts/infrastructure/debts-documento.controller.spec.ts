@@ -1,3 +1,4 @@
+import { EventEmitterModule } from '@nestjs/event-emitter'
 import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -39,7 +40,7 @@ beforeAll(async () => {
   process.env.ARCHIVOS_DIR = CARPETA
   entrarEnLibroDePrueba()
   postgres = await startPostgres()
-  const moduleRef = await Test.createTestingModule({ imports: [DebtsModule] })
+  const moduleRef = await Test.createTestingModule({ imports: [EventEmitterModule.forRoot(), DebtsModule] })
     .overrideProvider(PrismaService)
     .useValue(new PrismaService(postgres.url))
     .compile()
