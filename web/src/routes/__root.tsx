@@ -14,6 +14,7 @@ import { PageBreadcrumb } from '@/components/page-breadcrumb'
 import { ExchangeRateIndicator } from '@/features/money/exchange-rate-indicator'
 import { auth } from '@/features/identity/auth-client'
 import { useAsegurarLibroActivo } from '@/features/identity/libro-activo'
+import { recuerdoDeSesion } from '@/features/identity/recuerdo-de-sesion'
 import { MarcoPublico } from '@/features/identity/marco-publico'
 import { VigilanteDeSesion } from '@/features/identity/vigilante-de-sesion'
 import { copy as shell } from '@/features/shell/copy'
@@ -163,17 +164,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   // El destino viaja en `redirigirA` para volver ahí después de entrar, en vez de dejar a
   // todo el mundo en el tablero cuando venía siguiendo un enlace a otra pantalla.
   beforeLoad: async ({ location, context }) => {
-    if (esPublica(location.pathname)) return
-
     // `ensureQueryData` y no `fetchQuery`: si la respuesta sigue fresca la devuelve sin tocar
     // la red, que es justamente el punto.
-    const sesion = await context.queryClient.ensureQueryData({
-      queryKey: SESION,
-      queryFn: async () => (await auth.getSession()).data,
-      staleTime: VIGENCIA_DE_LA_SESION,
-    })
+    const preguntarSesion = async () => {
+      const sesion = await context.queryClient.ensureQueryData({
+        queryKey: SESION,
+        queryFn: async () => (await auth.getSession()).data,
+        staleTime: VIGENCIA_DE_LA_SESION,
+      })
+      if (sesion) recuerdoDeSesion.anotar()
+      else recuerdoDeSesion.olvidar()
+      return sesion
+    }
 
-    if (!sesion) {
+    // La landing se pinta sin preguntar, para no hacer esperar a quien nunca entró. Pero a quien
+    // vuelve con la sesión abierta eso le mostraba la landing un instante antes de saltar al
+    // tablero. Si este navegador tuvo sesión, se pregunta antes de pintar.
+    if (location.pathname === '/') {
+      if (recuerdoDeSesion.hubo() && (await preguntarSesion())) throw redirect({ to: '/tablero' })
+      return
+    }
+
+    if (esPublica(location.pathname)) return
+
+    if (!(await preguntarSesion())) {
       throw redirect({ to: '/entrar', search: { redirigirA: location.href } })
     }
   },
