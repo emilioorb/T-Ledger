@@ -19,7 +19,9 @@ import { controlDeAcceso, rolesDelLibro } from './roles'
 // Se importa de `better-auth/react` y no de `better-auth/client` porque esta es la app de
 // React: la variante de React es la que trae los hooks reactivos de sesión.
 export const auth = createAuthClient({
-  baseURL: import.meta.env.VITE_API_URL ?? window.location.origin,
+  // En el prerender de la portada no hay `window`, y tampoco se pide nada: el origen es de
+  // relleno, para que el módulo se pueda importar en Node.
+  baseURL: import.meta.env.VITE_API_URL ?? (import.meta.env.SSR ? 'http://localhost' : window.location.origin),
   // El mismo fetch que el resto de la API: un pedido de sesión sin red falla como ErrorDeRed,
   // que es lo que la pantalla de error necesita para distinguirlo de un bug.
   fetchOptions: { customFetchImpl: fetchAlServidor },

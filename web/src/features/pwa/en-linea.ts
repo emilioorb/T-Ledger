@@ -11,4 +11,10 @@ const suscribir = (avisar: () => void) => {
 
 const conectado = () => navigator.onLine
 
-export const useEnLinea = (): boolean => useSyncExternalStore(suscribir, conectado)
+// En el prerender se da por conectado, que es lo que ve casi todo el mundo al abrir: sin red,
+// el aviso aparece apenas termina de hidratar.
+// https://react.dev/reference/react/useSyncExternalStore#adding-support-for-server-rendering
+const conectadoEnElServidor = () => true
+
+export const useEnLinea = (): boolean =>
+  useSyncExternalStore(suscribir, conectado, conectadoEnElServidor)

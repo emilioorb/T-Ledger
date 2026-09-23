@@ -1,5 +1,5 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
-import { createRouter } from '@tanstack/react-router'
+import { createRouter, type RouterHistory } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { NotFound } from './components/not-found'
 import { ErrorDeCarga } from './features/pwa/error-de-carga'
@@ -24,13 +24,20 @@ export const queryClient = new QueryClient({
 })
 
 // defaultPreloadStaleTime en 0 deja que TanStack Query gobierne el caché, no el router.
-export const router = createRouter({
-  routeTree,
-  context: { queryClient },
-  defaultPreloadStaleTime: 0,
-  defaultNotFoundComponent: NotFound,
-  defaultErrorComponent: ErrorDeCarga,
-})
+// Fábrica y no solo instancia: el prerender de la portada arma el suyo, con historia en memoria.
+export const crearRouter = (contexto: { queryClient: QueryClient; history?: RouterHistory }) =>
+  createRouter({
+    routeTree,
+    history: contexto.history,
+    context: { queryClient: contexto.queryClient },
+    defaultPreloadStaleTime: 0,
+    defaultNotFoundComponent: NotFound,
+    defaultErrorComponent: ErrorDeCarga,
+  })
+
+export type Router = ReturnType<typeof crearRouter>
+
+export const router = crearRouter({ queryClient })
 
 declare module '@tanstack/react-router' {
   interface Register {
