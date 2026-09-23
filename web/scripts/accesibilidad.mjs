@@ -1,10 +1,14 @@
 import AxeBuilder from '@axe-core/playwright'
 import { chromium } from 'playwright-core'
+import { servirDist } from './servir-dist.mjs'
 
-// Uso: node scripts/accesibilidad.mjs [url-base], o con A11Y_URL. Sin ninguno revisa producción.
+// Uso: node scripts/accesibilidad.mjs [url-base], o con A11Y_URL. Sin ninguno revisa el dist/ local
+// servido como Vercel: lo que se va a publicar, y sin depender de la red.
 // Corre axe sobre las pantallas públicas, en claro y en oscuro, y falla con cualquier
 // violación crítica o seria. Las pantallas con sesión quedan afuera: pedirían credenciales.
-const base = process.argv[2] ?? process.env.A11Y_URL ?? 'https://t-ledger.vercel.app'
+const externa = process.argv[2] ?? process.env.A11Y_URL
+const local = externa ? undefined : await servirDist()
+const base = externa ?? local.base
 const PANTALLAS = ['/', '/entrar']
 const TEMAS = ['light', 'dark']
 const GRAVES = new Set(['critical', 'serious'])
@@ -33,6 +37,7 @@ try {
   }
 } finally {
   await navegador.close()
+  local?.cerrar()
 }
 
 process.exit(graves === 0 ? 0 : 1)

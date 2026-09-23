@@ -70,14 +70,16 @@ for (const { archivo: en, texto } of agregadas) {
 }
 
 const esTest = (en) => /\.(spec|test)\.[jt]sx?$/.test(en)
+// Llamadas y no la palabra: un `import { expect }` que cambia no es una aserción que se va.
+const ASERCION = /\bexpect\(|\bassert[.(]/g
 for (const { archivo: en, texto } of quitadas) {
-  if (esTest(en) && /\bexpect\b|\bassert\b/.test(texto)) marcar('asercion-quitada', en, texto)
+  if (esTest(en) && new RegExp(ASERCION.source).test(texto)) marcar('asercion-quitada', en, texto)
 }
 
 // Un test que cambió de extensión (.ts → .tsx) no está borrado, aunque cambie tanto que git no
 // lo reconozca como renombre. Pero solo si el de la extensión nueva es nuevo en este diff (si ya
 // existía, borrar el otro es borrar tests) y trae al menos tantas aserciones como el borrado.
-const aserciones = (texto) => (texto.match(/\bexpect\(|\bassert\b/g) ?? []).length
+const aserciones = (texto) => (texto.match(ASERCION) ?? []).length
 const nuevosEnElDiff = new Set([
   ...(git(['diff', '--name-only', '--diff-filter=A', mergeBase, '--']) ?? '').split('\n'),
   ...(git(['ls-files', '--others', '--exclude-standard']) ?? '').split('\n'),

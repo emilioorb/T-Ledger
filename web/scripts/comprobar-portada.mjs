@@ -1,57 +1,10 @@
-import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs'
-import { createServer } from 'node:http'
-import path from 'node:path'
 import { chromium } from 'playwright-core'
+import { servirDist } from './servir-dist.mjs'
 
 // Uso: node scripts/comprobar-portada.mjs, después de `vite build`.
-// Sirve dist/ como Vercel (cabeceras de vercel.json, primero los archivos, el resto a app.html)
-// y comprueba en Chrome lo que promete la spec del prerender
+// Sirve dist/ como Vercel y comprueba en Chrome lo que promete la spec del prerender
 // (docs/plans/2026-09-23-prerender-de-la-portada.md). Sale con 1 si algo falla.
-const DIST = path.resolve(import.meta.dirname, '..', 'dist')
-const vercel = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '..', 'vercel.json'), 'utf8'))
-const CABECERAS = Object.fromEntries(vercel.headers[0].headers.map(({ key, value }) => [key, value]))
-const TIPOS = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript',
-  '.css': 'text/css',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2',
-  '.webmanifest': 'application/manifest+json',
-  '.json': 'application/json',
-}
-
-const archivoPara = (url) => {
-  let ruta
-  try {
-    ruta = decodeURIComponent(new URL(url, 'http://x').pathname)
-  } catch {
-    return null
-  }
-  const directo = path.join(DIST, ruta === '/' ? 'index.html' : ruta)
-  const relativa = path.relative(DIST, directo)
-  const adentro = relativa !== '' && !relativa.startsWith('..') && !path.isAbsolute(relativa)
-  if (adentro && existsSync(directo) && statSync(directo).isFile()) return directo
-  return path.join(DIST, 'app.html')
-}
-
-// /api no existe acá: sin sesión, que es lo que ve un visitante nuevo o una sesión vencida.
-const servidor = createServer((pedido, respuesta) => {
-  if (pedido.url.startsWith('/api/')) {
-    respuesta.writeHead(404, { 'content-type': 'application/json' }).end('{}')
-    return
-  }
-  const archivo = archivoPara(pedido.url)
-  if (!archivo) {
-    respuesta.writeHead(400).end()
-    return
-  }
-  respuesta.writeHead(200, { ...CABECERAS, 'content-type': TIPOS[path.extname(archivo)] ?? 'application/octet-stream' })
-  createReadStream(archivo).pipe(respuesta)
-})
-await new Promise((listo) => servidor.listen(0, '127.0.0.1', listo))
-const base = `http://127.0.0.1:${servidor.address().port}`
+const { base, cerrar } = await servirDist()
 
 // Lo que dice la consola cuando la hidratación no calza o la CSP bloquea algo.
 const GRAVE = /hydrat|did not match|#418|#423|#425|Content Security Policy|violates/i
@@ -143,6 +96,31 @@ try {
   revisar(graves(navegacion.consola).length === 0, 'volver a la portada la crea en el navegador, con los totales, sin errores')
   await navegacion.contexto.close()
 
+  // Con sesión, la portada hidratada salta sola al tablero, y de ahí se navega por el interior
+  // de la app: todo con `router.ssr` puesto, que es como queda la sesión que entró por `/`.
+  // Las cifras dan 404 (no hay API): lo que se mira es que el router y la hidratación no se
+  // quejen y que la app se arme.
+  const conSesion = await navegador.newContext({ serviceWorkers: 'block' })
+  await conSesion.route('**/api/auth/get-session', (pedido) =>
+    pedido.fulfill({
+      json: {
+        session: { id: 's', userId: 'u', token: 't', expiresAt: '2099-01-01T00:00:00.000Z', activeOrganizationId: 'l' },
+        user: { id: 'u', email: 'prueba@t-ledger.local', name: 'Prueba', emailVerified: true, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' },
+      },
+    }),
+  )
+  const adentro = await conSesion.newPage()
+  const consolaAdentro = []
+  adentro.on('console', (mensaje) => consolaAdentro.push(mensaje.text()))
+  adentro.on('pageerror', (error) => consolaAdentro.push(error.message))
+  await adentro.goto(`${base}/`)
+  await adentro.waitForURL('**/tablero')
+  await adentro.getByRole('navigation', { name: 'Navegación' }).waitFor()
+  await adentro.getByRole('link', { name: 'Deudas' }).first().click()
+  await adentro.waitForURL('**/deudas')
+  revisar(graves(consolaAdentro).length === 0, `con sesión, de la portada hidratada al tablero y a deudas sin errores (${graves(consolaAdentro).join(' | ') || 'limpio'})`)
+  await conSesion.close()
+
   const calma = await abrir(navegador, { opciones: { reducedMotion: 'reduce' } })
   await calma.pagina.waitForFunction(HIDRATADA)
   revisar(await calma.pagina.evaluate(() => document.body.innerText.replace(/\s/g, '').includes('920000')), 'con movimiento reducido, los totales muestran el final apenas hidrata')
@@ -163,6 +141,37 @@ try {
     revisar(!html.includes('<h1') && !html.includes('antes-de-pintar') && html.includes('data-theme="dark"'), `${ruta} recibe app.html: sin portada, sin el script del <head> y en oscuro`)
   }
 
+  // Rendimiento con la red y la CPU de PageSpeed móvil (4G lento: 150 ms y 1,6 Mbps; CPU 4×).
+  // Mediana de tres cargas: avisa si pasa del presupuesto de CONSTRAINTS.md, no corta la cadena.
+  const medir = async () => {
+    const contexto = await navegador.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, serviceWorkers: 'block' })
+    const pagina = await contexto.newPage()
+    const cdp = await contexto.newCDPSession(pagina)
+    await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 })
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
+    await pagina.goto(`${base}/`, { waitUntil: 'load' })
+    await pagina.waitForFunction(() => performance.getEntriesByName('portada-hidratada').length > 0, null, { timeout: 60_000 })
+    const medida = await pagina.evaluate(() => new Promise((listo) => {
+      new PerformanceObserver((lista) => listo({
+        lcp: lista.getEntries().at(-1)?.startTime ?? Infinity,
+        hidratada: performance.getEntriesByName('portada-hidratada')[0]?.startTime ?? Infinity,
+      })).observe({ type: 'largest-contentful-paint', buffered: true })
+    }))
+    await contexto.close()
+    return medida
+  }
+  const medidas = [await medir(), await medir(), await medir()]
+  const mediana = (valores) => Math.round([...valores].sort((a, b) => a - b)[1])
+  const lcp = mediana(medidas.map((m) => m.lcp))
+  const hidratada = mediana(medidas.map((m) => m.hidratada))
+  // Medidos el 2026-09-23 con este mismo método (CONSTRAINTS.md): el peor LCP de cinco cargas fue
+  // 2828 ms, y hasta hidratar 6571 ms de mediana, más un 5 %.
+  const PRESUPUESTO = { lcp: 2900, hidratada: 6900 }
+  for (const [nombre, valor] of [['LCP', lcp], ['hasta hidratar', hidratada]]) {
+    const tope = nombre === 'LCP' ? PRESUPUESTO.lcp : PRESUPUESTO.hidratada
+    console.log(`${valor <= tope ? 'ok   ' : 'AVISO'} ${nombre} en 4G lento y CPU 4×: ${valor} ms (mediana de 3, presupuesto ${tope} ms)`)
+  }
+
   // Sin red, lo sirve el service worker: app.html para las rutas, index.html para la portada
   // aunque traiga query.
   const sinRed = await navegador.newContext({ serviceWorkers: 'allow' })
@@ -177,7 +186,7 @@ try {
   await sinRed.close()
 } finally {
   await navegador.close()
-  servidor.close()
+  cerrar()
 }
 
 process.exit(fallas.length === 0 ? 0 : 1)

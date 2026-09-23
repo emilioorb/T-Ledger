@@ -2,31 +2,25 @@ import { createRoot, hydrateRoot } from 'react-dom/client'
 import { App } from './app'
 import { iniciarObservabilidad, reportar } from './lib/observability'
 import { applyTheme, seguirAlSistema, tema } from './lib/theme'
-import { modoDeArranque, type Arranque } from './prerender/modo-de-arranque'
+import {
+  cargarParaHidratar,
+  estaRedirigiendo,
+  modoDeArranque,
+  type Arranque,
+} from './prerender/modo-de-arranque'
 import { queryClient, router } from './router'
 import './styles.css'
 
 const estadoDelRouter = (): Arranque['estado'] =>
   router.state.matches.find((match) => match.status !== 'success')?.status ?? 'success'
 
-// Cargar el router antes de hidratar. Si falla, la portada no se puede hidratar: se crea desde
-// cero, y el error queda reportado en vez de dejar una portada quieta sin app detrás.
-const cargarParaHidratar = async (): Promise<boolean> => {
-  try {
-    await router.load()
-    return true
-  } catch (error) {
-    reportar(error)
-    return false
-  }
-}
-
 // index.html trae la portada ya escrita; app.html, el resto de las rutas, llega vacío. La
 // portada no tiene loaders: con el router cargado, el primer render es igual al del prerender
 // y se puede hidratar sin serializar estado, que la CSP no dejaría pasar como script inline.
 // Sin top-level await: en la entrada, Rolldown parte el bundle en decenas de chunks.
 const arrancar = async (raiz: HTMLElement) => {
-  const traePortada = raiz.firstElementChild !== null && (await cargarParaHidratar())
+  const traePortada =
+    raiz.firstElementChild !== null && (await cargarParaHidratar(() => router.load(), reportar))
 
   const modo = modoDeArranque({
     traePortada,
@@ -58,17 +52,15 @@ const arrancar = async (raiz: HTMLElement) => {
         console.error(error)
       },
     })
+    // Hasta acá la portada se ve pero no responde: web/scripts/comprobar-portada.mjs mide esto.
+    performance.mark('portada-hidratada')
   } else {
     raiz.replaceChildren()
     createRoot(raiz).render(app)
   }
 }
 
-// public/antes-de-pintar.js marca el documento cuando manda a quien tuvo sesión al tablero: esa
-// página ya viene en camino, y arrancar acá sería pedir la sesión dos veces para nada.
-const redirigiendo = document.documentElement.dataset.redirigiendo !== undefined
-
-if (!redirigiendo) {
+if (!estaRedirigiendo(document.documentElement)) {
   // Antes del render: un error durante el primer montaje también tiene que reportarse, y es
   // justo cuando más se rompe.
   iniciarObservabilidad()
