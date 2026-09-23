@@ -50,6 +50,7 @@ export class UpdateDebtUseCase {
       kind: input.kind ?? props.kind,
       direction: input.direction ?? props.direction,
       budgetBucket: input.budgetBucket === undefined ? props.budgetBucket : input.budgetBucket,
+      notes: input.notes === undefined ? (props.notes ?? null) : input.notes,
     })
     if (isErr(updated)) throw new SemanticValidationError(updated.error.message)
 

@@ -1,9 +1,30 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common'
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Redirect,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
+import {
+  revisar,
+  TAMANO_MAXIMO_DOCUMENTO,
+  type RechazoDeArchivo,
+} from '../../../shared/archivos/archivo.js'
 import { fromMoney } from '../../../shared/http/money.schema.js'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { paginated, type Paginated } from '../../../shared/http/pagination.js'
 import { CreateDebtUseCase } from '../application/create-debt.use-case.js'
 import { DeleteDebtUseCase } from '../application/delete-debt.use-case.js'
+import { DocumentoDeDeudaUseCase } from '../application/documento-de-deuda.use-case.js'
 import { GetDebtUseCase } from '../application/get-debt.use-case.js'
 import { GetPayoffPlanUseCase } from '../application/get-payoff-plan.use-case.js'
 import { GetScheduleUseCase } from '../application/get-schedule.use-case.js'
@@ -37,6 +58,19 @@ import {
 } from './schedule.schemas.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
+// Lo que multer deja en la petición, con lo que de verdad se usa.
+interface ArchivoSubido {
+  buffer: Buffer
+  mimetype: string
+  size: number
+}
+
+const MOTIVOS: Record<RechazoDeArchivo, string> = {
+  tipo: 'El documento tiene que ser un PDF o una foto.',
+  tamano: 'El documento no puede pesar más de 20 MB.',
+  vacio: 'Ese archivo está vacío.',
+}
+
 const utc = (date: string): Date => new Date(`${date}T00:00:00.000Z`)
 
 @Controller('debts')
@@ -51,6 +85,7 @@ export class DebtsController {
     private readonly simulateExtraPayment: SimulateExtraPaymentUseCase,
     private readonly getPayoffPlan: GetPayoffPlanUseCase,
     private readonly pagos: PagosDeDeudaUseCase,
+    private readonly documento: DocumentoDeDeudaUseCase,
   ) {}
 
   @Get()
@@ -128,6 +163,36 @@ export class DebtsController {
     @Body(new ZodValidationPipe(marcarCuotaPagadaSchema)) input: MarcarCuotaPagadaInput,
   ): Promise<DebtResponse> {
     return toDebtResponse(await this.pagos.marcarPagada(id, input), new Date())
+  }
+
+  // El contrato viaja en multipart, igual que el comprobante de un movimiento.
+  @Permiso('deuda', 'write')
+  @Post(':id/document')
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor('archivo', { limits: { fileSize: TAMANO_MAXIMO_DOCUMENTO } }))
+  async subirDocumento(
+    @Param('id') id: string,
+    @UploadedFile() archivo: ArchivoSubido | undefined,
+  ): Promise<DebtResponse> {
+    if (!archivo) throw new BadRequestException('No llegó ningún archivo.')
+    const rechazo = revisar(archivo, TAMANO_MAXIMO_DOCUMENTO)
+    if (rechazo) throw new BadRequestException(MOTIVOS[rechazo])
+
+    const debt = await this.documento.guardar(id, { contenido: archivo.buffer, tipo: archivo.mimetype })
+    return toDebtResponse(debt, new Date())
+  }
+
+  // Redirección al enlace firmado: el navegador lo pide directo al almacenamiento.
+  @Get(':id/document')
+  @Redirect()
+  async verDocumento(@Param('id') id: string): Promise<{ url: string }> {
+    return { url: await this.documento.enlace(id) }
+  }
+
+  @Permiso('deuda', 'write')
+  @Delete(':id/document')
+  async quitarDocumento(@Param('id') id: string): Promise<DebtResponse> {
+    return toDebtResponse(await this.documento.quitar(id), new Date())
   }
 
   @Permiso('deuda', 'write')

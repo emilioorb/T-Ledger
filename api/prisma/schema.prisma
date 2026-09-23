@@ -38,6 +38,10 @@ model Debt {
   kind           DebtKind
   direction      DebtDirection @default(BORROWED)
   budgetBucket   String?
+  // Texto libre en Markdown: lo que dice el contrato, lo que conviene recordar.
+  notes          String?
+  // El contrato u otro documento, guardado en el almacenamiento de archivos.
+  documentKey    String?
   createdAt      DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
   book           book          @relation(fields: [bookId], references: [id], onDelete: Cascade)

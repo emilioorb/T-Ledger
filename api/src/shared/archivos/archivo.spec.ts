@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { claveDeComprobante, esDelLibro, revisar, TAMANO_MAXIMO } from './archivo.js'
+import {
+  claveDeComprobante,
+  claveDeDocumentoDeDeuda,
+  esDelLibro,
+  revisar,
+  TAMANO_MAXIMO,
+  TAMANO_MAXIMO_DOCUMENTO,
+} from './archivo.js'
 
 describe('qué se acepta como comprobante', () => {
   it('una foto y un PDF pasan', () => {
@@ -58,5 +65,18 @@ describe('de qué libro es un comprobante', () => {
   it('una clave que se sale del árbol tampoco', () => {
     expect(esDelLibro('../../etc/passwd', 'lib_1')).toBe(false)
     expect(esDelLibro('libros/otro/../lib_1/x.png', 'lib_1')).toBe(false)
+  })
+})
+
+describe('el documento de una deuda', () => {
+  it('acepta un contrato escaneado más pesado que un comprobante', () => {
+    expect(revisar({ mimetype: 'application/pdf', size: TAMANO_MAXIMO + 1 }, TAMANO_MAXIMO_DOCUMENTO)).toBeNull()
+    expect(revisar({ mimetype: 'application/pdf', size: TAMANO_MAXIMO_DOCUMENTO + 1 }, TAMANO_MAXIMO_DOCUMENTO)).toBe('tamano')
+  })
+
+  it('se guarda bajo el libro, aparte de los comprobantes', () => {
+    const clave = claveDeDocumentoDeDeuda('lib_1', 'deuda_1', 'application/pdf', 'abc123')
+    expect(clave).toBe('libros/lib_1/documentos/deudas/deuda_1-abc123.pdf')
+    expect(esDelLibro(clave, 'lib_1')).toBe(true)
   })
 })

@@ -18,11 +18,18 @@ export const TIPOS_ACEPTADOS: Record<string, string> = {
 // arriba es alguien subiendo otra cosa.
 export const TAMANO_MAXIMO = 5 * 1024 * 1024
 
+// Veinte para los documentos de una deuda: un contrato escaneado de varias hojas pasa con
+// facilidad de los cinco megas de una foto.
+export const TAMANO_MAXIMO_DOCUMENTO = 20 * 1024 * 1024
+
 export type RechazoDeArchivo = 'tipo' | 'tamano' | 'vacio'
 
-export const revisar = (archivo: { mimetype: string; size: number }): RechazoDeArchivo | null => {
+export const revisar = (
+  archivo: { mimetype: string; size: number },
+  tope: number = TAMANO_MAXIMO,
+): RechazoDeArchivo | null => {
   if (archivo.size === 0) return 'vacio'
-  if (archivo.size > TAMANO_MAXIMO) return 'tamano'
+  if (archivo.size > tope) return 'tamano'
   if (!(archivo.mimetype in TIPOS_ACEPTADOS)) return 'tipo'
   return null
 }
@@ -40,6 +47,15 @@ export const claveDeComprobante = (
   mimetype: string,
   azar: string,
 ): string => `libros/${bookId}/comprobantes/${movementId}-${azar}.${TIPOS_ACEPTADOS[mimetype]}`
+
+// El contrato o cualquier documento de una deuda. Misma regla que el comprobante: el libro
+// adelante y un nombre que no viene de quien sube.
+export const claveDeDocumentoDeDeuda = (
+  bookId: string,
+  debtId: string,
+  mimetype: string,
+  azar: string,
+): string => `libros/${bookId}/documentos/deudas/${debtId}-${azar}.${TIPOS_ACEPTADOS[mimetype]}`
 
 // Un comprobante pertenece al libro que dice su clave. Se comprueba antes de firmar el enlace
 // de lectura: sin esto, quien conozca la clave de otro libro podría pedir su factura y el

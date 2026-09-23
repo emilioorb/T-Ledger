@@ -35,6 +35,10 @@ export interface DebtProps {
   // Opcional al crear: una deuda nueva no tiene pagos. En orden y sin huecos: el pago n es el
   // de la cuota n.
   readonly payments?: readonly DebtPayment[]
+  // Notas libres de quien lleva la deuda. No entran en ningún cálculo.
+  readonly notes?: string | null
+  // Dónde está guardado el contrato, si se adjuntó.
+  readonly documentKey?: string | null
 }
 
 export class Debt {
@@ -76,6 +80,12 @@ export class Debt {
   get direction(): DebtDirection { return this.props.direction }
   get budgetBucket(): string | null { return this.props.budgetBucket }
   get payments(): readonly DebtPayment[] { return this.props.payments ?? [] }
+  get notes(): string | null { return this.props.notes ?? null }
+  get documentKey(): string | null { return this.props.documentKey ?? null }
+
+  withDocumentKey(documentKey: string | null): Debt {
+    return new Debt({ ...this.props, documentKey })
+  }
 
   isBorrowed(): boolean { return this.props.direction === 'BORROWED' }
 

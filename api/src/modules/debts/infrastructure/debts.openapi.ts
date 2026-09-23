@@ -70,6 +70,23 @@ export const debtsOpenApiPaths: ZodOpenApiPathsObject = {
       responses: { 201: { description: 'Deuda con la cuota saldada', ...json(debtResponseSchema) } },
     },
   },
+  '/debts/{id}/document': {
+    post: {
+      summary: 'Adjunta el contrato de la deuda (PDF o foto, hasta 20 MB) en multipart/form-data, campo `archivo`',
+      responses: {
+        200: { description: 'Deuda con documento', ...json(debtResponseSchema) },
+        400: { description: 'El archivo no es un PDF o una foto, está vacío o pesa de más' },
+      },
+    },
+    get: {
+      summary: 'Redirige al enlace firmado del documento',
+      responses: { 302: { description: 'Enlace de lectura' }, 404: { description: 'Sin documento' } },
+    },
+    delete: {
+      summary: 'Quita el documento de la deuda',
+      responses: { 200: { description: 'Deuda sin documento', ...json(debtResponseSchema) } },
+    },
+  },
   '/debts/{id}/payments/last': {
     delete: {
       summary: 'Deshace el último pago y anula su movimiento, si tiene',

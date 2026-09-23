@@ -16,6 +16,7 @@ export const createDebtSchema = z
     kind: z.enum(DEBT_KINDS),
     direction: z.enum(['BORROWED', 'LENT']),
     budgetBucket: nameText.nullable(),
+    notes: z.string().max(20_000).nullable().default(null),
   })
   .meta({ id: 'CreateDebtInput', title: 'CreateDebtInput' })
 
@@ -50,6 +51,9 @@ export const debtResponseSchema = z
     kind: z.enum(DEBT_KINDS),
     direction: z.enum(['BORROWED', 'LENT']),
     budgetBucket: z.string().nullable(),
+    notes: z.string().nullable(),
+    // Si tiene contrato adjunto. La clave no sale: se pide el enlace firmado a `/document`.
+    hasDocument: z.boolean(),
     monthlyPayment: moneySchema,
     totalInterest: moneySchema,
     payoffDate: isoDate,

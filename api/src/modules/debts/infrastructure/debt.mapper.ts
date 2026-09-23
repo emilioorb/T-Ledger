@@ -21,6 +21,8 @@ export interface DebtRow {
   direction: DebtDirection
   budgetBucket: string | null
   payments?: { installmentNumber: number; date: Date; movementId: string | null }[]
+  notes: string | null
+  documentKey: string | null
 }
 
 export const toDomain = (row: DebtRow): Debt => {
@@ -40,6 +42,8 @@ export const toDomain = (row: DebtRow): Debt => {
       kind: row.kind,
       direction: row.direction,
       budgetBucket: row.budgetBucket,
+      notes: row.notes,
+      documentKey: row.documentKey,
       payments: (row.payments ?? []).map(
         ({ installmentNumber, date, movementId }): DebtPayment => ({ installmentNumber, date, movementId }),
       ),
@@ -62,4 +66,6 @@ export const toRow = (
   kind: debt.kind,
   direction: debt.direction,
   budgetBucket: debt.budgetBucket,
+  notes: debt.notes,
+  documentKey: debt.documentKey,
 })

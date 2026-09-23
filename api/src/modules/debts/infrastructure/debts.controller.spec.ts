@@ -175,6 +175,22 @@ describe('GET, PATCH y DELETE /api/v1/debts/:id', () => {
     expect(response.body.termMonths).toBe(120)
   })
 
+  it('guarda notas, las devuelve y las borra con null', async () => {
+    const created = await request(app.getHttpServer()).post('/api/v1/debts').send(nuevaDeuda)
+    expect(created.body.notes).toBeNull()
+
+    const conNotas = await request(app.getHttpServer())
+      .patch(`/api/v1/debts/${created.body.id}`)
+      .send({ notes: '## Contrato\n- Tasa **variable**' })
+    expect(conNotas.body.notes).toBe('## Contrato\n- Tasa **variable**')
+    expect(conNotas.body.name).toBe(nuevaDeuda.name)
+
+    const sinNotas = await request(app.getHttpServer())
+      .patch(`/api/v1/debts/${created.body.id}`)
+      .send({ notes: null })
+    expect(sinNotas.body.notes).toBeNull()
+  })
+
   it('borra y luego devuelve 404', async () => {
     const created = await request(app.getHttpServer()).post('/api/v1/debts').send(nuevaDeuda)
 
