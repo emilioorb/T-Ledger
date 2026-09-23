@@ -13,16 +13,35 @@ sin leerla entera. Lo que está antes de la primera entrega, como este texto, no
 ### Nuevo
 
 - **T-Ledger se instala como app** en el teléfono y en la compu: abre en su propia ventana,
-  sin la barra del navegador, y arranca rápido porque la interfaz queda guardada.
-- **Nimbo es el ícono**, tímido, en blanco sobre negro. También en la pestaña del navegador.
+  sin la barra del navegador, y arranca rápido porque la interfaz queda guardada. El ícono es
+  Nimbo, tímido, en blanco sobre negro.
 - **Aviso de versión nueva.** Después de cada entrega la app lo dice y se actualiza cuando
   tocás «Actualizar», nunca sola: lo que estés escribiendo no se pierde.
+- **El pago de cada cuota.** Registrarlo anota el gasto en la contabilidad; las que pagaste
+  antes de empezar el libro se marcan sin movimiento, y el último pago se puede deshacer. La
+  tabla marca cada cuota como pagada, atrasada o pendiente.
+- **Notas y contrato de una deuda**, en un modal desde su detalle: lo que conviene recordar,
+  en Markdown, y el `PDF` del contrato adjunto.
+- **Dar acceso con una invitación.** Desde Cuenta mandás un enlace y la otra persona se
+  registra con su propia contraseña.
 
 ### Mejorado
 
+- **El saldo de una deuda sale de lo que pagaste**, no del calendario: una cuota atrasada se
+  sigue debiendo. El detalle muestra el saldo pendiente y cuántas cuotas quedan, y «Capital»
+  pasa a llamarse «Monto original», como en el estado de cuenta.
+- **Las metas se pausan** desde su tarjeta, y se reactivan cuando quieras.
+- **Un libro que ya no usás se elimina**, con la contraseña de quien lo creó.
 - **Sin conexión, la app lo explica** en vez de quedarse cargando, y vuelve sola cuando
   vuelve la red. Tus cifras no se guardan en el dispositivo: siguen solo en el servidor.
 - **Si una pantalla no puede cargar**, lo dice en castellano y ofrece reintentar.
+
+### Corregido
+
+- **Anular el gasto de una cuota** desde Movimientos no la dejaba otra vez sin pagar.
+- **Borrar un libro o una deuda** dejaba guardados sus comprobantes y contratos.
+- **Volver con la sesión abierta** pasaba por la portada en vez de entrar directo.
+- **Un libro sin presupuesto armado** mostraba el tablero como si hubiera fallado.
 
 ## 2026-09-22 · v1.0.0
 
