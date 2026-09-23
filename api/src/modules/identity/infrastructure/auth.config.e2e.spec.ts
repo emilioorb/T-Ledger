@@ -125,3 +125,33 @@ describe('una sesión nueva', { timeout: HASHEO }, () => {
     expect(sesion?.session.activeOrganizationId).toBe(personal.organizationId)
   })
 })
+
+describe('la invitación a la app', () => {
+  const invitarALaApp = (email: string, expiresAt: Date) =>
+    prisma.accessInvitation.create({
+      data: { email, expiresAt, createdBy: LIBRO_DE_PRUEBA.userId },
+    })
+
+  it('deja registrarse con cuenta propia, sin entrar al libro de nadie, y se gasta', async () => {
+    await invitarALaApp('pidio-acceso@tape.test', new Date(Date.now() + 86_400_000))
+
+    const { user } = await auth.api.signUpEmail({
+      body: { name: 'Pidió acceso', email: 'pidio-acceso@tape.test', password: 'una-clave-larga' },
+    })
+
+    const libros = await prisma.bookMember.findMany({ where: { userId: user.id }, include: { book: true } })
+    expect(libros.map((m) => m.book.name)).toEqual(['Personal'])
+    const invitacion = await prisma.accessInvitation.findFirstOrThrow({ where: { email: 'pidio-acceso@tape.test' } })
+    expect(invitacion.usedAt).not.toBeNull()
+  })
+
+  it('vencida no deja registrarse', async () => {
+    await invitarALaApp('llego-tarde@tape.test', new Date(Date.now() - 86_400_000))
+
+    await expect(
+      auth.api.signUpEmail({
+        body: { name: 'Tarde', email: 'llego-tarde@tape.test', password: 'una-clave-larga' },
+      }),
+    ).rejects.toThrow()
+  })
+})

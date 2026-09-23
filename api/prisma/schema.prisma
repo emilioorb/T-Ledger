@@ -616,3 +616,18 @@ model bookInvitation {
   @@index([email])
   @@map("bookInvitation")
 }
+
+// La invitación a la app: deja registrarse a un correo con su propia cuenta, sin meterlo en
+// ningún libro. No lleva libro porque es de la instancia; la genera quien la administra para
+// quien pidió acceso. Se gasta al registrarse y vence sola.
+model AccessInvitation {
+  id        String    @id @default(uuid(7))
+  email     String
+  expiresAt DateTime  @db.Timestamptz(3)
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdBy String
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([email])
+  @@map("access_invitations")
+}

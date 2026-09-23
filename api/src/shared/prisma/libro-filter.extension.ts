@@ -16,6 +16,8 @@ export const SIN_LIBRO = new Set([
   'book',
   'bookMember',
   'bookInvitation',
+  // La invitación a la app es de la instancia: deja registrarse sin entrar a ningún libro.
+  'AccessInvitation',
 ])
 
 const ESCRIBEN = new Set(['create', 'createMany', 'createManyAndReturn', 'upsert'])

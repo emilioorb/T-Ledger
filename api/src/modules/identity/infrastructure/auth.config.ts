@@ -111,14 +111,27 @@ export const crearAuth = (
       user: {
         create: {
           before: async (usuario) => {
-            const [cuentas, invitaciones] = await Promise.all([
+            const [cuentas, aUnLibro, aLaApp] = await Promise.all([
               prisma.authUser.count(),
               prisma.bookInvitation.findMany({
                 where: { email: usuario.email },
                 select: { status: true, expiresAt: true },
               }),
+              prisma.accessInvitation.findMany({
+                where: { email: usuario.email },
+                select: { usedAt: true, expiresAt: true },
+              }),
             ])
 
+            // Las dos invitaciones abren la misma puerta; la de la app no mete a nadie en un
+            // libro. Una gastada cuenta como aceptada, igual que la de un libro.
+            const invitaciones = [
+              ...aUnLibro,
+              ...aLaApp.map(({ usedAt, expiresAt }) => ({
+                status: usedAt ? 'accepted' : 'pending',
+                expiresAt,
+              })),
+            ]
             const permitido = puedeRegistrarse(
               { esLaPrimeraCuenta: cuentas === 0, invitaciones },
               new Date(),
@@ -130,6 +143,11 @@ export const crearAuth = (
           // directo a la base para que corra `afterCreateOrganization` y el libro salga con
           // su plan de cuentas. El slug lleva el id porque es único en toda la instancia.
           after: async (usuario) => {
+            // La invitación a la app sirve una sola vez: se gasta con la cuenta que abrió.
+            await prisma.accessInvitation.updateMany({
+              where: { email: usuario.email, usedAt: null },
+              data: { usedAt: new Date() },
+            })
             await auth.api.createOrganization({
               body: { name: 'Personal', slug: `personal-${usuario.id}`, userId: usuario.id },
             })

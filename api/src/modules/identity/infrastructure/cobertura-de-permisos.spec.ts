@@ -31,7 +31,11 @@ const metodosDeEscrituraSinPermiso = (): MetodoSinPermiso[] => {
       // El decorador de permiso va pegado al del verbo, arriba o abajo. Se miran tres líneas
       // a cada lado para no depender del orden en que estén escritos.
       const vecindario = lineas.slice(Math.max(0, i - 3), i + 4).join('\n')
-      if (!vecindario.includes('@Permiso(')) {
+      // Lo de la instancia —invitar a la app, los números del servidor— no es de ningún libro
+      // y no tiene rol: lo cuida `AdminGuard`. Cuenta como protección declarada, igual que el
+      // permiso; lo que no puede pasar es un endpoint que escribe sin ninguna de las dos.
+      const protegido = vecindario.includes('@Permiso(') || vecindario.includes('@UseGuards(AdminGuard)')
+      if (!protegido) {
         sueltos.push({ archivo: relativo, linea: i + 1, verbo: escribe[1]! })
       }
     })
@@ -42,12 +46,12 @@ const metodosDeEscrituraSinPermiso = (): MetodoSinPermiso[] => {
 // Esta es la guardia de la segunda capa. Sin ella, el endpoint número cuarenta que alguien
 // agregue dentro de seis meses va a quedar sin rol que lo cuide, y nadie se va a dar cuenta
 // hasta que quien solo debía mirar edite un movimiento.
-describe('todo endpoint que escribe declara su permiso', () => {
+describe('todo endpoint que escribe declara su protección', () => {
   it('se encontraron los controladores, si no el test no prueba nada', () => {
     expect(controladores.length).toBeGreaterThan(10)
   })
 
-  it('ningún POST, PATCH, PUT ni DELETE quedó sin @Permiso', () => {
+  it('ningún POST, PATCH, PUT ni DELETE quedó sin @Permiso ni AdminGuard', () => {
     expect(metodosDeEscrituraSinPermiso()).toEqual([])
   })
 })
