@@ -144,8 +144,10 @@ try {
   // Rendimiento con la red y la CPU de PageSpeed móvil (4G lento: 150 ms y 1,6 Mbps; CPU 4×).
   // Mediana de tres cargas: avisa si pasa del presupuesto de CONSTRAINTS.md, no corta la cadena.
   const medir = async () => {
-    const contexto = await navegador.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, serviceWorkers: 'block' })
+    const contexto = await navegador.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, hasTouch: true, serviceWorkers: 'block' })
     const pagina = await contexto.newPage()
+    let pidioElFondo = false
+    pagina.on('request', (pedido) => { if (pedido.url().includes('fondo-de-puntos')) pidioElFondo = true })
     const cdp = await contexto.newCDPSession(pagina)
     await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 })
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
@@ -158,10 +160,11 @@ try {
       })).observe({ type: 'largest-contentful-paint', buffered: true })
     }))
     await contexto.close()
-    return medida
+    return { ...medida, pidioElFondo }
   }
   const medidas = [await medir(), await medir(), await medir()]
   const mediana = (valores) => Math.round([...valores].sort((a, b) => a - b)[1])
+  revisar(medidas.every((m) => !m.pidioElFondo), 'en una pantalla táctil no se baja three.js (lleva-fondo.ts)')
   const lcp = mediana(medidas.map((m) => m.lcp))
   const hidratada = mediana(medidas.map((m) => m.hidratada))
   // Medidos el 2026-09-23 con este mismo método (CONSTRAINTS.md): el peor LCP de cinco cargas fue

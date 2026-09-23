@@ -1,6 +1,7 @@
 import { lazy, Suspense, useLayoutEffect, type ReactNode } from 'react'
 import { forceTheme, temaDeEntrada } from '@/lib/theme'
 import { useHidratado } from '@/lib/use-hidratado'
+import { llevaFondo } from './lleva-fondo'
 
 // Aparte porque arrastra Three.js: la primera pantalla que ve un desconocido no tiene por qué
 // esperarlo. La página pinta en papel liso y los puntos llegan después.
@@ -21,11 +22,12 @@ export const MarcoPublico = ({ children }: { children: ReactNode }) => {
   // prerender (claro), y forzarla pintaría un cuadro claro a quien eligió oscuro.
   useLayoutEffect(() => forceTheme(temaDeEntrada.leer()), [tema])
   // El lienzo no va en el HTML de la portada: se monta cuando ya hidrató, y entra con su fundido.
-  const hidratado = useHidratado()
+  // En pantallas táctiles no se monta (ver lleva-fondo.ts).
+  const conFondo = useHidratado() && llevaFondo()
 
   return (
     <>
-      {hidratado && (
+      {conFondo && (
         <Suspense fallback={null}>
           <FondoDePuntos tema={tema} />
         </Suspense>
