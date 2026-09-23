@@ -37,3 +37,11 @@ describe('sinMarcas', () => {
     expect(sinMarcas('Tocá **Guardar** y `g h`, o [la guía](/guia)')).toBe('Tocá Guardar y g h, o la guía')
   })
 })
+
+describe('los títulos', () => {
+  it('se distinguen del texto: más grandes y con peso', () => {
+    render(<TextoMarkdown>{'## Montos\n\nUn párrafo.\n\n### Tasa'}</TextoMarkdown>)
+    expect(screen.getByRole('heading', { level: 2, name: 'Montos' })).toHaveClass('font-semibold')
+    expect(screen.getByRole('heading', { level: 3, name: 'Tasa' })).toHaveClass('font-semibold')
+  })
+})

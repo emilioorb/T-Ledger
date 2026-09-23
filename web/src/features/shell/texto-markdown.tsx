@@ -8,6 +8,18 @@ import { cn } from '@/lib/utils'
 // texto se perdía, el código va en mono
 // como toda cifra, y una tabla es la de siempre en chico.
 const PIEZAS: Components = {
+  // Los títulos traen su propio aire arriba y ninguno el primero: sin estilo, la hoja base de
+  // Tailwind los deja del tamaño y el peso del texto, y unas notas con secciones se leían como
+  // un solo bloque.
+  h1: ({ node: _node, ...props }) => (
+    <h1 className="mt-5 text-base font-semibold tracking-tight text-foreground first:mt-0" {...props} />
+  ),
+  h2: ({ node: _node, ...props }) => (
+    <h2 className="mt-5 text-base font-semibold tracking-tight text-foreground first:mt-0" {...props} />
+  ),
+  h3: ({ node: _node, ...props }) => (
+    <h3 className="mt-4 mb-1.5 text-sm font-semibold text-foreground first:mt-0" {...props} />
+  ),
   p: ({ node: _node, ...props }) => <p className="text-sm" {...props} />,
   strong: ({ node: _node, ...props }) => (
     <strong className="font-semibold text-foreground" {...props} />
