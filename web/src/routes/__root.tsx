@@ -16,6 +16,8 @@ import { auth } from '@/features/identity/auth-client'
 import { useAsegurarLibroActivo } from '@/features/identity/libro-activo'
 import { recuerdoDeSesion } from '@/features/identity/recuerdo-de-sesion'
 import { MarcoPublico } from '@/features/identity/marco-publico'
+import { AvisoDeVersion } from '@/features/pwa/aviso-de-version'
+import { AvisoSinConexion } from '@/features/pwa/aviso-sin-conexion'
 import { VigilanteDeSesion } from '@/features/identity/vigilante-de-sesion'
 import { copy as shell } from '@/features/shell/copy'
 import { copy as shortcuts } from '@/features/shortcuts/copy'
@@ -204,9 +206,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       select: (estado) => estado.matches.some((match) => esPublica(match.routeId)),
     })
 
+    // Los avisos de la app instalada van en los dos lados: una versión nueva o un corte de red
+    // pasan igual con sesión que sin ella.
+    const avisosDeLaApp = (
+      <>
+        <AvisoDeVersion />
+        <AvisoSinConexion />
+      </>
+    )
+
     if (enPublica) {
       return (
         <TooltipProvider delayDuration={300}>
+          {avisosDeLaApp}
           {/* También acá: el título de la pestaña es lo primero que lee un lector de pantalla
               al cambiar de ruta, y sin esto las pantallas sin sesión heredaban el título de
               donde vinieras. */}
@@ -223,6 +235,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     // sesión que cerrar, y un reloj corriendo ahí sería un temporizador vigilando a nadie.
     return (
       <TooltipProvider delayDuration={300}>
+        {avisosDeLaApp}
         <PrimaryActionProvider>
           <Shell />
           <VigilanteDeSesion />
