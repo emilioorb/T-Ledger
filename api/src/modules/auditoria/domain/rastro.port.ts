@@ -23,6 +23,9 @@ export type AccionAuditada =
   | 'crear'
   | 'editar'
   | 'aportar'
+  // Pagar una cuota tampoco es editar la deuda: el registro tiene que poder decir «pagó la
+  // cuota 2», no «editó CONAPE».
+  | 'pagar'
   | 'eliminar'
   | 'anular'
   | 'cerrar'

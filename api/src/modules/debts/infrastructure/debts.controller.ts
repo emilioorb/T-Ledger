@@ -8,6 +8,7 @@ import { GetDebtUseCase } from '../application/get-debt.use-case.js'
 import { GetPayoffPlanUseCase } from '../application/get-payoff-plan.use-case.js'
 import { GetScheduleUseCase } from '../application/get-schedule.use-case.js'
 import { ListDebtsUseCase } from '../application/list-debts.use-case.js'
+import { PagosDeDeudaUseCase } from '../application/pagos-de-deuda.use-case.js'
 import { SimulateExtraPaymentUseCase } from '../application/simulate-extra-payment.use-case.js'
 import { UpdateDebtUseCase } from '../application/update-debt.use-case.js'
 import { toDebtResponse } from './debt.presenter.js'
@@ -20,14 +21,18 @@ import {
   type ListDebtsQuery,
   type UpdateDebtInput,
 } from './debt.schemas.js'
-import { toProjectionResponse, toScheduleResponse } from './schedule.presenter.js'
+import { toDebtScheduleResponse, toProjectionResponse } from './schedule.presenter.js'
 import {
+  marcarCuotaPagadaSchema,
+  pagarCuotaSchema,
   payoffPlanQuerySchema,
   simulateExtraPaymentSchema,
+  type DebtScheduleResponse,
+  type MarcarCuotaPagadaInput,
+  type PagarCuotaInput,
   type PayoffPlanQuery,
   type PayoffPlanResponse,
   type ProjectionResponse,
-  type ScheduleResponse,
   type SimulateExtraPaymentInput,
 } from './schedule.schemas.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
@@ -45,6 +50,7 @@ export class DebtsController {
     private readonly getSchedule: GetScheduleUseCase,
     private readonly simulateExtraPayment: SimulateExtraPaymentUseCase,
     private readonly getPayoffPlan: GetPayoffPlanUseCase,
+    private readonly pagos: PagosDeDeudaUseCase,
   ) {}
 
   @Get()
@@ -100,8 +106,34 @@ export class DebtsController {
   }
 
   @Get(':id/schedule')
-  async schedule(@Param('id') id: string): Promise<ScheduleResponse> {
-    return toScheduleResponse(await this.getSchedule.execute(id))
+  async schedule(@Param('id') id: string): Promise<DebtScheduleResponse> {
+    return toDebtScheduleResponse(await this.getSchedule.execute(id), new Date())
+  }
+
+  // Paga la siguiente cuota y escribe su gasto en la contabilidad.
+  @Permiso('deuda', 'write')
+  @Post(':id/payments')
+  async pay(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(pagarCuotaSchema)) input: PagarCuotaInput,
+  ): Promise<DebtResponse> {
+    return toDebtResponse(await this.pagos.pagar(id, input), new Date())
+  }
+
+  // La salda sin movimiento: para lo que se pagó antes de llevar el libro.
+  @Permiso('deuda', 'write')
+  @Post(':id/payments/settled')
+  async settle(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(marcarCuotaPagadaSchema)) input: MarcarCuotaPagadaInput,
+  ): Promise<DebtResponse> {
+    return toDebtResponse(await this.pagos.marcarPagada(id, input), new Date())
+  }
+
+  @Permiso('deuda', 'write')
+  @Delete(':id/payments/last')
+  async undoPayment(@Param('id') id: string): Promise<DebtResponse> {
+    return toDebtResponse(await this.pagos.deshacerUltimo(id), new Date())
   }
 
   // 200 y no 201: simular no crea nada.

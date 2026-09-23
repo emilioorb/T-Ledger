@@ -110,6 +110,7 @@ import { ReportsController } from './infrastructure/reports.controller.js'
     AccountGuard,
     CreateMovementUseCase,
     CreateJournalEntryUseCase,
+    VoidMovementUseCase,
   ],
 })
 export class AccountingModule {}

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isoDate } from '../../../shared/http/date.schema.js'
 import { moneySchema } from '../../../shared/http/money.schema.js'
 
 export const installmentSchema = z
@@ -19,6 +20,34 @@ export const scheduleResponseSchema = z
     totalPaid: moneySchema,
   })
   .meta({ id: 'AmortizationSchedule', title: 'AmortizationSchedule' })
+
+// La tabla de una deuda real, con lo que pasó en cada cuota. La de una simulación no lo lleva:
+// ahí ninguna cuota se pagó todavía.
+export const debtInstallmentSchema = installmentSchema
+  .extend({
+    status: z.enum(['PAID', 'OVERDUE', 'PENDING']),
+    paidOn: z.string().nullable(),
+    // Falso en una cuota pagada antes de llevar el libro: está saldada, pero sin gasto que la
+    // respalde.
+    withMovement: z.boolean(),
+  })
+  .meta({ id: 'DebtInstallment', title: 'DebtInstallment' })
+
+export const debtScheduleResponseSchema = scheduleResponseSchema
+  .extend({ installments: z.array(debtInstallmentSchema) })
+  .meta({ id: 'DebtSchedule', title: 'DebtSchedule' })
+
+export const pagarCuotaSchema = z
+  .object({
+    date: isoDate,
+    paymentAccountCode: z.string().regex(/^\d{3,10}$/),
+    categoryId: z.string().min(1),
+  })
+  .meta({ id: 'PagarCuotaInput', title: 'PagarCuotaInput' })
+
+export const marcarCuotaPagadaSchema = z
+  .object({ date: isoDate })
+  .meta({ id: 'MarcarCuotaPagadaInput', title: 'MarcarCuotaPagadaInput' })
 
 export const simulateExtraPaymentSchema = z
   .object({
@@ -64,5 +93,8 @@ export const payoffPlanResponseSchema = z
 export type SimulateExtraPaymentInput = z.infer<typeof simulateExtraPaymentSchema>
 export type PayoffPlanQuery = z.infer<typeof payoffPlanQuerySchema>
 export type ScheduleResponse = z.infer<typeof scheduleResponseSchema>
+export type DebtScheduleResponse = z.infer<typeof debtScheduleResponseSchema>
+export type PagarCuotaInput = z.infer<typeof pagarCuotaSchema>
+export type MarcarCuotaPagadaInput = z.infer<typeof marcarCuotaPagadaSchema>
 export type ProjectionResponse = z.infer<typeof projectionResponseSchema>
 export type PayoffPlanResponse = z.infer<typeof payoffPlanResponseSchema>

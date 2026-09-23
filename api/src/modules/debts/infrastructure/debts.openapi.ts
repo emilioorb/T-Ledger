@@ -1,9 +1,11 @@
 import type { ZodOpenApiPathsObject } from 'zod-openapi'
 import { createDebtSchema, debtResponseSchema, updateDebtSchema } from './debt.schemas.js'
 import {
+  debtScheduleResponseSchema,
+  marcarCuotaPagadaSchema,
+  pagarCuotaSchema,
   payoffPlanResponseSchema,
   projectionResponseSchema,
-  scheduleResponseSchema,
   simulateExtraPaymentSchema,
 } from './schedule.schemas.js'
 
@@ -46,8 +48,32 @@ export const debtsOpenApiPaths: ZodOpenApiPathsObject = {
   },
   '/debts/{id}/schedule': {
     get: {
-      summary: 'Devuelve la tabla de amortización completa',
-      responses: { 200: { description: 'Tabla de amortización', ...json(scheduleResponseSchema) } },
+      summary: 'Devuelve la tabla de amortización, con el estado de cada cuota',
+      responses: { 200: { description: 'Tabla de amortización', ...json(debtScheduleResponseSchema) } },
+    },
+  },
+  '/debts/{id}/payments': {
+    post: {
+      summary: 'Paga la siguiente cuota y registra su gasto en la contabilidad',
+      requestBody: json(pagarCuotaSchema),
+      responses: {
+        201: { description: 'Deuda con la cuota pagada', ...json(debtResponseSchema) },
+        409: { description: 'El mes del pago está cerrado' },
+        422: { description: 'No quedan cuotas o la fecha es anterior al último pago' },
+      },
+    },
+  },
+  '/debts/{id}/payments/settled': {
+    post: {
+      summary: 'Salda la siguiente cuota sin movimiento, para lo pagado antes de llevar el libro',
+      requestBody: json(marcarCuotaPagadaSchema),
+      responses: { 201: { description: 'Deuda con la cuota saldada', ...json(debtResponseSchema) } },
+    },
+  },
+  '/debts/{id}/payments/last': {
+    delete: {
+      summary: 'Deshace el último pago y anula su movimiento, si tiene',
+      responses: { 200: { description: 'Deuda sin ese pago', ...json(debtResponseSchema) } },
     },
   },
   '/debts/{id}/simulate': {
