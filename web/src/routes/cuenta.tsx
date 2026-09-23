@@ -8,6 +8,7 @@ import { Seccion } from '@/features/cuenta/seccion'
 import { TuApariencia } from '@/features/cuenta/tu-apariencia'
 import { TuContrasena } from '@/features/cuenta/tu-contrasena'
 import { TusLibros } from '@/features/cuenta/tus-libros'
+import { DarAcceso } from '@/features/datos/dar-acceso'
 import { useResumenDeInstancia, useSoyAdmin } from '@/features/datos/use-datos'
 import { TusSesiones } from '@/features/cuenta/tus-sesiones'
 import { useActiveOrganization, useSession } from '@/features/identity/auth-client'
@@ -63,6 +64,9 @@ const CuentaScreen = () => {
 
         <div className="grid content-start gap-4">
           <TusSesiones tokenActual={sesion.session.token} />
+
+          {/* Solo para quien administra la instancia: a nadie más le toca decidir quién entra. */}
+          {soyAdmin?.admin ? <DarAcceso /> : null}
 
           {/* Al final de todo, que es donde va lo que se hace una vez y sin vuelta atrás. */}
           <BorrarCuenta />

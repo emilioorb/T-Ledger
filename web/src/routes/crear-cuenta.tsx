@@ -10,6 +10,7 @@ import { copy } from '@/features/identity/copy'
 import { gestoDeFormulario } from '@/features/identity/gesto'
 import { MarcoDeIdentidad } from '@/features/identity/marco-de-identidad'
 import { queryClient } from '@/router'
+import { correoDeLaBusqueda } from '@/features/datos/enlace-de-invitacion'
 
 // La pantalla que faltaba para que una invitación sirva de algo. Aceptar una invitación es una
 // llamada con sesión —Better Auth la resuelve bajo su middleware de sesión, no a partir del
@@ -22,9 +23,10 @@ import { queryClient } from '@/router'
 // cambia es si después hay una invitación que aceptar.
 const CrearCuentaScreen = () => {
   const navegar = useNavigate()
-  const { invitacion } = Route.useSearch()
+  const { invitacion, correo: correoDelEnlace } = Route.useSearch()
   const [nombre, setNombre] = useState('')
-  const [correo, setCorreo] = useState('')
+  // Con el correo del enlace de invitación ya puesto: es el que la invitación deja pasar.
+  const [correo, setCorreo] = useState(correoDelEnlace ?? '')
   const [contrasena, setContrasena] = useState('')
   const [creando, setCreando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -157,10 +159,16 @@ interface Busqueda {
   // El id de la invitación, tal como viaja en el enlace que le llega al invitado. Sin él la
   // pantalla sigue sirviendo: es el caso de la primera cuenta.
   invitacion?: string
+  correo?: string
 }
 
 export const Route = createFileRoute('/crear-cuenta')({
   component: CrearCuentaScreen,
-  validateSearch: (busqueda: Record<string, unknown>): Busqueda =>
-    typeof busqueda.invitacion === 'string' ? { invitacion: busqueda.invitacion } : {},
+  validateSearch: (busqueda: Record<string, unknown>): Busqueda => {
+    const correo = correoDeLaBusqueda(busqueda)
+    return {
+      ...(typeof busqueda.invitacion === 'string' ? { invitacion: busqueda.invitacion } : {}),
+      ...(correo ? { correo } : {}),
+    }
+  },
 })

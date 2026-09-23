@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import type { components } from '@/lib/api-types.gen'
 
@@ -23,3 +23,31 @@ export const useResumenDeInstancia = (habilitada: boolean) =>
     enabled: habilitada,
     queryFn: () => apiFetch<Resumen>('/admin/summary'),
   })
+
+type InvitacionALaApp = components['schemas']['InvitacionALaApp']
+
+const INVITACIONES = ['admin', 'invitations'] as const
+
+export const useInvitacionesALaApp = (habilitada: boolean) =>
+  useQuery({
+    queryKey: INVITACIONES,
+    enabled: habilitada,
+    queryFn: () => apiFetch<InvitacionALaApp[]>('/admin/invitations'),
+  })
+
+export const useInvitarALaApp = () => {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (email: string) =>
+      apiFetch<InvitacionALaApp>('/admin/invitations', { method: 'POST', body: JSON.stringify({ email }) }),
+    onSuccess: () => client.invalidateQueries({ queryKey: INVITACIONES }),
+  })
+}
+
+export const useCancelarInvitacionALaApp = () => {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiFetch<void>(`/admin/invitations/${id}`, { method: 'DELETE' }),
+    onSuccess: () => client.invalidateQueries({ queryKey: INVITACIONES }),
+  })
+}

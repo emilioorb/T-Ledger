@@ -2996,6 +2996,121 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Las invitaciones a la app que siguen esperando */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Pendientes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InvitacionALaApp"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Invita a un correo a registrarse en la app, sin meterlo en ningún libro */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["InvitarALaAppInput"];
+                };
+            };
+            responses: {
+                /** @description Invitación vigente por una semana */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InvitacionALaApp"];
+                    };
+                };
+                /** @description No administrás esta instancia */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Ese correo ya tiene cuenta */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/invitations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cancela una invitación a la app sin usar */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cancelada */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No existe o ya se usó */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/summary": {
         parameters: {
             query?: never;
@@ -3318,6 +3433,11 @@ export interface components {
         /** VaciarLibro */
         VaciarLibro: {
             password: string;
+        };
+        /** InvitarALaAppInput */
+        InvitarALaAppInput: {
+            /** Format: email */
+            email: string;
         };
         /** Debt */
         Debt: {
@@ -3777,6 +3897,12 @@ export interface components {
         /** SoyAdmin */
         SoyAdmin: {
             admin: boolean;
+        };
+        /** InvitacionALaApp */
+        InvitacionALaApp: {
+            id: string;
+            email: string;
+            expiresAt: string;
         };
         /** ResumenDeInstancia */
         ResumenDeInstancia: {
