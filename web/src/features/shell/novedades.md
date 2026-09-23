@@ -8,6 +8,20 @@ Cada entrega abre con `## AAAA-MM-DD · vX.Y.Z` y lleva hasta tres grupos: `### 
 listas anidadas y tablas. La negrita marca **de qué** habla cada nota, para recorrer la lista
 sin leerla entera. Lo que está antes de la primera entrega, como este texto, no se muestra.
 
+## 2026-09-23 · v1.2.0
+
+### Mejorado
+
+- **La portada aparece enseguida.** Llega escrita desde el servidor y se lee antes de que
+  termine de cargar la app: en un teléfono lento, de unos cuatro segundos a uno o dos.
+- **En el teléfono la portada va en papel liso**, sin el campo de puntos, que era lo que más
+  la trababa al cargar. Con mouse, los puntos siguen.
+- **«Pedir acceso» anda desde el primer momento**: si tocás antes de que la página termine de
+  cargar, se abre tu correo con el mensaje listo.
+- **La app instalada abre directo en el tablero**, sin pasar por la portada.
+- **Los reportes de errores cuidan más lo que hacés**: ya no incluyen clics, lo que escribiste
+  ni los filtros de las pantallas.
+
 ## 2026-09-23 · v1.1.0
 
 ### Nuevo
