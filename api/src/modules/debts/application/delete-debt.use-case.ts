@@ -1,4 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
+import { ALMACENAMIENTO, type Almacenamiento } from '../../../shared/archivos/almacenamiento.port.js'
 import { NotFoundError } from '../../../shared/http/api-error.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
@@ -6,10 +7,13 @@ import { DEBT_REPOSITORY, type DebtRepository } from '../domain/debt-repository.
 
 @Injectable()
 export class DeleteDebtUseCase {
+  private readonly logger = new Logger(DeleteDebtUseCase.name)
+
   constructor(
     @Inject(DEBT_REPOSITORY) private readonly debts: DebtRepository,
     @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
     @Inject(RASTRO) private readonly rastro: Rastro,
+    @Inject(ALMACENAMIENTO) private readonly archivos: Almacenamiento,
   ) {}
 
   async execute(id: string): Promise<void> {
@@ -27,5 +31,14 @@ export class DeleteDebtUseCase {
         ...(deuda ? { antes: deuda.toProps() } : {}),
       })
     })
+
+    // El contrato vive fuera de la base y la cascada no lo alcanza. Después del borrado y sin
+    // cortar si falla: la deuda ya no existe, y un archivo huérfano ocupa unos bytes.
+    const contrato = deuda?.documentKey
+    if (contrato) {
+      await this.archivos
+        .borrar(contrato)
+        .catch((error: unknown) => this.logger.error(`No se pudo borrar el contrato de la deuda ${id}`, error))
+    }
   }
 }

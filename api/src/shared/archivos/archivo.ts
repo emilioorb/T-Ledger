@@ -46,7 +46,7 @@ export const claveDeComprobante = (
   movementId: string,
   mimetype: string,
   azar: string,
-): string => `libros/${bookId}/comprobantes/${movementId}-${azar}.${TIPOS_ACEPTADOS[mimetype]}`
+): string => `${prefijoDeComprobantes(bookId)}${movementId}-${azar}.${TIPOS_ACEPTADOS[mimetype]}`
 
 // El contrato o cualquier documento de una deuda. Misma regla que el comprobante: el libro
 // adelante y un nombre que no viene de quien sube.
@@ -55,7 +55,7 @@ export const claveDeDocumentoDeDeuda = (
   debtId: string,
   mimetype: string,
   azar: string,
-): string => `libros/${bookId}/documentos/deudas/${debtId}-${azar}.${TIPOS_ACEPTADOS[mimetype]}`
+): string => `${prefijoDeDocumentosDeDeudas(bookId)}${debtId}-${azar}.${TIPOS_ACEPTADOS[mimetype]}`
 
 // Todo lo de un libro, para borrarlo junto con él. Lo que devuelve se le pasa a un borrado
 // masivo, así que se niega a armar algo que no sea exactamente la carpeta de un libro: un id
@@ -65,6 +65,14 @@ export const prefijoDelLibro = (bookId: string): string => {
   if (!/^[A-Za-z0-9_-]+$/.test(bookId)) throw new Error(`Id de libro inválido para un prefijo: «${bookId}»`)
   return `libros/${bookId}/`
 }
+
+// Las carpetas de lo que se va al vaciar un libro: vaciar borra todos los movimientos y todas
+// las deudas, así que sus comprobantes y contratos se van enteros. Heredan la guardia del libro.
+export const prefijoDeComprobantes = (bookId: string): string =>
+  `${prefijoDelLibro(bookId)}comprobantes/`
+
+export const prefijoDeDocumentosDeDeudas = (bookId: string): string =>
+  `${prefijoDelLibro(bookId)}documentos/deudas/`
 
 // Borrar en R2 acepta hasta mil claves por llamada.
 export const enTandas = <T>(elementos: readonly T[], tamano: number): T[][] =>

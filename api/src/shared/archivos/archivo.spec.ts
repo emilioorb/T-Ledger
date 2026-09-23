@@ -8,6 +8,8 @@ import {
   TAMANO_MAXIMO_DOCUMENTO,
   enTandas,
   prefijoDelLibro,
+  prefijoDeComprobantes,
+  prefijoDeDocumentosDeDeudas,
 } from './archivo.js'
 
 describe('qué se acepta como comprobante', () => {
@@ -98,5 +100,16 @@ describe('los archivos de un libro entero', () => {
   it('reparte las claves en tandas de mil, que es lo que acepta R2 por llamada', () => {
     const claves = Array.from({ length: 2501 }, (_, i) => `k${i}`)
     expect(enTandas(claves, 1000).map((tanda) => tanda.length)).toEqual([1000, 1000, 501])
+  })
+})
+
+describe('las carpetas que se van al vaciar un libro', () => {
+  it('comprobantes y contratos de deudas tienen su carpeta, y las claves caen adentro', () => {
+    expect(prefijoDeComprobantes('lib_1')).toBe('libros/lib_1/comprobantes/')
+    expect(prefijoDeDocumentosDeDeudas('lib_1')).toBe('libros/lib_1/documentos/deudas/')
+    expect(claveDeComprobante('lib_1', 'mov', 'image/png', 'a').startsWith(prefijoDeComprobantes('lib_1'))).toBe(true)
+    expect(
+      claveDeDocumentoDeDeuda('lib_1', 'deu', 'application/pdf', 'a').startsWith(prefijoDeDocumentosDeDeudas('lib_1')),
+    ).toBe(true)
   })
 })
