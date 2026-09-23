@@ -14,6 +14,7 @@ import { AppModule } from './app.module.js'
 import { openApiDocument } from './shared/http/openapi.document.js'
 import { loadEnv } from './shared/config/env.js'
 import { AllExceptionsFilter } from './shared/http/all-exceptions.filter.js'
+import { soloPorElProxy } from './shared/http/solo-por-el-proxy.js'
 
 const bootstrap = async (): Promise<void> => {
   const env = loadEnv(process.env)
@@ -21,6 +22,8 @@ const bootstrap = async (): Promise<void> => {
   // para sus propias rutas y repone los parsers para todas las demás. Verificado: los pipes de
   // Zod siguen viendo el cuerpo (ver ADR-001).
   const app = await NestFactory.create(AppModule, { bodyParser: false })
+  // Antes que todo lo demás: lo que no pasó por Vercel no llega ni a Better Auth.
+  app.use(soloPorElProxy(env.PROXY_SECRET))
   app.setGlobalPrefix('api/v1')
   // `credentials: true` porque la sesión viaja en una cookie: sin esto el navegador la
   // descarta en cuanto el front está en otro origen, y el síntoma es una sesión que se pierde

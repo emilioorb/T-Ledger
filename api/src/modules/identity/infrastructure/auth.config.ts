@@ -64,12 +64,11 @@ export const crearAuth = (
     // entrar de cualquiera trababan el ingreso de todos. Medido en producción:
     // - por Vercel, la del cliente viene en `x-vercel-forwarded-for` (Vercel la reescribe
     //   aunque el cliente mande otra), y `x-real-ip` es la de salida de Vercel;
-    // - directo a Railway, la del cliente viene en `x-real-ip`.
-    // Quien llame directo a Railway puede inventarse la primera; Vercel no documenta cómo
-    // verificar que una petición reescrita pasó por su proxy.
+    // Directo a Railway ya no llega nada: `soloPorElProxy` lo rechaza antes, así que esta
+    // cabecera siempre la puso Vercel y no quien llama.
     // https://www.better-auth.com/docs/concepts/rate-limit#connecting-ip-address
     advanced: {
-      ipAddress: { ipAddressHeaders: ['x-vercel-forwarded-for', 'x-real-ip'] },
+      ipAddress: { ipAddressHeaders: ['x-vercel-forwarded-for'] },
     },
     // Quién ejecuta, guardado antes de que corra el endpoint. Es lo que les falta a los
     // ganchos de organización para poder firmar un cambio de rol o una expulsión: ellos

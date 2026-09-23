@@ -26,12 +26,11 @@ describe('la IP con la que Better Auth limita las peticiones', () => {
     expect(getIP(porVercel, options)).toBe('192.0.2.44')
   })
 
-  it('directo a Railway es la que pone el borde de Railway', () => {
-    const directo = new Headers({
-      'x-forwarded-for': '192.0.2.44, 203.0.113.9',
-      'x-real-ip': '192.0.2.44',
-    })
+  // Directo a Railway ya no llega nada (lo corta `soloPorElProxy`), así que `x-real-ip` no se
+  // toma como la del cliente: quien llamara directo podría haberla elegido.
+  it('no toma la IP de x-real-ip', () => {
+    const directo = new Headers({ 'x-real-ip': '192.0.2.44' })
 
-    expect(getIP(directo, options)).toBe('192.0.2.44')
+    expect(getIP(directo, options)).not.toBe('192.0.2.44')
   })
 })

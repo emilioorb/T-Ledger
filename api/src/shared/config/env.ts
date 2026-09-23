@@ -35,6 +35,9 @@ const envSchema = z.object({
   // el que pide Better Auth para su derivación de claves.
   AUTH_SECRET: z.string().min(32, { error: 'AUTH_SECRET tiene que medir al menos 32 caracteres' }),
   AUTH_BASE_URL: z.string().default('http://localhost:3000'),
+  // El secreto que Vercel agrega a lo que reenvía (web/vercel.json). Con él puesto, la API
+  // rechaza todo lo que llega directo a Railway. Opcional: en local no hay proxy adelante.
+  PROXY_SECRET: z.string().min(32, { error: 'PROXY_SECRET tiene que medir al menos 32 caracteres' }).optional(),
   // Quién administra la **instancia**, separado por comas. No es el dueño de un libro: es
   // quien ve los números del servidor entero. Va en el entorno y no en la base a propósito:
   // un superusuario que se pueda crear desde una pantalla es un superusuario que alguien
