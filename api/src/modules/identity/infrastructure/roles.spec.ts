@@ -39,4 +39,11 @@ describe('roles del libro', () => {
     expect(owner.authorize({ movimiento: ['create'] }).success).toBe(true)
     expect(owner.authorize({ periodo: ['close'] }).success).toBe(true)
   })
+
+  // Renombrar pasa por Better Auth; borrar pasa por nuestro endpoint, que pide la contraseña y
+  // no deja a nadie sin libro. Con `organization: delete` el de Better Auth lo saltearía.
+  it('el dueño renombra por Better Auth pero no borra por ahí', () => {
+    expect(owner.authorize({ organization: ['update'] }).success).toBe(true)
+    expect(owner.authorize({ organization: ['delete'] }).success).toBe(false)
+  })
 })

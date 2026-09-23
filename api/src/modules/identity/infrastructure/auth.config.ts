@@ -80,6 +80,21 @@ export const crearAuth = (
     // archivo: las tablas de Better Auth no pasan por el filtro de libro, y acá todavía no hay
     // libro que filtrar —la persona ni siquiera existe—.
     databaseHooks: {
+      // Toda sesión nace parada en un libro. Sin esto, quien tiene dos o más recibía 403 en cada
+      // consulta hasta que el navegador elegía uno, y la pantalla quedaba vacía mientras tanto.
+      // El más viejo porque es el personal, que es de donde parte todo el mundo.
+      session: {
+        create: {
+          before: async (sesion) => {
+            const primera = await prisma.bookMember.findFirst({
+              where: { userId: sesion.userId },
+              orderBy: { createdAt: 'asc' },
+              select: { organizationId: true },
+            })
+            return { data: { ...sesion, activeOrganizationId: primera?.organizationId ?? null } }
+          },
+        },
+      },
       user: {
         create: {
           before: async (usuario) => {

@@ -60,6 +60,10 @@ export const editor = ac.newRole({
 // Lo del editor más la gente y el libro mismo.
 export const owner = ac.newRole({
   ...editor.statements,
+  // El renombre lo hace el endpoint de Better Auth, y él pregunta por su propio permiso, no por
+  // `libro: update`. Borrar no va acá a propósito: lo hace nuestro endpoint, que pide la
+  // contraseña y no deja a nadie sin libro, y con este permiso el de Better Auth lo saltearía.
+  organization: ['update'],
   libro: ['update', 'delete', 'vaciar'],
   member: ['create', 'update', 'delete'],
   invitation: ['create', 'cancel'],
