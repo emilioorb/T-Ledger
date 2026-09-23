@@ -25,6 +25,21 @@ const abrir = () => {
 }
 
 describe('PedirAcceso', () => {
+  it('antes de hidratar ya sirve: el disparador es un mailto con el asunto puesto', () => {
+    render(<PedirAcceso />)
+    const disparador = screen.getByRole('button', { name: copy.acceso.open })
+
+    expect(disparador.getAttribute('href')).toContain('mailto:')
+    expect(disparador.getAttribute('href')).toContain(encodeURIComponent(copy.acceso.subject))
+  })
+
+  it('ya hidratado, abre el modal en vez de ir al correo', () => {
+    render(<PedirAcceso />)
+    const navego = fireEvent.click(screen.getByRole('button', { name: copy.acceso.open }))
+
+    expect(navego).toBe(false)
+  })
+
   it('abre el modal con la dirección a la vista', async () => {
     abrir()
     expect(await screen.findByText(copy.acceso.email)).toBeInTheDocument()

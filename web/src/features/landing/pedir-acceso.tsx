@@ -49,9 +49,23 @@ export const PedirAcceso = () => {
       <DialogTrigger asChild>
         {/* En el teléfono la cabecera no aguanta la frase entera al lado de «Entrar». El
             nombre accesible es siempre el largo, que contiene al corto. */}
-        <Button variant="ghost" size="sm" aria-label={copy.acceso.open}>
-          <span className="sm:hidden">{copy.acceso.openCorto}</span>
-          <span className="hidden sm:inline">{copy.acceso.open}</span>
+        <Button variant="ghost" size="sm" asChild>
+          {/* Un mailto de verdad: la portada llega escrita en el HTML y se puede tocar antes
+              de que hidrate, y un botón sin JavaScript no hace nada. Ya hidratado abre el modal
+              (el estado lo prende acá: con `preventDefault` Radix no alterna). `role="button"`
+              porque lo que se anuncia es lo que hace casi siempre: abrir el diálogo. */}
+          <a
+            href={MAILTO}
+            role="button"
+            aria-label={copy.acceso.open}
+            onClick={(evento) => {
+              evento.preventDefault()
+              setAbierto(true)
+            }}
+          >
+            <span className="sm:hidden">{copy.acceso.openCorto}</span>
+            <span className="hidden sm:inline">{copy.acceso.open}</span>
+          </a>
         </Button>
       </DialogTrigger>
 
