@@ -7,6 +7,7 @@ export const copy = {
 
   acceso: {
     title: 'Dar acceso',
+    open: 'Dar acceso',
     hint: 'Para quien te pidió entrar. Se registra con su propia contraseña y arranca con su libro Personal, sin ver el tuyo.',
     email: 'Su correo',
     placeholder: 'nombre@correo.com',

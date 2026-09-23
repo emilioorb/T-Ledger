@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Seccion } from '@/features/cuenta/seccion'
+import { FormDialog } from '@/components/form-dialog'
 import { ApiError } from '@/lib/api'
 import { formatIsoDate } from '@/lib/dates'
 import { copy } from './copy'
@@ -21,6 +21,36 @@ const enDia = (iso: string) => formatIsoDate(iso.slice(0, 10))
 // Para quien pidió acceso por el «Pedir acceso» de la landing. El admin no crea la cuenta ni ve
 // ninguna contraseña: deja una invitación para ese correo y le pasa el enlace. La persona se
 // registra sola y arranca con su libro Personal.
+//
+// Se abre desde el contador de cuentas, que es donde el admin ya está mirando quién tiene
+// acceso: un enlace al final de esa frase, en la tinta principal y no en otro color, porque el
+// sistema es monocromo (DESIGN.md, la Regla del Monocromo).
+export const EnlaceDarAcceso = () => {
+  const [abierto, setAbierto] = useState(false)
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        className="font-medium text-foreground underline underline-offset-2 hover:decoration-2 pointer-coarse:py-1.5"
+      >
+        {copy.acceso.open}
+      </button>
+      <FormDialog
+        open={abierto}
+        onOpenChange={setAbierto}
+        title={copy.acceso.title}
+        description={copy.acceso.hint}
+        icon={UserPlusIcon}
+        className="sm:max-w-lg"
+      >
+        <DarAcceso />
+      </FormDialog>
+    </>
+  )
+}
+
 export const DarAcceso = () => {
   const [correo, setCorreo] = useState('')
   const [creada, setCreada] = useState<{ email: string; expiresAt: string } | null>(null)
@@ -57,7 +87,7 @@ export const DarAcceso = () => {
   }
 
   return (
-    <Seccion title={copy.acceso.title} hint={copy.acceso.hint} icon={UserPlusIcon}>
+    <div className="grid gap-5">
       <form onSubmit={enviar} className="flex flex-wrap items-end gap-2">
         <div className="min-w-56 flex-1 space-y-1.5">
           <Label htmlFor="acceso-correo">{copy.acceso.email}</Label>
@@ -129,6 +159,6 @@ export const DarAcceso = () => {
           </ul>
         )}
       </div>
-    </Seccion>
+    </div>
   )
 }

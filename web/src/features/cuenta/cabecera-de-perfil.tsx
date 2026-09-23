@@ -7,6 +7,7 @@ import { auth } from '@/features/identity/auth-client'
 import { Bloub } from '@/features/shell/bloub'
 import { formatLongDate } from '@/lib/dates'
 import { copy } from './copy'
+import { EnlaceDarAcceso } from '@/features/datos/dar-acceso'
 
 interface Props {
   name: string
@@ -113,7 +114,9 @@ export const CabeceraDePerfil = ({ name, email, libro, rol, desde, usuarios }: P
                 {usuarios}
               </p>
             )}
-            <p className="mt-1 max-w-[28ch] text-xs text-muted-foreground">{datos.usuariosHint}</p>
+            <p className="mt-1 max-w-[28ch] text-xs text-muted-foreground">
+              {datos.usuariosHint} <EnlaceDarAcceso />
+            </p>
           </div>
         ) : null}
       </div>
