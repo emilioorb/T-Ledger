@@ -66,7 +66,7 @@ export const copy = {
       direction: { label: 'Dirección', borrowed: 'La debo', lent: 'La presté' },
       name: { label: 'Nombre', hint: 'Cómo la reconocés. Por ejemplo, CONAPE.' },
       counterparty: { label: 'Contraparte', hint: 'A quién se le paga o quién debe pagar.' },
-      principal: { label: 'Capital', hint: 'El monto original, no el saldo de hoy.' },
+      principal: { label: 'Monto original', hint: 'Con cuánto arrancó la deuda, no el saldo de hoy.' },
       currency: { label: 'Moneda' },
       annualRate: { label: 'Tasa anual', hint: 'En porcentaje. Cero es válido.' },
       compounding: {
@@ -229,7 +229,7 @@ export const copy = {
 
   detail: {
     counterparty: 'Contraparte',
-    principal: 'Capital',
+    principal: 'Monto original',
     rate: 'Tasa anual',
     term: 'Plazo',
     remaining: (cuotas: number) =>
