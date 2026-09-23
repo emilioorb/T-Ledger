@@ -10,6 +10,7 @@ import { JournalEntry, type JournalLine } from '../domain/journal-entry.js'
 import { CHART_SEED } from './chart-seed.js'
 import { PrismaAccountRepository } from './prisma-account.repository.js'
 import { PrismaJournalRepository } from './prisma-journal.repository.js'
+import { conLibro, type ContextoDeLibro } from '../../../shared/libro/libro-context.js'
 import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
@@ -175,6 +176,25 @@ describe('PrismaJournalRepository', () => {
     expect(gastos[1]?.debits).toBe(30_000_00n)
     // El asiento en dólares del 17 no entra en la agregación de colones.
     expect(gastos.reduce((acc, total) => acc + total.debits, 0n)).toBe(55_000_00n)
+  })
+
+  it('la agregación diaria no suma los asientos de otro libro', async () => {
+    const otroLibro: ContextoDeLibro = { bookId: 'lib_otro', userId: 'usr_otro', rol: 'owner' }
+    await prisma.clientSinFiltroDeLibro.book.upsert({
+      where: { id: otroLibro.bookId },
+      create: { id: otroLibro.bookId, name: 'Otro', slug: 'otro', createdAt: new Date() },
+      update: {},
+    })
+    await conLibro(otroLibro, async () => {
+      await accounts.saveMany(CHART_SEED.map((props) => unwrap(Account.create(props))))
+      await repository.save(asientoDeGasto('ajeno', utc('2026-09-16'), 77_000_00n))
+    })
+    await repository.save(asientoDeGasto('a1', utc('2026-09-16'), 20_000_00n))
+
+    const porDia = await repository.totalsByAccountPerDay('CRC', utc('2026-09-30'))
+
+    const gastos = porDia.filter((total) => total.accountCode === '6100')
+    expect(gastos.reduce((acc, total) => acc + total.debits, 0n)).toBe(20_000_00n)
   })
 
   it('la agregación diaria excluye lo posterior a la fecha de corte', async () => {

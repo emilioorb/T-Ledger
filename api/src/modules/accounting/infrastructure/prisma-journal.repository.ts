@@ -138,8 +138,12 @@ export class PrismaJournalRepository implements JournalRepository {
   // La fecha vive en el asiento y el monto en la línea, así que Prisma no puede agrupar por
   // las dos con su groupBy. La agregación igual va en la base: traer una fila por línea para
   // sumarlas en Node sería justamente lo que el resto del puerto evita.
+  //
+  // Una consulta cruda no pasa por la extensión que filtra por libro (ADR-002): el `bookId` va
+  // escrito a mano en las dos tablas. Sin él, el patrimonio de un libro sumaba los de todos.
   async totalsByAccountPerDay(currency: CurrencyCode, at: Date): Promise<DailyAccountTotals[]> {
-    const rows = await this.prisma.$queryRaw<
+    const libro = this.prisma.libro
+    const rows = await this.prisma.client.$queryRaw<
       { accountCode: string; date: Date; side: string; total: bigint }[]
     >`
       SELECT l."accountCode" AS "accountCode",
@@ -148,7 +152,9 @@ export class PrismaJournalRepository implements JournalRepository {
              SUM(l."amountMinor")::bigint AS "total"
         FROM journal_lines l
         JOIN journal_entries e ON e."id" = l."entryId"
-       WHERE l."currency" = ${currency}
+       WHERE l."bookId" = ${libro}
+         AND e."bookId" = ${libro}
+         AND l."currency" = ${currency}
          AND e."date" <= ${at}
        GROUP BY l."accountCode", e."date", l."side"
     `
