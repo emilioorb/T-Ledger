@@ -35,12 +35,12 @@ notar nada.
 Revisado con doubt-driven-development (revisor adversarial con contexto nuevo): lo de abajo ya
 incorpora los 14 hallazgos. La tabla de conciliación está al final.
 
-- **Render al compilar.** Primero un build de Vite en modo SSR (`vite build --ssr`, salida en
-  `.prerender/`, sin el plugin de PWA) con una entrada `src/prerender.tsx` que arma el router
-  con historia en memoria en `/`, espera `router.load()` y hace
-  `renderToString(<RouterProvider />)`. Después el build de cliente, cuyo `transformIndexHtml`
-  mete ese HTML en el `#root` de `index.html` **antes** de que la PWA arme el precache.
-  `app.html` es una segunda entrada HTML de Vite, sin portada. Sin dependencias nuevas.
+- **Render al compilar.** El plugin `t-ledger:portada-prerenderizada` de `vite.config.ts`, en
+  `generateBundle`, corre un build SSR anidado (`src/prerender/entrada.tsx`, salida en
+  `.prerender/`, sin PWA ni `public/`), arma el router con historia en memoria en `/`, espera
+  `router.load()` y hace `renderToString(<App />)`. Escribe eso en el `#root` de `index.html`
+  y emite `app.html` sin portada, antes de que la PWA arme el precache. Cada build rehace la
+  portada: no se puede colar una vieja. Sin dependencias nuevas.
 - **Hidratar sin el estado del servidor.** La hidratación oficial de TanStack Router
   (`RouterServer`/`RouterClient`) es experimental fuera de TanStack Start y serializa el estado
   en un `<script>` inline, que la CSP bloquea. `/` no tiene loaders: el cliente hace
@@ -68,7 +68,7 @@ incorpora los 14 hallazgos. La tabla de conciliación está al final.
 - **Hidratar o crear.** `main.tsx` hidrata solo si `#root` trae un elemento
   (`firstElementChild`), el router terminó en `/` sin redirección ni error y la ubicación
   coincide. En cualquier otro caso vacía el contenedor y usa `createRoot`.
-- **Un chequeo del build real.** `web/scripts/prerender.mjs` abre `index.html` servido con las
+- **Un chequeo del build real.** `web/scripts/comprobar-portada.mjs` abre `index.html` servido con las
   cabeceras de producción y falla si la consola trae errores de hidratación o violaciones de
   CSP. Se suma a `check:full`.
 
@@ -110,7 +110,7 @@ Ninguna. El prerender tiene que andar sin cambiar lo que ve quien ya usa la app.
 
 | # | Hallazgo | Clase | Resolución |
 |---|---|---|---|
-| 1 | `app.html` inyectado después del precache | Accionable | Inyección en `transformIndexHtml`; `app.html` como entrada de Vite |
+| 1 | `app.html` inyectado después del precache | Accionable | Todo en `generateBundle`: `app.html` sale del `index.html` compilado (`aplicacionDesde`). Dos entradas HTML partían el bundle en 80 chunks, igual que un top-level await en `main.tsx`: ninguno de los dos quedó |
 | 2 | Destello de tema al hidratar y por `applyTheme` | Accionable | Tema guardado en `MarcoPublico`; sin `applyTheme` al hidratar |
 | 3 | Nadie destapa la portada oculta | Accionable | Redirección a `/tablero` en vez de ocultar |
 | 4 | `window`/`document` en render (sumadora, `useCurrentTheme`) | Accionable | Render sin APIs del navegador |
@@ -123,5 +123,28 @@ Ninguna. El prerender tiene que andar sin cambiar lo que ve quien ya usa la app.
 | 11 | Ícono del tema equivocado al hidratar | Accionable | Los dos íconos, el CSS elige |
 | 12 | Cascada antes de hidratar | Compromiso | No toca el LCP; `modulepreload` si pesa |
 | 13 | Script bloqueante en el `<head>` | Compromiso | Se mide en la traza; `try/catch` |
-| 14 | Nada prueba el camino nuevo | Accionable | `web/scripts/prerender.mjs` en `check:full` |
+| 14 | Nada prueba el camino nuevo | Accionable | `web/scripts/comprobar-portada.mjs` en `check:full` |
 | — | `routes` con `rewrites` en `vercel.json` | Ruido | En producción desde hoy y responde bien |
+
+## Revisión de `/ship` (code-reviewer, security-auditor, test-engineer)
+
+Sin hallazgos críticos de seguridad ni de producción. Lo que se cambió antes del push:
+
+- `onRecoverableError` también escribe en la consola: con un handler propio React dejaba de
+  hacerlo, y el chequeo quedaba ciego. Ahora un canario altera el titular y tiene que fallar.
+- `inyectarPortada` reemplaza con una función: un `$&` en la portada corrompía el HTML.
+- `olvidarLaSesionLocal` junta lo que se limpia al salir, en los tres caminos (a mano, por
+  inactividad y desde otra pestaña).
+- `antes-de-pintar.js` se prueba ejecutándolo, no buscando texto.
+- `comprobar-portada.mjs` suma navegación después de hidratar, tema oscuro completo,
+  movimiento reducido, sesión vencida sin bucle, `app.html` en varias rutas y sin red con el
+  service worker (`/tablero` y `/?ref=x`). El servidor escucha solo en `127.0.0.1`.
+- El guardia del piso perdona un test que cambió de extensión solo si el nuevo trae al menos
+  las mismas aserciones.
+- La PWA instalada abre en `/tablero` (`start_url`), y el precache ignora la query al buscar,
+  para que `/?ref=x` abra la portada.
+
+Compromisos aceptados: `router.ssr` queda puesto toda la sesión (así lo deja la hidratación
+oficial; lo cubre la navegación del chequeo), los toques antes de hidratar se pierden, y el
+JS de entrada crece 0,2 kB.
+

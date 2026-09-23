@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import indexReal from '../../index.html?raw'
 import { aplicacionDesde } from './aplicacion-desde'
+import { inyectarPortada } from './inyectar-portada'
 
 const INDEX = `<!doctype html>
 <html lang="es" data-theme="light">
@@ -35,5 +37,13 @@ describe('aplicacionDesde', () => {
 
   it('falla si la plantilla cambió y ya no sabe qué sacar', () => {
     expect(() => aplicacionDesde('<html><head></head></html>')).toThrow(/antes-de-pintar/)
+  })
+
+  it('funciona con el index.html real: si la plantilla cambia, lo avisa el test y no el build', () => {
+    const app = aplicacionDesde(indexReal)
+
+    expect(app).not.toContain('antes-de-pintar')
+    expect(app).toContain('data-theme="dark"')
+    expect(inyectarPortada(indexReal, '<main></main>')).toContain('<div id="root"><main></main></div>')
   })
 })

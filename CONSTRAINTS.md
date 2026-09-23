@@ -32,7 +32,7 @@ también bloquea: se sacan los `|| echo AVISO` de `package.json`.
 | Cobertura de lo nuevo | ≥ 80 % de las líneas ejecutables que cambiaron | Obliga a un test sin exigirlo para una línea de config | `node scripts/cobertura-de-lo-nuevo.mjs` sobre el lcov de `vitest --coverage` | tarea |
 | Dependencias | Ninguna vulnerabilidad conocida sin excepción anotada | osv-scanner no filtra por severidad; la excepción obliga a leer cada caso | `osv-scanner scan source -r .` | completo |
 | Bundle | JS de entrada ≤ 131,3 kB, CSS ≤ 17,7 kB, fondo 3D ≤ 195,6 kB (brotli; no sube) | Lo de hoy más 0,5 %: el JS de entrada es lo que la portada evalúa antes de pintar | `npx size-limit` (en `web`, después de `vite build`) | completo |
-| Portada prerenderizada | `/` llega escrita en el HTML, hidrata sin errores ni violaciones de CSP, conserva el mismo `<h1>`, respeta el tema guardado, y ninguna otra ruta la trae | Si la hidratación no calza, React redibuja la portada y las animaciones arrancan dos veces; es un bug, no un aviso | `node web/scripts/prerender.mjs` (después del build) | completo |
+| Portada prerenderizada | `/` llega escrita en el HTML, hidrata sin errores ni violaciones de CSP, conserva el mismo `<h1>`, respeta el tema guardado, y ninguna otra ruta la trae | Si la hidratación no calza, React redibuja la portada y las animaciones arrancan dos veces; es un bug, no un aviso | `node web/scripts/comprobar-portada.mjs` (después del build) | completo |
 | Accesibilidad | Cero violaciones críticas o serias en `/` y `/entrar`, claro y oscuro | Las moderadas suelen ser discutibles; las graves dejan a alguien afuera | `node web/scripts/accesibilidad.mjs [url]` (axe-core, WCAG 2.2 AA) | completo, después del deploy |
 
 Las pantallas con sesión quedan fuera de axe: pedirían credenciales en el script.
@@ -42,7 +42,7 @@ Las pantallas con sesión quedan fuera de axe: pedirían credenciales en el scri
 | Métrica | Hoy | Dirección | Cómo se mide |
 |---|---|---|---|
 | Cobertura de líneas (api) | 85.72 | no baja | `node scripts/cobertura-del-proyecto.mjs` tras la suite completa |
-| Cobertura de líneas (web) | 22.37 | no baja | ídem |
+| Cobertura de líneas (web) | 23.53 | no baja | ídem |
 | PageSpeed móvil de la portada, TBT | 20 ms | no sube | PageSpeed Insights (la web, no la API ni Lighthouse local), tres corridas, se anota la peor |
 | PageSpeed móvil de la portada, LCP | 4,4 s | no sube | ídem; la meta es 2,5 s y hoy no se cumple: la portada no pinta hasta evaluar el JS de entrada |
 

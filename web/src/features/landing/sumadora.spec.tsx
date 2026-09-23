@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react'
-import { hydrateRoot } from 'react-dom/client'
+import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { finDe, marcaEn, TIRADA, useSumadora, type Paso } from './sumadora'
@@ -36,7 +36,12 @@ describe('la sumadora', () => {
 })
 
 describe('useSumadora', () => {
-  afterEach(() => vi.unstubAllGlobals())
+  let raiz: Root | undefined
+  afterEach(() => {
+    act(() => raiz?.unmount())
+    raiz = undefined
+    vi.unstubAllGlobals()
+  })
 
   const conMovimientoReducido = () =>
     vi.stubGlobal('matchMedia', (consulta: string) => ({ matches: consulta.includes('reduce') }))
@@ -65,7 +70,7 @@ describe('useSumadora', () => {
     marcas.length = 0
 
     await act(async () => {
-      hydrateRoot(contenedor, <Sonda />)
+      raiz = hydrateRoot(contenedor, <Sonda />)
     })
 
     expect(marcas[0]).toBe(0)

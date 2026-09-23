@@ -75,11 +75,21 @@ for (const { archivo: en, texto } of quitadas) {
 }
 
 // Un test que cambió de extensión (.ts → .tsx) no está borrado, aunque cambie tanto que git no
-// lo reconozca como renombre.
-const sigueConOtraExtension = (en) =>
-  ['.ts', '.tsx', '.js', '.jsx'].some((extension) => existsSync(en.replace(/\.[jt]sx?$/, extension)))
+// lo reconozca como renombre. Pero solo si el de la extensión nueva es nuevo en este diff (si ya
+// existía, borrar el otro es borrar tests) y trae al menos tantas aserciones como el borrado.
+const aserciones = (texto) => (texto.match(/\bexpect\(|\bassert\b/g) ?? []).length
+const nuevosEnElDiff = new Set([
+  ...(git(['diff', '--name-only', '--diff-filter=A', mergeBase, '--']) ?? '').split('\n'),
+  ...(git(['ls-files', '--others', '--exclude-standard']) ?? '').split('\n'),
+])
+const movidoConSusAserciones = (en) => {
+  const antes = aserciones(git(['show', `${mergeBase}:${en}`]) ?? '')
+  return ['.ts', '.tsx', '.js', '.jsx']
+    .map((extension) => en.replace(/\.[jt]sx?$/, extension))
+    .some((hermano) => hermano !== en && nuevosEnElDiff.has(hermano) && existsSync(hermano) && aserciones(readFileSync(hermano, 'utf8')) >= antes)
+}
 const borrados = (git(['diff', '--name-only', '--diff-filter=D', '-M', mergeBase, '--']) ?? '').split('\n')
-for (const en of borrados) if (esTest(en) && !sigueConOtraExtension(en)) marcar('test-borrado', en, en)
+for (const en of borrados) if (esTest(en) && !movidoConSusAserciones(en)) marcar('test-borrado', en, en)
 
 // CONSTRAINTS.md: una fila de excepción nueva, o un número que bajó en una fila que siguió.
 const numeros = (s) => (s.match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => Number(n.replace(',', '.')))
