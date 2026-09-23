@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react'
-import type { ErrorEvent } from '@sentry/react'
+import type { ErrorEvent, EventHint } from '@sentry/react'
+import { ApiError } from './api'
 
 // Copia deliberada del filtro del backend (`api/src/shared/observability/scrub.ts`). Son unas
 // pocas líneas, los dos paquetes no comparten build, y montar un workspace para compartirlas
@@ -14,7 +15,8 @@ export const scrub = (event: ErrorEvent): ErrorEvent => {
   if (limpio.request) {
     const { url, method } = limpio.request
     limpio.request = {
-      ...(url !== undefined && { url }),
+      // La query puede llevar fechas, montos o lo que se buscó.
+      ...(url !== undefined && { url: url.split('?')[0] }),
       ...(method !== undefined && { method }),
     }
   }
@@ -33,6 +35,23 @@ export const scrub = (event: ErrorEvent): ErrorEvent => {
   return limpio
 }
 
+// El texto de un error de la API lo escribe el servidor y puede repetir lo que la persona
+// cargó («El nombre … ya existe»). El código y el estado alcanzan para saber qué pasó.
+export const sinTextoDelServidor = (event: ErrorEvent, hint: EventHint): ErrorEvent => {
+  const error = hint.originalException
+  if (!(error instanceof ApiError) || !event.exception?.values) return event
+  return {
+    ...event,
+    exception: {
+      ...event.exception,
+      values: event.exception.values.map((valor) => ({
+        ...valor,
+        value: `${error.code} (${error.status})`,
+      })),
+    },
+  }
+}
+
 export const iniciarObservabilidad = (): void => {
   const dsn = import.meta.env.VITE_SENTRY_DSN
   if (!dsn) return
@@ -40,12 +59,23 @@ export const iniciarObservabilidad = (): void => {
   Sentry.init({
     dsn,
     environment: import.meta.env.MODE,
-    // Sin Session Replay. Aunque enmascare los montos, un replay muestra la estructura de la
-    // pantalla y qué hizo la persona, que en una app de finanzas ya dice demasiado.
-    integrations: [],
+    // Solo lo que captura errores. Afuera las migas, que guardan clics, consola y navegación,
+    // y Session Replay: aunque enmascare los montos, muestra qué hizo la persona, que en una app
+    // de finanzas ya dice demasiado. Un arreglo en `integrations` se suma a las de por defecto,
+    // no las reemplaza: por eso `defaultIntegrations: false`.
+    defaultIntegrations: false,
+    integrations: [
+      Sentry.eventFiltersIntegration(),
+      Sentry.functionToStringIntegration(),
+      Sentry.browserApiErrorsIntegration(),
+      Sentry.globalHandlersIntegration(),
+      Sentry.linkedErrorsIntegration(),
+      Sentry.dedupeIntegration(),
+      Sentry.httpContextIntegration(),
+    ],
     tracesSampleRate: 0,
     sendDefaultPii: false,
-    beforeSend: scrub,
+    beforeSend: (event, hint) => scrub(sinTextoDelServidor(event, hint)),
   })
 }
 
