@@ -33,14 +33,13 @@ import { copy as shell } from '@/features/shell/copy'
 import { copy as auditoria } from '@/features/auditoria/copy'
 import { copy as libroCopy } from '@/features/libro/copy'
 import { copy as guide } from '@/features/shell/guide-copy'
-import { recuerdoDeSesion } from '@/features/identity/recuerdo-de-sesion'
+import { olvidarLaSesionLocal } from '@/features/identity/salir'
 import {
   signOut,
   useActiveOrganization,
   useListOrganizations,
   useSession,
 } from '@/features/identity/auth-client'
-import { olvidarQuienEra } from '@/lib/observability'
 import { queryClient } from '@/router'
 import { applyTheme, resolver, tema as ajusteDeTema } from '@/lib/theme'
 
@@ -113,11 +112,7 @@ export const NavUser = () => {
     signOut({
       fetchOptions: {
         onSuccess: () => {
-          queryClient.clear()
-          olvidarQuienEra()
-          // Sin esto, public/antes-de-pintar.js vería la marca y mandaría la portada al tablero,
-          // y de ahí a entrar: quien sale tiene que llegar a la portada.
-          recuerdoDeSesion.olvidar()
+          olvidarLaSesionLocal(queryClient)
           // Recarga completa a propósito: es la única forma de garantizar que no quede nada
           // de la persona anterior en memoria, ni en un estado de React ni en un módulo.
           window.location.assign('/')

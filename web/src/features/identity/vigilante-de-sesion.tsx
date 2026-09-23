@@ -11,9 +11,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { queryClient } from '@/router'
-import { olvidarQuienEra } from '@/lib/observability'
 import { signOut } from './auth-client'
-import { recuerdoDeSesion } from './recuerdo-de-sesion'
+import { olvidarLaSesionLocal } from './salir'
 import { copy } from './copy'
 import { faltaParaCerrar, pasoDeSesion } from './inactividad'
 
@@ -68,9 +67,7 @@ export const VigilanteDeSesion = () => {
     // El mismo final que cerrar sesión a mano, y por los mismos motivos: la caché guarda los
     // saldos y los movimientos de quien acaba de irse, y Sentry deja de saber quién era.
     await signOut().catch(() => undefined)
-    queryClient.clear()
-    olvidarQuienEra()
-    recuerdoDeSesion.olvidar()
+    olvidarLaSesionLocal(queryClient)
     void navegar({ to: '/entrar', search: { motivo: 'inactividad' } })
   }, [avisarPares, navegar])
 
@@ -105,7 +102,7 @@ export const VigilanteDeSesion = () => {
     canal.current = bus
     bus.onmessage = ({ data }: MessageEvent<Aviso>) => {
       if (data.tipo === 'cerrada') {
-        queryClient.clear()
+        olvidarLaSesionLocal(queryClient)
         void navegar({ to: '/entrar', search: { motivo: 'inactividad' } })
         return
       }

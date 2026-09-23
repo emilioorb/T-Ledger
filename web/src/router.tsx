@@ -25,11 +25,11 @@ export const queryClient = new QueryClient({
 
 // defaultPreloadStaleTime en 0 deja que TanStack Query gobierne el caché, no el router.
 // Fábrica y no solo instancia: el prerender de la portada arma el suyo, con historia en memoria.
-export const crearRouter = (contexto: { queryClient: QueryClient; history?: RouterHistory }) =>
+export const crearRouter = (opciones: { queryClient: QueryClient; history?: RouterHistory }) =>
   createRouter({
     routeTree,
-    history: contexto.history,
-    context: { queryClient: contexto.queryClient },
+    history: opciones.history,
+    context: { queryClient: opciones.queryClient },
     defaultPreloadStaleTime: 0,
     defaultNotFoundComponent: NotFound,
     defaultErrorComponent: ErrorDeCarga,

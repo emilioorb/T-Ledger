@@ -11,6 +11,12 @@ describe('inyectarPortada', () => {
     expect(html).toContain('<script type="module" src="/x.js"></script>')
   })
 
+  it('escribe la portada literal aunque traiga patrones de reemplazo como $& o $`', () => {
+    const portada = "<p>US$&nbsp;5 $& $'</p>"
+
+    expect(inyectarPortada(PLANTILLA, portada)).toContain(`<div id="root">${portada}</div>`)
+  })
+
   it('falla si la plantilla no tiene un #root vacío, en vez de publicar una portada sin prerender', () => {
     expect(() => inyectarPortada('<body></body>', '<main></main>')).toThrow(/#root/)
   })

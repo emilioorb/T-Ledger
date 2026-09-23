@@ -34,7 +34,9 @@ const portadaPrerenderizada = (): Plugin => ({
         copyPublicDir: false,
       },
     })
-    const entrada = pathToFileURL(path.join(SALIDA_DEL_PRERENDER, 'entrada.js')).href
+    // Con `?v=`: Node guarda los módulos importados, y en `vite build --watch` serviría la portada
+    // del primer build.
+    const entrada = `${pathToFileURL(path.join(SALIDA_DEL_PRERENDER, 'entrada.js')).href}?v=${Date.now()}`
     const { renderizarPortada } = (await import(entrada)) as {
       renderizarPortada: () => Promise<string>
     }

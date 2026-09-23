@@ -7,5 +7,7 @@ export const inyectarPortada = (plantilla: string, portada: string): string => {
   if (!plantilla.includes(RAIZ_VACIA)) {
     throw new Error(`La plantilla no tiene un ${RAIZ_VACIA} vacío donde escribir la portada (#root)`)
   }
-  return plantilla.replace(RAIZ_VACIA, `<div id="root">${portada}</div>`)
+  // Con una función y no un string: así `$&` o `$'` en la portada se escriben tal cual, en vez
+  // de interpretarse como patrones de reemplazo.
+  return plantilla.replace(RAIZ_VACIA, () => `<div id="root">${portada}</div>`)
 }

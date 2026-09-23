@@ -46,10 +46,18 @@ const arrancar = async (raiz: HTMLElement) => {
   if (modo === 'hidratar') {
     // Lo mismo que hace la hidratación oficial del router (router-core, load-client.js): con
     // `ssr` puesto, la raíz no se envuelve en un Suspense que el HTML del prerender no tiene.
+    // Es un campo interno: en @tanstack/react-router 1.170 lo leen Matches.js y Match.js. Si una
+    // actualización lo cambia, lo avisa web/scripts/comprobar-portada.mjs, no la pantalla.
     router.ssr = { manifest: undefined }
     // Una hidratación que no calza (Chrome traduciendo la página, una extensión que toca el
-    // DOM) se recupera redibujando: que quede en Sentry, porque en pantalla no se ve.
-    hydrateRoot(raiz, app, { onRecoverableError: reportar })
+    // DOM) se recupera redibujando: que quede en Sentry, porque en pantalla no se ve. Y en la
+    // consola, como hace React si no se le pasa nada: web/scripts/comprobar-portada.mjs la lee.
+    hydrateRoot(raiz, app, {
+      onRecoverableError: (error) => {
+        reportar(error)
+        console.error(error)
+      },
+    })
   } else {
     raiz.replaceChildren()
     createRoot(raiz).render(app)
