@@ -39,6 +39,7 @@ import {
 } from '@/features/accounting/use-accounting'
 import type { ReportNode } from '@/features/accounting/types'
 import { copy as budgetCopy } from '@/features/budget/copy'
+import { sinModeloActivo } from '@/features/budget/sin-modelo-activo'
 import { useBudgetEvaluation } from '@/features/budget/use-budget'
 import { useDebts } from '@/features/debts/use-debts'
 import { copy as goalsCopy } from '@/features/goals/copy'
@@ -207,7 +208,10 @@ const DashboardScreen = () => {
   const loading = evaluation.isPending || projection.isPending || goals.isPending
   // Una consulta caída no puede volverse «no pasa nada»: sin el dato, la frase tranquilizadora
   // sería una afirmación falsa sobre la plata del usuario.
-  const failed = evaluation.isError || projection.isError || goals.isError
+  // Un libro sin modelo de presupuesto no es una consulta caída: el panel de presupuesto ya
+  // dice que no hay, y lo demás del tablero no depende de eso.
+  const presupuestoCaido = evaluation.isError && !sinModeloActivo(evaluation.error)
+  const failed = presupuestoCaido || projection.isError || goals.isError
   const flows = projection.data ?? []
   const current = flows[0]
   const overBucket = evaluation.data?.buckets.find((bucket) => bucket.status === 'OVER')
@@ -375,7 +379,7 @@ const DashboardScreen = () => {
           description={copy.overview.error.description}
           retryLabel={copy.overview.error.retry}
           onRetry={() => {
-            if (evaluation.isError) void evaluation.refetch()
+            if (presupuestoCaido) void evaluation.refetch()
             if (projection.isError) void projection.refetch()
             if (goals.isError) void goals.refetch()
           }}

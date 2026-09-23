@@ -20,7 +20,7 @@ import {
   useMonthlyIncome,
   useSetMonthlyIncome,
 } from '@/features/budget/use-budget'
-import { ApiError } from '@/lib/api'
+import { sinModeloActivo } from '@/features/budget/sin-modelo-activo'
 import { monthEnd, monthStart, today } from '@/lib/dates'
 import { absMoney, formatMoney, parseMoneyInput } from '@/lib/money'
 import { cn } from '@/lib/utils'
@@ -104,8 +104,7 @@ const BudgetScreen = () => {
 
   const overBucket = evaluation.data?.buckets.find((bucket) => bucket.status === 'OVER')
 
-  const noModel =
-    evaluation.error instanceof ApiError && evaluation.error.code === 'SEMANTIC_VALIDATION_ERROR'
+  const noModel = sinModeloActivo(evaluation.error)
 
   const submitIncome = (event: FormEvent) => {
     event.preventDefault()
