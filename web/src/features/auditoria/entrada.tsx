@@ -1,6 +1,7 @@
 import { copy } from './copy'
 import { nombreDeCampo, valorLegible } from './legible'
 import type { CambioDeRastro, EntidadAuditada, EntradaDeRastro } from './types'
+import { cn } from '@/lib/utils'
 
 const esEntidadConocida = (entity: string): entity is EntidadAuditada =>
   entity in copy.audit.singular
@@ -44,17 +45,29 @@ const Campo = ({ campo }: { campo: string }) => (
 
 // Al crear no hay valor anterior: mostrar «— → algo» inventaría un estado previo que nunca
 // existió. La flecha hace el trabajo de la frase «pasó de … a …» en un carácter.
-const DeAHacia = ({ antes, despues }: { antes: string | null; despues: string | null }) => (
+//
+// En el detalle abierto el valor se parte: vive dentro de una celda de tabla, que no deja partir
+// el texto, y unas notas o la clave de un archivo se estiraban en un renglón hasta salirse de
+// la pantalla. Conserva los saltos de línea de lo que se escribió en varias.
+const PARTIDO = 'whitespace-pre-wrap [overflow-wrap:anywhere]'
+
+interface ValoresProps {
+  antes: string | null
+  despues: string | null
+  partido?: boolean
+}
+
+const DeAHacia = ({ antes, despues, partido = false }: ValoresProps) => (
   <>
     {antes === null ? null : (
       <>
-        <span className="num line-through opacity-60">{antes}</span>
+        <span className={cn('num line-through opacity-60', partido && PARTIDO)}>{antes}</span>
         <span aria-hidden="true" className="text-muted-foreground">
           →
         </span>
       </>
     )}
-    <span className="num">{despues ?? copy.audit.noFields}</span>
+    <span className={cn('num', partido && PARTIDO)}>{despues ?? copy.audit.noFields}</span>
   </>
 )
 
@@ -94,9 +107,9 @@ export const DetalleCompleto = ({ cambios, nombres }: DetalleProps) => {
   return (
     <ul className="space-y-0.5">
       {visibles.map(({ campo, antes, despues }) => (
-        <li key={campo} className="flex flex-wrap items-baseline gap-x-1.5 text-xs">
+        <li key={campo} className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-xs">
           <Campo campo={campo} />
-          <DeAHacia antes={antes} despues={despues} />
+          <DeAHacia antes={antes} despues={despues} partido />
         </li>
       ))}
     </ul>
