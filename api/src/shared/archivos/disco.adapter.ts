@@ -38,6 +38,10 @@ export class DiscoAdapter implements Almacenamiento {
     await rm(this.rutaDe(clave), { force: true })
   }
 
+  async borrarTodoBajo(prefijo: string): Promise<void> {
+    await rm(this.rutaDe(prefijo), { recursive: true, force: true })
+  }
+
   rutaLocalDe(clave: string): string {
     return this.rutaDe(clave)
   }

@@ -9,6 +9,7 @@ const { options } = crearAuth(
   loadEnv({ DATABASE_URL: 'postgres://no-se-usa', AUTH_SECRET: 'x'.repeat(32) }),
   async () => {},
   async () => {},
+  async () => {},
 )
 
 // Las cabeceras medidas en producción, con documentación de ejemplo en lugar de IPs reales.

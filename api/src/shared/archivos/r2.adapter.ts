@@ -1,7 +1,15 @@
-import { GetObjectCommand, PutObjectCommand, S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import {
+  DeleteObjectCommand,
+  DeleteObjectsCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { Injectable } from '@nestjs/common'
 import type { Almacenamiento, ArchivoNuevo } from './almacenamiento.port.js'
+import { enTandas } from './archivo.js'
 
 export interface CredencialesDeR2 {
   accountId: string
@@ -55,5 +63,30 @@ export class R2Adapter implements Almacenamiento {
     await this.cliente.send(
       new DeleteObjectCommand({ Bucket: this.credenciales.bucket, Key: clave }),
     )
+  }
+
+  // Lista por páginas y borra en tandas de mil, que es lo que acepta R2 por llamada.
+  // https://developers.cloudflare.com/r2/api/s3/api/
+  async borrarTodoBajo(prefijo: string): Promise<void> {
+    let continuacion: string | undefined
+    do {
+      const pagina = await this.cliente.send(
+        new ListObjectsV2Command({
+          Bucket: this.credenciales.bucket,
+          Prefix: prefijo,
+          ...(continuacion ? { ContinuationToken: continuacion } : {}),
+        }),
+      )
+      const claves = (pagina.Contents ?? []).flatMap((objeto) => (objeto.Key ? [objeto.Key] : []))
+      for (const tanda of enTandas(claves, 1000)) {
+        await this.cliente.send(
+          new DeleteObjectsCommand({
+            Bucket: this.credenciales.bucket,
+            Delete: { Objects: tanda.map((Key) => ({ Key })), Quiet: true },
+          }),
+        )
+      }
+      continuacion = pagina.IsTruncated ? pagina.NextContinuationToken : undefined
+    } while (continuacion)
   }
 }

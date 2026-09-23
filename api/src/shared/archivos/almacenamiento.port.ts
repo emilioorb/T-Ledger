@@ -15,6 +15,10 @@ export interface Almacenamiento {
   enlaceDeLectura(clave: string): Promise<string>
 
   borrar(clave: string): Promise<void>
+
+  // Todo lo que cuelga de un prefijo. Existe para borrar los archivos de un libro junto con él;
+  // el prefijo lo arma `prefijoDelLibro`, que se niega a devolver algo más ancho que un libro.
+  borrarTodoBajo(prefijo: string): Promise<void>
 }
 
 export const ALMACENAMIENTO = Symbol('ALMACENAMIENTO')

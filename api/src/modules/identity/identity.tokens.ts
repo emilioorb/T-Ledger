@@ -11,3 +11,11 @@ export const LIBRO_CREADO = 'libro.creado'
 export interface LibroCreado {
   bookId: string
 }
+
+// Después de borrar un libro, sea porque lo borró su dueño o porque se fue la cuenta que lo
+// tenía. Quien guarda cosas del libro fuera de la base —los archivos— las limpia al oírlo.
+export const LIBRO_BORRADO = 'libro.borrado'
+
+export interface LibroBorrado {
+  bookId: string
+}

@@ -57,6 +57,21 @@ export const claveDeDocumentoDeDeuda = (
   azar: string,
 ): string => `libros/${bookId}/documentos/deudas/${debtId}-${azar}.${TIPOS_ACEPTADOS[mimetype]}`
 
+// Todo lo de un libro, para borrarlo junto con él. Lo que devuelve se le pasa a un borrado
+// masivo, así que se niega a armar algo que no sea exactamente la carpeta de un libro: un id
+// vacío daría `libros//` y uno con barras o `..` apuntaría a otra cosa. Un error acá vaciaría
+// el bucket de todos.
+export const prefijoDelLibro = (bookId: string): string => {
+  if (!/^[A-Za-z0-9_-]+$/.test(bookId)) throw new Error(`Id de libro inválido para un prefijo: «${bookId}»`)
+  return `libros/${bookId}/`
+}
+
+// Borrar en R2 acepta hasta mil claves por llamada.
+export const enTandas = <T>(elementos: readonly T[], tamano: number): T[][] =>
+  Array.from({ length: Math.ceil(elementos.length / tamano) }, (_, i) =>
+    elementos.slice(i * tamano, (i + 1) * tamano),
+  )
+
 // Un comprobante pertenece al libro que dice su clave. Se comprueba antes de firmar el enlace
 // de lectura: sin esto, quien conozca la clave de otro libro podría pedir su factura y el
 // servidor la firmaría sin mirar.

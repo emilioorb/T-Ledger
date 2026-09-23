@@ -14,6 +14,7 @@ let postgres: RunningPostgres
 let prisma: PrismaClient
 let auth: Auth
 const librosSembrados: string[] = []
+const librosBorrados: string[] = []
 
 beforeAll(async () => {
   postgres = await startPostgres()
@@ -25,6 +26,9 @@ beforeAll(async () => {
       librosSembrados.push(bookId)
     },
     async () => {},
+    async (bookIds) => {
+      librosBorrados.push(...bookIds)
+    },
   )
 }, 120_000)
 
@@ -153,5 +157,31 @@ describe('la invitación a la app', () => {
         body: { name: 'Tarde', email: 'llego-tarde@tape.test', password: 'una-clave-larga' },
       }),
     ).rejects.toThrow()
+  })
+})
+
+describe('darse de baja', { timeout: HASHEO }, () => {
+  // Los archivos del libro viven fuera de la base: sin este aviso, los de una cuenta que se va
+  // quedaban para siempre en el almacenamiento.
+  it('avisa qué libros se fueron con la cuenta', async () => {
+    await prisma.bookInvitation.create({
+      data: {
+        id: 'inv_baja',
+        organizationId: LIBRO_DE_PRUEBA.bookId,
+        email: 'se-va@tape.test',
+        role: 'member',
+        expiresAt: new Date(Date.now() + 86_400_000),
+        inviterId: LIBRO_DE_PRUEBA.userId,
+      },
+    })
+    const { user } = await auth.api.signUpEmail({
+      body: { name: 'Se va', email: 'se-va@tape.test', password: 'una-clave-larga' },
+    })
+    const personal = await prisma.bookMember.findFirstOrThrow({ where: { userId: user.id } })
+    const headers = await entrar('se-va@tape.test', 'una-clave-larga')
+
+    await auth.api.deleteUser({ headers, body: { password: 'una-clave-larga' } })
+
+    expect(librosBorrados).toEqual([personal.organizationId])
   })
 })

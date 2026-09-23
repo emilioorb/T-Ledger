@@ -24,4 +24,5 @@ export const auth = crearAuth(
   env,
   async () => {},
   async () => {},
+  async () => {},
 )

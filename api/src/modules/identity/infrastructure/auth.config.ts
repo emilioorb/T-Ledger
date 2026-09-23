@@ -41,6 +41,9 @@ export const crearAuth = (
   env: Env,
   alCrearLibro: (bookId: string) => Promise<void>,
   alCambiarMiembro: (cambio: CambioDeMiembro) => Promise<void>,
+  // Los libros que se fueron con una cuenta dada de baja. Quien guarda cosas de un libro fuera
+  // de la base —los archivos— las limpia al enterarse.
+  alBorrarLibros: (bookIds: string[]) => Promise<void>,
 ) => {
   const auth = betterAuth({
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
@@ -199,6 +202,7 @@ export const crearAuth = (
           const aBorrar = librosQueSeVanConLaCuenta(libros)
           if (aBorrar.length > 0) {
             await prisma.book.deleteMany({ where: { id: { in: aBorrar } } })
+            await alBorrarLibros(aBorrar)
           }
         },
       },

@@ -6,7 +6,7 @@ import { PrismaService } from '../../shared/prisma/prisma.service.js'
 import { RASTRO, type Rastro } from '../auditoria/domain/rastro.port.js'
 import { RastroModule } from '../auditoria/rastro.module.js'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import { AUTH, LIBRO_CREADO } from './identity.tokens.js'
+import { AUTH, LIBRO_BORRADO, LIBRO_CREADO } from './identity.tokens.js'
 import { crearAuth, type Auth } from './infrastructure/auth.config.js'
 import { LibroMiddleware } from './infrastructure/libro.middleware.js'
 import { PermisoGuard } from './infrastructure/permiso.guard.js'
@@ -49,6 +49,9 @@ import { VerificadorDeContrasena } from './infrastructure/verificador-de-contras
                 ...(despues ? { despues } : {}),
               }),
             )
+          },
+          async (bookIds) => {
+            await Promise.all(bookIds.map((bookId) => eventos.emitAsync(LIBRO_BORRADO, { bookId })))
           },
         ),
     },

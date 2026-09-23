@@ -6,6 +6,8 @@ import {
   revisar,
   TAMANO_MAXIMO,
   TAMANO_MAXIMO_DOCUMENTO,
+  enTandas,
+  prefijoDelLibro,
 } from './archivo.js'
 
 describe('qué se acepta como comprobante', () => {
@@ -78,5 +80,23 @@ describe('el documento de una deuda', () => {
     const clave = claveDeDocumentoDeDeuda('lib_1', 'deuda_1', 'application/pdf', 'abc123')
     expect(clave).toBe('libros/lib_1/documentos/deudas/deuda_1-abc123.pdf')
     expect(esDelLibro(clave, 'lib_1')).toBe(true)
+  })
+})
+
+describe('los archivos de un libro entero', () => {
+  it('viven bajo su prefijo', () => {
+    expect(prefijoDelLibro('lib_1')).toBe('libros/lib_1/')
+  })
+
+  // Es lo que se le pasa a un borrado masivo: un prefijo vacío o mal armado vaciaría el bucket.
+  it('no arma un prefijo con un id vacío o que se sale de su carpeta', () => {
+    expect(() => prefijoDelLibro('')).toThrow()
+    expect(() => prefijoDelLibro('../otro')).toThrow()
+    expect(() => prefijoDelLibro('lib/1')).toThrow()
+  })
+
+  it('reparte las claves en tandas de mil, que es lo que acepta R2 por llamada', () => {
+    const claves = Array.from({ length: 2501 }, (_, i) => `k${i}`)
+    expect(enTandas(claves, 1000).map((tanda) => tanda.length)).toEqual([1000, 1000, 501])
   })
 })
