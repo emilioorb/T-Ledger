@@ -180,21 +180,24 @@ describe('PrismaJournalRepository', () => {
 
   it('la agregación diaria no suma los asientos de otro libro', async () => {
     const otroLibro: ContextoDeLibro = { bookId: 'lib_otro', userId: 'usr_otro', rol: 'owner' }
-    await prisma.clientSinFiltroDeLibro.book.upsert({
-      where: { id: otroLibro.bookId },
-      create: { id: otroLibro.bookId, name: 'Otro', slug: 'otro', createdAt: new Date() },
-      update: {},
+    await prisma.clientSinFiltroDeLibro.book.create({
+      data: { id: otroLibro.bookId, name: 'Otro', slug: 'otro-libro-por-dia', createdAt: new Date() },
     })
-    await conLibro(otroLibro, async () => {
-      await accounts.saveMany(CHART_SEED.map((props) => unwrap(Account.create(props))))
-      await repository.save(asientoDeGasto('ajeno', utc('2026-09-16'), 77_000_00n))
-    })
-    await repository.save(asientoDeGasto('a1', utc('2026-09-16'), 20_000_00n))
+    try {
+      await conLibro(otroLibro, async () => {
+        await accounts.saveMany(CHART_SEED.map((props) => unwrap(Account.create(props))))
+        await repository.save(asientoDeGasto('ajeno', utc('2026-09-16'), 77_000_00n))
+      })
+      await repository.save(asientoDeGasto('a1', utc('2026-09-16'), 20_000_00n))
 
-    const porDia = await repository.totalsByAccountPerDay('CRC', utc('2026-09-30'))
+      const porDia = await repository.totalsByAccountPerDay('CRC', utc('2026-09-30'))
 
-    const gastos = porDia.filter((total) => total.accountCode === '6100')
-    expect(gastos.reduce((acc, total) => acc + total.debits, 0n)).toBe(20_000_00n)
+      const gastos = porDia.filter((total) => total.accountCode === '6100')
+      expect(gastos.reduce((acc, total) => acc + total.debits, 0n)).toBe(20_000_00n)
+    } finally {
+      // Borrar el libro se lleva sus cuentas y asientos: el resto del archivo no lo ve.
+      await prisma.clientSinFiltroDeLibro.book.delete({ where: { id: otroLibro.bookId } })
+    }
   })
 
   it('la agregación diaria excluye lo posterior a la fecha de corte', async () => {

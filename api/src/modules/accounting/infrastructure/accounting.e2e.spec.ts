@@ -11,6 +11,14 @@ import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { AccountingModule } from '../accounting.module.js'
 import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
+import { conLibro, type ContextoDeLibro } from '../../../shared/libro/libro-context.js'
+import { Money } from '../../../shared/kernel/money.js'
+import { unwrap } from '../../../shared/kernel/result.js'
+import { Account } from '../domain/account.js'
+import { JournalEntry } from '../domain/journal-entry.js'
+import { CHART_SEED } from './chart-seed.js'
+import { PrismaAccountRepository } from './prisma-account.repository.js'
+import { PrismaJournalRepository } from './prisma-journal.repository.js'
 
 let postgres: RunningPostgres
 let app: INestApplication
@@ -450,6 +458,45 @@ describe('flujo completo de contabilidad', () => {
     // El desglose muestra los dólares que se tienen, no el cero que deja el puente.
     expect(dolares.netWorthNative.minorUnits).toBe('100000')
     expect(dolares.netWorthTranslated.minorUnits).toBe('44327000')
+  })
+
+  it('el patrimonio de un libro no suma los asientos de otro libro', async () => {
+    const ajeno: ContextoDeLibro = { bookId: 'lib_ajeno', userId: 'usr_ajeno', rol: 'owner' }
+    await prisma.clientSinFiltroDeLibro.book.create({
+      data: { id: ajeno.bookId, name: 'Ajeno', slug: 'libro-ajeno-patrimonio', createdAt: new Date() },
+    })
+    try {
+      await conLibro(ajeno, async () => {
+        const cuentas = new PrismaAccountRepository(prisma)
+        await cuentas.saveMany(CHART_SEED.map((props) => unwrap(Account.create(props))))
+        const colones = Money.fromMinorUnits(77_000_00n, 'CRC')
+        const gasto = unwrap(
+          JournalEntry.create(
+            {
+              id: 'asiento-ajeno',
+              date: new Date('2026-09-16T00:00:00.000Z'),
+              description: 'Súper de otra familia',
+              reference: null,
+              lines: [
+                { accountCode: '6100', amount: colones, side: 'DEBIT' },
+                { accountCode: '1101', amount: colones, side: 'CREDIT' },
+              ],
+              sourceMovementId: null,
+              reversesEntryId: null,
+            },
+            await cuentas.loadChart(),
+          ),
+        )
+        await new PrismaJournalRepository(prisma, cuentas).save(gasto)
+      })
+
+      const patrimonio = await get('/reports/net-worth?at=2026-09-30').expect(200)
+
+      expect(patrimonio.body.equity.minorUnits).toBe('0')
+      expect(patrimonio.body.exchangeDifference.minorUnits).toBe('0')
+    } finally {
+      await prisma.clientSinFiltroDeLibro.book.delete({ where: { id: ajeno.bookId } })
+    }
   })
 
   it('sin movimientos el patrimonio es cero y no pide tipo de cambio', async () => {
