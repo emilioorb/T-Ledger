@@ -53,6 +53,7 @@
     "@types/node": "26.6.2",
     "@types/pg": "^8.16.0",
     "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "5.0.1",
     "dotenv": "^17.2.3",
     "eslint": "10.11.0",
     "supertest": "^7.2.2",
@@ -60,5 +61,8 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.70.0",
     "vitest": "5.0.1"
+  },
+  "overrides": {
+    "mysql2": "^3.23.1"
   }
 }
