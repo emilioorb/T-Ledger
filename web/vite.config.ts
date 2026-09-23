@@ -9,6 +9,7 @@ import { defineConfig } from 'vitest/config'
 import pkg from './package.json' with { type: 'json' }
 import { aplicacionDesde } from './src/prerender/aplicacion-desde.ts'
 import { inyectarPortada } from './src/prerender/inyectar-portada.ts'
+import { postergarJavaScript } from './src/prerender/postergar-javascript.ts'
 
 // Arma las dos puertas sobre el index.html ya compilado: index.html, con la portada
 // renderizada, para `/`; y app.html, sin portada, para el resto de las rutas (lo reescribe
@@ -41,7 +42,7 @@ const portadaPrerenderizada = (): Plugin => ({
       renderizarPortada: () => Promise<string>
     }
     const plantilla = String(index.source)
-    index.source = inyectarPortada(plantilla, await renderizarPortada())
+    index.source = postergarJavaScript(inyectarPortada(plantilla, await renderizarPortada()))
     this.emitFile({ type: 'asset', fileName: 'app.html', source: aplicacionDesde(plantilla) })
   },
 })
