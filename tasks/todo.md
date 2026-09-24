@@ -133,8 +133,10 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 - [x] **20. Formularios y acciones.** Mandan la `version` que vieron (y pagar, la `cuota`: hasta que la mande, dos
   pagos a la vez de una deuda registran las cuotas n y n+1, como antes); ante `EDITADO_POR_OTRO`, el aviso ofrece «Cargar lo
   último» (según la respuesta a la pregunta abierta). Se reparte por pantalla en sub-tareas de ≤5 archivos al llegar acá.
-- [ ] **21. Medir, documentar y publicar.** Contador de pedidos sin `version` (log y Sentry), novedades, ADR si algo se
+- [x] **21. Medir, documentar y publicar.** Contador de pedidos sin `version` (log y Sentry), novedades, ADR si algo se
   aparta de la spec, `/ship`, deploy de la API antes que la web.
 
 ### Checkpoint final
-- [ ] Todos los criterios de la spec cumplidos; `check:full` limpio; revisado con `/ship`.
+- [x] Todos los criterios de la spec cumplidos; `check:full` limpio; revisado con `/ship`.
+  (2026-09-24: publicada como v1.4.0. La API y la web salieron juntas: la web nueva es compatible con la API vieja.
+  Pendiente: mirar en Sentry la métrica `escritura_sin_version` para decidir cuándo volver `version` obligatoria.)
