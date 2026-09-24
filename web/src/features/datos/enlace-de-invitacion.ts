@@ -1,8 +1,16 @@
-// El enlace que el admin le manda a quien pidió acceso: la pantalla de registro con el correo ya
-// puesto, que es el que la invitación deja pasar. No lleva ningún secreto: lo que decide es la
-// invitación guardada para ese correo, no el enlace.
-export const enlaceDeInvitacion = (origen: string, correo: string): string =>
-  `${origen}/crear-cuenta?correo=${encodeURIComponent(correo)}`
+// Los enlaces de invitación que se le pasan a la persona. El token va en el fragmento y no en la
+// búsqueda: el fragmento no sale del navegador, así que no queda en los logs del servidor ni en
+// el Referer. Crear cuenta lo lee al abrir y lo borra de la barra de direcciones.
+const conToken = (url: string, token: string) => `${url}#token=${token}`
+
+export const enlaceALaApp = (origen: string, correo: string, token: string): string =>
+  conToken(`${origen}/crear-cuenta?correo=${encodeURIComponent(correo)}`, token)
+
+export const enlaceAlLibro = (origen: string, invitationId: string, token: string): string =>
+  conToken(`${origen}/crear-cuenta?invitacion=${encodeURIComponent(invitationId)}`, token)
+
+export const tokenDelFragmento = (fragmento: string): string | undefined =>
+  new URLSearchParams(fragmento.replace(/^#/, '')).get('token') || undefined
 
 export const correoDeLaBusqueda = (busqueda: Record<string, unknown>): string | undefined =>
   typeof busqueda.correo === 'string' ? busqueda.correo : undefined

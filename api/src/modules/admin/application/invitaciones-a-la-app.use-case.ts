@@ -1,10 +1,17 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
+import { EnlacesDeInvitacion } from '../../identity/infrastructure/enlaces-de-invitacion.js'
 
 export interface InvitacionALaApp {
   id: string
   email: string
   expiresAt: Date
+}
+
+// Al invitar, y solo ahí, viene el token del enlace: en la base queda su hash, así que después
+// no se puede volver a mostrar. Para mandarlo otra vez se renueva.
+export interface InvitacionConEnlace extends InvitacionALaApp {
+  token: string
 }
 
 // Una semana: alcanza para que la persona lea el mensaje y se registre, y no deja abierta
@@ -20,13 +27,16 @@ const SELECCION = { id: true, email: true, expiresAt: true } as const
 export class InvitacionesALaAppUseCase {
   private readonly logger = new Logger(InvitacionesALaAppUseCase.name)
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly enlaces: EnlacesDeInvitacion,
+  ) {}
 
   private get db() {
     return this.prisma.clientSinFiltroDeLibro
   }
 
-  async invitar(email: string, createdBy: string): Promise<InvitacionALaApp> {
+  async invitar(email: string, createdBy: string): Promise<InvitacionConEnlace> {
     const correo = email.trim().toLowerCase()
     if (await this.db.authUser.findUnique({ where: { email: correo }, select: { id: true } })) {
       throw new ConflictException('Ese correo ya tiene cuenta.')
@@ -42,7 +52,18 @@ export class InvitacionesALaAppUseCase {
 
     // Al log el hecho y no el correo: el ADR-005 no deja datos de personas en la telemetría.
     this.logger.log('La administración invitó a alguien a la app')
-    return invitacion
+    return { ...invitacion, token: await this.enlaces.paraLaApp(invitacion.id) }
+  }
+
+  // Un enlace nuevo para una invitación que sigue esperando. El anterior deja de servir: es la
+  // forma de volver a mandarlo, porque el token no se guarda.
+  async renovarEnlace(id: string): Promise<string> {
+    const vigente = await this.db.accessInvitation.findFirst({
+      where: { id, usedAt: null, expiresAt: { gt: new Date() } },
+      select: { id: true },
+    })
+    if (!vigente) throw new NotFoundException('Esa invitación no existe o ya se usó.')
+    return this.enlaces.paraLaApp(vigente.id)
   }
 
   pendientes(): Promise<InvitacionALaApp[]> {

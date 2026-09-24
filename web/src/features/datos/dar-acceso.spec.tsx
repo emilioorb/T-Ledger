@@ -17,10 +17,13 @@ const montar = () =>
 afterEach(() => vi.restoreAllMocks())
 
 describe('DarAcceso', () => {
-  it('después de invitar muestra el enlace de registro con el correo', async () => {
+  it('después de invitar muestra el enlace con el correo y el token en el fragmento', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) =>
       init?.method === 'POST'
-        ? respuesta({ id: 'inv-1', email: 'ana@correo.cr', expiresAt: '2026-09-30T13:00:00.000Z' }, 201)
+        ? respuesta(
+            { id: 'inv-1', email: 'ana@correo.cr', expiresAt: '2026-09-30T13:00:00.000Z', token: 'tok-1' },
+            201,
+          )
         : respuesta([]),
     )
     montar()
@@ -29,7 +32,25 @@ describe('DarAcceso', () => {
     fireEvent.click(screen.getByRole('button', { name: copy.acceso.submit }))
 
     const enlace = await screen.findByLabelText(copy.acceso.linkLabel)
-    expect(enlace).toHaveValue(`${window.location.origin}/crear-cuenta?correo=ana%40correo.cr`)
+    expect(enlace).toHaveValue(`${window.location.origin}/crear-cuenta?correo=ana%40correo.cr#token=tok-1`)
+  })
+
+  it('una invitación pendiente da un enlace nuevo, pedido al servidor', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) =>
+      init?.method === 'POST'
+        ? respuesta({ token: 'tok-nuevo' })
+        : respuesta([{ id: 'inv-3', email: 'eva@correo.cr', expiresAt: '2026-09-30T13:00:00.000Z' }]),
+    )
+    montar()
+
+    fireEvent.click(await screen.findByRole('button', { name: copy.acceso.renew }))
+
+    const enlace = await screen.findByLabelText(copy.acceso.linkLabel)
+    expect(enlace).toHaveValue(`${window.location.origin}/crear-cuenta?correo=eva%40correo.cr#token=tok-nuevo`)
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/admin/invitations/inv-3/link'),
+      expect.objectContaining({ method: 'POST' }),
+    )
   })
 
   it('lista las invitaciones que esperan registro', async () => {

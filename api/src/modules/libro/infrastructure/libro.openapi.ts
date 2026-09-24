@@ -1,10 +1,27 @@
 import type { ZodOpenApiPathsObject } from 'zod-openapi'
-import { libroPropioResponseSchema, vaciadoResponseSchema } from './libro.responses.js'
+import {
+  enlaceDeInvitacionAlLibroResponseSchema,
+  libroPropioResponseSchema,
+  vaciadoResponseSchema,
+} from './libro.responses.js'
 import { borrarLibroSchema, vaciarLibroSchema } from './libro.schemas.js'
 
 const json = <T>(schema: T) => ({ content: { 'application/json': { schema } } })
 
 export const libroOpenApiPaths: ZodOpenApiPathsObject = {
+  '/book/invitations/{id}/link': {
+    post: {
+      summary: 'Un enlace nuevo para una invitación pendiente del libro; el anterior deja de servir',
+      responses: {
+        200: {
+          description: 'El token del enlace (se muestra una sola vez)',
+          ...json(enlaceDeInvitacionAlLibroResponseSchema),
+        },
+        403: { description: 'Tu rol no puede invitar a este libro' },
+        404: { description: 'No es una invitación pendiente de este libro' },
+      },
+    },
+  },
   '/book': {
     delete: {
       summary: 'Borra el libro activo entero, para todos sus miembros. No se puede con el último',

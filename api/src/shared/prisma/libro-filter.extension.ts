@@ -18,6 +18,9 @@ export const SIN_LIBRO = new Set([
   'bookInvitation',
   // La invitación a la app es de la instancia: deja registrarse sin entrar a ningún libro.
   'AccessInvitation',
+  // El enlace de una invitación: de la instancia o de una invitación a un libro que todavía no
+  // tiene miembro. Se busca por el hash del token, antes de que exista ninguna sesión.
+  'InvitationLink',
 ])
 
 const ESCRIBEN = new Set(['create', 'createMany', 'createManyAndReturn', 'upsert'])

@@ -2832,6 +2832,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/book/invitations/{id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Un enlace nuevo para una invitación pendiente del libro; el anterior deja de servir */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description El token del enlace (se muestra una sola vez) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EnlaceDeInvitacionAlLibro"];
+                    };
+                };
+                /** @description Tu rol no puede invitar a este libro */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No es una invitación pendiente de este libro */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/book": {
         parameters: {
             query?: never;
@@ -3039,13 +3089,13 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Invitación vigente por una semana */
+                /** @description Invitación vigente por una semana, con el token de su enlace (se muestra una sola vez) */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["InvitacionALaApp"];
+                        "application/json": components["schemas"]["InvitacionALaAppConEnlace"];
                     };
                 };
                 /** @description No administrás esta instancia */
@@ -3057,6 +3107,49 @@ export interface paths {
                 };
                 /** @description Ese correo ya tiene cuenta */
                 409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/invitations/{id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Un enlace nuevo para una invitación a la app; el anterior deja de servir */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description El token del enlace nuevo (se muestra una sola vez) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EnlaceDeInvitacion"];
+                    };
+                };
+                /** @description No existe, venció o ya se usó */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3880,6 +3973,10 @@ export interface components {
             antes: unknown;
             despues: unknown;
         };
+        /** EnlaceDeInvitacionAlLibro */
+        EnlaceDeInvitacionAlLibro: {
+            token: string;
+        };
         /** LibroPropio */
         LibroPropio: {
             id: string;
@@ -3898,11 +3995,22 @@ export interface components {
         SoyAdmin: {
             admin: boolean;
         };
+        /** InvitacionALaAppConEnlace */
+        InvitacionALaAppConEnlace: {
+            id: string;
+            email: string;
+            expiresAt: string;
+            token: string;
+        };
         /** InvitacionALaApp */
         InvitacionALaApp: {
             id: string;
             email: string;
             expiresAt: string;
+        };
+        /** EnlaceDeInvitacion */
+        EnlaceDeInvitacion: {
+            token: string;
         };
         /** ResumenDeInstancia */
         ResumenDeInstancia: {

@@ -11,7 +11,9 @@ import { ResumenDeInstanciaUseCase } from '../application/resumen-de-instancia.u
 import { AdminGuard } from './admin.guard.js'
 import { invitarALaAppSchema } from './admin.responses.js'
 import type {
+  enlaceDeInvitacionResponseSchema,
   invitacionALaAppResponseSchema,
+  invitacionConEnlaceResponseSchema,
   resumenDeInstanciaResponseSchema,
   soyAdminResponseSchema,
 } from './admin.responses.js'
@@ -20,6 +22,8 @@ type SoyAdmin = z.infer<typeof soyAdminResponseSchema>
 type Resumen = z.infer<typeof resumenDeInstanciaResponseSchema>
 type InvitacionResponse = z.infer<typeof invitacionALaAppResponseSchema>
 type InvitarInput = z.infer<typeof invitarALaAppSchema>
+type InvitacionConEnlaceResponse = z.infer<typeof invitacionConEnlaceResponseSchema>
+type EnlaceResponse = z.infer<typeof enlaceDeInvitacionResponseSchema>
 
 const presentar = ({ id, email, expiresAt }: InvitacionALaApp): InvitacionResponse => ({
   id,
@@ -53,9 +57,18 @@ export class AdminController {
   @Post('invitations')
   async invitar(
     @Body(new ZodValidationPipe(invitarALaAppSchema)) input: InvitarInput,
-  ): Promise<InvitacionResponse> {
+  ): Promise<InvitacionConEnlaceResponse> {
     const { userId } = libroActual('invitar a la app')
-    return presentar(await this.invitaciones.invitar(input.email, userId))
+    const invitacion = await this.invitaciones.invitar(input.email, userId)
+    return { ...presentar(invitacion), token: invitacion.token }
+  }
+
+  // Otro enlace para la misma invitación: el anterior deja de servir.
+  @UseGuards(AdminGuard)
+  @Post('invitations/:id/link')
+  @HttpCode(200)
+  async enlace(@Param('id') id: string): Promise<EnlaceResponse> {
+    return { token: await this.invitaciones.renovarEnlace(id) }
   }
 
   @UseGuards(AdminGuard)

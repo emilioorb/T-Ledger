@@ -9,6 +9,7 @@ import { CampoDeContrasena } from '@/features/identity/campo-de-contrasena'
 import { copy } from '@/features/identity/copy'
 import { gestoDeFormulario } from '@/features/identity/gesto'
 import { MarcoDeIdentidad } from '@/features/identity/marco-de-identidad'
+import { cabeceraDelToken, useTokenDelEnlace } from '@/features/identity/token-del-enlace'
 import { queryClient } from '@/router'
 import { correoDeLaBusqueda } from '@/features/datos/enlace-de-invitacion'
 
@@ -16,7 +17,9 @@ import { correoDeLaBusqueda } from '@/features/datos/enlace-de-invitacion'
 // llamada con sesión —Better Auth la resuelve bajo su middleware de sesión, no a partir del
 // enlace—, así que el invitado necesita cuenta **antes** de poder aceptarla. Acá se crean las
 // dos cosas, en ese orden, y el servidor decide si puede: la regla vive en `puedeRegistrarse`
-// y no acá, porque una comprobación en el navegador no protege nada.
+// y no acá, porque una comprobación en el navegador no protege nada. Lo que la pantalla aporta
+// es el token del enlace, que el servidor exige para dejar registrarse a quien no es la primera
+// cuenta.
 //
 // Sirve también sin invitación, para la primera cuenta de una instancia recién levantada, a
 // quien no la puede invitar nadie. Es la misma pantalla y el mismo formulario: lo único que
@@ -24,6 +27,7 @@ import { correoDeLaBusqueda } from '@/features/datos/enlace-de-invitacion'
 const CrearCuentaScreen = () => {
   const navegar = useNavigate()
   const { invitacion, correo: correoDelEnlace } = Route.useSearch()
+  const token = useTokenDelEnlace()
   const [nombre, setNombre] = useState('')
   // Con el correo del enlace de invitación ya puesto: es el que la invitación deja pasar.
   const [correo, setCorreo] = useState(correoDelEnlace ?? '')
@@ -44,6 +48,7 @@ const CrearCuentaScreen = () => {
     await signUp.email(
       { name: nombre, email: correo, password: contrasena },
       {
+        headers: cabeceraDelToken(token),
         onSuccess: async () => {
           // Sin invitación no hay nada que aceptar: es la primera cuenta de la instancia, y su
           // libro lo crea después desde adentro.
@@ -66,7 +71,7 @@ const CrearCuentaScreen = () => {
           void navegar({ to: '/tablero' })
         },
         // El 403 es la regla de registro del servidor: no hay invitación vigente para ese
-        // correo. El 422 es el correo repetido. Lo demás no se disfraza de error de tecleo.
+        // correo y ese enlace. El 422 es el correo repetido. Lo demás no se disfraza de error de tecleo.
         onError: ({ error: fallo }) => {
           if (fallo.status === 0) fallar(copy.entrar.unreachable)
           else if (fallo.status === 403) fallar(copy.crear.notInvited)

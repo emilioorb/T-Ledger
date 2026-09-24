@@ -4,6 +4,7 @@ import { PrismaModule } from '../../shared/prisma/prisma.module.js'
 import { RastroModule } from '../auditoria/rastro.module.js'
 import { BorrarArchivosDelLibro } from './application/borrar-archivos-del-libro.listener.js'
 import { BorrarLibroUseCase } from './application/borrar-libro.use-case.js'
+import { EnlaceDeInvitacionUseCase } from './application/enlace-de-invitacion.use-case.js'
 import { MisLibrosUseCase } from './application/mis-libros.use-case.js'
 import { VaciarLibroUseCase } from './application/vaciar-libro.use-case.js'
 import { LIBRO_REPOSITORY } from './domain/libro-repository.port.js'
@@ -18,6 +19,7 @@ import { PrismaLibroRepository } from './infrastructure/prisma-libro.repository.
     VaciarLibroUseCase,
     MisLibrosUseCase,
     BorrarLibroUseCase,
+    EnlaceDeInvitacionUseCase,
     BorrarArchivosDelLibro,
   ],
 })

@@ -1,3 +1,5 @@
+import { createHash, randomBytes } from 'node:crypto'
+
 // Quién puede crear una cuenta.
 //
 // T-Ledger no tiene registro abierto, pero «cerrado» no puede significar apagado: el
@@ -9,9 +11,18 @@
 // Así que la puerta no está cerrada sino condicionada, que es lo que la propia documentación
 // de Better Auth recomienda para este caso: `disableSignUp` sirve para apagar el registro, y
 // para permitirlo *a veces* hay que decidirlo en el gancho de creación del usuario.
-export interface InvitacionDelCorreo {
-  status: string
+//
+// La condición es **tener el enlace**, no que el correo esté invitado: quien sabía el correo de
+// alguien invitado se registraba antes que esa persona y entraba a su libro
+// (docs/plans/2026-09-23-invitaciones-con-token.md).
+
+// Lo que el registro encuentra a partir del token que trae el pedido.
+export interface EnlaceDeInvitacion {
+  email: string
   expiresAt: Date
+  usedAt: Date | null
+  // Que la invitación a la que pertenece siga esperando: no cancelada ni aceptada.
+  invitacionVigente: boolean
 }
 
 interface Solicitud {
@@ -19,16 +30,34 @@ interface Solicitud {
   // persona que acaba de levantar su T-Ledger, y dejarla afuera sería dejar la base vacía
   // para siempre.
   esLaPrimeraCuenta: boolean
-  // Todas las invitaciones que existen para ese correo, en cualquier estado. La decisión de
-  // cuáles sirven se toma acá y no en la consulta, para que se pueda probar sin base.
-  invitaciones: InvitacionDelCorreo[]
+  email: string
+  enlace: EnlaceDeInvitacion | null
 }
 
-const VIGENTE = 'pending'
+const normalizar = (correo: string) => correo.trim().toLowerCase()
 
-export const puedeRegistrarse = ({ esLaPrimeraCuenta, invitaciones }: Solicitud, ahora: Date) =>
+export const puedeRegistrarse = ({ esLaPrimeraCuenta, email, enlace }: Solicitud, ahora: Date): boolean =>
   esLaPrimeraCuenta ||
-  invitaciones.some(({ status, expiresAt }) => status === VIGENTE && expiresAt > ahora)
+  (enlace !== null &&
+    normalizar(enlace.email) === normalizar(email) &&
+    enlace.usedAt === null &&
+    enlace.expiresAt > ahora &&
+    enlace.invitacionVigente)
+
+// 32 bytes al azar en base64url: 43 caracteres, sin relleno.
+const BYTES_DEL_TOKEN = 32
+const FORMA_DEL_TOKEN = /^[A-Za-z0-9_-]{43}$/
+
+export const generarToken = (): string => randomBytes(BYTES_DEL_TOKEN).toString('base64url')
+
+// El token llega del pedido y se usa en una consulta: tiene que ser texto con la forma exacta.
+// Un objeto (`{ not: '' }`) usado como filtro de Prisma encontraría la invitación sin saberlo.
+export const esToken = (valor: unknown): valor is string =>
+  typeof valor === 'string' && FORMA_DEL_TOKEN.test(valor)
+
+// En la base queda solo el hash: quien lea la base o un respaldo no puede registrarse como
+// ningún invitado. SHA-256 sin sal alcanza porque el token es aleatorio de 256 bits.
+export const hashDelToken = (token: string): string => createHash('sha256').update(token).digest('hex')
 
 // Lo mismo que le dice la pantalla de entrar a quien llega sin invitación. No distingue entre
 // «no te invitaron», «tu invitación venció» y «ya la usaste»: las tres son la misma respuesta

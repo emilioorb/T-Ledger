@@ -16,6 +16,7 @@ export interface Invitacion {
 }
 
 type Vaciado = components['schemas']['Vaciado']
+type EnlaceAlLibro = components['schemas']['EnlaceDeInvitacionAlLibro']
 
 // Las invitaciones no vienen con la organización activa: hay que pedirlas aparte, y solo las
 // ve quien puede administrarlas. Por eso la consulta se enciende con `habilitada` en vez de
@@ -60,6 +61,15 @@ export const useInvitar = () => {
     onError: () => toast.error(copy.invitar.failed),
   })
 }
+
+// El enlace sale de nuestra API y no de Better Auth: lleva un token que se guarda solo como
+// hash, así que cada pedido da uno nuevo y el anterior deja de servir.
+export const useEnlaceDeInvitacion = () =>
+  useMutation({
+    mutationFn: (invitationId: string) =>
+      apiFetch<EnlaceAlLibro>(`/book/invitations/${invitationId}/link`, { method: 'POST' }),
+    onError: () => toast.error(copy.invitar.linkFailed),
+  })
 
 export const useCancelarInvitacion = () => {
   const refrescar = useRefrescarGente()

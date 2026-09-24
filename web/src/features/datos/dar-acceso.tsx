@@ -8,14 +8,23 @@ import { FormDialog } from '@/components/form-dialog'
 import { ApiError } from '@/lib/api'
 import { formatIsoDate } from '@/lib/dates'
 import { copy } from './copy'
-import { enlaceDeInvitacion } from './enlace-de-invitacion'
+import { enlaceALaApp } from './enlace-de-invitacion'
 import {
   useCancelarInvitacionALaApp,
   useInvitacionesALaApp,
   useInvitarALaApp,
+  useRenovarEnlaceALaApp,
 } from './use-datos'
 
-const enlaceDe = (correo: string) => enlaceDeInvitacion(window.location.origin, correo)
+interface EnlaceListo {
+  url: string
+  expiresAt: string
+}
+
+const enlaceListo = (email: string, expiresAt: string, token: string): EnlaceListo => ({
+  url: enlaceALaApp(window.location.origin, email, token),
+  expiresAt,
+})
 const enDia = (iso: string) => formatIsoDate(iso.slice(0, 10))
 
 // Para quien pidió acceso por el «Pedir acceso» de la landing. El admin no crea la cuenta ni ve
@@ -53,11 +62,12 @@ export const EnlaceDarAcceso = () => {
 
 export const DarAcceso = () => {
   const [correo, setCorreo] = useState('')
-  const [creada, setCreada] = useState<{ email: string; expiresAt: string } | null>(null)
+  const [enlace, setEnlace] = useState<EnlaceListo | null>(null)
 
   const pendientes = useInvitacionesALaApp(true)
   const invitar = useInvitarALaApp()
   const cancelar = useCancelarInvitacionALaApp()
+  const renovar = useRenovarEnlaceALaApp()
 
   const copiar = async (texto: string) => {
     try {
@@ -74,7 +84,7 @@ export const DarAcceso = () => {
     if (limpio === '') return
     invitar.mutate(limpio, {
       onSuccess: (invitacion) => {
-        setCreada(invitacion)
+        setEnlace(enlaceListo(invitacion.email, invitacion.expiresAt, invitacion.token))
         setCorreo('')
       },
       onError: (error) =>
@@ -85,6 +95,12 @@ export const DarAcceso = () => {
         ),
     })
   }
+
+  const sacarOtro = (invitacion: { id: string; email: string; expiresAt: string }) =>
+    renovar.mutate(invitacion.id, {
+      onSuccess: ({ token }) => setEnlace(enlaceListo(invitacion.email, invitacion.expiresAt, token)),
+      onError: () => toast.error(copy.acceso.renewFailed),
+    })
 
   return (
     <div className="grid gap-5">
@@ -105,22 +121,22 @@ export const DarAcceso = () => {
         </Button>
       </form>
 
-      {creada ? (
+      {enlace ? (
         <div className="space-y-1.5 rounded-lg border border-border p-3">
           <Label htmlFor="acceso-enlace">{copy.acceso.linkLabel}</Label>
           <div className="flex gap-2">
             <Input
               id="acceso-enlace"
               readOnly
-              value={enlaceDe(creada.email)}
+              value={enlace.url}
               onFocus={(evento) => evento.currentTarget.select()}
               className="font-mono text-xs"
             />
-            <Button type="button" size="sm" variant="secondary" onClick={() => copiar(enlaceDe(creada.email))}>
+            <Button type="button" size="sm" variant="secondary" onClick={() => copiar(enlace.url)}>
               {copy.acceso.copy}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">{copy.acceso.linkHint(enDia(creada.expiresAt))}</p>
+          <p className="text-xs text-muted-foreground">{copy.acceso.linkHint(enDia(enlace.expiresAt))}</p>
         </div>
       ) : null}
 
@@ -139,8 +155,14 @@ export const DarAcceso = () => {
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-1">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => copiar(enlaceDe(invitacion.email))}>
-                    {copy.acceso.copyShort}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={renovar.isPending}
+                    onClick={() => sacarOtro(invitacion)}
+                  >
+                    {copy.acceso.renew}
                   </Button>
                   <Button
                     type="button"

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Param,
   Post,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -13,10 +14,15 @@ import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 import { VerificadorDeContrasena } from '../../identity/infrastructure/verificador-de-contrasena.js'
 import { BorrarLibroUseCase } from '../application/borrar-libro.use-case.js'
+import { EnlaceDeInvitacionUseCase } from '../application/enlace-de-invitacion.use-case.js'
 import { MisLibrosUseCase } from '../application/mis-libros.use-case.js'
 import { VaciarLibroUseCase } from '../application/vaciar-libro.use-case.js'
 import { totalBorrado } from '../domain/vaciado.js'
-import type { libroPropioResponseSchema, vaciadoResponseSchema } from './libro.responses.js'
+import type {
+  enlaceDeInvitacionAlLibroResponseSchema,
+  libroPropioResponseSchema,
+  vaciadoResponseSchema,
+} from './libro.responses.js'
 import {
   borrarLibroSchema,
   vaciarLibroSchema,
@@ -26,6 +32,7 @@ import {
 
 type VaciadoResponse = z.infer<typeof vaciadoResponseSchema>
 type LibroPropioResponse = z.infer<typeof libroPropioResponseSchema>
+type EnlaceResponse = z.infer<typeof enlaceDeInvitacionAlLibroResponseSchema>
 
 @Controller('book')
 export class LibroController {
@@ -34,7 +41,16 @@ export class LibroController {
     private readonly libros: MisLibrosUseCase,
     private readonly borrar: BorrarLibroUseCase,
     private readonly contrasena: VerificadorDeContrasena,
+    private readonly enlaces: EnlaceDeInvitacionUseCase,
   ) {}
+
+  // Solo quien puede invitar, y solo para una invitación pendiente de este libro.
+  @Permiso('invitation', 'create')
+  @Post('invitations/:id/link')
+  @HttpCode(200)
+  async enlace(@Param('id') id: string): Promise<EnlaceResponse> {
+    return { token: await this.enlaces.renovar(id) }
+  }
 
   // Sin permiso: cada quien ve los suyos, y el «suyos» sale de la sesión y no de la URL.
   @Get('mine')

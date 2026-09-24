@@ -25,6 +25,8 @@ export const useResumenDeInstancia = (habilitada: boolean) =>
   })
 
 type InvitacionALaApp = components['schemas']['InvitacionALaApp']
+type InvitacionConEnlace = components['schemas']['InvitacionALaAppConEnlace']
+type Enlace = components['schemas']['EnlaceDeInvitacion']
 
 const INVITACIONES = ['admin', 'invitations'] as const
 
@@ -39,10 +41,17 @@ export const useInvitarALaApp = () => {
   const client = useQueryClient()
   return useMutation({
     mutationFn: (email: string) =>
-      apiFetch<InvitacionALaApp>('/admin/invitations', { method: 'POST', body: JSON.stringify({ email }) }),
+      apiFetch<InvitacionConEnlace>('/admin/invitations', { method: 'POST', body: JSON.stringify({ email }) }),
     onSuccess: () => client.invalidateQueries({ queryKey: INVITACIONES }),
   })
 }
+
+// El token no se guarda, así que volver a mandar el enlace es pedir uno nuevo: el anterior deja
+// de servir.
+export const useRenovarEnlaceALaApp = () =>
+  useMutation({
+    mutationFn: (id: string) => apiFetch<Enlace>(`/admin/invitations/${id}/link`, { method: 'POST' }),
+  })
 
 export const useCancelarInvitacionALaApp = () => {
   const client = useQueryClient()

@@ -1,6 +1,5 @@
-import { CopyIcon, UserPlusIcon } from 'lucide-react'
+import { UserPlusIcon } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { toast } from 'sonner'
 import { FormDialog } from '@/components/form-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,15 +12,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { copy } from './copy'
-import { useInvitar, type RolDelLibro } from './use-libro'
+import { EnlaceDeLaInvitacion, enlaceDeLaInvitacion } from './enlace-de-la-invitacion'
+import { useEnlaceDeInvitacion, useInvitar, type RolDelLibro } from './use-libro'
 
 const ROLES: RolDelLibro[] = ['editor', 'viewer', 'owner']
-
-// El enlace que hay que pasarle a la persona. Se arma con el origen de esta pantalla y no con
-// una variable de entorno: la invitación se abre donde vive la aplicación, y ese dato ya está
-// en el navegador que la está creando.
-const enlaceDe = (invitationId: string) =>
-  `${window.location.origin}/crear-cuenta?invitacion=${invitationId}`
 
 export const Invitar = () => {
   const [abierto, setAbierto] = useState(false)
@@ -29,6 +23,8 @@ export const Invitar = () => {
   const [rol, setRol] = useState<RolDelLibro>('editor')
   const [enlace, setEnlace] = useState<string | null>(null)
   const invitar = useInvitar()
+  const sacarEnlace = useEnlaceDeInvitacion()
+  const enviando = invitar.isPending || sacarEnlace.isPending
 
   const cerrar = (abrir: boolean) => {
     setAbierto(abrir)
@@ -42,14 +38,14 @@ export const Invitar = () => {
     evento.preventDefault()
     invitar.mutate(
       { email: correo.trim(), role: rol },
-      { onSuccess: (invitacion) => invitacion && setEnlace(enlaceDe(invitacion.id)) },
+      {
+        onSuccess: (invitacion) =>
+          invitacion &&
+          sacarEnlace.mutate(invitacion.id, {
+            onSuccess: ({ token }) => setEnlace(enlaceDeLaInvitacion(invitacion.id, token)),
+          }),
+      },
     )
-  }
-
-  const copiar = async () => {
-    if (!enlace) return
-    await navigator.clipboard.writeText(enlace)
-    toast.success(copy.invitar.copied)
   }
 
   return (
@@ -70,16 +66,9 @@ export const Invitar = () => {
             produce, porque todavía no hay correo que lo mande. */}
         {enlace ? (
           <div className="grid gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="enlace">{copy.invitar.linkLabel}</Label>
-              <Input id="enlace" readOnly value={enlace} className="num text-xs" />
-            </div>
+            <EnlaceDeLaInvitacion id="enlace" enlace={enlace} />
 
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="secondary" size="sm" onClick={() => void copiar()}>
-                <CopyIcon aria-hidden="true" />
-                {copy.invitar.copy}
-              </Button>
+            <div className="flex justify-end">
               <Button type="button" size="sm" onClick={() => cerrar(false)}>
                 {copy.invitar.close}
               </Button>
@@ -117,8 +106,8 @@ export const Invitar = () => {
             </div>
 
             <div className="mt-2 flex justify-end">
-              <Button type="submit" size="sm" disabled={invitar.isPending || correo.trim() === ''}>
-                {invitar.isPending ? copy.invitar.submitting : copy.invitar.submit}
+              <Button type="submit" size="sm" disabled={enviando || correo.trim() === ''}>
+                {enviando ? copy.invitar.submitting : copy.invitar.submit}
               </Button>
             </div>
           </form>

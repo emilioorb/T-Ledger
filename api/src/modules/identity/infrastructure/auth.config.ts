@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
@@ -8,7 +9,8 @@ import { entrarComoAutor, exigirAutor } from './autor-de-la-peticion.js'
 import { librosQueSeVanConLaCuenta } from './baja-de-cuenta.js'
 import { puedeCrearLibro } from './cuantos-libros.js'
 import { ac, roles } from './roles.js'
-import { puedeRegistrarse, SIN_INVITACION } from './registro.js'
+import { EnlacesDeInvitacion } from './enlaces-de-invitacion.js'
+import { esToken, puedeRegistrarse, SIN_INVITACION } from './registro.js'
 
 // Better Auth trae su propio modelo de datos y su propio router, que no pasan por el dominio
 // hexagonal ni por el contrato Zod del resto de la app. Es el precio de no escribir a mano las
@@ -36,6 +38,9 @@ export interface CambioDeMiembro {
   despues?: object
 }
 
+// La cabecera en la que la pantalla de crear cuenta manda el token del enlace de invitación.
+export const CABECERA_DEL_TOKEN = 'x-token-invitacion'
+
 export const crearAuth = (
   prisma: PrismaClient,
   env: Env,
@@ -45,6 +50,17 @@ export const crearAuth = (
   // de la base —los archivos— las limpia al enterarse.
   alBorrarLibros: (bookIds: string[]) => Promise<void>,
 ) => {
+  const enlaces = new EnlacesDeInvitacion(prisma)
+  const logger = new Logger('Registro')
+
+  // El token del enlace llega en una cabecera y no en el cuerpo: el cuerpo del registro acepta
+  // objetos, y uno como `{ not: '' }` usado de filtro encontraría cualquier invitación del correo.
+  // Solo se devuelve si tiene la forma exacta de un token.
+  const tokenDelPedido = (ctx: { headers?: Headers | undefined } | null | undefined): string | null => {
+    const valor = ctx?.headers?.get(CABECERA_DEL_TOKEN)
+    return esToken(valor) ? valor : null
+  }
+
   const auth = betterAuth({
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
     secret: env.AUTH_SECRET,
@@ -77,12 +93,28 @@ export const crearAuth = (
     //
     // No corta nada si no hay sesión: entrar y registrarse pasan por acá, y ahí todavía no
     // hay nadie. Quien necesite el autor lo exige por su cuenta.
+    //
+    // Aceptar una invitación a un libro exige el enlace de esa invitación: Better Auth acepta con
+    // solo comparar el correo de la sesión, y el correo no se verifica. Su gancho
+    // `beforeAcceptInvitation` no recibe las cabeceras, por eso va acá.
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
         const sesion = await getSessionFromCtx(ctx).catch(() => null)
         if (sesion) entrarComoAutor(sesion.user.id)
+        if (ctx.path === '/organization/accept-invitation') {
+          const token = tokenDelPedido(ctx)
+          const { invitationId } = (ctx.body ?? {}) as { invitationId?: unknown }
+          const abre =
+            token !== null && typeof invitationId === 'string'
+              ? await enlaces.abreLaInvitacion(token, invitationId).catch(() => false)
+              : false
+          if (!abre) throw new APIError('FORBIDDEN', { message: SIN_INVITACION })
+        }
       }),
     },
+    // Invariante: correo y contraseña es el único camino que crea usuarios, y pasa por la regla
+    // de `user.create.before`. Cualquier plugin que cree usuarios (social, magic link, admin,
+    // anónimo) tiene que pasar por la misma regla antes de habilitarse.
     emailAndPassword: {
       enabled: true,
     },
@@ -112,44 +144,35 @@ export const crearAuth = (
       },
       user: {
         create: {
-          before: async (usuario) => {
-            const [cuentas, aUnLibro, aLaApp] = await Promise.all([
-              prisma.authUser.count(),
-              prisma.bookInvitation.findMany({
-                where: { email: usuario.email },
-                select: { status: true, expiresAt: true },
-              }),
-              prisma.accessInvitation.findMany({
-                where: { email: usuario.email },
-                select: { usedAt: true, expiresAt: true },
-              }),
-            ])
-
-            // Las dos invitaciones abren la misma puerta; la de la app no mete a nadie en un
-            // libro. Una gastada cuenta como aceptada, igual que la de un libro.
-            const invitaciones = [
-              ...aUnLibro,
-              ...aLaApp.map(({ usedAt, expiresAt }) => ({
-                status: usedAt ? 'accepted' : 'pending',
-                expiresAt,
-              })),
-            ]
-            const permitido = puedeRegistrarse(
-              { esLaPrimeraCuenta: cuentas === 0, invitaciones },
-              new Date(),
-            )
+          // Falla cerrado y siempre con la misma respuesta: sin pedido, sin enlace, con un enlace
+          // ajeno, vencido o usado, o si algo de acá adentro falla. Distinguir los casos le diría
+          // a quien prueba correos cuáles están invitados. El token no se loguea nunca.
+          before: async (usuario, ctx) => {
+            const permitido = await (async () => {
+              const token = tokenDelPedido(ctx)
+              const [cuentas, enlace] = await Promise.all([
+                prisma.authUser.count(),
+                token ? enlaces.buscar(token) : Promise.resolve(null),
+              ])
+              return puedeRegistrarse(
+                { esLaPrimeraCuenta: cuentas === 0, email: usuario.email, enlace },
+                new Date(),
+              )
+            })().catch((error: unknown) => {
+              // El tipo de error y nada más: ni el token ni el correo.
+              logger.warn(`El registro falló adentro del gancho: ${error instanceof Error ? error.name : 'desconocido'}`)
+              return false
+            })
             if (!permitido) throw new APIError('FORBIDDEN', { message: SIN_INVITACION })
           },
           // Toda cuenta nace con su libro personal, venga o no de una invitación: entrar a un
           // libro ajeno no reemplaza tener el propio. Va por la API de organizaciones y no
           // directo a la base para que corra `afterCreateOrganization` y el libro salga con
           // su plan de cuentas. El slug lleva el id porque es único en toda la instancia.
-          after: async (usuario) => {
-            // La invitación a la app sirve una sola vez: se gasta con la cuenta que abrió.
-            await prisma.accessInvitation.updateMany({
-              where: { email: usuario.email, usedAt: null },
-              data: { usedAt: new Date() },
-            })
+          after: async (usuario, ctx) => {
+            // El enlace sirve una sola vez: se gasta el que se usó, y con él su invitación a la app.
+            const token = tokenDelPedido(ctx)
+            if (token) await enlaces.gastar(token)
             await auth.api.createOrganization({
               body: { name: 'Personal', slug: `personal-${usuario.id}`, userId: usuario.id },
             })

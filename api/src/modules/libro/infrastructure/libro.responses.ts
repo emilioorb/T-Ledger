@@ -19,3 +19,9 @@ export const vaciadoResponseSchema = z
     total: z.number().int().nonnegative(),
   })
   .meta({ id: 'Vaciado', title: 'Vaciado' })
+
+// El token del enlace de una invitación al libro. Se ve solo en esta respuesta: en la base queda
+// su hash.
+export const enlaceDeInvitacionAlLibroResponseSchema = z
+  .object({ token: z.string() })
+  .meta({ id: 'EnlaceDeInvitacionAlLibro', title: 'EnlaceDeInvitacionAlLibro' })

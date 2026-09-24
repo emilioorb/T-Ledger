@@ -22,10 +22,12 @@ import {
 import { Seccion } from '@/features/cuenta/seccion'
 import { formatLongDate } from '@/lib/dates'
 import { copy } from './copy'
+import { EnlaceDeLaInvitacion, enlaceDeLaInvitacion } from './enlace-de-la-invitacion'
 import { Invitar } from './invitar'
 import {
   useCambiarRol,
   useCancelarInvitacion,
+  useEnlaceDeInvitacion,
   useInvitaciones,
   useSacarMiembro,
   type Invitacion,
@@ -58,6 +60,14 @@ const enDia = (fecha: Date | string) => new Date(fecha).toISOString().slice(0, 1
 export const LaGente = ({ miembros, soyYo, puedoAdministrar }: Props) => {
   const [sacando, setSacando] = useState<Miembro | null>(null)
   const { data: invitaciones } = useInvitaciones(puedoAdministrar)
+  const sacarEnlace = useEnlaceDeInvitacion()
+  const [enlaceNuevo, setEnlaceNuevo] = useState<{ invitationId: string; enlace: string } | null>(null)
+
+  const sacarOtroEnlace = (invitationId: string) =>
+    sacarEnlace.mutate(invitationId, {
+      onSuccess: ({ token }) =>
+        setEnlaceNuevo({ invitationId, enlace: enlaceDeLaInvitacion(invitationId, token) }),
+    })
   const cambiarRol = useCambiarRol()
   const sacar = useSacarMiembro()
   const cancelar = useCancelarInvitacion()
@@ -145,23 +155,37 @@ export const LaGente = ({ miembros, soyYo, puedoAdministrar }: Props) => {
           {invitaciones && invitaciones.length > 0 ? (
             <ul className="divide-y divide-border">
               {invitaciones.map((invitacion: Invitacion) => (
-                <li key={invitacion.id} className="flex items-center gap-3 py-2">
-                  <MailIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                  <div className="min-w-0 flex-1">
-                    <p className="num truncate text-sm">{invitacion.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {copy.invitar.expires(formatLongDate(enDia(invitacion.expiresAt)))}
-                    </p>
+                <li key={invitacion.id} className="space-y-2 py-2">
+                  <div className="flex items-center gap-3">
+                    <MailIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      <p className="num truncate text-sm">{invitacion.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {copy.invitar.expires(formatLongDate(enDia(invitacion.expiresAt)))}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={sacarEnlace.isPending}
+                      onClick={() => sacarOtroEnlace(invitacion.id)}
+                    >
+                      {copy.invitar.renew}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={cancelar.isPending}
+                      onClick={() => cancelar.mutate(invitacion.id)}
+                    >
+                      {copy.invitar.cancel}
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={cancelar.isPending}
-                    onClick={() => cancelar.mutate(invitacion.id)}
-                  >
-                    {copy.invitar.cancel}
-                  </Button>
+                  {enlaceNuevo?.invitationId === invitacion.id ? (
+                    <EnlaceDeLaInvitacion id={`enlace-${invitacion.id}`} enlace={enlaceNuevo.enlace} />
+                  ) : null}
                 </li>
               ))}
             </ul>

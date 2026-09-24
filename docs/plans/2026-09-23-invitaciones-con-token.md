@@ -95,3 +95,24 @@ no sirve de secreto, el token no se guarda en claro, y no viaja en la query de l
 | 9 | Carrera en la primera cuenta | Compromiso | Documentado |
 | 10 | El contrato de la web no estaba definido | Accionable | Fragmento, cabecera y limpieza de la URL |
 
+
+## Conciliación del /ship (2026-09-23)
+
+code-reviewer, security-auditor y test-engineer en paralelo sobre la implementación.
+
+| # | Hallazgo | Clase | Resolución |
+|---|---|---|---|
+| 1 | Con cuenta, se invita un correo ajeno al libro propio, se registra con ese enlace y se acepta la invitación de otro libro (High) | Bloqueante | Aceptar exige el token de **esa** invitación (`hooks.before` en `/organization/accept-invitation`); cambia el flujo de aceptación, que estaba en «preguntar antes» |
+| 2 | `gastar` tira si el enlace ya no está y la cuenta queda sin libro personal | Accionable | `updateMany`; e2e con el enlace renovado en el medio |
+| 3 | El enlace de una invitación a un libro vencida salía igual | Accionable | `paraUnLibro` filtra por `expiresAt` |
+| 4 | Se perdió el test del borde «vence en este instante» | Accionable | Restituido; probado mutando `>` por `>=` |
+| 5 | La guardia del piso se aflojó para que el cambio pase | Accionable | Revertido; las aserciones reescritas quedan marcadas para decidir a mano |
+| 6 | Renovar un enlace no dejaba rastro | Accionable | `EnlaceDeInvitacionUseCase` anota en el registro, sin el token |
+| 7 | El controlador creaba la clase de infraestructura | Accionable | `EnlacesDeInvitacion` se inyecta desde `IdentityModule` |
+| 8 | Falta el invariante de los plugins en el código | Accionable | Comentario junto a `emailAndPassword` |
+| 9 | Sin tests de la pantalla de crear cuenta ni de «Enlace nuevo» | Accionable | Tests de pantalla (con la cabecera al registrarse y al aceptar) y de la lista |
+| 10 | Un error adentro del gancho no deja rastro | Accionable | Se loguea el tipo de error, sin token ni correo |
+| 11 | El fragmento podía llegar a Sentry | Accionable | `scrub` corta en `?` y en `#` |
+| 12 | Con cuenta se pueden crear cuentas con correos ajenos (ocupar el correo; `ADMIN_EMAILS` sin cuenta) | Compromiso | Los correos no se verifican; en producción el admin ya tiene cuenta |
+| 13 | El historial global del navegador puede guardar el fragmento | Compromiso | Un uso, un correo, una semana |
+| 14 | El enlace de la app se crea fuera de la transacción de la invitación | Compromiso | Si falla, se renueva desde la lista |
