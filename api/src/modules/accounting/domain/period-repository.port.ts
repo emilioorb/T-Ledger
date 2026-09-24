@@ -6,6 +6,8 @@ export interface PeriodRepository {
   find(key: PeriodKey): Promise<AccountingPeriod | null>
   findAll(): Promise<AccountingPeriod[]>
   findClosedAfter(key: PeriodKey): Promise<AccountingPeriod[]>
+  // Dentro de la transacción de quien llama, que es la que tiene el candado del libro: el
+  // repositorio no abre la suya, y escribir sin ella lo corta el filtro de libro.
   save(period: AccountingPeriod): Promise<void>
   saveMany(periods: readonly AccountingPeriod[]): Promise<void>
 }

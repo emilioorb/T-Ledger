@@ -1,3 +1,4 @@
+import { conElCandadoRetenido } from '../../../test/candado-retenido.js'
 import type { INestApplication } from '@nestjs/common'
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter'
 import { Test } from '@nestjs/testing'
@@ -204,10 +205,12 @@ describe('dos personas sobre la misma meta', () => {
     events.on(GOAL_REACHED, listener)
     const meta = await crearMeta()
 
-    const respuestas = await Promise.all([
-      post(`/goals/${meta.id}/contributions`, aporte('300000000')),
-      post(`/goals/${meta.id}/contributions`, aporte('300000000')),
-    ])
+    const respuestas = await conElCandadoRetenido(prisma, 2, () =>
+      Promise.all([
+        post(`/goals/${meta.id}/contributions`, aporte('300000000')),
+        post(`/goals/${meta.id}/contributions`, aporte('300000000')),
+      ]),
+    )
 
     expect(respuestas.map((r) => r.status)).toEqual([201, 201])
     expect(listener).toHaveBeenCalledTimes(1)

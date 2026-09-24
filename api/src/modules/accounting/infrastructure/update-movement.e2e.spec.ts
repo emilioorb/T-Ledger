@@ -1,3 +1,4 @@
+import { conElCandadoRetenido } from '../../../test/candado-retenido.js'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import type { INestApplication } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
@@ -46,26 +47,16 @@ const mayorDe = async (account: string) =>
 
 // Determinista: el cierre de agosto toma el candado del libro primero, y el pedido llega mientras
 // lo tiene. Con la regla leída afuera, el pedido veía el mes abierto y asentaba en uno ya cerrado.
-const mientrasSeCierraAgosto = async (pedido: () => request.Test) => {
-  let soltar: () => void = () => {}
-  const retenido = new Promise<void>((listo) => (soltar = listo))
-  let tomado: () => void = () => {}
-  const yaTomo = new Promise<void>((listo) => (tomado = listo))
-
-  const cierre = prisma.withTransaction(async () => {
-    tomado()
-    await retenido
-    await prisma.client.accountingPeriod.create({
-      data: { bookId: prisma.libro, period: '2026-08', status: 'CLOSED', closedAt: new Date() },
-    })
-  })
-  await yaTomo
-  const respuesta = pedido().then((r) => r)
-  await new Promise((listo) => setTimeout(listo, 300))
-  soltar()
-  await cierre
-  return respuesta
-}
+const mientrasSeCierraAgosto = (pedido: () => request.Test) =>
+  conElCandadoRetenido(
+    prisma,
+    1,
+    async () => pedido(),
+    () =>
+      prisma.client.accountingPeriod.create({
+        data: { bookId: prisma.libro, period: '2026-08', status: 'CLOSED', closedAt: new Date() },
+      }),
+  )
 
 // Este test no tiene nada que decir sobre libros, pero toda consulta necesita uno:
 // sin contexto la extensión de Prisma corta, que es exactamente lo que queremos.
@@ -233,10 +224,12 @@ describe('dos escritores sobre el mismo movimiento', () => {
     const movimiento = await crear()
     const leida = await version(movimiento.id)
 
-    const respuestas = await Promise.all([
-      patch(`/movements/${movimiento.id}`, { counterparty: 'Primera', version: leida }),
-      patch(`/movements/${movimiento.id}`, { counterparty: 'Segunda', version: leida }),
-    ])
+    const respuestas = await conElCandadoRetenido(prisma, 2, () =>
+      Promise.all([
+        patch(`/movements/${movimiento.id}`, { counterparty: 'Primera', version: leida }),
+        patch(`/movements/${movimiento.id}`, { counterparty: 'Segunda', version: leida }),
+      ]),
+    )
 
     expect(respuestas.map((r) => r.status).sort()).toEqual([200, 409])
     expect(respuestas.find((r) => r.status === 409)?.body.error.code).toBe('EDITADO_POR_OTRO')
@@ -247,10 +240,12 @@ describe('dos escritores sobre el mismo movimiento', () => {
     const movimiento = await crear()
     const leida = await version(movimiento.id)
 
-    const respuestas = await Promise.all([
-      post(`/movements/${movimiento.id}/void`, { version: leida }),
-      post(`/movements/${movimiento.id}/void`, { version: leida }),
-    ])
+    const respuestas = await conElCandadoRetenido(prisma, 2, () =>
+      Promise.all([
+        post(`/movements/${movimiento.id}/void`, { version: leida }),
+        post(`/movements/${movimiento.id}/void`, { version: leida }),
+      ]),
+    )
 
     expect(respuestas.map((r) => r.status)).toEqual([200, 200])
     expect(await prisma.journalEntry.count()).toBe(2)
@@ -318,35 +313,27 @@ describe('dar de alta mientras el mes se cierra', () => {
 // y cerraba con un movimiento sin asentar adentro.
 describe('cerrar mientras entra un movimiento', () => {
   it('el cierre espera, ve el movimiento sin asiento y no cierra', async () => {
-    let soltar: () => void = () => {}
-    const retenido = new Promise<void>((listo) => (soltar = listo))
-    let tomado: () => void = () => {}
-    const yaTomo = new Promise<void>((listo) => (tomado = listo))
+    const cierre = await conElCandadoRetenido(
+      prisma,
+      1,
+      async () => post('/periods/2026-08/close'),
+      () =>
+        prisma.client.movement.create({
+          data: {
+            bookId: prisma.libro,
+            id: '00000000-0000-7000-8000-00000000c1e7',
+            date: new Date('2026-08-15T00:00:00.000Z'),
+            kind: 'EXPENSE',
+            categoryId: categoriaId,
+            counterparty: 'Sin asiento',
+            amountMinor: 1_000n,
+            currency: 'CRC',
+            status: 'ACTIVE',
+          },
+        }),
+    )
 
-    const entrada = prisma.withTransaction(async () => {
-      tomado()
-      await retenido
-      await prisma.client.movement.create({
-        data: {
-          bookId: prisma.libro,
-          id: '00000000-0000-7000-8000-00000000c1e7',
-          date: new Date('2026-08-15T00:00:00.000Z'),
-          kind: 'EXPENSE',
-          categoryId: categoriaId,
-          counterparty: 'Sin asiento',
-          amountMinor: 1_000n,
-          currency: 'CRC',
-          status: 'ACTIVE',
-        },
-      })
-    })
-    await yaTomo
-    const cierre = post('/periods/2026-08/close').then((r) => r)
-    await new Promise((listo) => setTimeout(listo, 300))
-    soltar()
-    await entrada
-
-    expect((await cierre).status).toBe(422)
+    expect(cierre.status).toBe(422)
     expect(await prisma.accountingPeriod.count({ where: { period: '2026-08', status: 'CLOSED' } })).toBe(0)
   })
 })

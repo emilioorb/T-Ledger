@@ -84,6 +84,10 @@ Con eso, más lo que ya decía la spec:
   dejaría pasar. Hoy no existe ninguna; los repositorios piden `client` en cada consulta.
 - Las consultas crudas (`$executeRaw`) no pasan por el filtro. Las cuida
   `consultas-crudas.spec.ts`, que solo admite las del candado.
+- Cerrar un mes calcula sus bloqueos con el candado tomado: balance por moneda, historia y
+  movimientos sin asentar. Medido el 2026-09-24 con cinco años de un libro activo (12 000
+  movimientos, 24 000 líneas): 92 a 296 ms, lejos del tope de espera de 4 s. Si un libro llega
+  a tardar, lo primero es contar los movimientos sin asentar con un `NOT EXISTS` en SQL.
 - `hashtext` da 32 bits: dos libros pueden caer en la misma clave y esperarse entre sí. Es
   una espera de más, no un error, y con los libros que hay es improbable.
 - Lo que se guarda fuera de la base no vuelve atrás con la transacción. El enlace de una

@@ -1,3 +1,4 @@
+import { conElCandadoRetenido } from '../../../test/candado-retenido.js'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import { Test } from '@nestjs/testing'
 import type { INestApplication } from '@nestjs/common'
@@ -198,7 +199,7 @@ describe('dos personas sobre la misma cuota', () => {
   it('dos pagos a la vez de la cuota 1 registran uno, sin gasto de más', async () => {
     const { body: deuda } = await http().post('/api/v1/debts').send(tresCuotas)
 
-    const respuestas = await Promise.all([pagarLa(deuda.id, 1), pagarLa(deuda.id, 1)])
+    const respuestas = await conElCandadoRetenido(prisma, 2, () => Promise.all([pagarLa(deuda.id, 1), pagarLa(deuda.id, 1)]))
 
     expect(respuestas.map((r) => r.status).sort()).toEqual([201, 409])
     expect(await prisma.debtPayment.count({ where: {} })).toBe(1)
@@ -210,10 +211,12 @@ describe('dos personas sobre la misma cuota', () => {
     await pagarLa(deuda.id, 1).expect(201)
     await pagarLa(deuda.id, 2).expect(201)
 
-    const respuestas = await Promise.all([
-      http().delete(`/api/v1/debts/${deuda.id}/payments/last?cuota=2`),
-      http().delete(`/api/v1/debts/${deuda.id}/payments/last?cuota=2`),
-    ])
+    const respuestas = await conElCandadoRetenido(prisma, 2, () =>
+      Promise.all([
+        http().delete(`/api/v1/debts/${deuda.id}/payments/last?cuota=2`),
+        http().delete(`/api/v1/debts/${deuda.id}/payments/last?cuota=2`),
+      ]),
+    )
 
     expect(respuestas.map((r) => r.status)).toEqual([200, 200])
     expect(await prisma.debtPayment.count({ where: {} })).toBe(1)

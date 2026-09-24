@@ -1,4 +1,5 @@
-import { ConflictError } from '../../../shared/http/api-error.js'
+import { ConflictError, NotFoundError } from '../../../shared/http/api-error.js'
+import { SUBIR_VERSION } from '../../../shared/prisma/escribir-con-version.js'
 import { Injectable } from '@nestjs/common'
 import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import type { DateRange } from '../../../shared/kernel/date-range.js'
@@ -161,7 +162,7 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
   async markPending(lineId: string): Promise<void> {
     await this.prisma.client.bankLine.updateMany({
       where: { id: lineId },
-      data: { status: 'PENDING', movementId: null },
+      data: { status: 'PENDING', movementId: null, ...SUBIR_VERSION },
     })
   }
 
@@ -175,8 +176,12 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
   ): Promise<void> {
     const { count } = await this.prisma.client.bankLine.updateMany({
       where: { id: lineId, status: { not: 'MATCHED' } },
-      data,
+      data: { ...data, ...SUBIR_VERSION },
     })
-    if (count === 0) throw new ConflictError('Esa línea ya está conciliada. Deshacela antes de cambiarla.')
+    if (count > 0) return
+    if ((await this.prisma.client.bankLine.count({ where: { id: lineId } })) === 0) {
+      throw new NotFoundError(`La línea ${lineId} no existe.`)
+    }
+    throw new ConflictError('Esa línea ya está conciliada. Deshacela antes de cambiarla.')
   }
 }

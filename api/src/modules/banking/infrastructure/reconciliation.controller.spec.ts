@@ -1,3 +1,4 @@
+import { conElCandadoRetenido } from '../../../test/candado-retenido.js'
 import type { INestApplication } from '@nestjs/common'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import { Test } from '@nestjs/testing'
@@ -340,10 +341,12 @@ describe('dos personas conciliando a la vez', () => {
     const movimiento = await crearMovimiento('4500000')
     const [primera, segunda] = await lineasPendientes()
 
-    const respuestas = await Promise.all([
-      post(`/bank-lines/${primera!.id}/match`, { movementId: movimiento.id }),
-      post(`/bank-lines/${segunda!.id}/match`, { movementId: movimiento.id }),
-    ])
+    const respuestas = await conElCandadoRetenido(prisma, 2, () =>
+      Promise.all([
+        post(`/bank-lines/${primera!.id}/match`, { movementId: movimiento.id }),
+        post(`/bank-lines/${segunda!.id}/match`, { movementId: movimiento.id }),
+      ]),
+    )
 
     expect(respuestas.map((r) => r.status).sort()).toEqual([200, 409])
     expect(await prisma.bankLine.count({ where: { movementId: movimiento.id, status: 'MATCHED' } })).toBe(1)
@@ -355,10 +358,12 @@ describe('dos personas conciliando a la vez', () => {
     const otro = await crearMovimiento('4500000')
     const [linea] = await lineasPendientes()
 
-    const respuestas = await Promise.all([
-      post(`/bank-lines/${linea!.id}/match`, { movementId: uno.id }),
-      post(`/bank-lines/${linea!.id}/match`, { movementId: otro.id }),
-    ])
+    const respuestas = await conElCandadoRetenido(prisma, 2, () =>
+      Promise.all([
+        post(`/bank-lines/${linea!.id}/match`, { movementId: uno.id }),
+        post(`/bank-lines/${linea!.id}/match`, { movementId: otro.id }),
+      ]),
+    )
 
     expect(respuestas.map((r) => r.status).sort()).toEqual([200, 409])
     const conciliada = await prisma.bankLine.findUniqueOrThrow({ where: { id: linea!.id } })
@@ -374,10 +379,12 @@ describe('convertir, cuentas y perfiles con dos personas a la vez', () => {
     await importar()
     const [linea] = await lineasPendientes()
 
-    const respuestas = await Promise.all([
-      post(`/bank-lines/${linea!.id}/to-movement`, { categoryId: categoriaId }),
-      post(`/bank-lines/${linea!.id}/to-movement`, { categoryId: categoriaId }),
-    ])
+    const respuestas = await conElCandadoRetenido(prisma, 2, () =>
+      Promise.all([
+        post(`/bank-lines/${linea!.id}/to-movement`, { categoryId: categoriaId }),
+        post(`/bank-lines/${linea!.id}/to-movement`, { categoryId: categoriaId }),
+      ]),
+    )
 
     expect(respuestas.map((r) => r.status).sort()).toEqual([201, 409])
     expect(await prisma.movement.count()).toBe(1)
@@ -409,5 +416,17 @@ describe('convertir, cuentas y perfiles con dos personas a la vez', () => {
     await patch(`/import-profiles/${perfilId}`, { ...perfil, name: 'Pisado', version: leido.version }).expect(409)
     expect((await get(`/import-profiles/${perfilId}`)).body.name).toBe('Uno')
   })
-})
 
+  it('sin versión guarda como antes, y la respuesta trae la versión nueva', async () => {
+    const { body: leida } = await get(`/bank-accounts/${cuentaId}`).expect(200)
+
+    const { body: editada } = await patch(`/bank-accounts/${cuentaId}`, { ...cuenta, name: 'Sin versión' }).expect(200)
+
+    expect(editada.version).toBe(leida.version + 1)
+  })
+
+  it('editar una cuenta bancaria que no existe responde 404 y no la crea', async () => {
+    await patch('/bank-accounts/00000000-0000-7000-8000-000000000000', cuenta).expect(404)
+    expect(await prisma.bankAccount.count({ where: { id: '00000000-0000-7000-8000-000000000000' } })).toBe(0)
+  })
+})
