@@ -47,7 +47,9 @@ export const useContribute = () => {
 export const useDeleteGoal = () => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => apiFetch<void>(`/goals/${id}`, { method: 'DELETE' }),
+    // La versión que se vio: si otra persona la cambió después, 409 en vez de borrar a ciegas.
+    mutationFn: ({ id, version }: Pick<Goal, 'id' | 'version'>) =>
+      apiFetch<void>(`/goals/${id}?version=${version}`, { method: 'DELETE' }),
     onSuccess: () => {
       toast.success(copy.goals.toast.deleted)
       void client.invalidateQueries({ queryKey: queryKeys.goals.all })

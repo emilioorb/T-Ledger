@@ -5,6 +5,7 @@ import { NotFound } from './components/not-found'
 import { ErrorDeCarga } from './features/pwa/error-de-carga'
 import { ApiError } from './lib/api'
 import { avisarErrorDeMutacion, avisos } from './lib/avisar-error-de-mutacion'
+import { cargarLoUltimo } from './lib/cargar-lo-ultimo'
 import { routeTree } from './routeTree.gen'
 
 const describe = (error: unknown): string =>
@@ -25,8 +26,8 @@ export const queryClient = new QueryClient({
     onError: (error, _variables, _resultado, mutation) =>
       avisarErrorDeMutacion(error, {
         tieneSuPropioAviso: mutation.options.onError !== undefined,
-        // Recargar todo lo que esté en pantalla: los formularios se rearman con la versión nueva.
-        cargarLoUltimo: () => void queryClient.invalidateQueries(),
+        // Recargar lo que está en pantalla y rearmar los formularios abiertos con la versión nueva.
+        cargarLoUltimo: () => void cargarLoUltimo(queryClient),
       }),
   }),
 })

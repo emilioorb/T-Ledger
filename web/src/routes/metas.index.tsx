@@ -1,3 +1,5 @@
+import { queryKeys } from '@/lib/query-keys'
+import { useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
 import { useState, type FormEvent } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Coins, Plus, Target } from 'lucide-react'
@@ -333,6 +335,13 @@ const GoalsScreen = () => {
     (account) => account.code !== contributing?.accountCode,
   )
   usePrimaryAction(copy.goals.new, () => setEditing({}))
+  // Rearmar el formulario abierto con la versión que guardó la otra persona.
+  useAlCargarLoUltimo((cache) =>
+    setEditing((actual) => {
+      const nueva = actual?.goal && cache.getQueryData<Goal[]>(queryKeys.goals.list())?.find((goal) => goal.id === actual.goal?.id)
+      return nueva ? { goal: nueva } : actual
+    }),
+  )
   const save = useSaveGoal()
   const contribute = useContribute()
   const remove = useDeleteGoal()
@@ -379,12 +388,14 @@ const GoalsScreen = () => {
       >
         {editing ? (
           <GoalForm
-            key={editing.goal?.id ?? 'nueva'}
+            key={editing.goal ? `${editing.goal.id}-${editing.goal.version}` : 'nueva'}
             goal={editing.goal}
             pending={save.isPending}
             onSubmit={(values) =>
               save.mutate(
-                { id: editing.goal?.id, input: values },
+                // Al editar, la versión que se vio: si otra persona guardó antes, 409 y el aviso
+                // ofrece cargar lo último.
+                { id: editing.goal?.id, input: editing.goal ? { ...values, version: editing.goal.version } : values },
                 { onSuccess: () => setEditing(null) },
               )
             }
@@ -525,7 +536,7 @@ const GoalsScreen = () => {
             <AlertDialogCancel>{copy.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (deleting) remove.mutate(deleting.id)
+                if (deleting) remove.mutate(deleting)
                 setDeleting(null)
               }}
             >
