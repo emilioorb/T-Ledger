@@ -83,12 +83,12 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
     línea: una.
   - Archivos: `match-line.use-case.ts`, `prisma-bank-statement.repository.ts`, `bank-statement` port,
     `reconciliation.controller.spec.ts`. (M)
-- [ ] **12. Línea a movimiento, cuentas bancarias y perfiles.** Reglas adentro; dos «convertir» generan un movimiento.
+- [x] **12. Línea a movimiento, cuentas bancarias y perfiles.** Reglas adentro; dos «convertir» generan un movimiento.
   - Archivos: `line-to-movement.use-case.ts`, `manage-bank-accounts.use-case.ts`, `manage-import-profiles.use-case.ts`,
     sus repos, spec. (M)
 
 ### Checkpoint C
-- [ ] Suite completa verde, `check:task` limpio.
+- [x] Suite completa verde, `check:task` limpio. (2026-09-24: 829 tests.)
 
 ## Fase 4: cierre de mes
 

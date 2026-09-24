@@ -9,6 +9,8 @@ export interface BankAccountProps {
   readonly currency: CurrencyCode
   readonly profileId: string | null
   readonly active: boolean
+  // La versión de la fila sobre la que se armó este estado. Opcional al crear: nace en 0.
+  readonly version?: number
 }
 
 export class BankAccount {
@@ -30,6 +32,12 @@ export class BankAccount {
   get currency(): CurrencyCode { return this.props.currency }
   get profileId(): string | null { return this.props.profileId }
   get active(): boolean { return this.props.active }
+  get version(): number { return this.props.version ?? 0 }
+
+  // Lo que queda después de guardarse: la base sube la versión en cada escritura.
+  guardada(): BankAccount {
+    return new BankAccount({ ...this.props, version: this.version + 1 })
+  }
 
   toProps(): BankAccountProps {
     return { ...this.props }

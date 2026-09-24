@@ -12,9 +12,10 @@ export const toBankAccountResponse = (account: BankAccount) => ({
   currency: account.currency,
   profileId: account.profileId,
   active: account.active,
+  version: account.version,
 })
 
-export const toImportProfileResponse = (profile: ImportProfile) => profile.toProps()
+export const toImportProfileResponse = (profile: ImportProfile) => ({ ...profile.toProps(), version: profile.version })
 
 export const toParsedLineResponse = (line: ParsedLine) => ({
   date: isoDate(line.date),

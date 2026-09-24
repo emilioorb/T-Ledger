@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import {
   ACCOUNT_REPOSITORY,
@@ -12,7 +13,7 @@ import {
   BANK_ACCOUNT_REPOSITORY,
   type BankAccountRepository,
 } from '../domain/bank-account-repository.port.js'
-import type { BankAccountInput } from '../infrastructure/banking.schemas.js'
+import type { BankAccountInput, UpdateBankAccountInput } from '../infrastructure/banking.schemas.js'
 
 @Injectable()
 export class ManageBankAccountsUseCase {
@@ -34,19 +35,24 @@ export class ManageBankAccountsUseCase {
 
   // En transacción, con el candado del libro: el plan de cuentas se lee adentro (ADR-006).
   async create(input: BankAccountInput): Promise<BankAccount> {
-    return this.transaction.withTransaction(() => this.save({ id: randomUUID(), ...input }))
+    return this.transaction.withTransaction(async () => {
+      const account = await this.validar({ id: randomUUID(), ...input })
+      await this.accounts.add(account)
+      return account
+    })
   }
 
-  async update(id: string, input: BankAccountInput): Promise<BankAccount> {
+  async update(id: string, { version, ...input }: UpdateBankAccountInput): Promise<BankAccount> {
     return this.transaction.withTransaction(async () => {
-      await this.find(id)
-      return this.save({ id, ...input })
+      const actual = await this.find(id)
+      exigirVersion(version, actual.version, 'editar una cuenta bancaria')
+      return this.accounts.update(await this.validar({ id, ...input, version: actual.version }))
     })
   }
 
   // Una cuenta bancaria apuntando a una agrupadora produciría movimientos que no se pueden
   // asentar, y el error aparecería recién al conciliar.
-  private async save(props: BankAccountProps): Promise<BankAccount> {
+  private async validar(props: BankAccountProps): Promise<BankAccount> {
     const account = BankAccount.create(props)
     if (isErr(account)) throw new SemanticValidationError(account.error.message)
 
@@ -57,7 +63,6 @@ export class ManageBankAccountsUseCase {
       )
     }
 
-    await this.accounts.save(account.value)
     return account.value
   }
 }

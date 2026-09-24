@@ -18,6 +18,8 @@ export interface ImportProfileProps {
   readonly creditColumn: number | null
   readonly decimalSeparator: '.' | ','
   readonly thousandsSeparator: string | null
+  // La versión de la fila sobre la que se armó este estado. Opcional al crear: nace en 0.
+  readonly version?: number
 }
 
 export class ImportProfile {
@@ -71,6 +73,12 @@ export class ImportProfile {
   get creditColumn(): number | null { return this.props.creditColumn }
   get decimalSeparator(): '.' | ',' { return this.props.decimalSeparator }
   get thousandsSeparator(): string | null { return this.props.thousandsSeparator }
+  get version(): number { return this.props.version ?? 0 }
+
+  // Lo que queda después de guardarse: la base sube la versión en cada escritura.
+  guardado(): ImportProfile {
+    return new ImportProfile({ ...this.props, version: this.version + 1 })
+  }
 
   toProps(): ImportProfileProps {
     return { ...this.props }

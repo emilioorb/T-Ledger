@@ -2,13 +2,20 @@ import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { ImportProfile, type ImportProfileProps } from '../domain/import-profile.js'
 import {
   IMPORT_PROFILE_REPOSITORY,
   type ImportProfileRepository,
 } from '../domain/import-profile-repository.port.js'
-import type { ImportProfileInput } from '../infrastructure/banking.schemas.js'
+import type { ImportProfileInput, UpdateImportProfileInput } from '../infrastructure/banking.schemas.js'
+
+const validar = (props: ImportProfileProps): ImportProfile => {
+  const profile = ImportProfile.create(props)
+  if (isErr(profile)) throw new SemanticValidationError(profile.error.message)
+  return profile.value
+}
 
 @Injectable()
 export class ManageImportProfilesUseCase {
@@ -29,21 +36,18 @@ export class ManageImportProfilesUseCase {
 
   // En transacción, con el candado del libro (ADR-006).
   async create(input: ImportProfileInput): Promise<ImportProfile> {
-    return this.transaction.withTransaction(() => this.save({ id: randomUUID(), ...input }))
-  }
-
-  async update(id: string, input: ImportProfileInput): Promise<ImportProfile> {
     return this.transaction.withTransaction(async () => {
-      await this.find(id)
-      return this.save({ id, ...input })
+      const profile = validar({ id: randomUUID(), ...input })
+      await this.profiles.add(profile)
+      return profile
     })
   }
 
-  private async save(props: ImportProfileProps): Promise<ImportProfile> {
-    const profile = ImportProfile.create(props)
-    if (isErr(profile)) throw new SemanticValidationError(profile.error.message)
-
-    await this.profiles.save(profile.value)
-    return profile.value
+  async update(id: string, { version, ...input }: UpdateImportProfileInput): Promise<ImportProfile> {
+    return this.transaction.withTransaction(async () => {
+      const actual = await this.find(id)
+      exigirVersion(version, actual.version, 'editar un perfil de importación')
+      return this.profiles.update(validar({ id, ...input, version: actual.version }))
+    })
   }
 }

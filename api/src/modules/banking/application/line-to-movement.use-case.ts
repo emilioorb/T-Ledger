@@ -24,7 +24,14 @@ export class LineToMovementUseCase {
     @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
-  async execute(lineId: string, input: LineToMovementInput): Promise<{ movementId: string }> {
+  // Todo adentro del candado del libro: la línea se mira ahí, así dos «convertir» a la vez no
+  // generan dos movimientos (ADR-006). Crear el movimiento y marcar la línea van juntos: si falla
+  // lo segundo, volver a convertirla duplicaría el movimiento y el asiento.
+  execute(lineId: string, input: LineToMovementInput): Promise<{ movementId: string }> {
+    return this.transaction.withTransaction(() => this.convertir(lineId, input))
+  }
+
+  private async convertir(lineId: string, input: LineToMovementInput): Promise<{ movementId: string }> {
     const line = await this.statements.findLine(lineId)
     if (!line) throw new NotFoundError(`La línea ${lineId} no existe.`)
     if (line.status !== 'PENDING') {
@@ -36,21 +43,16 @@ export class LineToMovementUseCase {
     // Un movimiento siempre es positivo: el signo del extracto define la dirección, no el monto.
     const magnitude = line.amount.isNegative() ? line.amount.negate() : line.amount
 
-    // Crear el movimiento y marcar la línea van juntos: si falla lo segundo la línea queda
-    // pendiente con su movimiento ya creado, y volver a conciliarla —que es lo que el usuario
-    // hace— duplica el movimiento y el asiento.
-    return this.transaction.withTransaction(async () => {
-      const { movement } = await this.createMovement.execute({
-        date: line.date.toISOString().slice(0, 10),
-        kind: line.amount.isNegative() ? 'EXPENSE' : 'INCOME',
-        categoryId: input.categoryId,
-        counterparty: input.counterparty ?? line.description,
-        amount: { minorUnits: magnitude.minorUnits.toString(), currency: magnitude.currency },
-        paymentAccountCode: account.accountCode,
-      })
-
-      await this.statements.markMatched(lineId, movement.id)
-      return { movementId: movement.id }
+    const { movement } = await this.createMovement.execute({
+      date: line.date.toISOString().slice(0, 10),
+      kind: line.amount.isNegative() ? 'EXPENSE' : 'INCOME',
+      categoryId: input.categoryId,
+      counterparty: input.counterparty ?? line.description,
+      amount: { minorUnits: magnitude.minorUnits.toString(), currency: magnitude.currency },
+      paymentAccountCode: account.accountCode,
     })
+
+    await this.statements.markMatched(lineId, movement.id)
+    return { movementId: movement.id }
   }
 }

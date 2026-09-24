@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { ManageImportProfilesUseCase } from '../application/manage-import-profiles.use-case.js'
 import { toImportProfileResponse } from './banking.presenters.js'
-import { importProfileSchema, type ImportProfileInput } from './banking.schemas.js'
+import { importProfileSchema, updateImportProfileSchema, type ImportProfileInput, type UpdateImportProfileInput } from './banking.schemas.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type ImportProfileResponse = ReturnType<typeof toImportProfileResponse>
@@ -33,7 +33,7 @@ export class ImportProfilesController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(importProfileSchema)) input: ImportProfileInput,
+    @Body(new ZodValidationPipe(updateImportProfileSchema)) input: UpdateImportProfileInput,
   ): Promise<ImportProfileResponse> {
     return toImportProfileResponse(await this.profiles.update(id, input))
   }

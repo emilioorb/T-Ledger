@@ -2,6 +2,8 @@ import type { ZodOpenApiPathsObject } from 'zod-openapi'
 import {
   bankAccountResponseSchema,
   bankAccountSchema,
+  updateBankAccountSchema,
+  updateImportProfileSchema,
   importProfileResponseSchema,
   importProfileSchema,
   importResultResponseSchema,
@@ -36,7 +38,7 @@ export const bankingOpenApiPaths: ZodOpenApiPathsObject = {
     },
     patch: {
       summary: 'Modifica una cuenta bancaria',
-      requestBody: json(bankAccountSchema),
+      requestBody: json(updateBankAccountSchema),
       responses: { 200: { description: 'Cuenta modificada', ...json(bankAccountResponseSchema) } },
     },
   },
@@ -61,7 +63,7 @@ export const bankingOpenApiPaths: ZodOpenApiPathsObject = {
     },
     patch: {
       summary: 'Modifica un perfil',
-      requestBody: json(importProfileSchema),
+      requestBody: json(updateImportProfileSchema),
       responses: { 200: { description: 'Perfil modificado', ...json(importProfileResponseSchema) } },
     },
   },

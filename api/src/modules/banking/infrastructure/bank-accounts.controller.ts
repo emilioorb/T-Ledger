@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { ManageBankAccountsUseCase } from '../application/manage-bank-accounts.use-case.js'
 import { toBankAccountResponse } from './banking.presenters.js'
-import { bankAccountSchema, type BankAccountInput } from './banking.schemas.js'
+import { bankAccountSchema, updateBankAccountSchema, type BankAccountInput, type UpdateBankAccountInput } from './banking.schemas.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type BankAccountResponse = ReturnType<typeof toBankAccountResponse>
@@ -33,7 +33,7 @@ export class BankAccountsController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(bankAccountSchema)) input: BankAccountInput,
+    @Body(new ZodValidationPipe(updateBankAccountSchema)) input: UpdateBankAccountInput,
   ): Promise<BankAccountResponse> {
     return toBankAccountResponse(await this.accounts.update(id, input))
   }

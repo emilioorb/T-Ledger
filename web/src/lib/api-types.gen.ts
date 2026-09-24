@@ -2355,7 +2355,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["BankAccountInput"];
+                    "application/json": components["schemas"]["UpdateBankAccountInput"];
                 };
             };
             responses: {
@@ -2482,7 +2482,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["ImportProfileInput"];
+                    "application/json": components["schemas"]["UpdateImportProfileInput"];
                 };
             };
             responses: {
@@ -3511,6 +3511,18 @@ export interface components {
             /** @default true */
             active: boolean;
         };
+        /** UpdateBankAccountInput */
+        UpdateBankAccountInput: {
+            name: string;
+            accountCode: string;
+            /** @enum {string} */
+            currency: "CRC" | "USD";
+            /** @default null */
+            profileId: string | null;
+            /** @default true */
+            active: boolean;
+            version?: number;
+        };
         /** ImportProfileInput */
         ImportProfileInput: {
             name: string;
@@ -3535,6 +3547,32 @@ export interface components {
             decimalSeparator: "." | ",";
             /** @default null */
             thousandsSeparator: string | null;
+        };
+        /** UpdateImportProfileInput */
+        UpdateImportProfileInput: {
+            name: string;
+            delimiter: string;
+            /** @enum {string} */
+            encoding: "utf-8" | "latin1";
+            /** @default 1 */
+            headerRows: number;
+            dateColumn: number;
+            /** @enum {string} */
+            dateFormat: "DD/MM/YYYY" | "YYYY-MM-DD";
+            descriptionColumn: number;
+            /** @default null */
+            referenceColumn: number | null;
+            /** @default null */
+            amountColumn: number | null;
+            /** @default null */
+            debitColumn: number | null;
+            /** @default null */
+            creditColumn: number | null;
+            /** @enum {string} */
+            decimalSeparator: "." | ",";
+            /** @default null */
+            thousandsSeparator: string | null;
+            version?: number;
         };
         /** MatchLineInput */
         MatchLineInput: {
@@ -3904,6 +3942,7 @@ export interface components {
             currency: "CRC" | "USD";
             profileId: string | null;
             active: boolean;
+            version: number;
         };
         /** ImportProfile */
         ImportProfile: {
@@ -3930,6 +3969,7 @@ export interface components {
             /** @default null */
             thousandsSeparator: string | null;
             id: string;
+            version: number;
         };
         /** ImportResult */
         ImportResult: {

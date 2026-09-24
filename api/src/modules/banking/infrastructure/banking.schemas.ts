@@ -4,6 +4,7 @@ import { isoDate } from '../../../shared/http/date.schema.js'
 import { CURRENCIES } from '../../../shared/kernel/currency.js'
 import { moneySchema } from '../../../shared/http/money.schema.js'
 import { paginationQuerySchema } from '../../../shared/http/pagination.js'
+import { version } from '../../../shared/http/version.schema.js'
 
 const accountCode = z
   .string()
@@ -38,6 +39,15 @@ export const bankAccountSchema = z
   })
   .meta({ id: 'BankAccountInput', title: 'BankAccountInput' })
 
+// Editar manda la versión que leyó, opcional mientras haya clientes que no la mandan.
+export const updateImportProfileSchema = importProfileSchema
+  .extend({ version: version.optional() })
+  .meta({ id: 'UpdateImportProfileInput', title: 'UpdateImportProfileInput' })
+
+export const updateBankAccountSchema = bankAccountSchema
+  .extend({ version: version.optional() })
+  .meta({ id: 'UpdateBankAccountInput', title: 'UpdateBankAccountInput' })
+
 export const importStatementSchema = z
   .object({ bankAccountId: z.string().min(1), profileId: z.string().min(1) })
   .meta({ id: 'ImportStatementInput', title: 'ImportStatementInput' })
@@ -65,11 +75,12 @@ export const bankAccountResponseSchema = z
     currency: z.enum(CURRENCIES),
     profileId: z.string().nullable(),
     active: z.boolean(),
+    version: z.number().int(),
   })
   .meta({ id: 'BankAccount', title: 'BankAccount' })
 
 export const importProfileResponseSchema = importProfileSchema
-  .extend({ id: z.string() })
+  .extend({ id: z.string(), version: z.number().int() })
   .meta({ id: 'ImportProfile', title: 'ImportProfile' })
 
 export const bankLineResponseSchema = z
@@ -133,6 +144,8 @@ export const reconciliationResponseSchema = z
 
 export type ImportProfileInput = z.infer<typeof importProfileSchema>
 export type BankAccountInput = z.infer<typeof bankAccountSchema>
+export type UpdateImportProfileInput = z.infer<typeof updateImportProfileSchema>
+export type UpdateBankAccountInput = z.infer<typeof updateBankAccountSchema>
 export type ImportStatementInput = z.infer<typeof importStatementSchema>
 export type ReconciliationQuery = z.infer<typeof reconciliationQuerySchema>
 export type MatchLineInput = z.infer<typeof matchLineSchema>

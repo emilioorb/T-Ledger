@@ -366,3 +366,48 @@ describe('dos personas conciliando a la vez', () => {
   })
 })
 
+describe('convertir, cuentas y perfiles con dos personas a la vez', () => {
+  const patch = (path: string, body: object) => request(app.getHttpServer()).patch(`${BASE}${path}`).send(body)
+  const cuenta = { name: 'BAC colones', accountCode: '1111', currency: 'CRC', profileId: null }
+
+  it('dos «convertir» a la vez de la misma línea generan un movimiento', async () => {
+    await importar()
+    const [linea] = await lineasPendientes()
+
+    const respuestas = await Promise.all([
+      post(`/bank-lines/${linea!.id}/to-movement`, { categoryId: categoriaId }),
+      post(`/bank-lines/${linea!.id}/to-movement`, { categoryId: categoriaId }),
+    ])
+
+    expect(respuestas.map((r) => r.status).sort()).toEqual([201, 409])
+    expect(await prisma.movement.count()).toBe(1)
+    expect(await prisma.journalEntry.count()).toBe(1)
+  })
+
+  it('editar una cuenta bancaria con una versión vieja responde 409; con la nueva, guarda', async () => {
+    const { body: leida } = await get(`/bank-accounts/${cuentaId}`).expect(200)
+    const { body: editada } = await patch(`/bank-accounts/${cuentaId}`, { ...cuenta, name: 'Una', version: leida.version }).expect(200)
+
+    await patch(`/bank-accounts/${cuentaId}`, { ...cuenta, name: 'Pisada', version: leida.version }).expect(409)
+    await patch(`/bank-accounts/${cuentaId}`, { ...cuenta, name: 'Dos', version: editada.version }).expect(200)
+    expect((await get(`/bank-accounts/${cuentaId}`)).body.name).toBe('Dos')
+  })
+
+  it('editar un perfil con una versión vieja responde 409', async () => {
+    const { body: leido } = await get(`/import-profiles/${perfilId}`).expect(200)
+    const perfil = {
+      delimiter: ',',
+      encoding: 'utf-8',
+      dateColumn: 0,
+      dateFormat: 'DD/MM/YYYY',
+      descriptionColumn: 1,
+      amountColumn: 3,
+      decimalSeparator: '.',
+    }
+
+    await patch(`/import-profiles/${perfilId}`, { ...perfil, name: 'Uno', version: leido.version }).expect(200)
+    await patch(`/import-profiles/${perfilId}`, { ...perfil, name: 'Pisado', version: leido.version }).expect(409)
+    expect((await get(`/import-profiles/${perfilId}`)).body.name).toBe('Uno')
+  })
+})
+
