@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { annualRate, nameText } from '../../../shared/http/text.schema.js'
 import { isoDate } from '../../../shared/http/date.schema.js'
 import { moneySchema } from '../../../shared/http/money.schema.js'
+import { version } from '../../../shared/http/version.schema.js'
 
 const accountCode = z
   .string()
@@ -32,7 +33,7 @@ export const createInvestmentSchema = z
   .meta({ id: 'CreateInvestmentInput', title: 'CreateInvestmentInput' })
 
 export const updateInvestmentSchema = z
-  .object(investmentFields)
+  .object({ ...investmentFields, version })
   .partial()
   .meta({ id: 'UpdateInvestmentInput', title: 'UpdateInvestmentInput' })
 
@@ -63,6 +64,8 @@ export const investmentResponseSchema = z
     kind: z.enum(['FIXED_TERM', 'OPEN']),
     maturesAt: isoDate.nullable(),
     accountCode: z.string().nullable(),
+    // La que hay que mandar al editar o borrar: si no coincide con la de la base, 409.
+    version: z.number().int(),
     invested: moneySchema,
     value: moneySchema,
     interestEarned: moneySchema,

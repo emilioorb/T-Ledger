@@ -13,6 +13,7 @@ export const toInvestmentResponse = (investment: Investment, at: Date) => ({
   kind: investment.kind,
   maturesAt: investment.maturesAt ? isoDate(investment.maturesAt) : null,
   accountCode: investment.accountCode,
+  version: investment.version,
   invested: fromMoney(investment.investedAt(at)),
   value: fromMoney(investment.valueAt(at)),
   interestEarned: fromMoney(investment.interestEarnedAt(at)),

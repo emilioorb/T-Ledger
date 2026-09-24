@@ -8,6 +8,7 @@ import { CreateJournalEntryUseCase } from '../../accounting/application/create-j
 import { toMoney } from '../../../shared/http/money.schema.js'
 import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import { INVESTMENT_MATURED, type InvestmentMatured } from '../domain/investment-events.js'
@@ -45,61 +46,63 @@ export class ManageInvestmentsUseCase {
     return investment
   }
 
-  async create(input: CreateInvestmentInput): Promise<Investment> {
-    await this.accounts.assertPostable(input.accountCode)
-    const rate = InterestRate.create(new Decimal(input.annualRate), input.compounding)
-    if (isErr(rate)) throw new SemanticValidationError(rate.error.message)
+  // Todo adentro del candado del libro: la cuenta, la inversión y su capital se leen ahí (ADR-006).
+  create(input: CreateInvestmentInput): Promise<Investment> {
+    return this.transaction.withTransaction(async () => {
+      await this.accounts.assertPostable(input.accountCode)
+      const rate = InterestRate.create(new Decimal(input.annualRate), input.compounding)
+      if (isErr(rate)) throw new SemanticValidationError(rate.error.message)
 
-    const investment = Investment.create({
-      id: randomUUID(),
-      name: input.name,
-      principal: toMoney(input.principal),
-      rate: rate.value,
-      openedAt: utc(input.openedAt),
-      kind: input.kind,
-      maturesAt: input.maturesAt ? utc(input.maturesAt) : null,
-      accountCode: input.accountCode,
-      contributions: [],
-    })
-    if (isErr(investment)) throw new SemanticValidationError(investment.error.message)
+      const investment = Investment.create({
+        id: randomUUID(),
+        name: input.name,
+        principal: toMoney(input.principal),
+        rate: rate.value,
+        openedAt: utc(input.openedAt),
+        kind: input.kind,
+        maturesAt: input.maturesAt ? utc(input.maturesAt) : null,
+        accountCode: input.accountCode,
+        contributions: [],
+      })
+      if (isErr(investment)) throw new SemanticValidationError(investment.error.message)
 
-    await this.transaction.withTransaction(async () => {
-      await this.investments.save(investment.value)
+      await this.investments.add(investment.value)
       await this.rastro.registrar({
         entidad: 'inversion',
         entidadId: investment.value.id,
         accion: 'crear',
         despues: investment.value.toProps(),
       })
+      return investment.value
     })
-
-    return investment.value
   }
 
-  async update(id: string, input: UpdateInvestmentInput): Promise<Investment> {
-    const props = (await this.find(id)).toProps()
-    if (input.accountCode !== undefined) await this.accounts.assertPostable(input.accountCode)
+  update(id: string, { version, ...input }: UpdateInvestmentInput): Promise<Investment> {
+    return this.transaction.withTransaction(async () => {
+      const actual = await this.find(id)
+      exigirVersion(version, actual.version, 'editar una inversión')
+      const props = actual.toProps()
+      if (input.accountCode !== undefined) await this.accounts.assertPostable(input.accountCode)
 
-    const rate = InterestRate.create(
-      new Decimal(input.annualRate ?? props.rate.annualPercentage),
-      input.compounding ?? props.rate.compounding,
-    )
-    if (isErr(rate)) throw new SemanticValidationError(rate.error.message)
+      const rate = InterestRate.create(
+        new Decimal(input.annualRate ?? props.rate.annualPercentage),
+        input.compounding ?? props.rate.compounding,
+      )
+      if (isErr(rate)) throw new SemanticValidationError(rate.error.message)
 
-    const investment = Investment.create({
-      ...props,
-      name: input.name ?? props.name,
-      principal: input.principal ? toMoney(input.principal) : props.principal,
-      rate: rate.value,
-      openedAt: input.openedAt ? utc(input.openedAt) : props.openedAt,
-      kind: input.kind ?? props.kind,
-      maturesAt: maturityOf(input.maturesAt, props.maturesAt),
-      accountCode: input.accountCode === undefined ? props.accountCode : input.accountCode,
-    })
-    if (isErr(investment)) throw new SemanticValidationError(investment.error.message)
+      const investment = Investment.create({
+        ...props,
+        name: input.name ?? props.name,
+        principal: input.principal ? toMoney(input.principal) : props.principal,
+        rate: rate.value,
+        openedAt: input.openedAt ? utc(input.openedAt) : props.openedAt,
+        kind: input.kind ?? props.kind,
+        maturesAt: maturityOf(input.maturesAt, props.maturesAt),
+        accountCode: input.accountCode === undefined ? props.accountCode : input.accountCode,
+      })
+      if (isErr(investment)) throw new SemanticValidationError(investment.error.message)
 
-    await this.transaction.withTransaction(async () => {
-      await this.investments.save(investment.value)
+      const guardada = await this.investments.update(investment.value)
       await this.rastro.registrar({
         entidad: 'inversion',
         entidadId: id,
@@ -107,41 +110,40 @@ export class ManageInvestmentsUseCase {
         antes: props,
         despues: investment.value.toProps(),
       })
+      return guardada
     })
-
-    return investment.value
   }
 
-  async contribute(id: string, input: InvestmentContributionInput): Promise<Investment> {
-    const investment = await this.find(id)
+  // Dos aportes de capital a la vez son dos aportes: no se pide versión.
+  contribute(id: string, input: InvestmentContributionInput): Promise<Investment> {
+    return this.transaction.withTransaction(async () => {
+      const investment = await this.find(id)
 
-    // Sin cuenta no hay dónde asentar el capital, y una inversión que crece sin que el libro
-    // lo vea deja el patrimonio contando esa plata dos veces: en la cuenta de origen y acá.
-    if (investment.accountCode === null) {
-      throw new SemanticValidationError(
-        `La inversión «${investment.name}» no tiene cuenta. Elegí una antes de agregar capital.`,
-      )
-    }
+      // Sin cuenta no hay dónde asentar el capital, y una inversión que crece sin que el libro
+      // lo vea deja el patrimonio contando esa plata dos veces: en la cuenta de origen y acá.
+      if (investment.accountCode === null) {
+        throw new SemanticValidationError(
+          `La inversión «${investment.name}» no tiene cuenta. Elegí una antes de agregar capital.`,
+        )
+      }
 
-    const contribution = {
-      id: randomUUID(),
-      date: utc(input.date),
-      amount: toMoney(input.amount),
-    }
+      const contribution = {
+        id: randomUUID(),
+        date: utc(input.date),
+        amount: toMoney(input.amount),
+      }
 
-    const updated = investment.addContribution(contribution)
-    if (isErr(updated)) throw new SemanticValidationError(updated.error.message)
+      const updated = investment.addContribution(contribution)
+      if (isErr(updated)) throw new SemanticValidationError(updated.error.message)
 
-    // El asiento primero: si el período está cerrado, el capital no se agrega. Y los dos en
-    // la misma transacción: si la segunda escritura falla queda un asiento huérfano.
-    const accountCode = investment.accountCode
-    await this.transaction.withTransaction(async () => {
+      // El asiento primero: si el período está cerrado, el capital no se agrega. Y los dos en
+      // la misma transacción: si la segunda escritura falla queda un asiento huérfano.
       await this.journal.execute({
         date: input.date,
         description: `Capital a ${investment.name}`,
         reference: null,
         lines: [
-          { accountCode, amount: input.amount, side: 'DEBIT' },
+          { accountCode: investment.accountCode, amount: input.amount, side: 'DEBIT' },
           { accountCode: input.fromAccountCode, amount: input.amount, side: 'CREDIT' },
         ],
       })
@@ -154,24 +156,21 @@ export class ManageInvestmentsUseCase {
         accion: 'aportar',
         despues: contribution,
       })
+      return updated.value.guardada()
     })
-
-    return updated.value
   }
 
-  async delete(id: string): Promise<void> {
-    // Se lee antes de borrar: después ya no hay a quién preguntarle qué inversión era.
-    const inversion = await this.investments.findById(id)
-
-    await this.transaction.withTransaction(async () => {
-      if (!(await this.investments.delete(id))) {
-        throw new NotFoundError(`La inversión ${id} no existe.`)
-      }
+  delete(id: string, version?: number): Promise<void> {
+    // Se lee antes de borrar, y adentro: después ya no hay a quién preguntarle qué inversión era.
+    return this.transaction.withTransaction(async () => {
+      const inversion = await this.find(id)
+      exigirVersion(version, inversion.version, 'borrar una inversión')
+      await this.investments.delete(id)
       await this.rastro.registrar({
         entidad: 'inversion',
         entidadId: id,
         accion: 'eliminar',
-        ...(inversion ? { antes: inversion.toProps() } : {}),
+        antes: inversion.toProps(),
       })
     })
   }

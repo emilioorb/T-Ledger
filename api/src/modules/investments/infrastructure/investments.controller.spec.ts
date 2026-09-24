@@ -1,3 +1,4 @@
+import { conElCandadoRetenido } from '../../../test/candado-retenido.js'
 import type { INestApplication } from '@nestjs/common'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import { Test } from '@nestjs/testing'
@@ -159,5 +160,42 @@ describe('inversiones', () => {
     await request(app.getHttpServer()).delete(`${BASE}/investments/${inversion.id}`).expect(204)
 
     expect(await prisma.investmentContribution.count()).toBe(0)
+  })
+})
+
+// Dos personas sobre la misma inversión, de verdad en paralelo (ADR-006).
+describe('dos personas sobre la misma inversión', () => {
+  const patch = (path: string, body: object) => request(app.getHttpServer()).patch(`${BASE}${path}`).send(body)
+  const del = (path: string) => request(app.getHttpServer()).delete(`${BASE}${path}`)
+
+  it('dos aportes de capital a la vez entran los dos, cada uno con su asiento', async () => {
+    const inversion = await crear()
+
+    const respuestas = await conElCandadoRetenido(prisma, 2, () =>
+      Promise.all([
+        post(`/investments/${inversion.id}/contributions`, capital('1000')),
+        post(`/investments/${inversion.id}/contributions`, capital('2000')),
+      ]),
+    )
+
+    expect(respuestas.map((r) => r.status)).toEqual([201, 201])
+    expect(await prisma.investmentContribution.count({ where: { investmentId: inversion.id } })).toBe(2)
+    expect(await prisma.journalEntry.count()).toBe(2)
+  })
+
+  it('editar con la versión de antes de un aporte responde 409; con la nueva, guarda', async () => {
+    const { body: creada } = await post('/investments', certificado).expect(201)
+    const { body: aportada } = await post(`/investments/${creada.id}/contributions`, capital('1000')).expect(201)
+
+    await patch(`/investments/${creada.id}`, { name: 'Pisada', version: creada.version }).expect(409)
+    await patch(`/investments/${creada.id}`, { name: 'Otra', version: aportada.version }).expect(200)
+  })
+
+  it('borrar con una versión vieja responde 409 y la inversión sigue', async () => {
+    const { body: creada } = await post('/investments', certificado).expect(201)
+    const { body: editada } = await patch(`/investments/${creada.id}`, { name: 'Otra' }).expect(200)
+
+    await del(`/investments/${creada.id}?version=${creada.version}`).expect(409)
+    await del(`/investments/${creada.id}?version=${editada.version}`).expect(204)
   })
 })

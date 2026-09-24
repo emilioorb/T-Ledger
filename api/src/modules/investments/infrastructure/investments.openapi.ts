@@ -1,4 +1,5 @@
 import type { ZodOpenApiPathsObject } from 'zod-openapi'
+import { versionEnTextoSchema } from '../../../shared/http/version.schema.js'
 import {
   createInvestmentSchema,
   investmentContributionSchema,
@@ -38,6 +39,7 @@ export const investmentsOpenApiPaths: ZodOpenApiPathsObject = {
     },
     delete: {
       summary: 'Borra una inversión y sus aportes',
+      requestParams: { query: versionEnTextoSchema },
       responses: { 204: { description: 'Borrada' } },
     },
   },

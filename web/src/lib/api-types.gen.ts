@@ -2080,7 +2080,9 @@ export interface paths {
         /** Borra una inversión y sus aportes */
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    version?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -3496,6 +3498,7 @@ export interface components {
             kind?: "FIXED_TERM" | "OPEN";
             maturesAt?: string | null;
             accountCode?: string | null;
+            version?: number;
         };
         /** InvestmentContributionInput */
         InvestmentContributionInput: {
@@ -3927,6 +3930,7 @@ export interface components {
             kind: "FIXED_TERM" | "OPEN";
             maturesAt: string | null;
             accountCode: string | null;
+            version: number;
             invested: components["schemas"]["MoneyOutput"];
             value: components["schemas"]["MoneyOutput"];
             interestEarned: components["schemas"]["MoneyOutput"];

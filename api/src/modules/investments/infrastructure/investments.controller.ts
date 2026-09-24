@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
+import { versionEnTextoSchema, type VersionEnTexto } from '../../../shared/http/version.schema.js'
 import { ManageInvestmentsUseCase } from '../application/manage-investments.use-case.js'
 import { toInvestmentResponse } from './investments.presenters.js'
 import {
@@ -76,7 +77,10 @@ export class InvestmentsController {
   @Permiso('inversion', 'write')
   @Delete(':id')
   @HttpCode(204)
-  async delete(@Param('id') id: string): Promise<void> {
-    await this.investments.delete(id)
+  async delete(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(versionEnTextoSchema)) query: VersionEnTexto,
+  ): Promise<void> {
+    await this.investments.delete(id, query.version)
   }
 }

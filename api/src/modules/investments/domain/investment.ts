@@ -21,6 +21,8 @@ export interface InvestmentProps {
   readonly maturesAt: Date | null
   readonly accountCode: string | null
   readonly contributions: readonly InvestmentContribution[]
+  // La versión de la fila sobre la que se armó este estado. Opcional al crear: nace en 0.
+  readonly version?: number
 }
 
 // Valor = P·(1+i)^n, con n en meses completos. Cada aporte capitaliza desde su
@@ -94,6 +96,15 @@ export class Investment {
   }
   get accountCode(): string | null {
     return this.props.accountCode
+  }
+  get version(): number {
+    return this.props.version ?? 0
+  }
+
+  // Lo que queda después de guardarse: la base sube la versión en cada escritura, también al
+  // agregar capital.
+  guardada(): Investment {
+    return new Investment({ ...this.props, version: this.version + 1 })
   }
   get contributions(): readonly InvestmentContribution[] {
     return this.props.contributions

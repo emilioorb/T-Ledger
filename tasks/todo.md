@@ -103,7 +103,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 - [x] **14. Metas.** Versión, aporte y pausa adentro, `GOAL_REACHED` calculado adentro (uno solo).
   - Archivos: `goals/domain/goal.ts`, `prisma-goal.repository.ts`, `manage-goals.use-case.ts`, `goals.schemas.ts`,
     `goals.controller.spec.ts`. (M)
-- [ ] **15. Inversiones.** El mismo patrón.
+- [x] **15. Inversiones.** El mismo patrón.
   - Archivos: `investments/domain/investment.ts`, `prisma-investment.repository.ts`, `manage-investments.use-case.ts`,
     `investments.schemas.ts`, spec. (M)
 
