@@ -19,8 +19,10 @@ export interface LibroRepository {
   // irreversible sin comprobante es un acto de fe.
   vaciar(): Promise<ResumenDeVaciado>
 
-  // Borra el libro entero, con su gente, sus invitaciones y su registro.
-  borrar(bookId: string): Promise<void>
+  // Borra el libro entero, con su gente, sus invitaciones y su registro. Con el candado de la
+  // persona tomado: cuenta sus libros y decide `sePuede` adentro, así dos borrados a la vez no la
+  // dejan sin ninguno. Devuelve si lo borró.
+  borrar(bookId: string, userId: string, sePuede: (librosDeLaPersona: number) => boolean): Promise<boolean>
 }
 
 export const LIBRO_REPOSITORY = Symbol('LIBRO_REPOSITORY')

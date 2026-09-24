@@ -5,6 +5,11 @@ import { SE_BORRA, type ResumenDeVaciado, type TablaQueSeBorra } from '../domain
 
 type Borrado = () => Promise<{ count: number }>
 
+// Un candado por persona, en otro espacio que el de los libros (624, en PrismaService): cuántos
+// libros le quedan a alguien no es de ningún libro. Con el mismo tope de espera.
+const ESPACIO_DE_PERSONAS = 625
+const ESPERA_MAXIMA_DEL_CANDADO = '4s'
+
 @Injectable()
 export class PrismaLibroRepository implements LibroRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -68,15 +73,18 @@ export class PrismaLibroRepository implements LibroRepository {
   // cada tabla que cuelga del libro siga cayendo con él. Las sesiones no cuelgan del libro,
   // solo lo nombran, así que se sueltan a mano en la misma transacción: si no, quien lo tenía
   // abierto quedaría parado en un libro que ya no existe.
-  async borrar(bookId: string): Promise<void> {
-    const cliente = this.prisma.clientSinFiltroDeLibro
+  async borrar(bookId: string, userId: string, sePuede: (librosDeLaPersona: number) => boolean): Promise<boolean> {
+    return this.prisma.clientSinFiltroDeLibro.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT set_config('lock_timeout', ${ESPERA_MAXIMA_DEL_CANDADO}, true)`
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${ESPACIO_DE_PERSONAS}::int, hashtext(${userId}))`
+      if (!sePuede(await tx.bookMember.count({ where: { userId } }))) return false
 
-    await cliente.$transaction([
-      cliente.authSession.updateMany({
+      await tx.authSession.updateMany({
         where: { activeOrganizationId: bookId },
         data: { activeOrganizationId: null },
-      }),
-      cliente.book.delete({ where: { id: bookId } }),
-    ])
+      })
+      await tx.book.delete({ where: { id: bookId } })
+      return true
+    })
   }
 }

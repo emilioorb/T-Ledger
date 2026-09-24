@@ -128,7 +128,7 @@ describe('borrar un libro', () => {
     await prisma.clientSinFiltroDeLibro.category.create({ data: categoria('cat-d', DESCARTABLE) })
     await prisma.clientSinFiltroDeLibro.movement.create({ data: movimiento('m-d', DESCARTABLE) })
 
-    await repository.borrar(DESCARTABLE)
+    await repository.borrar(DESCARTABLE, LIBRO_DE_PRUEBA.userId, () => true)
 
     expect(await prisma.clientSinFiltroDeLibro.book.findUnique({ where: { id: DESCARTABLE } })).toBeNull()
     expect(await prisma.clientSinFiltroDeLibro.movement.count({ where: { bookId: DESCARTABLE } })).toBe(0)
@@ -138,7 +138,7 @@ describe('borrar un libro', () => {
   it('no toca el libro de al lado', async () => {
     await prisma.clientSinFiltroDeLibro.movement.create({ data: movimiento('m-otro', OTRO.bookId) })
 
-    await repository.borrar(DESCARTABLE)
+    await repository.borrar(DESCARTABLE, LIBRO_DE_PRUEBA.userId, () => true)
 
     expect(await prisma.clientSinFiltroDeLibro.movement.count({ where: { bookId: OTRO.bookId } })).toBe(1)
   })
@@ -156,9 +156,57 @@ describe('borrar un libro', () => {
       },
     })
 
-    await repository.borrar(DESCARTABLE)
+    await repository.borrar(DESCARTABLE, LIBRO_DE_PRUEBA.userId, () => true)
 
     const sesion = await prisma.clientSinFiltroDeLibro.authSession.findUnique({ where: { id: 'ses-d' } })
     expect(sesion?.activeOrganizationId).toBeNull()
   })
 })
+
+// Dos borrados a la vez de los dos libros de una persona, de verdad en paralelo: el candado de la
+// persona los pone en fila, y el segundo ve que ya le queda uno solo.
+describe('borrar con el candado de la persona', () => {
+  const PERSONA = 'usr_dos_libros'
+  const LIBROS = ['lib_uno', 'lib_dos']
+
+  beforeEach(async () => {
+    const db = prisma.clientSinFiltroDeLibro
+    await db.authUser.upsert({
+      where: { id: PERSONA },
+      create: { id: PERSONA, name: 'Dos libros', email: 'dos@libros.test', emailVerified: true, createdAt: new Date(), updatedAt: new Date() },
+      update: {},
+    })
+    for (const id of LIBROS) {
+      await db.book.create({ data: { id, name: id, slug: id, createdAt: new Date() } })
+      await db.bookMember.create({ data: { id: `m-${id}`, organizationId: id, userId: PERSONA, role: 'owner', createdAt: new Date() } })
+    }
+  })
+
+  it('no la dejan sin libros: uno se borra y el otro no', async () => {
+    const db = prisma.clientSinFiltroDeLibro
+    const sePuede = (cuantos: number) => cuantos > 1
+    let soltar: () => void = () => {}
+    const retenido = new Promise<void>((listo) => (soltar = listo))
+    let tomado: () => void = () => {}
+    const yaTomo = new Promise<void>((listo) => (tomado = listo))
+
+    const candado = db.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(625::int, hashtext(${PERSONA}))`
+      tomado()
+      await retenido
+    })
+    await yaTomo
+    const borrados = Promise.all(LIBROS.map((id) => repository.borrar(id, PERSONA, sePuede)))
+    for (let intento = 0; intento < 150; intento += 1) {
+      const [fila] = await db.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM pg_locks l WHERE l.locktype = 'advisory' AND NOT l.granted`
+      if ((fila?.n ?? 0) >= 2) break
+      await new Promise((listo) => setTimeout(listo, 20))
+    }
+    soltar()
+    await candado
+
+    expect((await borrados).sort()).toEqual([false, true])
+    expect(await db.bookMember.count({ where: { userId: PERSONA } })).toBe(1)
+  })
+})
+

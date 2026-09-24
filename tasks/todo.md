@@ -117,7 +117,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 - [x] **18. Categorías y cuentas.** Versión y transacción.
   - Archivos: `manage-categories.use-case.ts`, `save-account.use-case.ts`, sus repos, spec nuevo. (M)
 
-- [ ] **18b. Borrar un libro** con candado por persona: dos borrados a la vez no la dejan sin libros.
+- [x] **18b. Borrar un libro** con candado por persona: dos borrados a la vez no la dejan sin libros.
   - Archivos: `libro/application/borrar-libro.use-case.ts`, spec. (S)
 
 ### Checkpoint D

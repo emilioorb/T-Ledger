@@ -20,8 +20,10 @@ const repositorioCon = (libros: LibroPropio[]) => {
   const repositorio: LibroRepository = {
     deLaPersona: async () => libros,
     vaciar: async () => ({}),
-    borrar: async (bookId) => {
+    borrar: async (bookId, _userId, sePuede) => {
+      if (!sePuede(libros.length)) return false
       borrados.push(bookId)
+      return true
     },
   }
   return { repositorio, borrados }
