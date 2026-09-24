@@ -410,6 +410,7 @@ export interface paths {
             parameters: {
                 query?: {
                     cuota?: string;
+                    version?: string;
                 };
                 header?: never;
                 path?: never;

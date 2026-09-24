@@ -117,8 +117,12 @@ export class ManageComprobanteUseCase {
   // corte de red justo en el COMMIT tira error aunque la fila haya quedado guardada, y borrar ahí
   // dejaría el movimiento apuntando a un archivo que no existe.
   private async borrarSiNadieLoUsa(id: string, clave: string, bookId: string): Promise<void> {
-    const guardado = await this.movements.findById(id).catch(() => null)
-    if (guardado?.receiptKey === clave) return
+    // Sin poder releer no se sabe: un archivo huérfano cuesta menos que una fila apuntando a nada.
+    const enUso = await this.movements.findById(id).then(
+      (fila) => fila?.receiptKey === clave,
+      () => true,
+    )
+    if (enUso) return
     await borrarDelLibro(this.archivos, clave, bookId).catch(() => undefined)
   }
 

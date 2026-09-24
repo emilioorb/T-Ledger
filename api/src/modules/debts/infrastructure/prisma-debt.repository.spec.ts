@@ -250,4 +250,15 @@ describe('editar una deuda guardada', () => {
     await expect(repository.update(conape())).rejects.toBeInstanceOf(NotFoundError)
     expect(await repository.findById(conape().id)).toBeNull()
   })
+
+  it('si los pagos cambiaron por otro camino que pagar o deshacer, no guarda', async () => {
+    const pagada = unwrap(conape().registerPayment({ date: utc('2026-02-15'), movementId: 'mov-1' }))
+    await repository.add(pagada)
+    const leida = (await repository.findById(pagada.id))!
+    const cambiada = unwrap(unwrap(leida.undoLastPayment()).debt.registerPayment({ date: utc('2026-02-15'), movementId: 'otro' }))
+
+    await expect(repository.update(cambiada)).rejects.toThrow(/cambiaron/)
+    expect((await repository.findById(pagada.id))?.payments[0]?.movementId).toBe('mov-1')
+  })
 })
+

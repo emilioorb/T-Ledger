@@ -228,4 +228,23 @@ describe('dos personas sobre la misma cuota', () => {
     const guardada = await prisma.debt.findUniqueOrThrow({ where: { id: deuda.id } })
     expect(pago.body.version).toBe(guardada.version)
   })
+
+  it('un «Deshacer» atrasado no deshace la cuota que otro volvió a pagar', async () => {
+    const { body: deuda } = await http().post('/api/v1/debts').send(tresCuotas)
+    const { body: pagada } = await pagarLa(deuda.id, 1).expect(201)
+
+    await http().delete(`/api/v1/debts/${deuda.id}/payments/last?cuota=1&version=${pagada.version}`).expect(200)
+    await pagarLa(deuda.id, 1).expect(201)
+    const atrasado = await http().delete(`/api/v1/debts/${deuda.id}/payments/last?cuota=1&version=${pagada.version}`)
+
+    expect(atrasado.status).toBe(409)
+    expect(await prisma.debtPayment.count({ where: {} })).toBe(1)
+  })
+
+  it('deshacer una cuota que no existe es un error, no un éxito silencioso', async () => {
+    const { body: deuda } = await http().post('/api/v1/debts').send(tresCuotas)
+
+    await http().delete(`/api/v1/debts/${deuda.id}/payments/last?cuota=99`).expect(422)
+  })
 })
+

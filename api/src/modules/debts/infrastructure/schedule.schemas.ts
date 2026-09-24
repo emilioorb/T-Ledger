@@ -54,9 +54,12 @@ export const marcarCuotaPagadaSchema = z
   .object({ date: isoDate, cuota: cuota.optional() })
   .meta({ id: 'MarcarCuotaPagadaInput', title: 'MarcarCuotaPagadaInput' })
 
-// Al deshacer va en `?cuota=`: un DELETE no lleva cuerpo.
+// Al deshacer va en `?cuota=` y `?version=`: un DELETE no lleva cuerpo.
 export const deshacerPagoQuerySchema = z
-  .object({ cuota: z.string().regex(/^\d+$/).transform(Number) })
+  .object({
+    cuota: z.string().regex(/^[1-9]\d{0,3}$/).transform(Number),
+    version: z.string().regex(/^\d{1,9}$/).transform(Number),
+  })
   .partial()
   .meta({ id: 'DeshacerPagoQuery', title: 'DeshacerPagoQuery' })
 

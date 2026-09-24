@@ -80,14 +80,20 @@ export class PagosDeDeudaUseCase {
     })
   }
 
-  // `cuota` es la que quien deshace vio como última. Si ya no está, otro la deshizo: es lo que se
-  // pedía y no se deshace una más. Si hay pagos después, cambió algo que no vio.
-  deshacerUltimo(id: string, cuota?: number): Promise<Debt> {
+  // `cuota` es la que quien deshace vio como última. Si justo le sigue a la última, otro la deshizo:
+  // es lo que se pedía y no se deshace una más. `version` cubre lo que la cuota sola no ve: que la
+  // hayan deshecho y vuelto a pagar, que es otro pago con el mismo número.
+  deshacerUltimo(id: string, esperado: { cuota?: number | undefined; version?: number | undefined } = {}): Promise<Debt> {
     return this.transaction.withTransaction(async () => {
       const debt = await this.propia(id)
       const ultima = debt.payments.length
-      if (cuota !== undefined && cuota > ultima) return debt
+      const { cuota, version } = esperado
+      if (cuota !== undefined && cuota === ultima + 1) return debt
+      if (cuota !== undefined && cuota > ultima + 1) {
+        throw new SemanticValidationError(`La deuda tiene ${ultima} cuotas pagadas: no hay una cuota ${cuota} para deshacer.`)
+      }
       exigirVersion(cuota, ultima, 'deshacer el pago de una cuota')
+      if (version !== undefined) exigirVersion(version, debt.version, 'deshacer el pago de una cuota')
       const { debt: sinElUltimo, undone } = oFallar(debt.undoLastPayment())
 
       // Primero la deuda y después el gasto: al anularlo, contabilidad avisa y `alAnularSuGasto`

@@ -95,8 +95,12 @@ export class DocumentoDeDeudaUseCase {
   // Si la fila no se guardó, el archivo nuevo no lo usa nadie. Se relee antes de borrar: un corte
   // justo en el COMMIT tira error aunque la fila haya quedado guardada.
   private async borrarSiNadieLoUsa(id: string, clave: string, bookId: string): Promise<void> {
-    const guardada = await this.debts.findById(id).catch(() => null)
-    if (guardada?.documentKey === clave) return
+    // Sin poder releer no se sabe: un archivo huérfano cuesta menos que una fila apuntando a nada.
+    const enUso = await this.debts.findById(id).then(
+      (fila) => fila?.documentKey === clave,
+      () => true,
+    )
+    if (enUso) return
     await borrarDelLibro(this.archivos, clave, bookId).catch(() => undefined)
   }
 

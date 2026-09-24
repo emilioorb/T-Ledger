@@ -208,7 +208,7 @@ export class DebtsController {
     @Param('id') id: string,
     @Query(new ZodValidationPipe(deshacerPagoQuerySchema)) query: DeshacerPagoQuery,
   ): Promise<DebtResponse> {
-    return toDebtResponse(await this.pagos.deshacerUltimo(id, query.cuota), new Date())
+    return toDebtResponse(await this.pagos.deshacerUltimo(id, query), new Date())
   }
 
   // 200 y no 201: simular no crea nada.

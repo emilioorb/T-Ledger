@@ -57,10 +57,28 @@ export class PrismaDebtRepository implements DebtRepository {
     return debt.guardada()
   }
 
-  // La versión ya garantizó que la fila está como se leyó, y los pagos van en orden y sin huecos
-  // (el pago n es la cuota n): alcanza con comparar cuántos hay.
+  // Los pagos van en orden y sin huecos (el pago n es la cuota n), y solo cambian agregando al final
+  // o deshaciendo el último. Lo que ambos tienen en común tiene que coincidir: si no, alguien los
+  // cambió por otro camino, y guardar por diferencia escondería el cambio.
   private async sincronizarPagos(debt: Debt): Promise<void> {
-    const guardados = await this.prisma.client.debtPayment.count({ where: { debtId: debt.id } })
+    const filas = await this.prisma.client.debtPayment.findMany({
+      where: { debtId: debt.id },
+      orderBy: { installmentNumber: 'asc' },
+      select: { installmentNumber: true, movementId: true, date: true },
+    })
+    const distinto = filas.some((fila, indice) => {
+      const pago = debt.payments[indice]
+      return (
+        pago !== undefined &&
+        (pago.installmentNumber !== fila.installmentNumber ||
+          pago.movementId !== fila.movementId ||
+          pago.date.getTime() !== fila.date.getTime())
+      )
+    })
+    if (distinto) {
+      throw new Error(`Los pagos de la deuda ${debt.id} cambiaron por un camino que no es pagar ni deshacer`)
+    }
+    const guardados = filas.length
     const cuantos = debt.payments.length
     if (guardados > cuantos) {
       await this.prisma.client.debtPayment.deleteMany({

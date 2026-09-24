@@ -58,7 +58,8 @@ export const debtResponseSchema = z
     notes: z.string().nullable(),
     // Si tiene contrato adjunto. La clave no sale: se pide el enlace firmado a `/document`.
     hasDocument: z.boolean(),
-    // La que hay que mandar al editar, pagar o borrar: si no coincide con la de la base, 409.
+    // La que hay que mandar al editar, borrar, cambiar el documento o deshacer un pago: si no
+    // coincide con la de la base, 409. Pagar manda la `cuota` que espera.
     version: z.number().int(),
     monthlyPayment: moneySchema,
     totalInterest: moneySchema,
