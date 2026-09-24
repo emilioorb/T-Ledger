@@ -1,12 +1,8 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // Tono de PRODUCT.md: denso, directo, verificable. El presupuesto no regaña ni felicita:
 // dice cuánto se asignó, cuánto se fue y de dónde sale ese número.
 export const copy = {
-  nav: {
-    section: 'Plan',
-    budget: 'Presupuesto',
-    models: 'Modelos',
-    goals: 'Metas',
-  },
+  nav: etiquetas.plan,
 
   budget: {
     title: 'Presupuesto',

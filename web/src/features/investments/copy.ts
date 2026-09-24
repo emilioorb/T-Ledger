@@ -1,8 +1,9 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // Una inversión no amortiza: capitaliza. Lo que importa es cuánto vale hoy, cuánto de eso
 // es interés, y cuándo vuelve a estar disponible.
 export const copy = {
   investments: {
-    title: 'Inversiones',
+    title: etiquetas.inversiones,
     description: 'Cuánto pusiste, cuánto vale hoy y cuándo vuelve a estar disponible.',
     columns: {
       name: 'Inversión',

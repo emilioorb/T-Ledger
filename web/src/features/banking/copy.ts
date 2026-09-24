@@ -1,12 +1,8 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // La conciliación no es una tabla de líneas: es el trabajo de explicar la diferencia entre lo
 // que anotaste y lo que el banco vio. El copy va detrás de esa diferencia.
 export const copy = {
-  nav: {
-    section: 'Banco',
-    accounts: 'Cuentas',
-    import: 'Importar',
-    reconciliation: 'Conciliación',
-  },
+  nav: etiquetas.banco,
 
   accounts: {
     title: 'Cuentas bancarias',

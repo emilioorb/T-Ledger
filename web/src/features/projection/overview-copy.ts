@@ -1,7 +1,8 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // El panel no resume: apunta. Cada línea nombra una cosa que pasa y lleva a resolverla.
 export const copy = {
   overview: {
-    title: 'Dashboard',
+    title: etiquetas.tablero,
     greeting: 'Esto es lo que está pasando con tu plata.',
     month: (month: string) => `En ${month}`,
     surplus: 'Queda libre este mes',

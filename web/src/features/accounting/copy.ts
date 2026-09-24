@@ -1,20 +1,8 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // Todo el texto de contabilidad vive acá, no disperso en el JSX. Tono de PRODUCT.md:
 // denso, directo, verificable. Cada vista dice qué pregunta responde, no qué es.
 export const copy = {
-  nav: {
-    section: 'Contabilidad',
-    accounts: 'Plan de cuentas',
-    categories: 'Categorías',
-    movements: 'Movimientos',
-    journal: 'Asientos',
-    ledger: 'Mayor',
-    trialBalance: 'Comprobación',
-    financialPosition: 'Situación',
-    netWorth: 'Patrimonio',
-    incomeStatement: 'Resultados',
-    closing: 'Cierre',
-    reportsGroup: 'Reportes',
-  },
+  nav: etiquetas.contabilidad,
 
   common: {
     pager: {

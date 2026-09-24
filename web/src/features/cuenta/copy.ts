@@ -1,5 +1,6 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 export const copy = {
-  title: 'Tu cuenta',
+  title: etiquetas.cuenta,
 
   perfil: {
     nameLabel: 'Tu nombre',

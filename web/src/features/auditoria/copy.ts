@@ -1,8 +1,9 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // El registro de auditoría. El tono es el del resto: se dice qué pasó, sin adjetivos.
 export const copy = {
   nav: { auditLog: 'Registro' },
   audit: {
-    title: 'Registro',
+    title: etiquetas.registro,
     description: 'Quién cambió qué en este libro, del cambio más reciente al más viejo.',
     // Qué se está mirando, arriba de la tabla.
     filterEntity: 'Qué',

@@ -1,43 +1,30 @@
-import { copy as accounting } from '@/features/accounting/copy'
-import { copy as banking } from '@/features/banking/copy'
-import { copy as budget } from '@/features/budget/copy'
-import { copy as debts } from '@/features/debts/copy'
-import { copy as goals } from '@/features/goals/copy'
-import { copy as investments } from '@/features/investments/copy'
-import { copy as landing } from '@/features/landing/copy'
-import { copy as projection } from '@/features/projection/copy'
-import { copy as overview } from '@/features/projection/overview-copy'
+import { etiquetas } from '@/features/shell/etiquetas'
 import { copy as shell } from '@/features/shell/copy'
-import { copy as guide } from '@/features/shell/guide-copy'
-import { copy as auditoria } from '@/features/auditoria/copy'
-import { copy as cuenta } from '@/features/cuenta/copy'
-import { copy as libro } from '@/features/libro/copy'
-import { copy as identity } from '@/features/identity/copy'
 
 export const ACCOUNTING_LABELS: Record<string, string> = {
-  movimientos: accounting.nav.movements,
-  asientos: accounting.nav.journal,
-  cuentas: accounting.nav.accounts,
-  categorias: accounting.nav.categories,
-  mayor: accounting.nav.ledger,
-  comprobacion: accounting.nav.trialBalance,
-  patrimonio: accounting.nav.netWorth,
-  situacion: accounting.nav.financialPosition,
-  resultados: accounting.nav.incomeStatement,
-  cierre: accounting.nav.closing,
+  movimientos: etiquetas.contabilidad.movements,
+  asientos: etiquetas.contabilidad.journal,
+  cuentas: etiquetas.contabilidad.accounts,
+  categorias: etiquetas.contabilidad.categories,
+  mayor: etiquetas.contabilidad.ledger,
+  comprobacion: etiquetas.contabilidad.trialBalance,
+  patrimonio: etiquetas.contabilidad.netWorth,
+  situacion: etiquetas.contabilidad.financialPosition,
+  resultados: etiquetas.contabilidad.incomeStatement,
+  cierre: etiquetas.contabilidad.closing,
 }
 
 export const PLAN_LABELS: Record<string, string> = {
-  presupuesto: budget.nav.budget,
-  metas: goals.goals.title,
-  inversiones: investments.investments.title,
-  proyeccion: projection.projection.title,
+  presupuesto: etiquetas.plan.budget,
+  metas: etiquetas.metas,
+  inversiones: etiquetas.inversiones,
+  proyeccion: etiquetas.proyeccion,
 }
 
 export const BANKING_LABELS: Record<string, string> = {
-  cuentas: banking.nav.accounts,
-  importar: banking.nav.import,
-  conciliacion: banking.nav.reconciliation,
+  cuentas: etiquetas.banco.accounts,
+  importar: etiquetas.banco.import,
+  conciliacion: etiquetas.banco.reconciliation,
 }
 
 // Cómo se llama la pantalla en la que estás, derivado de la ruta y no declarado por cada
@@ -46,25 +33,25 @@ export const BANKING_LABELS: Record<string, string> = {
 export const screenNameFor = (pathname: string): string | null => {
   const [section, second] = pathname.split('/').filter(Boolean)
 
-  if (!section) return landing.tab
-  if (section === 'tablero') return overview.overview.title
-  if (section === 'banco') return BANKING_LABELS[second ?? ''] ?? banking.nav.section
-  if (section === 'contabilidad') return ACCOUNTING_LABELS[second ?? ''] ?? accounting.nav.section
-  if (section === 'presupuesto' && second === 'modelos') return budget.nav.models
+  if (!section) return etiquetas.portada
+  if (section === 'tablero') return etiquetas.tablero
+  if (section === 'banco') return BANKING_LABELS[second ?? ''] ?? etiquetas.banco.section
+  if (section === 'contabilidad') return ACCOUNTING_LABELS[second ?? ''] ?? etiquetas.contabilidad.section
+  if (section === 'presupuesto' && second === 'modelos') return etiquetas.plan.models
   if (section in PLAN_LABELS) return PLAN_LABELS[section] ?? null
-  if (section === 'deudas') return debts.nav.debts
-  if (section === 'plan-de-pago') return debts.nav.payoffPlan
+  if (section === 'deudas') return etiquetas.dinero.debts
+  if (section === 'plan-de-pago') return etiquetas.dinero.payoffPlan
   if (section === 'novedades') return shell.nav.releases
-  if (section === 'guia') return guide.guide.title
-  if (section === 'auditoria') return auditoria.audit.title
-  if (section === 'cuenta') return cuenta.title
-  if (section === 'libro') return libro.title
+  if (section === 'guia') return etiquetas.guia
+  if (section === 'auditoria') return etiquetas.registro
+  if (section === 'cuenta') return etiquetas.cuenta
+  if (section === 'libro') return etiquetas.libro
   // Las pantallas sin sesión también son pantallas. Faltaban, y eso tenía una consecuencia
   // que no se veía venir: al cerrar la sesión por inactividad, el vigilante navega a
   // `/entrar` mientras el título todavía se está recalculando, no encontraba la ruta y la
   // pestaña quedaba diciendo «Esta dirección no existe» encima del formulario de ingreso.
-  if (section === 'entrar') return identity.entrar.tab
-  if (section === 'crear-cuenta') return identity.crear.tab
+  if (section === 'entrar') return etiquetas.entrar
+  if (section === 'crear-cuenta') return etiquetas.crearCuenta
   // Una ruta que no existe también tiene nombre: la pestaña dice que te perdiste, no el
   // nombre de la app como si estuvieras en algún lado.
   return shell.notFound.title

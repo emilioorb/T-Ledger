@@ -1,3 +1,4 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // La guía está escrita para alguien que nunca llevó una contabilidad. Cada pantalla se
 // cuenta en tres bloques: para qué sirve, cómo se usa paso a paso, y qué conviene saber
 // antes. Si una frase supone que el lector ya sabe qué es un asiento, la frase está mal.
@@ -10,7 +11,7 @@
 // dejaría de ser un mapa el día que alguno cambie.
 export const copy = {
   guide: {
-    title: 'Guía',
+    title: etiquetas.guia,
     description:
       'Cómo llevar el control de tu plata con esta app, pantalla por pantalla. Si es la primera vez, empezá por «Cómo funciona esto».',
     index: 'Índice de la guía',

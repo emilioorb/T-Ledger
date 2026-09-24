@@ -1,3 +1,4 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
@@ -28,11 +29,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { copy } from '@/features/debts/copy'
 import { copy as shell } from '@/features/shell/copy'
-import { copy as auditoria } from '@/features/auditoria/copy'
-import { copy as libroCopy } from '@/features/libro/copy'
-import { copy as guide } from '@/features/shell/guide-copy'
 import { olvidarLaSesionLocal } from '@/features/identity/salir'
 import {
   signOut,
@@ -157,14 +154,14 @@ export const NavUser = () => {
             <DropdownMenuItem asChild>
               <Link to="/libro">
                 <UsersIcon aria-hidden="true" />
-                {libroCopy.title}
+                {etiquetas.libro}
               </Link>
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
               <Link to="/guia">
                 <CompassIcon aria-hidden="true" />
-                {guide.guide.title}
+                {etiquetas.guia}
               </Link>
             </DropdownMenuItem>
 
@@ -179,7 +176,7 @@ export const NavUser = () => {
               <DropdownMenuItem asChild>
                 <Link to="/auditoria">
                   <ShieldCheckIcon aria-hidden="true" />
-                  {auditoria.audit.title}
+                  {etiquetas.registro}
                 </Link>
               </DropdownMenuItem>
             ) : null}
@@ -216,7 +213,7 @@ export const NavUser = () => {
               ) : (
                 <MoonIcon aria-hidden="true" />
               )}
-              {resolver(preferencia) === 'dark' ? copy.nav.lightTheme : copy.nav.darkTheme}
+              {resolver(preferencia) === 'dark' ? etiquetas.tema.lightTheme : etiquetas.tema.darkTheme}
             </DropdownMenuItem>
 
             {/* Salir va al fondo y con su propia separación: es lo único del menú que termina

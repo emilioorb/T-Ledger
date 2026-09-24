@@ -1,8 +1,9 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // La pregunta que originó el sistema: en qué mes cambia cada cosa. El copy va detrás de
 // esa pregunta, no del total.
 export const copy = {
   projection: {
-    title: 'Proyección',
+    title: etiquetas.proyeccion,
     description: 'Mes a mes: lo que entra, lo que ya está comprometido y lo que queda libre.',
     horizon: { label: 'Horizonte', months: (n: number) => `${n} meses` },
     // El rótulo de la tarjeta no puede ser la misma palabra que el filtro de arriba: el

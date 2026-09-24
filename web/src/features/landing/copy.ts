@@ -1,10 +1,11 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // El texto de la única pantalla que ve alguien que todavía no entró. Vive acá por la misma
 // razón que el resto: el titular se va a corregir diez veces, y buscarlo entre el JSX es
 // buscarlo entre reglas y grillas.
 export const copy = {
   // Lo que la pestaña dice mientras la landing está abierta. No lleva el nombre de la app
   // adelante: `documentTitleFor` ya lo agrega al final.
-  tab: 'Contabilidad personal de partida doble',
+  tab: etiquetas.portada,
   // No dice «contabilidad»: lo demuestra en vez de anunciarlo, y la palabra espanta a quien
   // no la usa. Va partido porque la pata lo parte: lo tuyo a la izquierda, lo del libro a la
   // derecha.

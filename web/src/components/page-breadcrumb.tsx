@@ -1,3 +1,4 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   Breadcrumb,
@@ -7,20 +8,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { copy as accounting } from '@/features/accounting/copy'
-import { copy as banking } from '@/features/banking/copy'
-import { copy as budget } from '@/features/budget/copy'
-import { copy as goals } from '@/features/goals/copy'
-import { copy as investments } from '@/features/investments/copy'
-import { copy as overview } from '@/features/projection/overview-copy'
 import { copy as shell } from '@/features/shell/copy'
-import { copy as guide } from '@/features/shell/guide-copy'
 import { ACCOUNTING_LABELS, BANKING_LABELS, PLAN_LABELS } from '@/features/shell/page-title'
-import { copy } from '@/features/debts/copy'
-import { useDebt } from '@/features/debts/use-debts'
-import { useGoal } from '@/features/goals/use-goals'
+import { useQuery } from '@tanstack/react-query'
+import { apiFetch } from '@/lib/api'
+import { queryKeys } from '@/lib/query-keys'
 import { today } from '@/lib/dates'
-import { useInvestmentProjection } from '@/features/investments/use-investments'
 
 const Crumb = ({ to, label }: { to: string; label: string }) => (
   <>
@@ -35,12 +28,18 @@ const Crumb = ({ to, label }: { to: string; label: string }) => (
   </>
 )
 
+// El nombre de lo que se está viendo, con la misma clave de caché que usa su pantalla: la miga lo
+// encuentra ahí sin pedirlo dos veces. No importa los hooks de cada pantalla a propósito: la miga
+// está en el bundle de entrada, y esos módulos traían todas sus mutaciones a la portada.
+const useNombre = (queryKey: readonly unknown[], ruta: string) =>
+  useQuery({ queryKey, queryFn: () => apiFetch<{ name: string }>(ruta), enabled: ruta !== '' })
+
 const DebtCrumbs = ({ id }: { id: string }) => {
-  const debt = useDebt(id)
+  const debt = useNombre(queryKeys.debts.detail(id), `/debts/${id}`)
 
   return (
     <>
-      <Crumb to="/deudas" label={copy.nav.debts} />
+      <Crumb to="/deudas" label={etiquetas.dinero.debts} />
       <BreadcrumbItem>
         <BreadcrumbPage>{debt.data?.name ?? '…'}</BreadcrumbPage>
       </BreadcrumbItem>
@@ -49,10 +48,10 @@ const DebtCrumbs = ({ id }: { id: string }) => {
 }
 
 const GoalCrumbs = ({ id }: { id: string }) => {
-  const goal = useGoal(id)
+  const goal = useNombre(queryKeys.goals.detail(id), `/goals/${id}`)
   return (
     <>
-      <Crumb to="/metas" label={goals.goals.title} />
+      <Crumb to="/metas" label={etiquetas.metas} />
       <BreadcrumbItem>
         <BreadcrumbPage>{goal.data?.name ?? '…'}</BreadcrumbPage>
       </BreadcrumbItem>
@@ -61,10 +60,11 @@ const GoalCrumbs = ({ id }: { id: string }) => {
 }
 
 const InvestmentCrumbs = ({ id }: { id: string }) => {
-  const investment = useInvestmentProjection(id, today())
+  const hoy = today()
+  const investment = useNombre(queryKeys.investments.projection(id, hoy), `/investments/${id}/projection?at=${hoy}`)
   return (
     <>
-      <Crumb to="/inversiones" label={investments.investments.title} />
+      <Crumb to="/inversiones" label={etiquetas.inversiones} />
       <BreadcrumbItem>
         <BreadcrumbPage>{investment.data?.name ?? '…'}</BreadcrumbPage>
       </BreadcrumbItem>
@@ -89,7 +89,7 @@ export const PageBreadcrumb = () => {
   if (!section) {
     return (
       <Breadcrumb>
-        <BreadcrumbList>{leaf(overview.overview.title)}</BreadcrumbList>
+        <BreadcrumbList>{leaf(etiquetas.tablero)}</BreadcrumbList>
       </Breadcrumb>
     )
   }
@@ -99,14 +99,14 @@ export const PageBreadcrumb = () => {
       <BreadcrumbList className="flex-nowrap whitespace-nowrap">
         {section === 'banco' ? (
           <>
-            <BreadcrumbItem>{banking.nav.section}</BreadcrumbItem>
+            <BreadcrumbItem>{etiquetas.banco.section}</BreadcrumbItem>
             <BreadcrumbSeparator />
-            {leaf(BANKING_LABELS[second ?? ''] ?? banking.nav.section)}
+            {leaf(BANKING_LABELS[second ?? ''] ?? etiquetas.banco.section)}
           </>
         ) : section === 'presupuesto' && second === 'modelos' ? (
           <>
-            <Crumb to="/presupuesto" label={budget.nav.budget} />
-            {leaf(budget.nav.models)}
+            <Crumb to="/presupuesto" label={etiquetas.plan.budget} />
+            {leaf(etiquetas.plan.models)}
           </>
         ) : section === 'metas' && second ? (
           <GoalCrumbs id={second} />
@@ -116,20 +116,20 @@ export const PageBreadcrumb = () => {
           leaf(PLAN_LABELS[section] ?? section)
         ) : section === 'contabilidad' ? (
           <>
-            <BreadcrumbItem>{accounting.nav.section}</BreadcrumbItem>
+            <BreadcrumbItem>{etiquetas.contabilidad.section}</BreadcrumbItem>
             <BreadcrumbSeparator />
-            {leaf(ACCOUNTING_LABELS[second ?? ''] ?? accounting.nav.section)}
+            {leaf(ACCOUNTING_LABELS[second ?? ''] ?? etiquetas.contabilidad.section)}
           </>
         ) : section === 'plan-de-pago' ? (
-          leaf(copy.nav.payoffPlan)
+          leaf(etiquetas.dinero.payoffPlan)
         ) : section === 'novedades' ? (
           leaf(shell.nav.releases)
         ) : section === 'guia' ? (
-          leaf(guide.guide.title)
+          leaf(etiquetas.guia)
         ) : section !== 'deudas' ? null : second ? (
           <DebtCrumbs id={second} />
         ) : (
-          leaf(copy.nav.debts)
+          leaf(etiquetas.dinero.debts)
         )}
       </BreadcrumbList>
     </Breadcrumb>

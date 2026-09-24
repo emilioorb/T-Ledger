@@ -1,5 +1,6 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 export const copy = {
-  title: 'El libro',
+  title: etiquetas.libro,
   description: 'Quién entra, qué puede hacer y cómo empezar de nuevo.',
 
   nombre: {

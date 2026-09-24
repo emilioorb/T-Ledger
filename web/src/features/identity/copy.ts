@@ -1,3 +1,4 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // Las pantallas donde todavía no sos nadie. El tono es el mismo del resto: se dice lo que
 // pasa, sin pedir disculpas ni prometer de más.
 export const copy = {
@@ -6,7 +7,7 @@ export const copy = {
     // El nombre corto, para la pestaña. El titular ya dice «T-Ledger» y el título de la
     // pestaña le agrega el nombre de la app al final: junto daría «Entrar a T-Ledger ·
     // T-Ledger».
-    tab: 'Entrar',
+    tab: etiquetas.entrar,
     // Dice para qué sirve la cuenta, que es lo que alguien necesita saber parado acá. Y es
     // cierto: una misma cuenta lleva varios libros, que es de lo que se trata la fase.
     subtitle: 'Una cuenta para tu libro, el de la casa y el de la familia.',
@@ -52,7 +53,7 @@ export const copy = {
   },
   crear: {
     title: 'Crear tu cuenta',
-    tab: 'Crear cuenta',
+    tab: etiquetas.crearCuenta,
     // Con el enlace de acceso se dice qué va a pasar después; sin él, lo mismo que en la
     // pantalla de entrar, porque es lo mismo que va a contestar el servidor.
     invited: 'Te dieron acceso a T-Ledger. Creá tu cuenta con tu propia contraseña y arrancás con tu libro.',

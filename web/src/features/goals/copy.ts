@@ -1,8 +1,9 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // Lo que una meta responde no es «cuánto llevo» sino «¿llego?». El copy pone esa
 // pregunta adelante, y el porcentaje atrás.
 export const copy = {
   goals: {
-    title: 'Metas',
+    title: etiquetas.metas,
     description: 'Cuánto falta, cuánto hay que poner por mes y si al ritmo actual se llega.',
     columns: {
       name: 'Meta',

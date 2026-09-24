@@ -1,12 +1,10 @@
+import { etiquetas } from '@/features/shell/etiquetas'
 // Todo el texto de la funcionalidad vive acá, no disperso en el JSX: así se revisa de
 // una sola lectura. Tono de PRODUCT.md: denso, directo, verificable. Sin rayas largas.
 export const copy = {
   nav: {
-    section: 'Dinero',
-    debts: 'Deudas',
-    payoffPlan: 'Plan de pago',
-    lightTheme: 'Tema claro',
-    darkTheme: 'Tema oscuro',
+    ...etiquetas.dinero,
+    ...etiquetas.tema,
     user: 'Emilio',
     userSubtitle: 'Datos locales',
   },
