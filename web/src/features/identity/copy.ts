@@ -76,7 +76,15 @@ export const copy = {
   // cuentas nuevas las habilita quien administra la instancia.
   unirse: {
     title: 'Unirte a un libro',
-    withSession: (correo: string) => `Te invitaron a un libro. Vas a entrar con ${correo}.`,
+    withSession: (correo: string) => `Vas a entrar con ${correo}.`,
+    // Qué libro es y quién invita, antes del botón: unirse deja todo lo que anotes a la vista
+    // de quien lleva ese libro.
+    invitedBy: (quien: string, libro: string, rol: string) =>
+      `${quien} te invitó al libro «${libro}», para que ${rol}.`,
+    otherAccount: (correo: string) =>
+      `Esta invitación no es para ${correo}. Salí y entrá con el correo al que te invitaron.`,
+    switchAccount: 'Entrar con otra cuenta',
+    joinedNotOpened: 'Ya sos parte del libro, pero no se pudo abrir. Elegilo desde Cuenta, en Tus libros.',
     join: 'Unirme al libro',
     joining: 'Uniéndote…',
     needsAccount: 'Te invitaron a un libro. Para unirte, entrá con tu cuenta de T-Ledger.',

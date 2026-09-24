@@ -8,6 +8,7 @@ import { CampoDeContrasena } from '@/features/identity/campo-de-contrasena'
 import { copy } from '@/features/identity/copy'
 import { MarcoDeIdentidad } from '@/features/identity/marco-de-identidad'
 import { gestoDeFormulario } from '@/features/identity/gesto'
+import { destinoPropio } from '@/features/identity/destino'
 import { queryClient } from '@/router'
 
 const EntrarScreen = () => {
@@ -30,7 +31,9 @@ const EntrarScreen = () => {
           // La caché puede tener datos de quien usó esta pantalla antes. Vaciarla acá es lo
           // que evita que el primer instante después de entrar muestre plata ajena.
           queryClient.clear()
-          void navegar({ to: redirigirA ?? '/tablero' })
+          // `href` y no `to`: el destino ya trae su búsqueda armada (`/unirse?invitacion=…`), y
+          // `to` la tomaría como parte de la ruta.
+          void (redirigirA ? navegar({ href: redirigirA }) : navegar({ to: '/tablero' }))
         },
         // Tres casos y no dos. Sin conexión no es culpa de nadie; un 401 sí es una credencial
         // equivocada —sin decir cuál de las dos, que confirmaría qué correos tienen cuenta—; y
@@ -129,7 +132,7 @@ interface Busqueda {
 export const Route = createFileRoute('/entrar')({
   component: EntrarScreen,
   validateSearch: (busqueda: Record<string, unknown>): Busqueda => ({
-    ...(typeof busqueda.redirigirA === 'string' ? { redirigirA: busqueda.redirigirA } : {}),
+    ...(destinoPropio(busqueda.redirigirA) ? { redirigirA: destinoPropio(busqueda.redirigirA) } : {}),
     ...(busqueda.motivo === 'inactividad' ? { motivo: 'inactividad' as const } : {}),
   }),
 })

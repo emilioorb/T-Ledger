@@ -32,7 +32,7 @@ describe('DarAcceso', () => {
     fireEvent.click(screen.getByRole('button', { name: copy.acceso.submit }))
 
     const enlace = await screen.findByLabelText(copy.acceso.linkLabel)
-    expect(enlace).toHaveValue(`${window.location.origin}/crear-cuenta?correo=ana%40correo.cr#token=tok-1`)
+    expect(enlace).toHaveValue(`${window.location.origin}/crear-cuenta#token=tok-1&correo=ana%40correo.cr`)
   })
 
   it('una invitación pendiente da un enlace nuevo, pedido al servidor', async () => {
@@ -46,7 +46,7 @@ describe('DarAcceso', () => {
     fireEvent.click(await screen.findByRole('button', { name: copy.acceso.renew }))
 
     const enlace = await screen.findByLabelText(copy.acceso.linkLabel)
-    expect(enlace).toHaveValue(`${window.location.origin}/crear-cuenta?correo=eva%40correo.cr#token=tok-nuevo`)
+    expect(enlace).toHaveValue(`${window.location.origin}/crear-cuenta#token=tok-nuevo&correo=eva%40correo.cr`)
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/admin/invitations/inv-3/link'),
       expect.objectContaining({ method: 'POST' }),

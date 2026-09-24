@@ -9,9 +9,8 @@ import { CampoDeContrasena } from '@/features/identity/campo-de-contrasena'
 import { copy } from '@/features/identity/copy'
 import { gestoDeFormulario } from '@/features/identity/gesto'
 import { MarcoDeIdentidad } from '@/features/identity/marco-de-identidad'
-import { cabeceraDelToken, useTokenDelEnlace } from '@/features/identity/token-del-enlace'
+import { cabeceraDelToken, useDatosDelEnlace } from '@/features/identity/token-del-enlace'
 import { queryClient } from '@/router'
-import { correoDeLaBusqueda } from '@/features/datos/enlace-de-invitacion'
 
 // Crear la cuenta con el enlace de acceso que da quien administra la instancia. El servidor
 // decide si puede: la regla vive en `puedeRegistrarse` y no acá, porque una comprobación en el
@@ -22,8 +21,7 @@ import { correoDeLaBusqueda } from '@/features/datos/enlace-de-invitacion'
 // no la puede invitar nadie.
 const CrearCuentaScreen = () => {
   const navegar = useNavigate()
-  const { correo: correoDelEnlace } = Route.useSearch()
-  const token = useTokenDelEnlace()
+  const { token, correo: correoDelEnlace } = useDatosDelEnlace()
   const [nombre, setNombre] = useState('')
   // Con el correo del enlace de invitación ya puesto: es el que la invitación deja pasar.
   const [correo, setCorreo] = useState(correoDelEnlace ?? '')
@@ -71,7 +69,7 @@ const CrearCuentaScreen = () => {
     >
       <h1 className="text-2xl font-semibold tracking-tight 2xl:text-3xl">{copy.crear.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {correoDelEnlace ? copy.crear.invited : copy.crear.alone}
+        {token ? copy.crear.invited : copy.crear.alone}
       </p>
 
       <form onSubmit={crear} className="mt-8 space-y-4">
@@ -139,16 +137,4 @@ const CrearCuentaScreen = () => {
   )
 }
 
-interface Busqueda {
-  // El correo del enlace de acceso, ya puesto. Sin él la pantalla sigue sirviendo: es el caso
-  // de la primera cuenta.
-  correo?: string
-}
-
-export const Route = createFileRoute('/crear-cuenta')({
-  component: CrearCuentaScreen,
-  validateSearch: (busqueda: Record<string, unknown>): Busqueda => {
-    const correo = correoDeLaBusqueda(busqueda)
-    return correo ? { correo } : {}
-  },
-})
+export const Route = createFileRoute('/crear-cuenta')({ component: CrearCuentaScreen })

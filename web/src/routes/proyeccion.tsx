@@ -53,9 +53,37 @@ const MonthRow = ({ flow, breakdown }: RowProps) => {
     >
       <span className="num text-sm">{monthLabel(flow)}</span>
 
-      {/* En el teléfono las notas van al final: primero las cifras, que es lo que se viene a
-          leer, y después por qué el mes se ve así. */}
-      <span className="order-last flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-muted-foreground @2xl:order-none">
+      {/* Angosto, un renglón por cifra con el monto a la derecha: en fila, «Entra» y
+          «Comprometido» se separaban cada uno a su manera y no se podían comparar. */}
+      <span className="grid gap-y-0.5 @2xl:order-2 @2xl:flex @2xl:flex-nowrap @2xl:justify-end @2xl:gap-x-4">
+        <span className="flex items-baseline justify-between gap-2 @2xl:contents">
+          <span className="text-xs text-muted-foreground @2xl:hidden">
+            {copy.projection.columns.income}
+          </span>
+          <Amount money={flow.income} className="text-xs text-muted-foreground @2xl:w-28" />
+        </span>
+        <span className="flex items-baseline justify-between gap-2 @2xl:contents">
+          <span className="text-xs text-muted-foreground @2xl:hidden">
+            {copy.projection.columns.committed}
+          </span>
+          <Amount money={flow.committed} className="text-xs text-muted-foreground @2xl:w-28" />
+        </span>
+        <span className="flex items-baseline justify-between gap-2 @2xl:contents">
+          <span className="text-xs text-muted-foreground @2xl:hidden">
+            {copy.projection.columns.surplus}
+          </span>
+          <Amount
+            money={flow.surplus}
+            emphasis={negative || hasFreed ? 'strong' : 'normal'}
+            tone={negative ? 'alert' : 'plain'}
+            className="text-sm @2xl:w-32"
+          />
+        </span>
+      </span>
+      {/* Las notas van después de las cifras también en el HTML: primero lo que se viene a leer,
+          después por qué el mes se ve así, y un lector de pantalla lo recorre en ese orden. En
+          escritorio el CSS las pone en la columna del medio. */}
+      <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-muted-foreground @2xl:order-1">
         {negative ? (
           <Hint text={copy.projection.negativeHint}>
             <span className="text-negative">{copy.projection.negative}</span>
@@ -96,33 +124,6 @@ const MonthRow = ({ flow, breakdown }: RowProps) => {
         ))}
       </span>
 
-      {/* Angosto, un renglón por cifra con el monto a la derecha: en fila, «Entra» y
-          «Comprometido» se separaban cada uno a su manera y no se podían comparar. */}
-      <span className="grid gap-y-0.5 @2xl:flex @2xl:flex-nowrap @2xl:justify-end @2xl:gap-x-4">
-        <span className="flex items-baseline justify-between gap-2 @2xl:contents">
-          <span className="text-xs text-muted-foreground @2xl:hidden">
-            {copy.projection.columns.income}
-          </span>
-          <Amount money={flow.income} className="text-xs text-muted-foreground @2xl:w-28" />
-        </span>
-        <span className="flex items-baseline justify-between gap-2 @2xl:contents">
-          <span className="text-xs text-muted-foreground @2xl:hidden">
-            {copy.projection.columns.committed}
-          </span>
-          <Amount money={flow.committed} className="text-xs text-muted-foreground @2xl:w-28" />
-        </span>
-        <span className="flex items-baseline justify-between gap-2 @2xl:contents">
-          <span className="text-xs text-muted-foreground @2xl:hidden">
-            {copy.projection.columns.surplus}
-          </span>
-          <Amount
-            money={flow.surplus}
-            emphasis={negative || hasFreed ? 'strong' : 'normal'}
-            tone={negative ? 'alert' : 'plain'}
-            className="text-sm @2xl:w-32"
-          />
-        </span>
-      </span>
     </li>
   )
 }

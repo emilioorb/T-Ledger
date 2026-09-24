@@ -37,6 +37,8 @@ export const copy = {
       projection: 'Lo que queda libre, mes a mes',
       projectionHint:
         'Lo que entra menos lo que ya está comprometido. Debajo de la línea, el mes no cierra.',
+      projectionOtherCurrency:
+        'Solo en colones: lo que tenés en dólares no suma acá. Se ve en Proyección, eligiendo USD.',
       surplus: 'Queda libre',
       budget: (month: string) => `Presupuesto de ${month}`,
       budgetHint: 'Lo gastado contra lo asignado en cada cubeta.',

@@ -48,6 +48,7 @@ import { useGoals } from '@/features/goals/use-goals'
 import { useInvestments } from '@/features/investments/use-investments'
 import { copy } from '@/features/projection/overview-copy'
 import { copy as shell } from '@/features/shell/copy'
+import { hayOtraMoneda } from '@/features/projection/otra-moneda'
 import { useCashFlowProjection } from '@/features/projection/use-projection'
 import type { Money } from '@/features/projection/types'
 import {
@@ -231,6 +232,14 @@ const DashboardScreen = () => {
   // nunca, así que la tarjeta decía que debías lo mismo aunque llevaras años pagando.
   const debtTotal = sum(
     (debts.data?.data ?? []).map((debt) => debt.outstanding),
+    'CRC',
+  )
+  const proyeccionIncompleta = hayOtraMoneda(
+    [
+      ...(goals.data ?? []).map((goal) => goal.target),
+      ...(debts.data?.data ?? []).map((debt) => debt.outstanding),
+      ...(investments.data ?? []).map((investment) => investment.value),
+    ],
     'CRC',
   )
   const investedTotal = sum(
@@ -487,7 +496,9 @@ const DashboardScreen = () => {
           <Panel
             icon={ChartLine}
             title={copy.overview.chart.projection}
-            hint={copy.overview.chart.projectionHint}
+            hint={
+              proyeccionIncompleta ? copy.overview.chart.projectionOtherCurrency : copy.overview.chart.projectionHint
+            }
             to="/proyeccion"
             action={copy.overview.goTo.projection}
           >

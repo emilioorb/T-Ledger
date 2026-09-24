@@ -8,10 +8,7 @@ const navegar = vi.fn()
 
 vi.mock('@tanstack/react-router', async (original) => ({
   ...(await original<typeof import('@tanstack/react-router')>()),
-  createFileRoute: () => (opciones: { component: ComponentType }) => ({
-    ...opciones,
-    useSearch: () => ({ correo: 'eva@correo.cr' }),
-  }),
+  createFileRoute: () => (opciones: { component: ComponentType }) => opciones,
   useNavigate: () => navegar,
   Link: ({ children }: { children: React.ReactNode }) => <a href="/entrar">{children}</a>,
 }))
@@ -38,7 +35,7 @@ afterEach(() => {
 // La pantalla trae el marco de identidad entero; con la suite en paralelo no alcanzan los 5 s.
 describe('crear cuenta con el enlace de acceso', { timeout: 15_000 }, () => {
   it('manda el token del fragmento al registrarse y lo borra de la URL', async () => {
-    window.history.replaceState(null, '', `/crear-cuenta?correo=eva%40correo.cr#token=${TOKEN}`)
+    window.history.replaceState(null, '', `/crear-cuenta#token=${TOKEN}&correo=eva%40correo.cr`)
     const fetch = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(json({ token: 'sesion', user: { id: 'usr-1', email: 'eva@correo.cr', name: 'Eva' } }))
@@ -53,5 +50,31 @@ describe('crear cuenta con el enlace de acceso', { timeout: 15_000 }, () => {
     await waitFor(() => expect(navegar).toHaveBeenCalledWith({ to: '/tablero' }))
     const registro = fetch.mock.calls.find(([url]) => String(url).includes('sign-up'))
     expect(cabeceraDe(registro?.[1])).toBe(TOKEN)
+  })
+
+  it('con el enlace deja el correo puesto y dice que le dieron acceso', async () => {
+    window.history.replaceState(null, '', `/crear-cuenta#token=${TOKEN}&correo=eva%40correo.cr`)
+    const Pantalla = (Route as unknown as { component: ComponentType }).component
+    render(<Pantalla />)
+
+    expect(await screen.findByText(copy.crear.invited)).toBeInTheDocument()
+    expect(screen.getByLabelText(copy.entrar.email)).toHaveValue('eva@correo.cr')
+  })
+
+  it('sin enlace es la primera cuenta, y un 403 dice que el enlace no sirve', async () => {
+    window.history.replaceState(null, '', '/crear-cuenta')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ message: 'no' }), { status: 403, headers: { 'content-type': 'application/json' } }),
+    )
+    const Pantalla = (Route as unknown as { component: ComponentType }).component
+    render(<Pantalla />)
+
+    expect(await screen.findByText(copy.crear.alone)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText(copy.crear.name), { target: { value: 'Eva' } })
+    fireEvent.change(screen.getByLabelText(copy.entrar.email), { target: { value: 'eva@correo.cr' } })
+    fireEvent.change(screen.getByLabelText(copy.entrar.password), { target: { value: 'una-clave-larga' } })
+    fireEvent.click(screen.getByRole('button', { name: copy.crear.submit }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(copy.crear.notInvited)
   })
 })
