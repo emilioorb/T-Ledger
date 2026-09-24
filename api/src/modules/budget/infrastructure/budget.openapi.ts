@@ -3,6 +3,7 @@ import {
   budgetEvaluationResponseSchema,
   budgetModelResponseSchema,
   budgetModelSchema,
+  updateBudgetModelSchema,
   evaluationQuerySchema,
   monthlyIncomeResponseSchema,
   monthlyIncomeSchema,
@@ -55,7 +56,7 @@ export const budgetOpenApiPaths: ZodOpenApiPathsObject = {
     },
     patch: {
       summary: 'Modifica un modelo de presupuesto',
-      requestBody: json(budgetModelSchema),
+      requestBody: json(updateBudgetModelSchema),
       responses: { 200: { description: 'Modelo modificado', ...json(budgetModelResponseSchema) } },
     },
   },

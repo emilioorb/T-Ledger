@@ -194,3 +194,44 @@ describe('presupuesto contra la contabilidad', () => {
     expect(response.body.buckets[0].consumed.minorUnits).toBe('25000000')
   })
 })
+
+// Los modelos llevan versión (ADR-006).
+describe('editar un modelo con versión', () => {
+  const patch = (path: string, body: object) => request(app.getHttpServer()).patch(`${BASE}${path}`).send(body)
+
+  it('con una versión vieja responde 409; con la que trae la respuesta, guarda', async () => {
+    const { body: creado } = await post('/budget-models', modelo5030).expect(201)
+    const { body: editado } = await patch(`/budget-models/${creado.id}`, { ...modelo5030, name: 'Uno', version: creado.version }).expect(200)
+
+    await patch(`/budget-models/${creado.id}`, { ...modelo5030, name: 'Pisado', version: creado.version }).expect(409)
+    await patch(`/budget-models/${creado.id}`, { ...modelo5030, name: 'Dos', version: editado.version }).expect(200)
+  })
+
+  it('activar otro le sube la versión al que apaga: quien lo editaba no lo vuelve a prender sin enterarse', async () => {
+    const { body: primero } = await post('/budget-models', modelo5030).expect(201)
+    await post('/budget-models', { ...modelo5030, name: 'Otro' }).expect(201)
+
+    await patch(`/budget-models/${primero.id}`, { ...modelo5030, version: primero.version }).expect(409)
+  })
+
+  it('editar no borra y recrea las cubetas que siguen: se diferencian por su clave', async () => {
+    const { body: creado } = await post('/budget-models', modelo5030).expect(201)
+    const antes = await prisma.budgetBucket.findMany({ where: { modelId: creado.id }, orderBy: { bucketKey: 'asc' } })
+
+    const sinDeseos = {
+      ...modelo5030,
+      buckets: [
+        { ...modelo5030.buckets[0]!, percentage: '80' },
+        { ...modelo5030.buckets[2]! },
+      ],
+    }
+    await patch(`/budget-models/${creado.id}`, { ...sinDeseos, version: creado.version }).expect(200)
+
+    const despues = await prisma.budgetBucket.findMany({ where: { modelId: creado.id }, orderBy: { bucketKey: 'asc' } })
+    expect(despues.map((cubeta) => cubeta.bucketKey)).toEqual(['ahorro', 'necesidades'])
+    expect(despues.map((cubeta) => cubeta.id)).toEqual(
+      antes.filter((cubeta) => cubeta.bucketKey !== 'deseos').map((cubeta) => cubeta.id),
+    )
+    expect(despues.find((cubeta) => cubeta.bucketKey === 'necesidades')?.percentage.toString()).toBe('80')
+  })
+})

@@ -33,6 +33,7 @@ export const toModelResponse = (
     id: model.id,
     name: model.name,
     active,
+    version: model.version,
     buckets: model.buckets.map((bucket) => ({
       id: bucket.id,
       name: bucket.name,

@@ -11,6 +11,8 @@ export interface BudgetModelProps {
   readonly id: string
   readonly name: string
   readonly buckets: readonly BudgetBucket[]
+  // Opcional al crear: nace en 0.
+  readonly version?: number
 }
 
 export class PercentageBudgetModel implements BudgetModel {
@@ -55,6 +57,13 @@ export class PercentageBudgetModel implements BudgetModel {
   }
   get buckets(): readonly BudgetBucket[] {
     return this.props.buckets
+  }
+  get version(): number {
+    return this.props.version ?? 0
+  }
+
+  guardado(): PercentageBudgetModel {
+    return new PercentageBudgetModel({ ...this.props, version: this.version + 1 })
   }
 
   evaluate(income: Money, spending: CategorizedSpending): BudgetEvaluation {

@@ -2,7 +2,12 @@ import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { ManageBudgetModelsUseCase } from '../application/manage-budget-models.use-case.js'
 import { toModelResponse } from './budget.presenters.js'
-import { budgetModelSchema, type BudgetModelInput } from './budget.schemas.js'
+import {
+  budgetModelSchema,
+  updateBudgetModelSchema,
+  type BudgetModelInput,
+  type UpdateBudgetModelInput,
+} from './budget.schemas.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
 type ModelResponse = ReturnType<typeof toModelResponse>
@@ -41,7 +46,7 @@ export class BudgetModelsController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(budgetModelSchema)) input: BudgetModelInput,
+    @Body(new ZodValidationPipe(updateBudgetModelSchema)) input: UpdateBudgetModelInput,
   ): Promise<ModelResponse> {
     const model = await this.models.update(id, input)
     return toModelResponse(model, input.active, await this.models.mappingFor(id))

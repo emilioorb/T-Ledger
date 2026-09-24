@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { version } from '../../../shared/http/version.schema.js'
 import { periodParam } from '../../../shared/http/date.schema.js'
 import { nameText } from '../../../shared/http/text.schema.js'
 import { CURRENCIES } from '../../../shared/kernel/currency.js'
@@ -34,6 +35,11 @@ export const budgetModelSchema = z
   })
   .meta({ id: 'BudgetModelInput', title: 'BudgetModelInput' })
 
+// Editar manda la versión que leyó, opcional mientras haya clientes que no la mandan.
+export const updateBudgetModelSchema = budgetModelSchema
+  .extend({ version: version.optional() })
+  .meta({ id: 'UpdateBudgetModelInput', title: 'UpdateBudgetModelInput' })
+
 export const evaluationQuerySchema = z
   .object({ month: periodParam, currency: z.enum(CURRENCIES) })
   .meta({ id: 'BudgetEvaluationQuery', title: 'BudgetEvaluationQuery' })
@@ -47,6 +53,8 @@ export const budgetModelResponseSchema = z
     id: z.string(),
     name: z.string(),
     active: z.boolean(),
+    // La que hay que mandar al editar: si no coincide con la de la base, 409.
+    version: z.number().int(),
     buckets: z.array(
       z.object({
         id: z.string(),
@@ -87,5 +95,6 @@ export const monthlyIncomeResponseSchema = z
   .meta({ id: 'MonthlyIncome', title: 'MonthlyIncome' })
 
 export type BudgetModelInput = z.infer<typeof budgetModelSchema>
+export type UpdateBudgetModelInput = z.infer<typeof updateBudgetModelSchema>
 export type EvaluationQuery = z.infer<typeof evaluationQuerySchema>
 export type MonthlyIncomeInput = z.infer<typeof monthlyIncomeSchema>

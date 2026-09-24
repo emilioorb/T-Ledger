@@ -109,7 +109,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 
 ## Fase 6: presupuesto y catálogos
 
-- [ ] **16. Modelos de presupuesto.** Versión; activar uno sube la versión de los que apaga; cubetas diferenciadas.
+- [x] **16. Modelos de presupuesto.** Versión; activar uno sube la versión de los que apaga; cubetas diferenciadas.
   - Archivos: `prisma-budget-model.repository.ts`, `manage-budget-models.use-case.ts`, `budget.schemas.ts`,
     `budget.controller.spec.ts`. (M)
 - [ ] **17. Ingreso mensual con caso de uso propio** (hoy lo escribe el controller directo), con versión y rastro.

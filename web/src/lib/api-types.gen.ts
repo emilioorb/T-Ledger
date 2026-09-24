@@ -1776,7 +1776,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["BudgetModelInput"];
+                    "application/json": components["schemas"]["UpdateBudgetModelInput"];
                 };
             };
             responses: {
@@ -3443,6 +3443,14 @@ export interface components {
             /** @default null */
             colorIndex: number | null;
         };
+        /** UpdateBudgetModelInput */
+        UpdateBudgetModelInput: {
+            name: string;
+            /** @default false */
+            active: boolean;
+            buckets: components["schemas"]["BudgetBucketInput"][];
+            version?: number;
+        };
         /** CreateGoalInput */
         CreateGoalInput: {
             name: string;
@@ -3884,6 +3892,7 @@ export interface components {
             id: string;
             name: string;
             active: boolean;
+            version: number;
             buckets: {
                 id: string;
                 name: string;
