@@ -39,6 +39,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--success-text": "var(--positive)",
           "--success-border": "var(--border-subtle)",
           "--border-radius": "var(--radius)",
+          // Un diálogo modal apaga los clics de todo lo que queda afuera; los avisos tienen que
+          // seguir tocándose encima de él («Cargar lo último» se usa con el formulario abierto).
+          pointerEvents: "auto",
         } as React.CSSProperties
       }
       toastOptions={{

@@ -42,10 +42,17 @@ function DialogOverlay({
 // `max-h` + `overflow-y-auto`: un formulario largo a 360 px medía más que la pantalla y se
 // partía arriba y abajo sin ningún ancestro desplazable, con el botón de guardar fuera de
 // alcance.
+// Un toque en un aviso no cierra el diálogo. «Cargar lo último» vive en un toast y se toca con el
+// formulario abierto: si Radix lo tomara como un clic afuera, cerraría justo el formulario que el
+// aviso viene a rearmar.
+const esUnAviso = (objetivo: EventTarget | null): boolean =>
+  objetivo instanceof Element && objetivo.closest('[data-sonner-toaster]') !== null
+
 function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
@@ -59,6 +66,10 @@ function DialogContent({
           "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100svh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-5 overflow-y-auto rounded-xl bg-popover p-5 text-popover-foreground ring-1 ring-foreground/10 duration-(--duration-overlay) ease-(--ease-out-quart) outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
+        onInteractOutside={(evento) => {
+          if (esUnAviso(evento.target)) evento.preventDefault()
+          onInteractOutside?.(evento)
+        }}
         {...props}
       >
         {children}
