@@ -22,6 +22,9 @@ export const NotasDeLaDeuda = ({ debtId, notes, hasDocument, version }: Props) =
   const [abierto, setAbierto] = useState(false)
   const [editando, setEditando] = useState(false)
   const [borrador, setBorrador] = useState(notes ?? '')
+  // La versión que se vio al empezar a editar: una recarga en segundo plano (al volver a la
+  // pestaña) trae la de otra persona, y guardar con esa la pisaría sin 409.
+  const [versionAlEditar, setVersionAlEditar] = useState(version)
   const archivo = useRef<HTMLInputElement>(null)
 
   const guardar = useGuardarNotas(debtId)
@@ -38,7 +41,7 @@ export const NotasDeLaDeuda = ({ debtId, notes, hasDocument, version }: Props) =
 
   const confirmar = () => {
     const limpio = borrador.trim()
-    guardar.mutate({ notes: limpio === '' ? null : limpio, version }, { onSuccess: () => setEditando(false) })
+    guardar.mutate({ notes: limpio === '' ? null : limpio, version: versionAlEditar }, { onSuccess: () => setEditando(false) })
   }
 
   return (
@@ -102,6 +105,7 @@ export const NotasDeLaDeuda = ({ debtId, notes, hasDocument, version }: Props) =
                   size="sm"
                   onClick={() => {
                     setBorrador(notes ?? '')
+                    setVersionAlEditar(version)
                     setEditando(true)
                   }}
                 >

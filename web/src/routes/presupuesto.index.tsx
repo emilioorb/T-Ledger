@@ -96,6 +96,9 @@ const BudgetScreen = () => {
   const [at, setAt] = useState(monthStart(today()))
   const [incomeDraft, setIncomeDraft] = useState('')
   const [editingIncome, setEditingIncome] = useState(false)
+  // La versión que se vio al abrir el formulario (`null`: el mes sin declarar). Una recarga en
+  // segundo plano traería la de otra persona, y guardar con esa la pisaría sin 409.
+  const [versionVista, setVersionVista] = useState<number | null>(null)
 
   const month = monthOf(at)
   const evaluation = useBudgetEvaluation(month, currency)
@@ -109,7 +112,7 @@ const BudgetScreen = () => {
   const submitIncome = (event: FormEvent) => {
     event.preventDefault()
     setIncome.mutate(
-      { month, amount: parseMoneyInput(incomeDraft, currency), version: income.data?.version ?? null },
+      { month, amount: parseMoneyInput(incomeDraft, currency), version: versionVista },
       { onSuccess: () => setEditingIncome(false) },
     )
   }
@@ -235,7 +238,13 @@ const BudgetScreen = () => {
               title={copy.budget.noIncome.title}
               description={copy.budget.noIncome.description}
               action={
-                <Button size="sm" onClick={() => setEditingIncome(true)}>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setVersionVista(income.data?.version ?? null)
+                    setEditingIncome(true)
+                  }}
+                >
                   {copy.budget.noIncome.action}
                 </Button>
               }
@@ -259,6 +268,7 @@ const BudgetScreen = () => {
               className="text-muted-foreground hover:text-foreground"
               onClick={() => {
                 setIncomeDraft(income.data ? income.data.amount.minorUnits.slice(0, -2) : '')
+                setVersionVista(income.data?.version ?? null)
                 setEditingIncome(true)
               }}
             >

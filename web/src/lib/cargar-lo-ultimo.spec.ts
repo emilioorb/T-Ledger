@@ -46,5 +46,13 @@ describe('lo último de una entidad en la caché', () => {
       undefined,
     ])
   })
+
+  it('no confunde la entidad con otra forma que comparte el campo: un nodo del árbol no es la cuenta', () => {
+    const cache = new QueryClient()
+    cache.setQueryData(['cuentas', 'arbol', 'CRC'], [{ code: '1', name: 'Activo', level: 0, children: [] }])
+    cache.setQueryData(['cuentas', 'lista'], { data: [{ code: '1', name: 'Activo', version: 7 }] })
+
+    expect(loUltimoDe<{ code: string; version: number }>(cache, ['cuentas'], '1', 'code')?.version).toBe(7)
+  })
 })
 

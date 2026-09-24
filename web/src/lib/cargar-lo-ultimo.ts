@@ -45,7 +45,10 @@ export const loUltimoDe = <T extends object>(
   campo: keyof T & string = 'id' as keyof T & string,
 ): T | undefined => {
   for (const [, dato] of cache.getQueriesData({ queryKey })) {
-    const encontrado = dentroDe(dato, campo).find((entidad) => entidad[campo] === valor)
+    // Con `version`: bajo la misma clave conviven otras formas con el mismo campo (el árbol de
+    // cuentas tiene `code` y no `version`), y rearmar un formulario con una de esas mandaría la
+    // edición sin versión, que es pisar a ciegas.
+    const encontrado = dentroDe(dato, campo).find((entidad) => entidad[campo] === valor && 'version' in entidad)
     if (encontrado) return encontrado as T
   }
   return undefined
