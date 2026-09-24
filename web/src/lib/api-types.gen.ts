@@ -1053,6 +1053,8 @@ export interface paths {
                     "multipart/form-data": {
                         /** Format: binary */
                         archivo: string;
+                        /** @description La versión que se leyó; con otra, 409 */
+                        version?: string;
                     };
                 };
             };
@@ -1071,7 +1073,9 @@ export interface paths {
         /** Quita el comprobante de un movimiento */
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    version?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;

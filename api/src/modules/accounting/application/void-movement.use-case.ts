@@ -40,12 +40,12 @@ export class VoidMovementUseCase {
     const voided = movement.void_()
     // Primero el aviso: si quien escucha frena la anulación, no se llegó a escribir nada.
     await this.eventos.emitAsync(MOVIMIENTO_ANULANDOSE, { movementId: id } satisfies MovimientoAnulandose)
-    await this.movements.update(voided)
+    const anulado = await this.movements.update(voided)
     // Sin `antes`/`despues`: anular no cambia campos, cambia el estado, y eso ya lo dice la
     // acción. Un diff acá mostraría «status: ACTIVE → VOIDED» y nada más.
     await this.rastro.registrar({ entidad: 'movimiento', entidadId: id, accion: 'anular' })
     await this.poster.reverse(id)
 
-    return { movement: voided, journalEntryId: null }
+    return { movement: anulado, journalEntryId: null }
   }
 }

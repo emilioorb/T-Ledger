@@ -18,6 +18,7 @@ import {
   updateCategorySchema,
   updateMovementSchema,
   voidMovementSchema,
+  versionEnTextoSchema,
 } from './accounting.schemas.js'
 import {
   accountResponseSchema,
@@ -136,7 +137,10 @@ export const accountingOpenApiPaths: ZodOpenApiPathsObject = {
           'multipart/form-data': {
             schema: {
               type: 'object',
-              properties: { archivo: { type: 'string', format: 'binary' } },
+              properties: {
+                archivo: { type: 'string', format: 'binary' },
+                version: { type: 'string', pattern: '^\\d+$', description: 'La versión que se leyó; con otra, 409' },
+              },
               required: ['archivo'],
             },
           },
@@ -150,6 +154,7 @@ export const accountingOpenApiPaths: ZodOpenApiPathsObject = {
     },
     delete: {
       summary: 'Quita el comprobante de un movimiento',
+      requestParams: { query: versionEnTextoSchema },
       responses: { 200: { description: 'Movimiento sin comprobante', ...json(movementResponseSchema) } },
     },
   },

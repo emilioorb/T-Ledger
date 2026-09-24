@@ -112,6 +112,13 @@ export const updateMovementSchema = z
   .partial()
   .meta({ id: 'UpdateMovementInput', title: 'UpdateMovementInput' })
 
+// La misma versión cuando no hay cuerpo JSON: un campo del formulario al subir el comprobante, o
+// `?version=` al quitarlo. Llega como texto.
+export const versionEnTextoSchema = z
+  .object({ version: z.string().regex(/^\d+$/).transform(Number) })
+  .partial()
+  .meta({ id: 'VersionEnTexto', title: 'VersionEnTexto' })
+
 // Sin cuerpo también vale: es lo que manda la app instalada que todavía no se actualizó.
 export const voidMovementSchema = z
   .object({ version })
@@ -195,6 +202,7 @@ export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>
 export type CreateMovementInput = z.infer<typeof createMovementSchema>
 export type UpdateMovementInput = z.infer<typeof updateMovementSchema>
 export type VoidMovementInput = z.infer<typeof voidMovementSchema>
+export type VersionEnTexto = z.infer<typeof versionEnTextoSchema>
 export type ListMovementsQuery = z.infer<typeof listMovementsQuerySchema>
 export type MovementTotalsQuery = z.infer<typeof movementTotalsQuerySchema>
 export type CreateJournalEntryInput = z.infer<typeof createJournalEntrySchema>

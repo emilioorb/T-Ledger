@@ -55,7 +55,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 - [x] **6b. Crear un movimiento y un asiento manual** leen el mes abierto adentro, después del candado.
   - Acepta: cerrar un mes mientras se crea un movimiento o un asiento en él: o entra antes o recibe «mes cerrado».
   - Archivos: `create-movement.use-case.ts`, `create-journal-entry.use-case.ts`, `prisma-journal.repository.ts`, spec. (S)
-- [ ] **7. Comprobante de un movimiento.** Adjuntar o quitar va adentro y con versión; un movimiento anulado no revive.
+- [x] **7. Comprobante de un movimiento.** Adjuntar o quitar va adentro y con versión; un movimiento anulado no revive.
   - Acepta: anular y adjuntar a la vez no vuelve el movimiento a activo; subir a R2 queda fuera de la transacción.
   - Archivos: `manage-comprobante.use-case.ts`, `movements.controller.ts`, spec. (S)
 

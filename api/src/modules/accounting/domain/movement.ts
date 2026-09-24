@@ -76,6 +76,11 @@ export class Movement {
     return new Movement({ ...this.props, status: 'VOIDED' })
   }
 
+  // Lo que queda después de guardarse: la base sube la versión en cada escritura.
+  guardado(): Movement {
+    return new Movement({ ...this.props, version: this.props.version + 1 })
+  }
+
   toProps(): MovementProps {
     return { ...this.props }
   }

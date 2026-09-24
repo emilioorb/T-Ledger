@@ -115,12 +115,13 @@ export class PrismaMovementRepository implements MovementRepository {
     })
   }
 
-  async update(movement: Movement): Promise<void> {
+  async update(movement: Movement): Promise<Movement> {
     const { count } = await this.prisma.client.movement.updateMany({
       where: { id: movement.id, version: movement.version },
       data: { ...datosDe(movement), ...SUBIR_VERSION },
     })
     await verificarEscritura(count, async () => (await this.prisma.client.movement.count({ where: { id: movement.id } })) > 0)
+    return movement.guardado()
   }
 
   // Un movimiento anulado no cuenta: su falta de asiento es el estado esperado.

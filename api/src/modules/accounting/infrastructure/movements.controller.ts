@@ -36,11 +36,13 @@ import {
   movementTotalsQuerySchema,
   updateMovementSchema,
   voidMovementSchema,
+  versionEnTextoSchema,
   type CreateMovementInput,
   type ListMovementsQuery,
   type MovementTotalsQuery,
   type UpdateMovementInput,
   type VoidMovementInput,
+  type VersionEnTexto,
 } from './accounting.schemas.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
@@ -155,13 +157,14 @@ export class MovementsController {
   async subirComprobante(
     @Param('id') id: string,
     @UploadedFile() archivo: ArchivoSubido | undefined,
+    @Body(new ZodValidationPipe(versionEnTextoSchema)) formulario: VersionEnTexto,
   ): Promise<MovementResponse> {
     if (!archivo) throw new BadRequestException('No llegó ningún archivo.')
 
     const rechazo = revisar(archivo)
     if (rechazo) throw new BadRequestException(MOTIVOS[rechazo])
 
-    await this.comprobante.guardar(id, { contenido: archivo.buffer, tipo: archivo.mimetype })
+    await this.comprobante.guardar(id, { contenido: archivo.buffer, tipo: archivo.mimetype }, formulario.version)
 
     // Se relee en vez de armar la respuesta a mano: el movimiento sigue teniendo su asiento,
     // y devolver `journalEntryId: null` lo habría mostrado como «sin contabilizar» en la
@@ -179,8 +182,11 @@ export class MovementsController {
 
   @Permiso('movimiento', 'update')
   @Delete(':id/receipt')
-  async quitarComprobante(@Param('id') id: string): Promise<MovementResponse> {
-    await this.comprobante.quitar(id)
+  async quitarComprobante(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(versionEnTextoSchema)) query: VersionEnTexto,
+  ): Promise<MovementResponse> {
+    await this.comprobante.quitar(id, query.version)
     return present(await this.listMovements.byId(id))
   }
 

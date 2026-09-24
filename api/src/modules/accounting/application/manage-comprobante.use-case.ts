@@ -5,6 +5,7 @@ import { borrarDelLibro, claveDeComprobante, esDelLibro } from '../../../shared/
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { libroActual } from '../../../shared/libro/libro-context.js'
+import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import { MOVEMENT_REPOSITORY, type MovementRepository } from '../domain/movement-repository.port.js'
@@ -13,6 +14,12 @@ import { Movement } from '../domain/movement.js'
 export interface ComprobanteNuevo {
   contenido: Buffer
   tipo: string
+}
+
+interface CambioDeComprobante {
+  movement: Movement
+  // El comprobante que dejó de usarse, para borrarlo cuando la fila ya se guardó.
+  anterior: string | null
 }
 
 // El comprobante de un movimiento: subirlo, mirarlo y quitarlo.
@@ -35,37 +42,29 @@ export class ManageComprobanteUseCase {
     return movement
   }
 
-  async guardar(id: string, archivo: ComprobanteNuevo): Promise<Movement> {
+  // El archivo se sube afuera de la transacción: subir tarda lo que tarde la red, y el candado del
+  // libro no se retiene esperándola. Adentro, la fila se relee: armada con lo leído antes de subir,
+  // una anulación que entrara en el medio volvía el movimiento a activo.
+  async guardar(id: string, archivo: ComprobanteNuevo, version?: number): Promise<Movement> {
     const { bookId } = libroActual('guardar un comprobante')
-    const actual = await this.buscar(id)
-    const props = actual.toProps()
+    await this.buscar(id)
 
     const clave = claveDeComprobante(bookId, id, archivo.tipo, randomUUID().slice(0, 8))
-
     // El archivo primero y la fila después: al revés, un fallo al subir dejaría un movimiento
     // apuntando a un comprobante que no existe, y la pantalla mostraría un enlace roto sin
     // explicar por qué.
     await this.archivos.guardar({ clave, contenido: archivo.contenido, tipo: archivo.tipo })
 
-    const movement = Movement.create({ ...props, receiptKey: clave })
-    if (isErr(movement)) throw new SemanticValidationError(movement.error.message)
-
-    await this.transaction.withTransaction(async () => {
-      await this.movements.update(movement.value)
-      await this.rastro.registrar({
-        entidad: 'movimiento',
-        entidadId: id,
-        accion: 'editar',
-        antes: { comprobante: props.receiptKey },
-        despues: { comprobante: clave },
+    const cambio = await this.transaction
+      .withTransaction(() => this.apuntar(id, clave, version))
+      .catch(async (error: unknown) => {
+        // Si la fila no se guardó, el archivo nuevo no lo va a usar nadie.
+        await borrarDelLibro(this.archivos, clave, bookId).catch(() => undefined)
+        throw error
       })
-    })
 
-    // El anterior se borra al final y sin cortar si falla: un archivo huérfano en el bucket
-    // cuesta unos bytes; perder el nuevo porque no se pudo borrar el viejo cuesta la factura.
-    if (props.receiptKey) await borrarDelLibro(this.archivos, props.receiptKey, bookId).catch(() => undefined)
-
-    return movement.value
+    await this.borrarAnterior(cambio.anterior, bookId)
+    return cambio.movement
   }
 
   async enlace(id: string): Promise<string> {
@@ -82,29 +81,36 @@ export class ManageComprobanteUseCase {
     return this.archivos.enlaceDeLectura(clave)
   }
 
-  async quitar(id: string): Promise<Movement> {
-    const actual = await this.buscar(id)
-    const props = actual.toProps()
-    if (!props.receiptKey) return actual
+  async quitar(id: string, version?: number): Promise<Movement> {
+    const { bookId } = libroActual('quitar un comprobante')
+    const cambio = await this.transaction.withTransaction(() => this.apuntar(id, null, version))
+    await this.borrarAnterior(cambio.anterior, bookId)
+    return cambio.movement
+  }
 
-    const movement = Movement.create({ ...props, receiptKey: null })
+  private async apuntar(id: string, clave: string | null, version: number | undefined): Promise<CambioDeComprobante> {
+    const actual = await this.buscar(id)
+    const anterior = actual.receiptKey
+    if (anterior === clave) return { movement: actual, anterior: null }
+    exigirVersion(version, actual.version, 'cambiar el comprobante de un movimiento')
+
+    const movement = Movement.create({ ...actual.toProps(), receiptKey: clave })
     if (isErr(movement)) throw new SemanticValidationError(movement.error.message)
 
-    await this.transaction.withTransaction(async () => {
-      await this.movements.update(movement.value)
-      await this.rastro.registrar({
-        entidad: 'movimiento',
-        entidadId: id,
-        accion: 'editar',
-        antes: { comprobante: props.receiptKey },
-        despues: { comprobante: null },
-      })
+    const guardado = await this.movements.update(movement.value)
+    await this.rastro.registrar({
+      entidad: 'movimiento',
+      entidadId: id,
+      accion: 'editar',
+      antes: { comprobante: anterior },
+      despues: { comprobante: clave },
     })
+    return { movement: guardado, anterior }
+  }
 
-    await borrarDelLibro(this.archivos, props.receiptKey, libroActual('quitar un comprobante').bookId).catch(
-      () => undefined,
-    )
-
-    return movement.value
+  // Al final y sin cortar si falla: un archivo huérfano en el bucket cuesta unos bytes; perder el
+  // cambio porque no se pudo borrar el viejo cuesta la factura.
+  private async borrarAnterior(clave: string | null, bookId: string): Promise<void> {
+    if (clave) await borrarDelLibro(this.archivos, clave, bookId).catch(() => undefined)
   }
 }

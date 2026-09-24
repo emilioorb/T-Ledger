@@ -53,8 +53,9 @@ export interface MovementRepository {
 
   // Solo si la fila sigue en la versión del movimiento. Si no, `EditadoPorOtroError`, o
   // `NotFoundError` si ya no existe. Separado de `add` a propósito: un upsert recrearía en
-  // silencio lo que no encontró.
-  update(movement: Movement): Promise<void>
+  // silencio lo que no encontró. Devuelve el movimiento en su versión nueva, que es la que
+  // tiene que mandar la próxima edición.
+  update(movement: Movement): Promise<Movement>
 
   // Un movimiento activo sin asiento es lo que impide cerrar el mes. Se cuenta en la
   // base: la pantalla de cierre solo necesita el número, no los movimientos.

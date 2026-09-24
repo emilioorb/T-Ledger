@@ -67,16 +67,17 @@ export class UpdateMovementUseCase {
     const category = await this.categories.find(movement.value.categoryId)
 
     await this.poster.reverse(id)
-    await this.movements.update(movement.value)
+    const guardado = await this.movements.update(movement.value)
     await this.rastro.registrar({
       entidad: 'movimiento',
       entidadId: id,
       accion: 'editar',
       antes: props,
+      // Lo editado y no lo guardado: la versión nueva no es un cambio que el rastro deba mostrar.
       despues: movement.value.toProps(),
     })
-    const journalEntryId = await this.poster.post(movement.value, category)
+    const journalEntryId = await this.poster.post(guardado, category)
 
-    return { movement: movement.value, journalEntryId }
+    return { movement: guardado, journalEntryId }
   }
 }

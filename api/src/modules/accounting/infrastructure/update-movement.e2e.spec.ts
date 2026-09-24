@@ -249,6 +249,16 @@ describe('dos escritores sobre el mismo movimiento', () => {
     expect((await mayorDe('6100')).closingBalance.minorUnits).toBe('0')
   })
 
+  it('la respuesta trae la versión nueva: con ella se puede volver a editar', async () => {
+    const movimiento = await crear()
+    const primera = await patch(`/movements/${movimiento.id}`, { counterparty: 'Primera', version: await version(movimiento.id) })
+    const segunda = await patch(`/movements/${movimiento.id}`, { counterparty: 'Segunda', version: primera.body.version })
+    const anulado = await post(`/movements/${movimiento.id}/void`, { version: segunda.body.version })
+
+    expect([primera.status, segunda.status, anulado.status]).toEqual([200, 200, 200])
+    expect(anulado.body.version).toBe(await version(movimiento.id))
+  })
+
   it('una edición con una versión vieja no guarda', async () => {
     const movimiento = await crear()
     const leida = await version(movimiento.id)
