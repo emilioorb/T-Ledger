@@ -14,6 +14,7 @@ import type { CurrencyCode, Money, ReportNode } from '@/features/accounting/type
 import { useFinancialPosition } from '@/features/accounting/use-accounting'
 import { today } from '@/lib/dates'
 import { TableSkeleton } from '@/components/table-skeleton'
+import { Ecuacion } from '@/features/accounting/ecuacion'
 
 const PERIOD_RESULT_CODE = 'RESULTADO-DEL-PERIODO'
 
@@ -89,17 +90,15 @@ const FinancialPositionScreen = () => {
                 : copy.financialPosition.unbalanced
             }
           >
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <Amount
-                money={position.data.assets}
-                emphasis="strong"
-                className="text-3xl tracking-tight"
-              />
-              <span className="text-2xl text-muted-foreground">=</span>
-              <Amount money={position.data.liabilities} className="text-2xl" />
-              <span className="text-2xl text-muted-foreground">+</span>
-              <Amount money={position.data.equity} className="text-2xl" />
-            </div>
+            <Ecuacion
+              resultado={
+                <Amount money={position.data.assets} emphasis="strong" className="text-3xl tracking-tight" />
+              }
+              terminos={[
+                { operador: '=', valor: <Amount money={position.data.liabilities} className="text-2xl" /> },
+                { operador: '+', valor: <Amount money={position.data.equity} className="text-2xl" /> },
+              ]}
+            />
           </StatCard>
 
           {position.data.sections.assets.length === 0 &&

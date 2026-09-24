@@ -19,8 +19,21 @@ sin leerla entera. Lo que está antes de la primera entrega, como este texto, no
   para entrar con tu cuenta y unirte. Si la persona todavía no tiene cuenta, primero le da
   acceso quien administra T-Ledger.
 
+### Mejorado
+
+- **En el teléfono se lee mejor:**
+  - El saludo del tablero va entero, debajo de la fecha.
+  - La proyección muestra cada mes de arriba abajo: lo que entra, lo comprometido y lo que
+    queda, alineados.
+  - Las ecuaciones de Patrimonio y Situación ponen cada término en su renglón, sin dejar un
+    «=» o un «+» colgando.
+  - Las acciones de cada meta pasan a otro renglón en vez de salirse de la tarjeta.
+  - El campo de fecha ya no se sale de los formularios en el iPhone.
+
 ### Corregido
 
+- **Una meta, deuda o inversión en dólares tiraba la proyección y el tablero.** Ahora cada
+  moneda se proyecta por separado, como en el resto del tablero.
 - **Los enlaces de invitación ahora son de quien los recibe.** Llevan una clave que sirve una
   sola vez, y hace falta para crear la cuenta y para unirse a un libro: saber el correo
   invitado ya no alcanza.

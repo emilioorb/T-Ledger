@@ -53,7 +53,9 @@ const MonthRow = ({ flow, breakdown }: RowProps) => {
     >
       <span className="num text-sm">{monthLabel(flow)}</span>
 
-      <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      {/* En el teléfono las notas van al final: primero las cifras, que es lo que se viene a
+          leer, y después por qué el mes se ve así. */}
+      <span className="order-last flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-muted-foreground @2xl:order-none">
         {negative ? (
           <Hint text={copy.projection.negativeHint}>
             <span className="text-negative">{copy.projection.negative}</span>
@@ -94,20 +96,22 @@ const MonthRow = ({ flow, breakdown }: RowProps) => {
         ))}
       </span>
 
-      <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 @2xl:flex-nowrap @2xl:justify-end">
-        <span className="flex items-baseline gap-2 @2xl:contents">
+      {/* Angosto, un renglón por cifra con el monto a la derecha: en fila, «Entra» y
+          «Comprometido» se separaban cada uno a su manera y no se podían comparar. */}
+      <span className="grid gap-y-0.5 @2xl:flex @2xl:flex-nowrap @2xl:justify-end @2xl:gap-x-4">
+        <span className="flex items-baseline justify-between gap-2 @2xl:contents">
           <span className="text-xs text-muted-foreground @2xl:hidden">
             {copy.projection.columns.income}
           </span>
           <Amount money={flow.income} className="text-xs text-muted-foreground @2xl:w-28" />
         </span>
-        <span className="flex items-baseline gap-2 @2xl:contents">
+        <span className="flex items-baseline justify-between gap-2 @2xl:contents">
           <span className="text-xs text-muted-foreground @2xl:hidden">
             {copy.projection.columns.committed}
           </span>
           <Amount money={flow.committed} className="text-xs text-muted-foreground @2xl:w-28" />
         </span>
-        <span className="flex items-baseline gap-2 @2xl:contents">
+        <span className="flex items-baseline justify-between gap-2 @2xl:contents">
           <span className="text-xs text-muted-foreground @2xl:hidden">
             {copy.projection.columns.surplus}
           </span>
@@ -196,11 +200,11 @@ const ProjectionScreen = () => {
             hint={firstNegative ? copy.projection.negativeHint : undefined}
           >
             {firstNegative ? (
-              <p className="text-3xl font-medium tracking-tight text-negative">
+              <p className="text-2xl font-medium tracking-tight text-balance text-negative @lg:text-3xl">
                 {copy.projection.firstNegative(monthLabel(firstNegative))}
               </p>
             ) : (
-              <p className="text-3xl tracking-tight">{copy.projection.allClear}</p>
+              <p className="text-2xl tracking-tight text-balance @lg:text-3xl">{copy.projection.allClear}</p>
             )}
           </StatCard>
 

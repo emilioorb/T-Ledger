@@ -280,7 +280,9 @@ const GoalBlock = ({ goal, onEdit, onDelete, onContribute, onToggle }: CardProps
         />
       </div>
 
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-3">
+      {/* Se parte en dos renglones cuando no entra: el aporte y cuatro acciones no caben en
+          un teléfono angosto, y se salían de la tarjeta. */}
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border pt-3">
         {!goal.active ? (
           <span className="text-xs text-muted-foreground">{copy.goals.pausedNote}</span>
         ) : goal.reached ? (
@@ -294,7 +296,7 @@ const GoalBlock = ({ goal, onEdit, onDelete, onContribute, onToggle }: CardProps
           </Hint>
         )}
 
-        <div className="-mr-2 flex shrink-0 gap-0.5">
+        <div className="-mr-2 ml-auto flex shrink-0 gap-0.5">
           {goal.active ? (
             <GoalAction onClick={onContribute}>{copy.goals.contribute}</GoalAction>
           ) : null}

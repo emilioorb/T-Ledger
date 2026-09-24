@@ -16,6 +16,7 @@ import { useNetWorth } from '@/features/accounting/use-accounting'
 import { ApiError } from '@/lib/api'
 import { today } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { Ecuacion } from '@/features/accounting/ecuacion'
 
 const CurrencyRow = ({ row }: { row: CurrencyBreakdown }) => (
   <li
@@ -108,25 +109,28 @@ const NetWorthScreen = () => {
             label={copy.netWorth.identity}
             hint={report.data.balances ? copy.netWorth.balanced : copy.netWorth.unbalanced}
           >
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <Amount
-                money={report.data.netWorth}
-                emphasis="strong"
-                className="text-3xl tracking-tight"
-              />
-              <span className="text-2xl text-muted-foreground">=</span>
-              <Amount money={report.data.equity} className="text-2xl" />
-              <span className="text-2xl text-muted-foreground">+</span>
-              <Hint text={copy.netWorth.exchangeHint}>
-                <Amount
-                  money={report.data.exchangeDifference}
-                  className={cn(
-                    'text-2xl',
-                    !isZeroMoney(report.data.exchangeDifference) && 'text-warning',
-                  )}
-                />
-              </Hint>
-            </div>
+            <Ecuacion
+              resultado={
+                <Amount money={report.data.netWorth} emphasis="strong" className="text-3xl tracking-tight" />
+              }
+              terminos={[
+                { operador: '=', valor: <Amount money={report.data.equity} className="text-2xl" /> },
+                {
+                  operador: '+',
+                  valor: (
+                    <Hint text={copy.netWorth.exchangeHint}>
+                      <Amount
+                        money={report.data.exchangeDifference}
+                        className={cn(
+                          'text-2xl',
+                          !isZeroMoney(report.data.exchangeDifference) && 'text-warning',
+                        )}
+                      />
+                    </Hint>
+                  ),
+                },
+              ]}
+            />
           </StatCard>
 
           {report.data.byCurrency.length === 0 ? (
