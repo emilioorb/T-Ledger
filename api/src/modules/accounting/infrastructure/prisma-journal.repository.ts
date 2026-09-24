@@ -44,33 +44,32 @@ export class PrismaJournalRepository implements JournalRepository {
     private readonly accounts: PrismaAccountRepository,
   ) {}
 
+  // Va dentro de la transacción de quien la llama, que es la que tiene el candado del libro.
   async save(entry: JournalEntry): Promise<void> {
-    await this.prisma.withTransaction(async () => {
-      await this.prisma.client.journalEntry.upsert({
-        where: { id: entry.id },
-        create: {
-          bookId: this.prisma.libro,
-          id: entry.id,
-          date: entry.date,
-          description: entry.description,
-          reference: entry.reference,
-          sourceMovementId: entry.sourceMovementId,
-          reversesEntryId: entry.reversesEntryId,
-        },
-        update: { description: entry.description, reference: entry.reference },
-      })
+    await this.prisma.client.journalEntry.upsert({
+      where: { id: entry.id },
+      create: {
+        bookId: this.prisma.libro,
+        id: entry.id,
+        date: entry.date,
+        description: entry.description,
+        reference: entry.reference,
+        sourceMovementId: entry.sourceMovementId,
+        reversesEntryId: entry.reversesEntryId,
+      },
+      update: { description: entry.description, reference: entry.reference },
+    })
 
-      await this.prisma.client.journalLine.deleteMany({ where: { entryId: entry.id } })
-      await this.prisma.client.journalLine.createMany({
-        data: entry.lines.map((line) => ({
-          bookId: this.prisma.libro,
-          entryId: entry.id,
-          accountCode: line.accountCode,
-          currency: line.amount.currency,
-          amountMinor: line.amount.minorUnits,
-          side: line.side,
-        })),
-      })
+    await this.prisma.client.journalLine.deleteMany({ where: { entryId: entry.id } })
+    await this.prisma.client.journalLine.createMany({
+      data: entry.lines.map((line) => ({
+        bookId: this.prisma.libro,
+        entryId: entry.id,
+        accountCode: line.accountCode,
+        currency: line.amount.currency,
+        amountMinor: line.amount.minorUnits,
+        side: line.side,
+      })),
     })
   }
 

@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import { SemanticValidationError } from '../../../shared/http/api-error.js'
 import { toMoney } from '../../../shared/http/money.schema.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { ACCOUNT_REPOSITORY, type AccountRepository } from '../domain/account-repository.port.js'
 import { JOURNAL_REPOSITORY, type JournalRepository } from '../domain/journal-repository.port.js'
 import { JournalEntry } from '../domain/journal-entry.js'
@@ -15,9 +16,15 @@ export class CreateJournalEntryUseCase {
     @Inject(JOURNAL_REPOSITORY) private readonly journal: JournalRepository,
     @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
     private readonly guard: PeriodGuard,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
-  async execute(input: CreateJournalEntryInput): Promise<JournalEntry> {
+  // Como el alta de un movimiento: el mes abierto y el plan se leen dentro del candado del libro.
+  execute(input: CreateJournalEntryInput): Promise<JournalEntry> {
+    return this.transaction.withTransaction(() => this.asentar(input))
+  }
+
+  private async asentar(input: CreateJournalEntryInput): Promise<JournalEntry> {
     const date = new Date(`${input.date}T00:00:00.000Z`)
     await this.guard.assertOpen(date)
 

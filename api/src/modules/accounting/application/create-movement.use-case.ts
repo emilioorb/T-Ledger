@@ -28,7 +28,13 @@ export class CreateMovementUseCase {
     @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
-  async execute(input: CreateMovementInput): Promise<PostedMovement> {
+  // El mes abierto se lee dentro del candado del libro: leído afuera, un cierre que entraba en el
+  // medio dejaba un asiento en un mes ya cerrado (ADR-006).
+  execute(input: CreateMovementInput): Promise<PostedMovement> {
+    return this.transaction.withTransaction(() => this.crear(input))
+  }
+
+  private async crear(input: CreateMovementInput): Promise<PostedMovement> {
     const date = new Date(`${input.date}T00:00:00.000Z`)
     await this.guard.assertOpen(date)
 
@@ -51,18 +57,16 @@ export class CreateMovementUseCase {
     // El movimiento y su asiento se guardan juntos o no se guarda ninguno: si el asiento
     // falla —cuenta de pago inexistente, por ejemplo— antes quedaba el movimiento sin
     // asentar, y eso bloquea el cierre del mes con un error que no explica nada.
-    const journalEntryId = await this.transaction.withTransaction(async () => {
-      await this.movements.add(movement.value)
-      // Dentro de la misma transacción que el cambio (ADR-004): no puede quedar un movimiento
-      // sin su rastro ni un rastro de algo que al final no se guardó.
-      await this.rastro.registrar({
-        entidad: 'movimiento',
-        entidadId: movement.value.id,
-        accion: 'crear',
-        despues: movement.value.toProps(),
-      })
-      return this.poster.post(movement.value, category)
+    await this.movements.add(movement.value)
+    // Dentro de la misma transacción que el cambio (ADR-004): no puede quedar un movimiento
+    // sin su rastro ni un rastro de algo que al final no se guardó.
+    await this.rastro.registrar({
+      entidad: 'movimiento',
+      entidadId: movement.value.id,
+      accion: 'crear',
+      despues: movement.value.toProps(),
     })
+    const journalEntryId = await this.poster.post(movement.value, category)
 
     return { movement: movement.value, journalEntryId }
   }

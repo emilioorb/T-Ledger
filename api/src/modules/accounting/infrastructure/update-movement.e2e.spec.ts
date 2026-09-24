@@ -44,6 +44,29 @@ const mayorDe = async (account: string) =>
     ).expect(200)
   ).body as { rows: unknown[]; closingBalance: { minorUnits: string } }
 
+// Determinista: el cierre de agosto toma el candado del libro primero, y el pedido llega mientras
+// lo tiene. Con la regla leída afuera, el pedido veía el mes abierto y asentaba en uno ya cerrado.
+const mientrasSeCierraAgosto = async (pedido: () => request.Test) => {
+  let soltar: () => void = () => {}
+  const retenido = new Promise<void>((listo) => (soltar = listo))
+  let tomado: () => void = () => {}
+  const yaTomo = new Promise<void>((listo) => (tomado = listo))
+
+  const cierre = prisma.withTransaction(async () => {
+    tomado()
+    await retenido
+    await prisma.client.accountingPeriod.create({
+      data: { bookId: prisma.libro, period: '2026-08', status: 'CLOSED', closedAt: new Date() },
+    })
+  })
+  await yaTomo
+  const respuesta = pedido().then((r) => r)
+  await new Promise((listo) => setTimeout(listo, 300))
+  soltar()
+  await cierre
+  return respuesta
+}
+
 // Este test no tiene nada que decir sobre libros, pero toda consulta necesita uno:
 // sin contexto la extensión de Prisma corta, que es exactamente lo que queremos.
 beforeEach(entrarEnLibroDePrueba)
@@ -237,29 +260,37 @@ describe('dos escritores sobre el mismo movimiento', () => {
     expect((await get(`/movements/${movimiento.id}`).expect(200)).body.counterparty).toBe('Primera')
   })
 
-  // Determinista: el cierre toma el candado primero y la edición llega mientras lo tiene. Con la
-  // regla leída afuera, la edición veía el mes abierto y asentaba en un mes ya cerrado.
   it('editar mientras el mes se cierra: espera al cierre y recibe «mes cerrado»', async () => {
     const movimiento = await crear({ date: '2026-08-15' })
-    let soltar: () => void = () => {}
-    const retenido = new Promise<void>((listo) => (soltar = listo))
-    let tomado: () => void = () => {}
-    const yaTomo = new Promise<void>((listo) => (tomado = listo))
 
-    const cierre = prisma.withTransaction(async () => {
-      tomado()
-      await retenido
-      await prisma.client.accountingPeriod.create({
-        data: { bookId: prisma.libro, period: '2026-08', status: 'CLOSED', closedAt: new Date() },
-      })
-    })
-    await yaTomo
-    const edicion = patch(`/movements/${movimiento.id}`, { counterparty: 'Tarde' }).then((r) => r)
-    await new Promise((listo) => setTimeout(listo, 300))
-    soltar()
-    await cierre
+    const response = await mientrasSeCierraAgosto(() => patch(`/movements/${movimiento.id}`, { counterparty: 'Tarde' }))
 
-    expect((await edicion).status).toBe(409)
+    expect(response.status).toBe(409)
     expect(await prisma.journalEntry.count()).toBe(1)
+  })
+})
+
+describe('dar de alta mientras el mes se cierra', () => {
+  it('un movimiento espera al cierre y recibe «mes cerrado»', async () => {
+    const response = await mientrasSeCierraAgosto(() => post('/movements', nuevoMovimiento({ date: '2026-08-15' })))
+
+    expect(response.status).toBe(409)
+    expect(await prisma.movement.count()).toBe(0)
+  })
+
+  it('un asiento manual espera al cierre y recibe «mes cerrado»', async () => {
+    const response = await mientrasSeCierraAgosto(() =>
+      post('/journal-entries', {
+        date: '2026-08-15',
+        description: 'Aporte',
+        lines: [
+          { accountCode: '1101', amount: { minorUnits: '1000000', currency: 'CRC' }, side: 'DEBIT' },
+          { accountCode: '3110', amount: { minorUnits: '1000000', currency: 'CRC' }, side: 'CREDIT' },
+        ],
+      }),
+    )
+
+    expect(response.status).toBe(409)
+    expect(await prisma.journalEntry.count()).toBe(0)
   })
 })

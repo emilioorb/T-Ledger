@@ -52,7 +52,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
     inverso; editar en un mes que se cierra en paralelo no deja asientos adentro.
   - Archivos: `update-movement.use-case.ts`, `void-movement.use-case.ts`, `accounting.schemas.ts`,
     `movements.controller.ts`, `update-movement.e2e.spec.ts`. (M)
-- [ ] **6b. Crear un movimiento y un asiento manual** leen el mes abierto adentro, después del candado.
+- [x] **6b. Crear un movimiento y un asiento manual** leen el mes abierto adentro, después del candado.
   - Acepta: cerrar un mes mientras se crea un movimiento o un asiento en él: o entra antes o recibe «mes cerrado».
   - Archivos: `create-movement.use-case.ts`, `create-journal-entry.use-case.ts`, `prisma-journal.repository.ts`, spec. (S)
 - [ ] **7. Comprobante de un movimiento.** Adjuntar o quitar va adentro y con versión; un movimiento anulado no revive.
