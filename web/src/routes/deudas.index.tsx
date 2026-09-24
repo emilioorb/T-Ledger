@@ -1,3 +1,5 @@
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { queryKeys } from '@/lib/query-keys'
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Plus, Receipt } from 'lucide-react'
@@ -29,6 +31,13 @@ const DebtsScreen = () => {
     </Button>
   )
 
+  // Rearmar el formulario abierto con la versión que guardó la otra persona.
+  useAlCargarLoUltimo((cache) =>
+    setEditing((actual) => {
+      const nueva = actual?.debt && loUltimoDe<Debt>(cache, queryKeys.debts.all, actual.debt.id)
+      return nueva ? { ...actual, debt: nueva } : actual
+    }),
+  )
   const editingDebt = editing?.debt
 
   return (
@@ -47,7 +56,7 @@ const DebtsScreen = () => {
       >
         {editing ? (
           <DebtForm
-            key={editingDebt?.id ?? 'nueva'}
+            key={editingDebt ? `${editingDebt.id}-${editingDebt.version}` : 'nueva'}
             pending={createDebt.isPending || updateDebt.isPending}
             submitLabel={editingDebt ? copy.form.submitEdit : undefined}
             onCancel={close}
@@ -70,7 +79,9 @@ const DebtsScreen = () => {
             }
             onSubmit={(input) =>
               editingDebt
-                ? updateDebt.mutate({ id: editingDebt.id, input }, { onSuccess: close })
+                ? // La versión que se vio: si otra persona guardó antes, 409 y el aviso ofrece cargar
+                  // lo último.
+                  updateDebt.mutate({ id: editingDebt.id, input: { ...input, version: editingDebt.version } }, { onSuccess: close })
                 : createDebt.mutate(input, { onSuccess: close })
             }
           />

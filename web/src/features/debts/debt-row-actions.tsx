@@ -57,7 +57,7 @@ export const DebtRowActions = ({ debt, onEdit }: Props) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{copy.confirmDelete.cancel}</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={() => deleteDebt.mutate(debt.id)}>
+            <AlertDialogAction variant="destructive" onClick={() => deleteDebt.mutate(debt)}>
               {copy.confirmDelete.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>

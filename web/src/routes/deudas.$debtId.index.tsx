@@ -59,7 +59,7 @@ const DebtDetail = () => {
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-semibold tracking-tight">{data.name}</h1>
-          <NotasDeLaDeuda debtId={data.id} notes={data.notes} hasDocument={data.hasDocument} />
+          <NotasDeLaDeuda debtId={data.id} notes={data.notes} hasDocument={data.hasDocument} version={data.version} />
         </div>
 
         {/* La cuota es lo que se paga todos los meses: esa abre la pantalla, y la fecha en

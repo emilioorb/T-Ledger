@@ -7,7 +7,7 @@ import { NotasDeLaDeuda } from './notas-de-la-deuda'
 const abrir = async (notes: string | null, hasDocument: boolean) => {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <NotasDeLaDeuda debtId="conape" notes={notes} hasDocument={hasDocument} />
+      <NotasDeLaDeuda debtId="conape" notes={notes} hasDocument={hasDocument} version={0} />
     </QueryClientProvider>,
   )
   fireEvent.click(screen.getByRole('button', { name: copy.notas.open }))

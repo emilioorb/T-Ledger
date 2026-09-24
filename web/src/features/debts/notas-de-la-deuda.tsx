@@ -11,12 +11,14 @@ interface Props {
   debtId: string
   notes: string | null
   hasDocument: boolean
+  // La versión de la deuda que se ve: guardar notas o cambiar el documento con otra da 409.
+  version: number
 }
 
 // Lo que no es cifra pero hace falta tener a mano: qué dice el contrato, con quién hablar,
 // qué cambia cada semestre. Se lee con formato y se edita en el mismo modal; el contrato va
 // adjunto al lado, porque es de donde salen esas notas.
-export const NotasDeLaDeuda = ({ debtId, notes, hasDocument }: Props) => {
+export const NotasDeLaDeuda = ({ debtId, notes, hasDocument, version }: Props) => {
   const [abierto, setAbierto] = useState(false)
   const [editando, setEditando] = useState(false)
   const [borrador, setBorrador] = useState(notes ?? '')
@@ -36,7 +38,7 @@ export const NotasDeLaDeuda = ({ debtId, notes, hasDocument }: Props) => {
 
   const confirmar = () => {
     const limpio = borrador.trim()
-    guardar.mutate(limpio === '' ? null : limpio, { onSuccess: () => setEditando(false) })
+    guardar.mutate({ notes: limpio === '' ? null : limpio, version }, { onSuccess: () => setEditando(false) })
   }
 
   return (
@@ -138,7 +140,7 @@ export const NotasDeLaDeuda = ({ debtId, notes, hasDocument }: Props) => {
                   variant="ghost"
                   size="sm"
                   disabled={quitar.isPending}
-                  onClick={() => quitar.mutate()}
+                  onClick={() => quitar.mutate(version)}
                 >
                   {copy.notas.document.remove}
                 </Button>
@@ -165,7 +167,7 @@ export const NotasDeLaDeuda = ({ debtId, notes, hasDocument }: Props) => {
               className="hidden"
               onChange={(evento) => {
                 const elegido = evento.target.files?.[0]
-                if (elegido) subir.mutate(elegido)
+                if (elegido) subir.mutate({ archivo: elegido, version })
                 evento.target.value = ''
               }}
             />

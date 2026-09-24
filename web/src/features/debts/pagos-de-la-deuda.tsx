@@ -44,7 +44,8 @@ export const PagosDeLaDeuda = ({ debt, installments }: Props) => {
   const deshacer = useDeshacerPago(debt.id)
 
   const siguiente = installments.find((cuota) => cuota.status !== 'PAID')
-  const hayPagos = installments.some((cuota) => cuota.status === 'PAID')
+  const ultimaPagada = installments.filter((cuota) => cuota.status === 'PAID').at(-1)
+  const hayPagos = ultimaPagada !== undefined
 
   const cubeta = modelos.data
     ?.find((modelo) => modelo.active)
@@ -61,17 +62,21 @@ export const PagosDeLaDeuda = ({ debt, installments }: Props) => {
     setCategoria(null)
   }
 
+  // La cuota que se ve como siguiente viaja con el pago: dos pagos a la vez de la misma cuota
+  // registran uno, en vez de pagar esta y la que sigue.
   const confirmarPago = (evento: FormEvent) => {
     evento.preventDefault()
+    if (!siguiente) return
     pagar.mutate(
-      { date: fecha, paymentAccountCode: cuenta, categoryId: categoriaElegida },
+      { date: fecha, paymentAccountCode: cuenta, categoryId: categoriaElegida, cuota: siguiente.number },
       { onSuccess: cerrar },
     )
   }
 
   const confirmarSaldo = (evento: FormEvent) => {
     evento.preventDefault()
-    saldar.mutate(fecha, { onSuccess: cerrar })
+    if (!siguiente) return
+    saldar.mutate({ date: fecha, cuota: siguiente.number }, { onSuccess: cerrar })
   }
 
   return (
@@ -227,7 +232,7 @@ export const PagosDeLaDeuda = ({ debt, installments }: Props) => {
             size="sm"
             variant="destructive"
             disabled={deshacer.isPending}
-            onClick={() => deshacer.mutate(undefined, { onSuccess: cerrar })}
+            onClick={() => ultimaPagada && deshacer.mutate({ cuota: ultimaPagada.number, version: debt.version }, { onSuccess: cerrar })}
           >
             {copy.pagos.confirmUndo}
           </Button>

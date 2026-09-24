@@ -77,7 +77,9 @@ export const useUpdateDebt = () => {
 export const useDeleteDebt = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => apiFetch<void>(`/debts/${id}`, { method: 'DELETE' }),
+    // La versión que se vio: si otra persona la cambió después, 409 en vez de borrar a ciegas.
+    mutationFn: ({ id, version }: Pick<Debt, 'id' | 'version'>) =>
+      apiFetch<void>(`/debts/${id}?version=${version}`, { method: 'DELETE' }),
     onSuccess: async () => {
       toast.success(copy.toast.deleted)
       await queryClient.invalidateQueries({ queryKey: queryKeys.debts.all })
@@ -122,8 +124,9 @@ export const usePagarCuota = (id: string) => {
 export const useSaldarCuota = (id: string) => {
   const refrescar = useRefrescarTrasPagar()
   return useMutation({
-    mutationFn: (date: string) =>
-      apiFetch<Debt>(`/debts/${id}/payments/settled`, { method: 'POST', body: JSON.stringify({ date }) }),
+    // `cuota` es la que se vio como siguiente: dos saldos a la vez de la misma no saldan dos.
+    mutationFn: (input: { date: string; cuota: number }) =>
+      apiFetch<Debt>(`/debts/${id}/payments/settled`, { method: 'POST', body: JSON.stringify(input) }),
     onSuccess: async () => {
       toast.success(copy.pagos.toast.settled)
       await refrescar()
@@ -135,7 +138,10 @@ export const useSaldarCuota = (id: string) => {
 export const useDeshacerPago = (id: string) => {
   const refrescar = useRefrescarTrasPagar()
   return useMutation({
-    mutationFn: () => apiFetch<Debt>(`/debts/${id}/payments/last`, { method: 'DELETE' }),
+    // La cuota que se vio como última y la versión: si otra persona la deshizo y la volvió a pagar,
+    // 409 en vez de deshacer su pago.
+    mutationFn: ({ cuota, version }: { cuota: number; version: number }) =>
+      apiFetch<Debt>(`/debts/${id}/payments/last?cuota=${cuota}&version=${version}`, { method: 'DELETE' }),
     onSuccess: async () => {
       toast.success(copy.pagos.toast.undone)
       await refrescar()
@@ -162,8 +168,8 @@ const motivoDelRechazo = (error: unknown): string => {
 export const useGuardarNotas = (id: string) => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (notes: string | null) =>
-      apiFetch<Debt>(`/debts/${id}`, { method: 'PATCH', body: JSON.stringify({ notes }) }),
+    mutationFn: ({ notes, version }: { notes: string | null; version: number }) =>
+      apiFetch<Debt>(`/debts/${id}`, { method: 'PATCH', body: JSON.stringify({ notes, version }) }),
     onSuccess: async () => {
       toast.success(copy.notas.saved)
       await client.invalidateQueries({ queryKey: queryKeys.debts.all })
@@ -175,9 +181,10 @@ export const useGuardarNotas = (id: string) => {
 export const useSubirDocumento = (id: string) => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (archivo: File) => {
+    mutationFn: ({ archivo, version }: { archivo: File; version: number }) => {
       const cuerpo = new FormData()
       cuerpo.append('archivo', archivo)
+      cuerpo.append('version', String(version))
       // Sin `Content-Type` a mano: el navegador lo pone con el `boundary` que genera.
       return apiFetch<Debt>(`/debts/${id}/document`, { method: 'POST', body: cuerpo })
     },
@@ -194,7 +201,7 @@ export const useSubirDocumento = (id: string) => {
 export const useQuitarDocumento = (id: string) => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: () => apiFetch<Debt>(`/debts/${id}/document`, { method: 'DELETE' }),
+    mutationFn: (version: number) => apiFetch<Debt>(`/debts/${id}/document?version=${version}`, { method: 'DELETE' }),
     onSuccess: async () => {
       toast.success(copy.notas.document.removed)
       await client.invalidateQueries({ queryKey: queryKeys.debts.all })
