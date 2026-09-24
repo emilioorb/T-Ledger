@@ -24,7 +24,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Acepta: la migración corre sobre una copia con datos y no corta nada; el índice rechaza dos líneas conciliadas al
     mismo movimiento; la guarda `clasificacion-de-modelos` sigue verde.
   - Archivos: `prisma/schema.prisma`, migración nueva, `shared/prisma/clasificacion-de-modelos.spec.ts`. (S)
-- [ ] **4. Escritura condicionada y dos libros en paralelo.** Ayudante `escribirConVersion` (update/delete con
+- [x] **4. Escritura condicionada y dos libros en paralelo.** Ayudante `escribirConVersion` (update/delete con
   `{ id, version }`, 404 o 409 según corresponda, sin versión escribe y cuenta). Test de carga: dos libros escribiendo
   en paralelo, cero falsos conflictos.
   - Acepta: el ayudante distingue los tres casos; el test de dos libros pasa 20 veces seguidas sin `REINTENTAR`.
