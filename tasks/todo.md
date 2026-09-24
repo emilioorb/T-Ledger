@@ -64,7 +64,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 
 ## Fase 2: deudas y pagos
 
-- [ ] **8. Pagos que no se reescriben.** `save` de la deuda deja de borrar y recrear pagos; la deuda lleva versión.
+- [x] **8. Pagos que no se reescriben.** `save` de la deuda deja de borrar y recrear pagos; la deuda lleva versión.
   - Acepta: editar el nombre mientras otro paga no borra el pago.
   - Archivos: `debts/domain/debt.ts`, `debt.mapper.ts`, `prisma-debt.repository.ts`, `debt-repository.port.ts`, spec
     del repo. (M)

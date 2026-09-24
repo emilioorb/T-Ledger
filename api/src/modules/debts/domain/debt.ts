@@ -39,6 +39,8 @@ export interface DebtProps {
   readonly notes?: string | null
   // Dónde está guardado el contrato, si se adjuntó.
   readonly documentKey?: string | null
+  // La versión de la fila sobre la que se armó este estado. Opcional al crear: nace en 0.
+  readonly version?: number
 }
 
 export class Debt {
@@ -82,6 +84,7 @@ export class Debt {
   get payments(): readonly DebtPayment[] { return this.props.payments ?? [] }
   get notes(): string | null { return this.props.notes ?? null }
   get documentKey(): string | null { return this.props.documentKey ?? null }
+  get version(): number { return this.props.version ?? 0 }
 
   withDocumentKey(documentKey: string | null): Debt {
     return new Debt({ ...this.props, documentKey })
@@ -180,6 +183,11 @@ export class Debt {
     } catch (cause) {
       return err(cause instanceof RangeError ? cause : new RangeError('No se pudo simular el abono'))
     }
+  }
+
+  // Lo que queda después de guardarse: la base sube la versión en cada escritura.
+  guardada(): Debt {
+    return new Debt({ ...this.props, version: this.version + 1 })
   }
 
   toProps(): DebtProps {

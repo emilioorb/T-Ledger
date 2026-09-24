@@ -11,7 +11,13 @@ export interface DebtRepository {
   findById(id: string): Promise<Debt | null>
   // La deuda cuya cuota pagó ese movimiento, si alguna.
   findByPaymentMovement(movementId: string): Promise<Debt | null>
-  save(debt: Debt): Promise<void>
+  add(debt: Debt): Promise<void>
+
+  // Solo si la fila sigue en la versión de la deuda: si no, `EditadoPorOtroError`, o
+  // `NotFoundError` si ya no existe. Los pagos no se reescriben: se agregan los nuevos y se
+  // quitan los deshechos, así editar el nombre no toca un pago que alguien registró. Devuelve
+  // la deuda en su versión nueva.
+  update(debt: Debt): Promise<Debt>
   delete(id: string): Promise<boolean>
 }
 

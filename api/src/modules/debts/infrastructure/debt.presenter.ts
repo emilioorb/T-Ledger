@@ -21,6 +21,7 @@ export const toDebtResponse = (debt: Debt, at: Date): DebtResponse => {
     budgetBucket: debt.budgetBucket,
     notes: debt.notes,
     hasDocument: debt.documentKey !== null,
+    version: debt.version,
     monthlyPayment: fromMoney(schedule.installments[0]?.payment ?? debt.principal.multiply(0)),
     totalInterest: fromMoney(schedule.totalInterest),
     payoffDate: toIsoDate(debt.payoffDate()),

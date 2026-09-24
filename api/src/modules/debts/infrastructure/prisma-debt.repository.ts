@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { SUBIR_VERSION, verificarEscritura } from '../../../shared/prisma/escribir-con-version.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import type { Debt, DebtDirection } from '../domain/debt.js'
 import type { DebtPage, DebtRepository } from '../domain/debt-repository.port.js'
@@ -39,24 +40,41 @@ export class PrismaDebtRepository implements DebtRepository {
     return row ? toDomain(row as DebtRow) : null
   }
 
-  async save(debt: Debt): Promise<void> {
-    const row = toRow(debt)
-    const { id, ...rest } = row
-    await this.prisma.client.debt.upsert({
-      where: { id },
-      create: { bookId: this.prisma.libro, id, ...rest },
-      update: rest,
-    })
-    await this.guardarPagos(debt)
+  async add(debt: Debt): Promise<void> {
+    const { id, ...rest } = toRow(debt)
+    await this.prisma.client.debt.create({ data: { bookId: this.prisma.libro, id, ...rest } })
+    await this.agregarPagos(debt, 0)
   }
 
-  // Se reemplazan enteros: son pocas filas por deuda, y así un pago deshecho desaparece sin
-  // que el repositorio tenga que saber qué cambió.
-  private async guardarPagos(debt: Debt): Promise<void> {
-    await this.prisma.client.debtPayment.deleteMany({ where: { debtId: debt.id } })
-    if (debt.payments.length === 0) return
+  async update(debt: Debt): Promise<Debt> {
+    const { id, ...rest } = toRow(debt)
+    const { count } = await this.prisma.client.debt.updateMany({
+      where: { id, version: debt.version },
+      data: { ...rest, ...SUBIR_VERSION },
+    })
+    await verificarEscritura(count, async () => (await this.prisma.client.debt.count({ where: { id } })) > 0)
+    await this.sincronizarPagos(debt)
+    return debt.guardada()
+  }
+
+  // La versión ya garantizó que la fila está como se leyó, y los pagos van en orden y sin huecos
+  // (el pago n es la cuota n): alcanza con comparar cuántos hay.
+  private async sincronizarPagos(debt: Debt): Promise<void> {
+    const guardados = await this.prisma.client.debtPayment.count({ where: { debtId: debt.id } })
+    const cuantos = debt.payments.length
+    if (guardados > cuantos) {
+      await this.prisma.client.debtPayment.deleteMany({
+        where: { debtId: debt.id, installmentNumber: { gt: cuantos } },
+      })
+    }
+    if (cuantos > guardados) await this.agregarPagos(debt, guardados)
+  }
+
+  private async agregarPagos(debt: Debt, desde: number): Promise<void> {
+    const nuevos = debt.payments.slice(desde)
+    if (nuevos.length === 0) return
     await this.prisma.client.debtPayment.createMany({
-      data: debt.payments.map((payment) => ({
+      data: nuevos.map((payment) => ({
         bookId: this.prisma.libro,
         debtId: debt.id,
         installmentNumber: payment.installmentNumber,

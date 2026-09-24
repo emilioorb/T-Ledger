@@ -23,6 +23,7 @@ export interface DebtRow {
   payments?: { installmentNumber: number; date: Date; movementId: string | null }[]
   notes: string | null
   documentKey: string | null
+  version: number
 }
 
 export const toDomain = (row: DebtRow): Debt => {
@@ -44,6 +45,7 @@ export const toDomain = (row: DebtRow): Debt => {
       budgetBucket: row.budgetBucket,
       notes: row.notes,
       documentKey: row.documentKey,
+      version: row.version,
       payments: (row.payments ?? []).map(
         ({ installmentNumber, date, movementId }): DebtPayment => ({ installmentNumber, date, movementId }),
       ),
@@ -53,7 +55,7 @@ export const toDomain = (row: DebtRow): Debt => {
 
 export const toRow = (
   debt: Debt,
-): Omit<DebtRow, 'annualRate' | 'payments'> & { annualRate: string } => ({
+): Omit<DebtRow, 'annualRate' | 'payments' | 'version'> & { annualRate: string } => ({
   id: debt.id,
   name: debt.name,
   counterparty: debt.counterparty,

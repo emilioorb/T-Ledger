@@ -48,7 +48,7 @@ export class CreateDebtUseCase {
 
     // La deuda y su rastro, juntos: guardar una sin el otro deja una deuda que apareció sola.
     await this.transaction.withTransaction(async () => {
-      await this.debts.save(cargada)
+      await this.debts.add(cargada)
       await this.rastro.registrar({
         entidad: 'deuda',
         entidadId: cargada.id,

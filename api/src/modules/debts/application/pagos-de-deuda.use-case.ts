@@ -113,7 +113,7 @@ export class PagosDeDeudaUseCase {
   }
 
   private async guardar(debt: Debt, accion: 'pagar' | 'anular', antes?: Debt): Promise<void> {
-    await this.debts.save(debt)
+    await this.debts.update(debt)
     await this.rastro.registrar({
       entidad: 'deuda',
       entidadId: debt.id,

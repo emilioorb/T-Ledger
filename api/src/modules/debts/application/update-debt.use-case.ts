@@ -55,7 +55,7 @@ export class UpdateDebtUseCase {
     if (isErr(updated)) throw new SemanticValidationError(updated.error.message)
 
     await this.transaction.withTransaction(async () => {
-      await this.debts.save(updated.value)
+      await this.debts.update(updated.value)
       await this.rastro.registrar({
         entidad: 'deuda',
         entidadId: id,

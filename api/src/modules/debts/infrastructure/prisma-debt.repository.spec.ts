@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { EditadoPorOtroError, NotFoundError } from '../../../shared/http/api-error.js'
 import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { Money } from '../../../shared/kernel/money.js'
 import { unwrap } from '../../../shared/kernel/result.js'
@@ -71,7 +72,7 @@ beforeEach(async () => {
 describe('PrismaDebtRepository', () => {
   it('guarda y recupera una deuda sin perder precisión en el monto', async () => {
     const debt = conape()
-    await repository.save(debt)
+    await repository.add(debt)
 
     const found = await repository.findById(debt.id)
     expect(found?.principal.minorUnits).toBe(5_634_929_300n)
@@ -79,35 +80,35 @@ describe('PrismaDebtRepository', () => {
   })
 
   it('conserva la tasa como decimal exacto', async () => {
-    await repository.save(conape())
+    await repository.add(conape())
     const found = await repository.findById('0199a1c0-0000-7000-8000-000000000001')
     expect(found?.rate.annualPercentage.toString()).toBe('9.5')
     expect(found?.rate.compounding).toBe('MONTHLY')
   })
 
   it('devuelve una entidad de dominio, no una fila de Prisma', async () => {
-    await repository.save(conape())
+    await repository.add(conape())
     const found = await repository.findById('0199a1c0-0000-7000-8000-000000000001')
     expect(found).toBeInstanceOf(Debt)
     expect(found?.schedule().finalBalance.minorUnits).toBe(0n)
   })
 
   it('conserva la fecha de inicio como día, sin desplazamiento de zona', async () => {
-    await repository.save(conape())
+    await repository.add(conape())
     const found = await repository.findById('0199a1c0-0000-7000-8000-000000000001')
     expect(found?.startDate.toISOString()).toBe('2026-01-15T00:00:00.000Z')
   })
 
-  it('actualiza en lugar de duplicar cuando se guarda dos veces el mismo id', async () => {
-    await repository.save(conape())
-    await repository.save(conape())
+  it('actualiza en lugar de duplicar', async () => {
+    await repository.add(conape())
+    await repository.update(conape())
     const page = await repository.findAll(1, 10)
     expect(page.totalItems).toBe(1)
   })
 
   it('filtra por dirección cuando se le pide', async () => {
-    await repository.save(conape())
-    await repository.save(prestamoOtorgado())
+    await repository.add(conape())
+    await repository.add(prestamoOtorgado())
 
     const prestados = await repository.findAll(1, 10, 'LENT')
     expect(prestados.totalItems).toBe(1)
@@ -119,7 +120,7 @@ describe('PrismaDebtRepository', () => {
 
   it('pagina y reporta el total', async () => {
     for (let index = 1; index <= 3; index += 1) {
-      await repository.save(
+      await repository.add(
         unwrap(
           Debt.create({
             ...conape().toProps(),
@@ -135,7 +136,7 @@ describe('PrismaDebtRepository', () => {
   })
 
   it('guarda un préstamo otorgado sin cubeta y lo recupera como tal', async () => {
-    await repository.save(prestamoOtorgado())
+    await repository.add(prestamoOtorgado())
     const found = await repository.findById('0199a1c0-0000-7000-8000-0000000000aa')
     expect(found?.direction).toBe('LENT')
     expect(found?.budgetBucket).toBeNull()
@@ -149,7 +150,7 @@ describe('PrismaDebtRepository', () => {
 
   it('borra una deuda existente', async () => {
     const debt = conape()
-    await repository.save(debt)
+    await repository.add(debt)
     expect(await repository.delete(debt.id)).toBe(true)
     expect(await repository.findById(debt.id)).toBeNull()
   })
@@ -169,7 +170,7 @@ describe('los pagos de una deuda', () => {
       }),
     )
 
-    await repository.save(pagada)
+    await repository.add(pagada)
     const recargada = await repository.findById(pagada.id)
 
     expect(recargada?.payments).toEqual(pagada.payments)
@@ -177,9 +178,9 @@ describe('los pagos de una deuda', () => {
 
   it('un pago deshecho desaparece al guardar', async () => {
     const pagada = unwrap(conape().registerPayment({ date: utc('2026-02-15'), movementId: null }))
-    await repository.save(pagada)
+    await repository.add(pagada)
 
-    await repository.save(unwrap(pagada.undoLastPayment()).debt)
+    await repository.update(unwrap(pagada.undoLastPayment()).debt)
 
     expect((await repository.findById(pagada.id))?.payments).toEqual([])
   })
@@ -191,8 +192,8 @@ describe('los pagos de una deuda', () => {
     const haceTresMeses = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth() - 3, 10))
     const propia = unwrap(Debt.create({ ...conape().toProps(), startDate: haceTresMeses }))
     const otorgada = unwrap(Debt.create({ ...prestamoOtorgado().toProps(), startDate: haceTresMeses }))
-    await repository.save(propia)
-    await repository.save(otorgada)
+    await repository.add(propia)
+    await repository.add(otorgada)
 
     const migracion = readFileSync(
       fileURLToPath(new URL(`../../../../prisma/migrations/${MIGRACION}/migration.sql`, import.meta.url)),
@@ -202,5 +203,51 @@ describe('los pagos de una deuda', () => {
 
     expect((await repository.findById(propia.id))?.payments.map((p) => p.installmentNumber)).toEqual([1, 2, 3])
     expect((await repository.findById(otorgada.id))?.payments).toEqual([])
+  })
+})
+
+describe('editar una deuda guardada', () => {
+  beforeEach(async () => {
+    await prisma.debtPayment.deleteMany({ where: {} })
+    await prisma.debt.deleteMany({ where: {} })
+  })
+
+  const renombrada = (debt: Debt, name: string) => unwrap(Debt.create({ ...debt.toProps(), name }))
+
+  it('editar el nombre no borra un pago registrado: los pagos no se reescriben', async () => {
+    await repository.add(conape())
+    const leida = (await repository.findById(conape().id))!
+    const pagada = await repository.update(unwrap(leida.registerPayment({ date: utc('2026-02-15'), movementId: null })))
+
+    await repository.update(renombrada(pagada, 'Otro nombre'))
+
+    const recargada = await repository.findById(conape().id)
+    expect(recargada?.name).toBe('Otro nombre')
+    expect(recargada?.payments).toHaveLength(1)
+  })
+
+  it('con la versión de antes del pago no guarda, y el pago queda', async () => {
+    await repository.add(conape())
+    const leidaPorLasDos = (await repository.findById(conape().id))!
+    await repository.update(unwrap(leidaPorLasDos.registerPayment({ date: utc('2026-02-15'), movementId: null })))
+
+    await expect(repository.update(renombrada(leidaPorLasDos, 'Pisada'))).rejects.toBeInstanceOf(EditadoPorOtroError)
+
+    const recargada = await repository.findById(conape().id)
+    expect(recargada?.name).toBe(conape().name)
+    expect(recargada?.payments).toHaveLength(1)
+  })
+
+  it('cada escritura sube la versión, y la devuelve', async () => {
+    await repository.add(conape())
+    const guardada = await repository.update(renombrada(conape(), 'Una'))
+
+    expect(guardada.version).toBe(1)
+    expect((await repository.findById(conape().id))?.version).toBe(1)
+  })
+
+  it('si no existe no la crea: avisa que no está', async () => {
+    await expect(repository.update(conape())).rejects.toBeInstanceOf(NotFoundError)
+    expect(await repository.findById(conape().id)).toBeNull()
   })
 })

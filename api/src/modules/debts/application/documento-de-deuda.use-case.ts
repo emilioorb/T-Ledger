@@ -67,7 +67,7 @@ export class DocumentoDeDeudaUseCase {
 
   private registrar(antes: Debt, despues: Debt): Promise<void> {
     return this.transaction.withTransaction(async () => {
-      await this.debts.save(despues)
+      await this.debts.update(despues)
       await this.rastro.registrar({
         entidad: 'deuda',
         entidadId: despues.id,
