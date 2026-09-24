@@ -4,10 +4,11 @@ import { toast } from 'sonner'
 import { NotFound } from './components/not-found'
 import { ErrorDeCarga } from './features/pwa/error-de-carga'
 import { ApiError } from './lib/api'
+import { avisarErrorDeMutacion, avisos } from './lib/avisar-error-de-mutacion'
 import { routeTree } from './routeTree.gen'
 
 const describe = (error: unknown): string =>
-  error instanceof ApiError ? error.message : 'No se pudo completar la operación'
+  error instanceof ApiError ? error.message : avisos.fallo
 
 // Una consulta que falla ya lo explica en pantalla con su ErrorState y su reintento: el toast
 // encima diría dos veces lo mismo. Por eso el aviso es opt-in, para la consulta secundaria que
@@ -20,7 +21,14 @@ export const queryClient = new QueryClient({
       toast.error(describe(error))
     },
   }),
-  mutationCache: new MutationCache({ onError: (error) => toast.error(describe(error)) }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _resultado, mutation) =>
+      avisarErrorDeMutacion(error, {
+        tieneSuPropioAviso: mutation.options.onError !== undefined,
+        // Recargar todo lo que esté en pantalla: los formularios se rearman con la versión nueva.
+        cargarLoUltimo: () => void queryClient.invalidateQueries(),
+      }),
+  }),
 })
 
 // defaultPreloadStaleTime en 0 deja que TanStack Query gobierne el caché, no el router.

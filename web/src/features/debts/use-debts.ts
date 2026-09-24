@@ -115,7 +115,7 @@ export const usePagarCuota = (id: string) => {
       toast.success(copy.pagos.toast.paid)
       await refrescar()
     },
-    onError: (error: unknown) => toast.error(motivoDelRechazo(error)),
+    onError: avisarRechazo,
   })
 }
 
@@ -128,7 +128,7 @@ export const useSaldarCuota = (id: string) => {
       toast.success(copy.pagos.toast.settled)
       await refrescar()
     },
-    onError: (error: unknown) => toast.error(motivoDelRechazo(error)),
+    onError: avisarRechazo,
   })
 }
 
@@ -140,15 +140,20 @@ export const useDeshacerPago = (id: string) => {
       toast.success(copy.pagos.toast.undone)
       await refrescar()
     },
-    onError: (error: unknown) => toast.error(motivoDelRechazo(error)),
+    onError: avisarRechazo,
   })
+}
+
+// «Otro guardó antes» lo avisa la caché de mutaciones, con «Cargar lo último»: acá no se repite.
+const avisarRechazo = (error: unknown): void => {
+  if (!esEditadoPorOtro(error)) toast.error(motivoDelRechazo(error))
 }
 
 // Por el `code` y no por el 409 a secas: el 409 también es «otro guardó antes» y «probá de nuevo»,
 // y esos traen su propio mensaje. `CONFLICT` es el mes cerrado; el 422, lo que el servidor explica
 // con palabras que la persona entiende —no quedan cuotas, la fecha es anterior al último pago—.
 const motivoDelRechazo = (error: unknown): string => {
-  if (esEditadoPorOtro(error) || esReintentar(error)) return error.message
+  if (esReintentar(error)) return error.message
   if (error instanceof ApiError && error.code === 'CONFLICT') return copy.pagos.toast.closedPeriod
   if (error instanceof ApiError && error.status === 422) return error.message
   return copy.pagos.toast.failed
