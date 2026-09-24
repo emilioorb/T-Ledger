@@ -177,6 +177,35 @@ describe('CashFlowProjectionUseCase', () => {
     expect(flow[2]?.incomeDeclared).toBe(false)
   })
 
+  it('cada moneda se proyecta por separado: una meta en dólares no rompe la vista en colones', async () => {
+    const enDolares = unwrap(
+      Goal.create({
+        id: 'carro',
+        name: 'Carro',
+        target: Money.fromMinorUnits(1_200_000n, 'USD'),
+        desiredDate: utc('2027-02-01'),
+        priority: 1,
+        accountCode: null,
+        contributions: [],
+      }),
+    )
+    goals.findAll.mockResolvedValue([metaConAporteMensual(1_000n), enDolares])
+    debts.findAll.mockResolvedValue({ items: [deudaDe3Cuotas()], totalItems: 1 })
+    incomes.find.mockResolvedValue({ amount: Money.fromMinorUnits(500_000n, 'USD') })
+
+    const enColones = await useCase.execute(3, utc('2026-02-01'), 'CRC')
+    const enUsd = await useCase.execute(3, utc('2026-02-01'), 'USD')
+
+    expect(enColones[0]?.goalContributions).toEqual(crc(1_000n))
+    expect(enColones[0]?.debtPayments.isZero()).toBe(false)
+    expect(enColones[0]?.income.isZero()).toBe(true)
+    expect(enColones[0]?.incomeDeclared).toBe(false)
+    expect(enUsd[0]?.goalContributions.currency).toBe('USD')
+    expect(enUsd[0]?.goalContributions.isZero()).toBe(false)
+    expect(enUsd[0]?.debtPayments.isZero()).toBe(true)
+    expect(enUsd[0]?.income).toEqual(Money.fromMinorUnits(500_000n, 'USD'))
+  })
+
   it('sin nada cargado proyecta meses en cero, no falla', async () => {
     const flow = await useCase.execute(3, utc('2026-02-01'))
 

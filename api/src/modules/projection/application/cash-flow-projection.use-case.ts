@@ -40,11 +40,19 @@ export class CashFlowProjectionUseCase {
       throw new SemanticValidationError(`La proyección no pasa de ${MAX_MONTHS} meses`)
     }
 
-    const [{ items: debts }, goals, investments] = await Promise.all([
+    // Cada moneda se proyecta por separado, como el tablero: sumar una meta en dólares a una
+    // vista en colones no tiene sentido sin un tipo de cambio, y `Money` se niega a hacerlo.
+    // Una sola meta en dólares tiraba la proyección entera, y con ella el tablero.
+    const [{ items: todasLasDeudas }, todasLasMetas, todasLasInversiones] = await Promise.all([
       this.debts.findAll(1, ALL),
       this.goals.findAll(),
       this.investments.findAll(),
     ])
+    const debts = todasLasDeudas.filter((debt) => debt.principal.currency === currency)
+    const goals = todasLasMetas.filter((goal) => goal.target.currency === currency)
+    const investments = todasLasInversiones.filter((investment) => investment.principal.currency === currency)
+    const enLaMoneda = <T extends { amount: Money }>(ingreso: T | null) =>
+      ingreso?.amount.currency === currency ? ingreso : null
 
     const zero = Money.zero(currency)
     const flows: MonthlyFlow[] = []
@@ -92,10 +100,10 @@ export class CashFlowProjectionUseCase {
       }, zero)
 
       const key = unwrap(PeriodKey.of(year, month))
-      const declared = await this.incomes.find(key)
+      const declared = enLaMoneda(await this.incomes.find(key))
       // Sin declarar, se arrastra el último conocido: un mes sin el dato no es un mes
       // sin ingreso, y tratarlo así llenaría la proyección de rojos falsos.
-      const income_ = declared ?? (await this.incomes.findLatestUpTo(key))
+      const income_ = declared ?? enLaMoneda(await this.incomes.findLatestUpTo(key))
       const estimatedSpending = zero
 
       const income = unwrap(
