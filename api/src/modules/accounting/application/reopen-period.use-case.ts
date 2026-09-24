@@ -13,8 +13,14 @@ export class ReopenPeriodUseCase {
   ) {}
 
   // Reabrir agosto dejando septiembre cerrado produciría un mes abierto debajo de uno
-  // cerrado, que es justo lo que la regla del orden existe para impedir.
-  async execute(key: PeriodKey): Promise<AccountingPeriod[]> {
+  // cerrado, que es justo lo que la regla del orden existe para impedir. Los meses cerrados se
+  // leen adentro del candado del libro: leídos afuera, uno que se cerraba en el medio quedaba
+  // cerrado encima de uno reabierto.
+  execute(key: PeriodKey): Promise<AccountingPeriod[]> {
+    return this.transaction.withTransaction(() => this.reabrir(key))
+  }
+
+  private async reabrir(key: PeriodKey): Promise<AccountingPeriod[]> {
     const [own, later] = await Promise.all([
       this.periods.find(key),
       this.periods.findClosedAfter(key),
@@ -29,17 +35,14 @@ export class ReopenPeriodUseCase {
 
     // Un rastro por mes reabierto y no uno solo por la operación: reabrir agosto arrastra
     // septiembre y octubre, y dentro de un mes la pregunta es siempre «¿quién reabrió *este*?».
-    await this.transaction.withTransaction(async () => {
-      await this.periods.saveMany(reopened)
-      for (const period of reopened) {
-        await this.rastro.registrar({
-          entidad: 'periodo',
-          entidadId: period.key.toString(),
-          accion: 'reabrir',
-        })
-      }
-    })
-
+    await this.periods.saveMany(reopened)
+    for (const period of reopened) {
+      await this.rastro.registrar({
+        entidad: 'periodo',
+        entidadId: period.key.toString(),
+        accion: 'reabrir',
+      })
+    }
     return reopened
   }
 }

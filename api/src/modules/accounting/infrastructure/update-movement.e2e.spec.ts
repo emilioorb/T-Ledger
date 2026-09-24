@@ -312,3 +312,42 @@ describe('dar de alta mientras el mes se cierra', () => {
     expect(await prisma.journalEntry.count()).toBe(0)
   })
 })
+
+// Al revés que los de arriba: el movimiento sin asiento entra primero, con el candado tomado, y el
+// cierre llega mientras lo tiene. Con los bloqueos calculados afuera, el cierre veía el mes limpio
+// y cerraba con un movimiento sin asentar adentro.
+describe('cerrar mientras entra un movimiento', () => {
+  it('el cierre espera, ve el movimiento sin asiento y no cierra', async () => {
+    let soltar: () => void = () => {}
+    const retenido = new Promise<void>((listo) => (soltar = listo))
+    let tomado: () => void = () => {}
+    const yaTomo = new Promise<void>((listo) => (tomado = listo))
+
+    const entrada = prisma.withTransaction(async () => {
+      tomado()
+      await retenido
+      await prisma.client.movement.create({
+        data: {
+          bookId: prisma.libro,
+          id: '00000000-0000-7000-8000-00000000c1e7',
+          date: new Date('2026-08-15T00:00:00.000Z'),
+          kind: 'EXPENSE',
+          categoryId: categoriaId,
+          counterparty: 'Sin asiento',
+          amountMinor: 1_000n,
+          currency: 'CRC',
+          status: 'ACTIVE',
+        },
+      })
+    })
+    await yaTomo
+    const cierre = post('/periods/2026-08/close').then((r) => r)
+    await new Promise((listo) => setTimeout(listo, 300))
+    soltar()
+    await entrada
+
+    expect((await cierre).status).toBe(422)
+    expect(await prisma.accountingPeriod.count({ where: { period: '2026-08', status: 'CLOSED' } })).toBe(0)
+  })
+})
+

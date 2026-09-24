@@ -92,7 +92,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 
 ## Fase 4: cierre de mes
 
-- [ ] **13. Cerrar y reabrir.** Bloqueos y meses cerrados posteriores calculados adentro; el repo usa la transacción del
+- [x] **13. Cerrar y reabrir.** Bloqueos y meses cerrados posteriores calculados adentro; el repo usa la transacción del
   caso de uso.
   - Acepta: cerrar un mes mientras entra un movimiento en él: o entra antes del cierre o recibe «mes cerrado», nunca
     queda adentro de un mes cerrado.

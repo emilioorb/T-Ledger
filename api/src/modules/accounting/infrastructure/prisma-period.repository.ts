@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { SUBIR_VERSION } from '../../../shared/prisma/escribir-con-version.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import type { AccountingPeriod, PeriodKey } from '../domain/accounting-period.js'
 import type { PeriodRepository } from '../domain/period-repository.port.js'
@@ -33,16 +34,17 @@ export class PrismaPeriodRepository implements PeriodRepository {
     await this.saveMany([period])
   }
 
+  // Va dentro de la transacción de quien la llama, que es la que tiene el candado del libro. Cada
+  // escritura sube la versión, aunque el período no la lleve en el dominio: así quien lo leyó
+  // antes puede enterarse.
   async saveMany(periods: readonly AccountingPeriod[]): Promise<void> {
-    await this.prisma.withTransaction(async () => {
-      for (const period of periods) {
-        const data = { status: period.status, closedAt: period.closedAt }
-        await this.prisma.client.accountingPeriod.upsert({
-          where: { bookId_period: { bookId: this.prisma.libro, period: period.key.toString() } },
-          create: { bookId: this.prisma.libro, period: period.key.toString(), ...data },
-          update: data,
-        })
-      }
-    })
+    for (const period of periods) {
+      const data = { status: period.status, closedAt: period.closedAt }
+      await this.prisma.client.accountingPeriod.upsert({
+        where: { bookId_period: { bookId: this.prisma.libro, period: period.key.toString() } },
+        create: { bookId: this.prisma.libro, period: period.key.toString(), ...data },
+        update: { ...data, ...SUBIR_VERSION },
+      })
+    }
   }
 }
