@@ -1,3 +1,5 @@
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { queryKeys } from '@/lib/query-keys'
 import { useState, type FormEvent } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Coins, PiggyBank, Plus } from 'lucide-react'
@@ -392,6 +394,13 @@ const InvestmentsScreen = () => {
   // La cuenta de la inversión no puede ser el origen: el traslado sería de ella a ella misma.
   const origins = usePostableAssets().filter((account) => account.code !== adding?.accountCode)
   usePrimaryAction(copy.investments.new, () => setEditing({}))
+  // Rearmar el formulario abierto con la versión que guardó la otra persona.
+  useAlCargarLoUltimo((cache) =>
+    setEditing((actual) => {
+      const nueva = actual?.investment && loUltimoDe<Investment>(cache, queryKeys.investments.all, actual.investment.id)
+      return nueva ? { investment: nueva } : actual
+    }),
+  )
   const save = useSaveInvestment()
   const addCapital = useAddCapital()
   const remove = useDeleteInvestment()
@@ -441,12 +450,17 @@ const InvestmentsScreen = () => {
       >
         {editing ? (
           <InvestmentForm
-            key={editing.investment?.id ?? 'nueva'}
+            key={editing.investment ? `${editing.investment.id}-${editing.investment.version}` : 'nueva'}
             investment={editing.investment}
             pending={save.isPending}
             onSubmit={(values) =>
               save.mutate(
-                { id: editing.investment?.id, input: values },
+                // Al editar, la versión que se vio: si otra persona guardó antes, 409 y el aviso
+                // ofrece cargar lo último.
+                {
+                  id: editing.investment?.id,
+                  input: editing.investment ? { ...values, version: editing.investment.version } : values,
+                },
                 { onSuccess: () => setEditing(null) },
               )
             }
@@ -587,7 +601,7 @@ const InvestmentsScreen = () => {
             <AlertDialogCancel>{copy.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (deleting) remove.mutate(deleting.id)
+                if (deleting) remove.mutate(deleting)
                 setDeleting(null)
               }}
             >

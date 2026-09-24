@@ -25,3 +25,26 @@ export const useAlCargarLoUltimo = (rearmar: (cache: QueryClient) => void): void
     return () => window.removeEventListener(EVENTO, escuchar)
   }, [cache])
 }
+
+interface ConId {
+  id: string
+}
+
+const dentroDe = (dato: unknown): ConId[] => {
+  if (Array.isArray(dato)) return dato as ConId[]
+  if (dato && typeof dato === 'object' && 'data' in dato && Array.isArray(dato.data)) return dato.data as ConId[]
+  if (dato && typeof dato === 'object' && 'id' in dato) return [dato as ConId]
+  return []
+}
+
+// Lo último de una entidad, buscado por id en todas las consultas de la caché bajo esa clave: una
+// lista, una página (`{ data }`) o el detalle. Así cada pantalla rearma su formulario sin saber
+// con qué filtros se pidió la lista.
+export const loUltimoDe = <T extends ConId>(cache: QueryClient, queryKey: readonly unknown[], id: string): T | undefined => {
+  for (const [, dato] of cache.getQueriesData({ queryKey })) {
+    const encontrado = dentroDe(dato).find((entidad) => entidad.id === id)
+    if (encontrado) return encontrado as T
+  }
+  return undefined
+}
+

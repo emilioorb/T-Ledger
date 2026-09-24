@@ -61,7 +61,9 @@ export const useAddCapital = () => {
 export const useDeleteInvestment = () => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => apiFetch<void>(`/investments/${id}`, { method: 'DELETE' }),
+    // La versión que se vio: si otra persona la cambió después, 409 en vez de borrar a ciegas.
+    mutationFn: ({ id, version }: Pick<Investment, 'id' | 'version'>) =>
+      apiFetch<void>(`/investments/${id}?version=${version}`, { method: 'DELETE' }),
     onSuccess: () => {
       toast.success(copy.investments.toast.deleted)
       void client.invalidateQueries({ queryKey: queryKeys.investments.all })

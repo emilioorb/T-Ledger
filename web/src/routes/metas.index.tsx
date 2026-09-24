@@ -1,5 +1,5 @@
 import { queryKeys } from '@/lib/query-keys'
-import { useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
 import { useState, type FormEvent } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Coins, Plus, Target } from 'lucide-react'
@@ -338,7 +338,7 @@ const GoalsScreen = () => {
   // Rearmar el formulario abierto con la versión que guardó la otra persona.
   useAlCargarLoUltimo((cache) =>
     setEditing((actual) => {
-      const nueva = actual?.goal && cache.getQueryData<Goal[]>(queryKeys.goals.list())?.find((goal) => goal.id === actual.goal?.id)
+      const nueva = actual?.goal && loUltimoDe<Goal>(cache, queryKeys.goals.all, actual.goal.id)
       return nueva ? { goal: nueva } : actual
     }),
   )
