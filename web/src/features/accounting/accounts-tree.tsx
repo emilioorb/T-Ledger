@@ -26,6 +26,9 @@ interface RowProps {
 
 const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
   const hasChildren = node.children.length > 0
+  // Las raíces son las clases del plan y agrupan siempre, aunque todavía no tengan cuentas
+  // debajo: «Costo de ingresos» vacía sigue siendo un grupo, no una cuenta donde se asienta.
+  const agrupa = node.level === 0 || hasChildren
   const isOpen = expanded.has(node.code)
   const account = byCode.get(node.code)
 
@@ -43,7 +46,7 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
           node.level === 0 && 'border-border-strong',
           // Las cuentas que agrupan a otras llevan la fila entera en el tono neutro del tema:
           // con la sangría sola, en un plan largo costaba ver dónde empezaba cada grupo.
-          hasChildren && 'bg-muted/60',
+          agrupa && 'bg-muted/60',
         )}
       >
         <div
@@ -78,7 +81,7 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
             {node.name}
           </span>
 
-          {hasChildren ? (
+          {agrupa ? (
             <span className="hidden shrink-0 text-[0.6875rem] text-muted-foreground @2xl:inline">
               {copy.accounts.grouping}
             </span>
