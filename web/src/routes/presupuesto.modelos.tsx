@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/budget/copy'
@@ -16,7 +17,8 @@ import type { BudgetModel } from '@/features/budget/types'
 import { useBudgetModels, useMonthlyIncome, useSaveBudgetModel } from '@/features/budget/use-budget'
 import { useAccounts } from '@/features/accounting/use-accounting'
 import { today } from '@/lib/dates'
-import { formatMoney, type MoneyDto } from '@/lib/money'
+import { formatMoney, parseMoneyInput, toMoneyInput, type MoneyDto } from '@/lib/money'
+import { montosAPorcentajes, sumaDePorcentajes } from '@/features/budget/montos-a-porcentajes'
 import { colorDe, ColorPicker } from '@/components/color-picker'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +26,8 @@ interface BucketDraft {
   id: string
   name: string
   percentage: string
+  // Lo que se escribió en modo monto. El porcentaje sale de acá, y es lo único que se guarda.
+  monto: string
   isSavings: boolean
   accountCodes: string[]
   persisted: boolean
@@ -45,6 +49,7 @@ const emptyBucket = (): BucketDraft => ({
   id: '',
   name: '',
   percentage: '0',
+  monto: '',
   isSavings: false,
   accountCodes: [],
   persisted: false,
@@ -58,8 +63,17 @@ const shareOf = (income: MoneyDto, percentage: string): MoneyDto => {
   return { minorUnits: share.toString(), currency: income.currency }
 }
 
-const sumOf = (buckets: BucketDraft[]): number =>
-  buckets.reduce((acc, bucket) => acc + (Number(bucket.percentage) || 0), 0)
+type Modo = 'porcentaje' | 'monto'
+
+// Lo que no se puede leer como monto cuenta como cero mientras se escribe: el campo todavía
+// está a medias, y la suma de abajo avisa que no llega.
+const centimosDe = (texto: string, income: MoneyDto): bigint => {
+  try {
+    return BigInt(parseMoneyInput(texto, income.currency).minorUnits)
+  } catch {
+    return 0n
+  }
+}
 
 interface FormProps {
   model?: BudgetModel
@@ -79,6 +93,7 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
           id: bucket.id,
           name: bucket.name,
           percentage: bucket.percentage,
+          monto: '',
           isSavings: bucket.isSavings,
           accountCodes: [...bucket.accountCodes],
           persisted: true,
@@ -87,8 +102,14 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
       : [emptyBucket()],
   )
 
+  const [modo, setModo] = useState<Modo>('porcentaje')
+
   const fields = copy.models.form
-  const total = sumOf(buckets)
+  const total = sumaDePorcentajes(buckets.map((bucket) => bucket.percentage))
+  const enMonto = modo === 'monto' && income !== null
+  const sumaDeMontos = income
+    ? { minorUnits: buckets.reduce((acc, bucket) => acc + centimosDe(bucket.monto, income), 0n).toString(), currency: income.currency }
+    : null
   const balanced = total === 100
   const savings = buckets.filter((bucket) => bucket.isSavings).length === 1
 
@@ -96,6 +117,31 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
     setBuckets((current) =>
       current.map((bucket, at) => (at === index ? { ...bucket, ...patch } : bucket)),
     )
+
+  // Al pasar a montos, cada cubeta arranca con lo que ya valía su porcentaje. Cambiar de modo no
+  // toca los porcentajes: solo escribir un monto los recalcula.
+  const cambiarModo = (nuevo: Modo) => {
+    if (nuevo === 'monto' && income) {
+      setBuckets((current) =>
+        current.map((bucket) => ({ ...bucket, monto: toMoneyInput(shareOf(income, bucket.percentage)) })),
+      )
+    }
+    setModo(nuevo)
+  }
+
+  // Los porcentajes se recalculan todos juntos: el redondeo se reparte entre las cubetas para que
+  // montos que suman el ingreso den 100 justo.
+  const updateMonto = (index: number, monto: string) => {
+    if (!income) return
+    setBuckets((current) => {
+      const conMonto = current.map((bucket, at) => (at === index ? { ...bucket, monto } : bucket))
+      const porcentajes = montosAPorcentajes(
+        conMonto.map((bucket) => centimosDe(bucket.monto, income)),
+        BigInt(income.minorUnits),
+      )
+      return conMonto.map((bucket, at) => ({ ...bucket, percentage: porcentajes[at] ?? '0' }))
+    })
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -130,15 +176,29 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
       </div>
 
       <div>
-        <h3 className="text-sm font-medium tracking-tight">{fields.buckets}</h3>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-medium tracking-tight">{fields.buckets}</h3>
+          {income ? (
+            <Tabs value={modo} onValueChange={(value) => cambiarModo(value as Modo)}>
+              <TabsList aria-label={fields.modo.label}>
+                <TabsTrigger value="porcentaje">{fields.modo.porcentaje}</TabsTrigger>
+                <TabsTrigger value="monto">{fields.modo.monto}</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          ) : null}
+        </div>
         <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">{fields.accountsHint}</p>
+        {income ? null : <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">{fields.sinIngreso}</p>}
 
         <ul className="mt-3 divide-y divide-border">
           {buckets.map((bucket, index) => (
             // eslint-disable-next-line react/no-array-index-key
             <li
               key={index}
-              className="grid gap-2 py-3 first:pt-0 last:pb-0 sm:grid-cols-[1fr_6rem_auto]"
+              className={cn(
+                'grid gap-2 py-3 first:pt-0 last:pb-0',
+                enMonto ? 'sm:grid-cols-[1fr_9rem_auto]' : 'sm:grid-cols-[1fr_6rem_auto]',
+              )}
             >
               <Input
                 value={bucket.name}
@@ -153,14 +213,25 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
                 }
               />
               <div>
-                <Input
-                  value={bucket.percentage}
-                  inputMode="decimal"
-                  required
-                  aria-label={fields.percentage}
-                  className="num num-right"
-                  onChange={(event) => update(index, { percentage: event.target.value })}
-                />
+                {enMonto ? (
+                  <Input
+                    value={bucket.monto}
+                    inputMode="decimal"
+                    required
+                    aria-label={fields.monto}
+                    className="num num-right"
+                    onChange={(event) => updateMonto(index, event.target.value)}
+                  />
+                ) : (
+                  <Input
+                    value={bucket.percentage}
+                    inputMode="decimal"
+                    required
+                    aria-label={fields.percentage}
+                    className="num num-right"
+                    onChange={(event) => update(index, { percentage: event.target.value })}
+                  />
+                )}
               </div>
               <Button
                 type="button"
@@ -176,7 +247,9 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
               <div className="sm:col-span-3">
                 {income ? (
                   <p className="text-xs text-muted-foreground">
-                    {fields.inColones(formatMoney(shareOf(income, bucket.percentage)))}
+                    {enMonto
+                      ? fields.enPorcentaje(bucket.percentage)
+                      : fields.inColones(formatMoney(shareOf(income, bucket.percentage)))}
                   </p>
                 ) : null}
                 {/* El color respira más que las líneas de texto que lo rodean: son fichas de
@@ -242,6 +315,11 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
         <span className="text-xs text-muted-foreground">{fields.total}</span>
         <span className={cn('num', balanced ? 'text-positive' : 'text-negative')}>{total}%</span>
         {!balanced ? <span className="text-xs text-negative">{fields.unbalancedHint}</span> : null}
+        {enMonto && !balanced && income && sumaDeMontos ? (
+          <span className="text-xs text-muted-foreground">
+            {fields.montosSuman(formatMoney(sumaDeMontos), formatMoney(income))}
+          </span>
+        ) : null}
         {balanced && !savings ? (
           <span className="text-xs text-negative">{fields.savingsMissing}</span>
         ) : null}

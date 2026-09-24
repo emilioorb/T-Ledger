@@ -85,6 +85,18 @@ export const copy = {
       // El ejemplo vive con el resto del copy: es texto que el usuario lee.
       bucketNamePlaceholder: 'Necesidades',
       percentage: 'Porcentaje',
+      // Cargar la cubeta en plata y que el modelo guarde el porcentaje que le corresponde sobre
+      // el ingreso del mes. El modelo sigue siendo de porcentajes: el monto es una forma de
+      // escribirlos.
+      modo: {
+        label: 'Cargar las cubetas en',
+        porcentaje: 'Porcentaje',
+        monto: 'Monto',
+      },
+      monto: 'Monto',
+      enPorcentaje: (porcentaje: string) => `= ${porcentaje} % del ingreso de este mes`,
+      montosSuman: (suma: string, ingreso: string) => `Los montos suman ${suma} de ${ingreso}.`,
+      sinIngreso: 'Para cargar montos, declará primero el ingreso de este mes en Presupuesto.',
       isSavings: 'Es la cubeta de ahorro',
       isSavingsHint:
         'Los abonos extraordinarios a deudas caen acá. Tiene que haber exactamente una.',
