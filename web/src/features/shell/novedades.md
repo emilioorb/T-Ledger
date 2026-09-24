@@ -8,6 +8,31 @@ Cada entrega abre con `## AAAA-MM-DD · vX.Y.Z` y lleva hasta tres grupos: `### 
 listas anidadas y tablas. La negrita marca **de qué** habla cada nota, para recorrer la lista
 sin leerla entera. Lo que está antes de la primera entrega, como este texto, no se muestra.
 
+## 2026-09-24 · v1.4.0
+
+### Nuevo
+
+- **Dos personas en el mismo libro ya no se pisan.** Si alguien guardó algo mientras lo
+  editabas, en vez de sobrescribirlo sin aviso te lo dice y ofrece «Cargar lo último»: ves lo
+  que guardó la otra persona y decidís.
+- **Cubetas en monto.** En un modelo de presupuesto podés cargar cada cubeta en colones, y se
+  convierte sola al porcentaje del ingreso del mes. Si los montos suman el ingreso, dan 100 %
+  justo.
+
+### Mejorado
+
+- **El tipo de cambio del BCCR se ve también en el teléfono**, arriba, a la par de los atajos.
+- **Nadie se queda sin libro.** Si borran un libro compartido, te sacan del único que tenías o
+  te vas de él, se te abre uno propio, vacío, con su plan de cuentas.
+- **Pagar, deshacer o anular dos veces a la vez** registra una sola vez: sin gastos de más ni
+  reversiones dobles.
+
+### Corregido
+
+- **Cerrar un mes mientras entraba un movimiento** podía dejarlo sin asentar adentro del mes
+  cerrado.
+- **Un error al pagar una cuota** se avisaba dos veces.
+
 ## 2026-09-24 · v1.3.1
 
 ### Mejorado
