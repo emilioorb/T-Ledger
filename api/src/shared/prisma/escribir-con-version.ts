@@ -16,6 +16,16 @@ export const condicionDeVersion = (version: number | undefined, que: string): { 
   return {}
 }
 
+// Lo mismo cuando la fila ya se leyó dentro del candado del libro: comparar ahí no tiene carrera,
+// y corta antes de que la regla escriba nada.
+export const exigirVersion = (delCliente: number | undefined, leida: number, que: string): void => {
+  if (delCliente === undefined) {
+    registro.log(`Escritura sin versión: ${que}`)
+    return
+  }
+  if (delCliente !== leida) throw new EditadoPorOtroError()
+}
+
 // Toda escritura sobre una fila versionada la sube, también las laterales: si no, quien la
 // leyó antes guardaría encima sin enterarse.
 export const SUBIR_VERSION = { version: { increment: 1 } } as const

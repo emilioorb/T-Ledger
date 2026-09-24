@@ -47,7 +47,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Acepta: guardar con versión vieja da 409; el mapper y el presenter exponen `version`.
   - Archivos: `accounting/domain/movement.ts`, `accounting.mappers.ts`, `prisma-movement.repository.ts`, presenter,
     spec del repo. (M)
-- [ ] **6. Editar y anular movimientos.** Reglas adentro (mes abierto, anulado), `version` opcional en el contrato.
+- [x] **6. Editar y anular movimientos.** Reglas adentro (mes abierto, anulado), `version` opcional en el contrato.
   - Acepta: dos ediciones a la vez, una gana y la otra recibe 409; dos anulaciones a la vez dejan **un** asiento
     inverso; editar en un mes que se cierra en paralelo no deja asientos adentro.
   - Archivos: `update-movement.use-case.ts`, `void-movement.use-case.ts`, `accounting.schemas.ts`,

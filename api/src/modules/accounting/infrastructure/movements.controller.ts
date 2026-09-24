@@ -35,10 +35,12 @@ import {
   listMovementsQuerySchema,
   movementTotalsQuerySchema,
   updateMovementSchema,
+  voidMovementSchema,
   type CreateMovementInput,
   type ListMovementsQuery,
   type MovementTotalsQuery,
   type UpdateMovementInput,
+  type VoidMovementInput,
 } from './accounting.schemas.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
@@ -186,7 +188,10 @@ export class MovementsController {
   @Permiso('movimiento', 'create')
   @Post(':id/void')
   @HttpCode(200)
-  async void(@Param('id') id: string): Promise<MovementResponse> {
-    return present(await this.voidMovement.execute(id))
+  async void(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(voidMovementSchema)) input: VoidMovementInput,
+  ): Promise<MovementResponse> {
+    return present(await this.voidMovement.execute(id, input.version))
   }
 }

@@ -17,6 +17,7 @@ import {
   updateAccountSchema,
   updateCategorySchema,
   updateMovementSchema,
+  voidMovementSchema,
 } from './accounting.schemas.js'
 import {
   accountResponseSchema,
@@ -155,6 +156,7 @@ export const accountingOpenApiPaths: ZodOpenApiPathsObject = {
   '/movements/{id}/void': {
     post: {
       summary: 'Anula un movimiento y registra el asiento de reversión',
+      requestBody: { required: false, ...json(voidMovementSchema) },
       responses: { 200: { description: 'Movimiento anulado', ...json(movementResponseSchema) } },
     },
   },

@@ -192,3 +192,74 @@ describe('el guardián de período', () => {
     expect((await post(`/movements/${movimiento.id}/void`)).status).toBe(409)
   })
 })
+
+// Dos personas sobre el mismo movimiento, de verdad en paralelo: las reglas se leen dentro del
+// candado del libro, así que la segunda ve lo que dejó la primera (ADR-006).
+describe('dos escritores sobre el mismo movimiento', () => {
+  const version = async (id: string) => ((await get(`/movements/${id}`).expect(200)).body as { version: number }).version
+
+  it('dos ediciones con la misma versión: una guarda y la otra recibe 409', async () => {
+    const movimiento = await crear()
+    const leida = await version(movimiento.id)
+
+    const respuestas = await Promise.all([
+      patch(`/movements/${movimiento.id}`, { counterparty: 'Primera', version: leida }),
+      patch(`/movements/${movimiento.id}`, { counterparty: 'Segunda', version: leida }),
+    ])
+
+    expect(respuestas.map((r) => r.status).sort()).toEqual([200, 409])
+    expect(respuestas.find((r) => r.status === 409)?.body.error.code).toBe('EDITADO_POR_OTRO')
+    expect(await prisma.journalEntry.count()).toBe(3)
+  })
+
+  it('dos anulaciones a la vez dejan una sola reversión', async () => {
+    const movimiento = await crear()
+    const leida = await version(movimiento.id)
+
+    const respuestas = await Promise.all([
+      post(`/movements/${movimiento.id}/void`, { version: leida }),
+      post(`/movements/${movimiento.id}/void`, { version: leida }),
+    ])
+
+    expect(respuestas.map((r) => r.status)).toEqual([200, 200])
+    expect(await prisma.journalEntry.count()).toBe(2)
+    expect((await mayorDe('6100')).closingBalance.minorUnits).toBe('0')
+  })
+
+  it('una edición con una versión vieja no guarda', async () => {
+    const movimiento = await crear()
+    const leida = await version(movimiento.id)
+    await patch(`/movements/${movimiento.id}`, { counterparty: 'Primera' }).expect(200)
+
+    const response = await patch(`/movements/${movimiento.id}`, { counterparty: 'Segunda', version: leida })
+
+    expect(response.status).toBe(409)
+    expect((await get(`/movements/${movimiento.id}`).expect(200)).body.counterparty).toBe('Primera')
+  })
+
+  // Determinista: el cierre toma el candado primero y la edición llega mientras lo tiene. Con la
+  // regla leída afuera, la edición veía el mes abierto y asentaba en un mes ya cerrado.
+  it('editar mientras el mes se cierra: espera al cierre y recibe «mes cerrado»', async () => {
+    const movimiento = await crear({ date: '2026-08-15' })
+    let soltar: () => void = () => {}
+    const retenido = new Promise<void>((listo) => (soltar = listo))
+    let tomado: () => void = () => {}
+    const yaTomo = new Promise<void>((listo) => (tomado = listo))
+
+    const cierre = prisma.withTransaction(async () => {
+      tomado()
+      await retenido
+      await prisma.client.accountingPeriod.create({
+        data: { bookId: prisma.libro, period: '2026-08', status: 'CLOSED', closedAt: new Date() },
+      })
+    })
+    await yaTomo
+    const edicion = patch(`/movements/${movimiento.id}`, { counterparty: 'Tarde' }).then((r) => r)
+    await new Promise((listo) => setTimeout(listo, 300))
+    soltar()
+    await cierre
+
+    expect((await edicion).status).toBe(409)
+    expect(await prisma.journalEntry.count()).toBe(1)
+  })
+})

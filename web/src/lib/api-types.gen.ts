@@ -1111,7 +1111,11 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VoidMovementInput"];
+                };
+            };
             responses: {
                 /** @description Movimiento anulado */
                 200: {
@@ -3374,6 +3378,14 @@ export interface components {
             counterparty?: string;
             amount?: components["schemas"]["Money"];
             paymentAccountCode?: string | null;
+            version?: number;
+        };
+        /**
+         * VoidMovementInput
+         * @default {}
+         */
+        VoidMovementInput: {
+            version?: number;
         };
         /** CreateJournalEntryInput */
         CreateJournalEntryInput: {
