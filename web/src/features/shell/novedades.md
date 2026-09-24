@@ -8,6 +8,18 @@ Cada entrega abre con `## AAAA-MM-DD · vX.Y.Z` y lleva hasta tres grupos: `### 
 listas anidadas y tablas. La negrita marca **de qué** habla cada nota, para recorrer la lista
 sin leerla entera. Lo que está antes de la primera entrega, como este texto, no se muestra.
 
+## 2026-09-24 · v1.3.1
+
+### Mejorado
+
+- **Nimbo aparece también en el teléfono**, chiquito, al final de la fila de la fecha.
+- **En el plan de cuentas, las cuentas que agrupan a otras** llevan la fila entera en un tono
+  neutro: se ve de un vistazo dónde empieza cada grupo.
+
+### Corregido
+
+- **Un saldo muy grande en el plan de cuentas** se salía de su fila en el teléfono.
+
 ## 2026-09-23 · v1.3.0
 
 ### Nuevo
