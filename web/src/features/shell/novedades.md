@@ -21,6 +21,7 @@ sin leerla entera. Lo que está antes de la primera entrega, como este texto, no
 
 ### Mejorado
 
+- **La app abre más liviana:** lo que se descarga antes de la primera pantalla pesa un 13 % menos.
 - **El tipo de cambio del BCCR se ve también en el teléfono**, arriba, a la par de los atajos.
 - **Nadie se queda sin libro.** Si borran un libro compartido, te sacan del único que tenías o
   te vas de él, se te abre uno propio, vacío, con su plan de cuentas.
