@@ -15,7 +15,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Acepta: cada caso tiene su código en la respuesta; ninguno va a Sentry como error; el mensaje de
     `EDITADO_POR_OTRO` dice «esto cambió mientras lo editabas», sin culpar a nadie.
   - Archivos: `shared/http/api-error.ts`, `shared/http/all-exceptions.filter.ts`, su spec. (S)
-- [ ] **3. Migración.** `version Int @default(0)` en las 12 entidades e índice único parcial
+- [x] **3. Migración.** `version Int @default(0)` en las 12 entidades e índice único parcial
   `bank_lines("movementId") WHERE status = 'MATCHED'`.
   - Acepta: la migración corre sobre una copia con datos y no corta nada; el índice rechaza dos líneas conciliadas al
     mismo movimiento; la guarda `clasificacion-de-modelos` sigue verde.

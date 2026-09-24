@@ -8,6 +8,7 @@ import { startPostgres, type RunningPostgres } from '../../../test/postgres-cont
 import type { ParsedLine } from '../domain/bank-line.js'
 import type { StatementHeader } from '../domain/bank-statement-repository.port.js'
 import { PrismaBankStatementRepository } from './prisma-bank-statement.repository.js'
+import { errorDeLaBase } from '../../../shared/http/all-exceptions.filter.js'
 import { LIBRO_DE_PRUEBA } from '../../../shared/libro/libro-de-prueba.js'
 import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 
@@ -144,5 +145,32 @@ describe('PrismaBankStatementRepository', () => {
 
     expect((await repository.pendingLines(CUENTA, septiembre, 1, 20)).totalItems).toBe(1)
     expect(await repository.isMovementTaken('mov-1')).toBe(false)
+  })
+
+  it('un movimiento concilia con una sola línea: la base rechaza la segunda', async () => {
+    // Es una regla entre filas: con dos personas conciliando a la vez, solo la base la sostiene.
+    await repository.save(extracto(), [linea('REF1'), linea('REF2')])
+    const [una, otra] = await prisma.bankLine.findMany({ orderBy: { reference: 'asc' } })
+    const movimiento = randomUUID()
+
+    await repository.markMatched(una!.id, movimiento)
+    const rechazo = await repository.markMatched(otra!.id, movimiento).then(
+      () => null,
+      (error: unknown) => error,
+    )
+
+    expect(errorDeLaBase(rechazo)).toBe('unicidad')
+  })
+
+  it('una línea desconciliada libera el movimiento para otra', async () => {
+    await repository.save(extracto(), [linea('REF1'), linea('REF2')])
+    const [una, otra] = await prisma.bankLine.findMany({ orderBy: { reference: 'asc' } })
+    const movimiento = randomUUID()
+
+    await repository.markMatched(una!.id, movimiento)
+    await repository.markPending(una!.id)
+    await repository.markMatched(otra!.id, movimiento)
+
+    expect(await prisma.bankLine.count({ where: { status: 'MATCHED' } })).toBe(1)
   })
 })

@@ -1,7 +1,10 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "esm"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "esm"
+  // Índices parciales: una línea bancaria conciliada por movimiento (6b). Preview desde 7.4,
+  // con soporte de migraciones e introspección.
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -26,6 +29,8 @@ enum DebtDirection {
 
 model Debt {
   id             String        @id @default(uuid(7))
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version        Int           @default(0)
   bookId         String
   name           String
   counterparty   String
@@ -116,6 +121,8 @@ model Account {
   // conserva el código como identificador legible en vez de meter un uuid, porque es lo que
   // hace usable un plan de cuentas.
   bookId           String
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version          Int          @default(0)
   code             String
   name             String
   accountClass     AccountClass
@@ -180,6 +187,8 @@ model JournalLine {
 
 model Category {
   id          String       @id @default(uuid(7))
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version     Int          @default(0)
   bookId      String
   name        String
   kind        CategoryKind
@@ -199,6 +208,8 @@ model Category {
 
 model Movement {
   id                 String         @id
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version            Int            @default(0)
   bookId             String
   date               DateTime       @db.Date
   kind               CategoryKind
@@ -221,6 +232,8 @@ model Movement {
 model AccountingPeriod {
   // Cada libro cierra sus propios meses: «2026-09» existe una vez por libro, no una sola vez.
   bookId   String
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version  Int          @default(0)
   period   String
   status   PeriodStatus @default(OPEN)
   closedAt DateTime?    @db.Timestamptz(3)
@@ -233,6 +246,8 @@ model AccountingPeriod {
 
 model BudgetModel {
   id        String         @id @default(uuid(7))
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version   Int            @default(0)
   bookId    String
   name      String
   active    Boolean        @default(false)
@@ -271,6 +286,8 @@ model BudgetBucket {
 
 model BudgetIncome {
   bookId      String
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version     Int    @default(0)
   period      String
   amountMinor BigInt
   currency    String @db.Char(3)
@@ -283,6 +300,8 @@ model BudgetIncome {
 
 model Goal {
   id          String   @id @default(uuid(7))
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version     Int      @default(0)
   bookId      String
   name        String
   targetMinor BigInt
@@ -323,6 +342,8 @@ enum InvestmentKind {
 
 model Investment {
   id             String         @id @default(uuid(7))
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version        Int            @default(0)
   bookId         String
   name           String
   principalMinor BigInt
@@ -365,6 +386,8 @@ enum BankLineStatus {
 
 model ImportProfile {
   id                 String   @id @default(uuid(7))
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version            Int      @default(0)
   bookId             String
   name               String
   delimiter          String   @db.Char(1)
@@ -390,6 +413,8 @@ model ImportProfile {
 
 model BankAccount {
   id          String   @id @default(uuid(7))
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version     Int      @default(0)
   bookId      String
   name        String
   accountCode String
@@ -426,6 +451,8 @@ model BankStatement {
 
 model BankLine {
   id            String         @id @default(uuid(7))
+  // Control optimista (6b): cada edición la sube; guardar con una vieja da 409.
+  version       Int            @default(0)
   bookId        String
   statementId   String
   bankAccountId String
@@ -443,6 +470,9 @@ model BankLine {
   book        book          @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   @@unique([bankAccountId, hash])
+  // Un movimiento concilia con una sola línea. Es una regla entre filas: solo la base la puede
+  // sostener con dos personas conciliando a la vez.
+  @@unique([movementId], map: "bank_lines_movimiento_conciliado_una_vez", where: raw("status = 'MATCHED'"))
   @@index([bookId, bankAccountId, status])
   @@index([bookId, date])
   @@map("bank_lines")
@@ -601,16 +631,16 @@ model bookMember {
 }
 
 model bookInvitation {
-  id             String   @id
+  id             String           @id
   organizationId String
-  book           book     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  book           book             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   email          String
   role           String?
-  status         String   @default("pending")
+  status         String           @default("pending")
   expiresAt      DateTime
-  createdAt      DateTime @default(now())
+  createdAt      DateTime         @default(now())
   inviterId      String
-  authuser       authUser @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  authuser       authUser         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
   enlaces        InvitationLink[]
 
   @@index([organizationId])
@@ -622,12 +652,12 @@ model bookInvitation {
 // ningún libro. No lleva libro porque es de la instancia; la genera quien la administra para
 // quien pidió acceso. Se gasta al registrarse y vence sola.
 model AccessInvitation {
-  id        String    @id @default(uuid(7))
+  id        String           @id @default(uuid(7))
   email     String
-  expiresAt DateTime  @db.Timestamptz(3)
-  usedAt    DateTime? @db.Timestamptz(3)
+  expiresAt DateTime         @db.Timestamptz(3)
+  usedAt    DateTime?        @db.Timestamptz(3)
   createdBy String
-  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  createdAt DateTime         @default(now()) @db.Timestamptz(3)
   enlaces   InvitationLink[]
 
   @@index([email])
