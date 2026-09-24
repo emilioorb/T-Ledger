@@ -41,6 +41,9 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
           // La raíz se marca con una línea más fuerte, no con más alto: todas las filas
           // miden lo mismo y la jerarquía se lee por sangría y peso.
           node.level === 0 && 'border-border-strong',
+          // Las cuentas que agrupan a otras llevan la fila entera en el tono neutro del tema:
+          // con la sangría sola, en un plan largo costaba ver dónde empezaba cada grupo.
+          hasChildren && 'bg-muted/60',
         )}
       >
         <div
@@ -100,7 +103,9 @@ const AccountRow = ({ node, byCode, expanded, onToggle, onEdit }: RowProps) => {
           <Amount
             money={node.balance}
             emphasis={node.level === 0 ? 'strong' : 'normal'}
-            className="w-28 text-sm @2xl:w-32"
+            // Ancho mínimo y no fijo: alinea la columna, y un saldo de diez cifras crece en vez
+            // de salirse de la fila.
+            className="min-w-28 shrink-0 text-sm @2xl:min-w-32"
           />
         </div>
       </li>

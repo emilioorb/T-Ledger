@@ -43,6 +43,9 @@ export const CabeceraDelTablero = ({ nombre, senales, resumen }: Props) => {
             {mes.replace('.', '')}
           </span>
         </span>
+        {/* En el teléfono la mascota va al final de la fila de la fecha, más chica: al lado
+            del saludo no le quedaba lugar. En pantallas anchas vuelve a su sitio de abajo. */}
+        <AnimoAvatar senales={senales} className="ml-auto w-10 shrink-0 sm:hidden" />
       </div>
 
       <div className="flex min-w-0 flex-1 items-center gap-4 px-5 py-4">
