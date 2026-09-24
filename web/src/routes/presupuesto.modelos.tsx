@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePrimaryAction } from '@/features/shortcuts/primary-action'
 import { copy } from '@/features/budget/copy'
+import { copyMontos } from '@/features/budget/copy-montos'
 import type { BudgetModel } from '@/features/budget/types'
 import { useBudgetModels, useMonthlyIncome, useSaveBudgetModel } from '@/features/budget/use-budget'
 import { useAccounts } from '@/features/accounting/use-accounting'
@@ -105,6 +106,7 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
   const [modo, setModo] = useState<Modo>('porcentaje')
 
   const fields = copy.models.form
+  const montos = copyMontos
   const total = sumaDePorcentajes(buckets.map((bucket) => bucket.percentage))
   const enMonto = modo === 'monto' && income !== null
   const sumaDeMontos = income
@@ -180,15 +182,15 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
           <h3 className="text-sm font-medium tracking-tight">{fields.buckets}</h3>
           {income ? (
             <Tabs value={modo} onValueChange={(value) => cambiarModo(value as Modo)}>
-              <TabsList aria-label={fields.modo.label}>
-                <TabsTrigger value="porcentaje">{fields.modo.porcentaje}</TabsTrigger>
-                <TabsTrigger value="monto">{fields.modo.monto}</TabsTrigger>
+              <TabsList aria-label={montos.modo.label}>
+                <TabsTrigger value="porcentaje">{montos.modo.porcentaje}</TabsTrigger>
+                <TabsTrigger value="monto">{montos.modo.monto}</TabsTrigger>
               </TabsList>
             </Tabs>
           ) : null}
         </div>
         <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">{fields.accountsHint}</p>
-        {income ? null : <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">{fields.sinIngreso}</p>}
+        {income ? null : <p className="mt-0.5 max-w-[65ch] text-xs text-muted-foreground">{montos.sinIngreso}</p>}
 
         <ul className="mt-3 divide-y divide-border">
           {buckets.map((bucket, index) => (
@@ -218,7 +220,7 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
                     value={bucket.monto}
                     inputMode="decimal"
                     required
-                    aria-label={fields.monto}
+                    aria-label={montos.monto}
                     className="num num-right"
                     onChange={(event) => updateMonto(index, event.target.value)}
                   />
@@ -248,7 +250,7 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
                 {income ? (
                   <p className="text-xs text-muted-foreground">
                     {enMonto
-                      ? fields.enPorcentaje(bucket.percentage)
+                      ? montos.enPorcentaje(bucket.percentage)
                       : fields.inColones(formatMoney(shareOf(income, bucket.percentage)))}
                   </p>
                 ) : null}
@@ -317,7 +319,7 @@ const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: For
         {!balanced ? <span className="text-xs text-negative">{fields.unbalancedHint}</span> : null}
         {enMonto && !balanced && income && sumaDeMontos ? (
           <span className="text-xs text-muted-foreground">
-            {fields.montosSuman(formatMoney(sumaDeMontos), formatMoney(income))}
+            {montos.montosSuman(formatMoney(sumaDeMontos), formatMoney(income))}
           </span>
         ) : null}
         {balanced && !savings ? (
