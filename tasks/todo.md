@@ -5,11 +5,15 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 
 ## Fase 0: cimientos
 
-- [x] **1. Transacción serializable con reintento.** `withTransaction` abre Serializable y reintenta hasta 3 veces ante
-  `P2034`; agotado, lanza un error propio.
-  - Acepta: dos transacciones que chocan terminan una aplicada y otra reintentada; un test prueba que el adapter
-    traduce 40001 y 40P01 (también en el `COMMIT`); una transacción anidada no reintenta por su cuenta.
-  - Archivos: `shared/prisma/prisma.service.ts`, `shared/prisma/unit-of-work.port.ts`, spec nuevo. (S)
+- [x] **1. Transacción serializable con reintento.** Hecha y medida: daba errores entre libros (27 de 120 con cuatro
+  libros). Reemplazada por la 1b ([ADR-006](../docs/decisions/ADR-006-candado-por-libro-para-la-concurrencia.md)).
+- [ ] **1b. Candado por libro.** `withTransaction` en Read Committed toma `pg_advisory_xact_lock` del libro como primera
+  instrucción; sin libro (BCCR) no toma candado. La clave viaja con la transacción. `SET LOCAL lock_timeout`; pool,
+  `timeout` y `maxWait` explícitos; 55P03 y P2028 a `REINTENTAR`; reintento acotado solo ante 40P01.
+  - Acepta: dos escritores del mismo libro quedan en fila (la regla del cupo da una fila, sin reintentos); dos libros no
+    se esperan (uno retenido no demora al otro); `saveMany` del BCCR corre sin libro; la espera vencida da `REINTENTAR`.
+  - Archivos: `shared/prisma/prisma.service.ts`, `choque-de-transaccion.ts`, `transaccion-serializable.spec.ts` (pasa a
+    `candado-por-libro.spec.ts`), `dos-libros-en-paralelo.spec.ts`, filtro de errores. (M)
 - [x] **2. Errores de la base con respuesta propia.** `EDITADO_POR_OTRO` (409), `REINTENTAR` (409), `P2002` a 409 y `P2025`
   a 404, en vez de 500.
   - Acepta: cada caso tiene su código en la respuesta; ninguno va a Sentry como error; el mensaje de
@@ -26,6 +30,12 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Acepta: el ayudante distingue los tres casos; el test de dos libros pasa 20 veces seguidas sin `REINTENTAR`.
   - Archivos: `shared/prisma/escribir-con-version.ts`, su spec, spec de dos libros. (S)
 
+- [ ] **4b. Ninguna escritura de un libro fuera de una transacción.** El filtro de libro rechaza la escritura sin
+  transacción, y la que va a otro libro que el del candado. Antes, pasar a transacción las que hoy van sueltas:
+  conciliar, categorías, cuentas, cuentas bancarias, perfiles de importación, ingreso mensual y altas sueltas.
+  - Acepta: la suite completa corre con el guardia prendido; un test prueba que una escritura suelta tira.
+  - Se reparte en sub-tareas de ≤5 archivos según lo que marque la suite al prender el guardia.
+
 ### Checkpoint A
 - [ ] Suite completa verde, `check:task` limpio. Si el test de dos libros mostró falsos conflictos, parar y revisar.
 
@@ -41,6 +51,9 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
     inverso; editar en un mes que se cierra en paralelo no deja asientos adentro.
   - Archivos: `update-movement.use-case.ts`, `void-movement.use-case.ts`, `accounting.schemas.ts`,
     `movements.controller.ts`, `update-movement.e2e.spec.ts`. (M)
+- [ ] **6b. Crear un movimiento y un asiento manual** leen el mes abierto adentro, después del candado.
+  - Acepta: cerrar un mes mientras se crea un movimiento o un asiento en él: o entra antes o recibe «mes cerrado».
+  - Archivos: `create-movement.use-case.ts`, `create-journal-entry.use-case.ts`, `prisma-journal.repository.ts`, spec. (S)
 - [ ] **7. Comprobante de un movimiento.** Adjuntar o quitar va adentro y con versión; un movimiento anulado no revive.
   - Acepta: anular y adjuntar a la vez no vuelve el movimiento a activo; subir a R2 queda fuera de la transacción.
   - Archivos: `manage-comprobante.use-case.ts`, `movements.controller.ts`, spec. (S)
@@ -102,6 +115,9 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Archivos: caso de uso nuevo, `budget.controller.ts`, `prisma-budget-income.repository.ts`, spec. (S)
 - [ ] **18. Categorías y cuentas.** Versión y transacción.
   - Archivos: `manage-categories.use-case.ts`, `save-account.use-case.ts`, sus repos, spec nuevo. (M)
+
+- [ ] **18b. Borrar un libro** con candado por persona: dos borrados a la vez no la dejan sin libros.
+  - Archivos: `libro/application/borrar-libro.use-case.ts`, spec. (S)
 
 ### Checkpoint D
 - [ ] Suite completa verde; `check:full` limpio; la API publicable sola (acepta pedidos sin `version`).

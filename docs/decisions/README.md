@@ -11,6 +11,7 @@ valor de un ADR es el contexto de cuando se decidió, no la conclusión.
 | [003](ADR-003-diferir-el-cifrado-extremo-a-extremo.md) | El cifrado extremo a extremo se difiere, no se descarta | Aceptado |
 | [004](ADR-004-audit-log-en-la-transaccion-del-cambio.md) | El audit log se escribe en la misma transacción que el cambio | Aceptado |
 | [005](ADR-005-sentry-sin-datos-del-libro.md) | Sentry no recibe un solo dato del libro | Aceptado |
+| [006](ADR-006-candado-por-libro-para-la-concurrencia.md) | Las escrituras de un libro van en fila, con un candado por libro | Aceptado |
 
 El diseño completo del que salen las cinco está en
 [`../superpowers/specs/2026-09-21-multiusuario-design.md`](../superpowers/specs/2026-09-21-multiusuario-design.md).

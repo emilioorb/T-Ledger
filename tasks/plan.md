@@ -24,9 +24,11 @@ cada uno con su test de dos escritores reales en paralelo.
 - **La transacción la abre el caso de uso**, no el repositorio. Los cuatro repositorios que
   abren la suya pasan a usar la del caso de uso, para que las lecturas de la regla queden
   adentro.
-- **Serializable en todas las escrituras de negocio**, con 3 reintentos ante `P2034`. Antes de
-  seguir se mide (tarea 1) que el adapter traduce 40001 y 40P01, y (tarea 4) que dos libros en
-  paralelo no chocan.
+- **Un candado por libro, en Read Committed** ([ADR-006](../docs/decisions/ADR-006-candado-por-libro-para-la-concurrencia.md)).
+  La spec pedía Serializable; medido, daba errores entre libros que no se tocan (27 de 120 con
+  cuatro libros a la vez). Las escrituras de un libro van en fila y los libros no se esperan.
+- **Ninguna escritura de un libro fuera de una transacción**: lo hace cumplir el filtro de libro,
+  no la memoria de quien programa.
 
 ## Riesgos
 

@@ -36,11 +36,13 @@ nada visible.
    en vez de pisarlo; si ya no existe, 404. Vale para todas las entidades que se editan.
 2. **Las transiciones de estado no se duplican**: dos anulaciones, dos conciliaciones, dos pagos
    o dos «deshacer» simultáneos del mismo objeto terminan en uno solo.
-3. **Las escrituras de varias filas son atómicas y serializables**: con dos escritores a la
-   vez, cada libro queda como si hubieran ido una detrás de la otra. Un choque de la base
-   (`P2034`) se reintenta solo, hasta 3 veces, y recién después se informa con un código
-   distinto (`REINTENTAR`). Un mes que se cierra al mismo tiempo que se anota un movimiento en
-   él no queda con asientos adentro.
+3. **Las escrituras de varias filas son atómicas y van en fila por libro**: con dos escritores
+   a la vez, cada libro queda como si hubieran ido una detrás de la otra, y dos libros distintos
+   no se esperan ni chocan. Si la espera pasa su tope, o hay un deadlock que no se resuelve
+   reintentando, se informa con un código distinto (`REINTENTAR`). Un mes que se cierra al mismo
+   tiempo que se anota un movimiento en él no queda con asientos adentro. (Cambiado el
+   2026-09-24: la spec pedía Serializable; medido, daba errores entre libros. Ver
+   [ADR-006](../decisions/ADR-006-candado-por-libro-para-la-concurrencia.md).)
 4. **En la web**, el 409 de edición dice, sin tecnicismos y sin culpar a nadie, que eso cambió
    mientras lo editabas, y ofrece cargar lo último. Lo escrito no se pierde sin avisar.
 5. **Sin cortar a nadie durante el deploy**: la API acepta pedidos sin `version` mientras haya
@@ -62,7 +64,9 @@ conciliación de sus hallazgos está al final.
    cerrados después) se hace dentro del mismo `withTransaction` que escribe. Sin esto,
    Serializable no ve el conflicto: Postgres solo detecta lo que las dos transacciones leen y
    escriben adentro.
-2. **Transacciones serializables con reintento acotado.** `withTransaction` abre con
+2. **~~Transacciones serializables con reintento acotado.~~** Reemplazado por un candado por
+   libro ([ADR-006](../decisions/ADR-006-candado-por-libro-para-la-concurrencia.md)): lo que
+   sigue quedó como registro de lo que se probó. `withTransaction` abre con
    `isolationLevel: Serializable` y reintenta ante `P2034` hasta 3 veces. Reintentar es seguro
    solo porque, por el punto 1, la función vuelve a leer todo adentro, y porque toda escritura
    de una edición lleva su condición (punto 3): un reintento con datos viejos falla en vez de
