@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ApiError, apiFetch } from '@/lib/api'
+import { ApiError, apiFetch, esEditadoPorOtro, esReintentar } from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import { copy } from './copy'
 import type {
@@ -144,10 +144,12 @@ export const useDeshacerPago = (id: string) => {
   })
 }
 
-// Por el `status`: el 409 es el mes cerrado y el 422 lo que el servidor explica con palabras
-// que la persona entiende —no quedan cuotas, la fecha es anterior al último pago—.
+// Por el `code` y no por el 409 a secas: el 409 también es «otro guardó antes» y «probá de nuevo»,
+// y esos traen su propio mensaje. `CONFLICT` es el mes cerrado; el 422, lo que el servidor explica
+// con palabras que la persona entiende —no quedan cuotas, la fecha es anterior al último pago—.
 const motivoDelRechazo = (error: unknown): string => {
-  if (error instanceof ApiError && error.status === 409) return copy.pagos.toast.closedPeriod
+  if (esEditadoPorOtro(error) || esReintentar(error)) return error.message
+  if (error instanceof ApiError && error.code === 'CONFLICT') return copy.pagos.toast.closedPeriod
   if (error instanceof ApiError && error.status === 422) return error.message
   return copy.pagos.toast.failed
 }

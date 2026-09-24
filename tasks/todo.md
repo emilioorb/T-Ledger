@@ -127,7 +127,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 
 ## Fase 7: web
 
-- [ ] **19. Cliente.** Cada pedido manda la versión del cliente en una cabecera; los errores se distinguen por `code`
+- [x] **19. Cliente.** Cada pedido manda la versión del cliente en una cabecera; los errores se distinguen por `code`
   (`EDITADO_POR_OTRO`, `REINTENTAR`, mes cerrado), ya no por el 409 a secas.
   - Archivos: `web/src/lib/api.ts`, `web/src/lib/api-types.gen.ts`, `web/src/features/debts/use-debts.ts`, spec. (S)
 - [ ] **20. Formularios y acciones.** Mandan la `version` que vieron (y pagar, la `cuota`: hasta que la mande, dos

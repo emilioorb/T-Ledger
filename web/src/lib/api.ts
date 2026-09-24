@@ -36,6 +36,18 @@ export const fetchAlServidor: typeof fetch = async (input, init) => {
   }
 }
 
+// Otra persona guardó antes sobre lo mismo (6b): hay que cargar lo último antes de volver a
+// guardar. Distinto de REINTENTAR, que es un cruce momentáneo y se arregla con solo probar de nuevo.
+export const esEditadoPorOtro = (error: unknown): error is ApiError =>
+  error instanceof ApiError && error.code === 'EDITADO_POR_OTRO'
+
+export const esReintentar = (error: unknown): error is ApiError =>
+  error instanceof ApiError && error.code === 'REINTENTAR'
+
+// Qué versión de la app hizo el pedido: la API cuenta cuántos pedidos llegan sin `version` y de
+// qué versiones, para saber cuándo la puede volver obligatoria.
+export const CABECERA_DE_VERSION = 'x-version-cliente'
+
 const isApiErrorBody =(value: unknown): value is ApiErrorBody =>
   typeof value === 'object' &&
   value !== null &&
@@ -49,8 +61,8 @@ export const apiFetch = async <T>(path: string, init?: RequestInit): Promise<T> 
   const response = await fetchAlServidor(`/api/v1${path}`, {
     ...init,
     headers: isFormData
-      ? { ...init?.headers }
-      : { 'content-type': 'application/json', ...init?.headers },
+      ? { [CABECERA_DE_VERSION]: __APP_VERSION__, ...init?.headers }
+      : { 'content-type': 'application/json', [CABECERA_DE_VERSION]: __APP_VERSION__, ...init?.headers },
   })
 
   if (response.status === 204) return undefined as T
