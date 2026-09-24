@@ -1,11 +1,11 @@
 import { Logger } from '@nestjs/common'
 import { betterAuth } from 'better-auth'
-import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { organization } from 'better-auth/plugins'
 import type { PrismaClient } from '../../../generated/prisma/client.js'
 import type { Env } from '../../../shared/config/env.js'
-import { entrarComoAutor, exigirAutor } from './autor-de-la-peticion.js'
+import { exigirAutor } from './autor-de-la-peticion.js'
 import { librosQueSeVanConLaCuenta } from './baja-de-cuenta.js'
 import { puedeCrearLibro } from './cuantos-libros.js'
 import { ac, roles } from './roles.js'
@@ -88,21 +88,11 @@ export const crearAuth = (
     advanced: {
       ipAddress: { ipAddressHeaders: ['x-vercel-forwarded-for'] },
     },
-    // Quién ejecuta, guardado antes de que corra el endpoint. Es lo que les falta a los
-    // ganchos de organización para poder firmar un cambio de rol o una expulsión: ellos
-    // reciben al afectado, no a la sesión. Acá sí se puede pedir, y el gancho corre en la
-    // misma cadena asíncrona de esta petición.
-    //
-    // No corta nada si no hay sesión: entrar y registrarse pasan por acá, y ahí todavía no
-    // hay nadie. Quien necesite el autor lo exige por su cuenta.
-    //
     // Aceptar o rechazar una invitación a un libro exige el enlace de esa invitación: Better Auth
     // decide con solo comparar el correo de la sesión, y el correo no se verifica. Su gancho
     // `beforeAcceptInvitation` no recibe las cabeceras, por eso va acá.
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
-        const sesion = await getSessionFromCtx(ctx).catch(() => null)
-        if (sesion) entrarComoAutor(sesion.user.id)
         if (RESPONDER_UNA_INVITACION.has(ctx.path)) {
           const token = tokenDelPedido(ctx)
           const { invitationId } = (ctx.body ?? {}) as { invitationId?: unknown }
@@ -278,7 +268,7 @@ export const crearAuth = (
           // ella.
           // Sobre gente se registran los cinco caminos. Los ganchos de organización reciben a
           // la persona afectada y no a la sesión que ejecuta, así que en los dos últimos el
-          // autor lo pone `autorDeLaPeticion`, sembrado por el hook global de arriba. Antes
+          // autor lo pone `autorDeLaPeticion`, leído del contexto de la petición. Antes
           // quedaban sin registrar justamente por eso: anotar al afectado como autor diría
           // que alguien se degradó o se expulsó a sí mismo, y un registro que miente sobre
           // quién hizo el cambio es peor que uno que no lo tiene, porque se le cree.

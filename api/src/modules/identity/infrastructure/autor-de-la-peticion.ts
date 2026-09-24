@@ -1,4 +1,4 @@
-import { AsyncLocalStorage } from 'node:async_hooks'
+import { tryGetCurrentAuthEndpointContext } from '@better-auth/core/context'
 
 // Quién está ejecutando la petición de Better Auth que corre ahora mismo.
 //
@@ -7,17 +7,13 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 // afectado, y anotarlo como autor diría que alguien se degradó o se expulsó a sí mismo. Con
 // eso, el ADR-004 dejó sin registrar los dos caminos donde más importa saberlo.
 //
-// El dato sí existe, un escalón más arriba: el hook global de Better Auth corre dentro de la
-// petición y ahí se puede pedir la sesión. Se siembra ahí y se lee en el gancho, que vive en
-// la misma cadena asíncrona. Es el mismo mecanismo con el que el libro viaja hasta los
-// repositorios sin pasarse de mano en mano.
-const almacen = new AsyncLocalStorage<string>()
-
-// `enterWith` y no `run`: el hook global no envuelve al handler que viene después, lo precede.
-// Es la misma razón por la que `entrarEnLibro` existe al lado de `conLibro`.
-export const entrarComoAutor = (userId: string): void => almacen.enterWith(userId)
-
-export const autorDeLaPeticion = (): string | undefined => almacen.getStore()
+// Better Auth corre cada endpoint dentro de su propio contexto de petición, y ahí el
+// middleware de sesión del plugin de organizaciones ya dejó la sesión. Se lee de ahí, con la
+// función que su documentación recomienda para esto. Antes se sembraba un AsyncLocalStorage
+// propio desde el hook global con `enterWith`, que no llegaba hasta el gancho: medido, sacar a
+// alguien de un libro daba 500 con «No se sabe quién quiso sacar a alguien del libro».
+export const autorDeLaPeticion = (): string | undefined =>
+  tryGetCurrentAuthEndpointContext()?.context.session?.user.id
 
 export class SinAutorError extends Error {
   constructor(que: string) {
