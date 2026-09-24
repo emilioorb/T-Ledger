@@ -26,23 +26,26 @@ export const useAlCargarLoUltimo = (rearmar: (cache: QueryClient) => void): void
   }, [cache])
 }
 
-interface ConId {
-  id: string
-}
+type Entidad = Record<string, unknown>
 
-const dentroDe = (dato: unknown): ConId[] => {
-  if (Array.isArray(dato)) return dato as ConId[]
-  if (dato && typeof dato === 'object' && 'data' in dato && Array.isArray(dato.data)) return dato.data as ConId[]
-  if (dato && typeof dato === 'object' && 'id' in dato) return [dato as ConId]
+const dentroDe = (dato: unknown, campo: string): Entidad[] => {
+  if (Array.isArray(dato)) return dato as Entidad[]
+  if (dato && typeof dato === 'object' && 'data' in dato && Array.isArray(dato.data)) return dato.data as Entidad[]
+  if (dato && typeof dato === 'object' && campo in dato) return [dato as Entidad]
   return []
 }
 
-// Lo último de una entidad, buscado por id en todas las consultas de la caché bajo esa clave: una
-// lista, una página (`{ data }`) o el detalle. Así cada pantalla rearma su formulario sin saber
-// con qué filtros se pidió la lista.
-export const loUltimoDe = <T extends ConId>(cache: QueryClient, queryKey: readonly unknown[], id: string): T | undefined => {
+// Lo último de una entidad, buscado por su id (o el campo que la identifique) en todas las
+// consultas de la caché bajo esa clave: una lista, una página (`{ data }`) o el detalle. Así cada
+// pantalla rearma su formulario sin saber con qué filtros se pidió la lista.
+export const loUltimoDe = <T extends object>(
+  cache: QueryClient,
+  queryKey: readonly unknown[],
+  valor: string,
+  campo: keyof T & string = 'id' as keyof T & string,
+): T | undefined => {
   for (const [, dato] of cache.getQueriesData({ queryKey })) {
-    const encontrado = dentroDe(dato).find((entidad) => entidad.id === id)
+    const encontrado = dentroDe(dato, campo).find((entidad) => entidad[campo] === valor)
     if (encontrado) return encontrado as T
   }
   return undefined

@@ -1,3 +1,5 @@
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { queryKeys } from '@/lib/query-keys'
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { FolderTree, Plus } from 'lucide-react'
@@ -26,10 +28,20 @@ const AccountsScreen = () => {
   const tree = useAccountsTree(currency, at)
   const save = useSaveAccount()
 
+  // Rearmar el formulario abierto con la versión que guardó la otra persona.
+  useAlCargarLoUltimo((cache) =>
+    setEditing((actual) => {
+      const nueva = actual?.account && loUltimoDe<Account>(cache, queryKeys.accounting.all, actual.account.code, 'code')
+      return nueva ? { account: nueva } : actual
+    }),
+  )
+
   const submit = (values: AccountFormValues) => {
     const { code, ...rest } = values
     save.mutate(
-      editing?.account ? { code: editing.account.code, input: rest } : { input: { code, ...rest } },
+      editing?.account
+        ? { code: editing.account.code, input: { ...rest, version: editing.account.version } }
+        : { input: { code, ...rest } },
       { onSuccess: () => setEditing(null) },
     )
   }
@@ -56,7 +68,7 @@ const AccountsScreen = () => {
       >
         {editing ? (
           <AccountForm
-            key={editing.account?.code ?? 'nueva'}
+            key={editing.account ? `${editing.account.code}-${editing.account.version}` : 'nueva'}
             account={editing.account}
             accounts={accounts.data?.data ?? []}
             pending={save.isPending}

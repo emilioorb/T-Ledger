@@ -103,7 +103,9 @@ export const useSaveCategory = () => {
 export const useDeleteCategory = () => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => apiFetch<void>(`/categories/${id}`, { method: 'DELETE' }),
+    // La versión que se vio: si otra persona la cambió después, 409 en vez de borrar a ciegas.
+    mutationFn: ({ id, version }: Pick<Category, 'id' | 'version'>) =>
+      apiFetch<void>(`/categories/${id}?version=${version}`, { method: 'DELETE' }),
     onSuccess: () => {
       toast.success(copy.categories.toast.deleted)
       void client.invalidateQueries({ queryKey: queryKeys.accounting.all })
@@ -153,9 +155,10 @@ export const useSubirComprobante = () => {
   const client = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, archivo }: { id: string; archivo: File }) => {
+    mutationFn: async ({ id, archivo, version }: { id: string; archivo: File; version: number }) => {
       const cuerpo = new FormData()
       cuerpo.append('archivo', archivo)
+      cuerpo.append('version', String(version))
       // Sin `Content-Type` a mano: el navegador tiene que ponerlo con el `boundary` que él
       // genera, y escribirlo rompe la lectura del lado del servidor.
       return apiFetch<Movement>(`/movements/${id}/receipt`, { method: 'POST', body: cuerpo })
@@ -170,8 +173,8 @@ export const useQuitarComprobante = () => {
   const client = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch<Movement>(`/movements/${id}/receipt`, { method: 'DELETE' }),
+    mutationFn: ({ id, version }: Pick<Movement, 'id' | 'version'>) =>
+      apiFetch<Movement>(`/movements/${id}/receipt?version=${version}`, { method: 'DELETE' }),
     onSuccess: () => {
       toast.success(copy.movements.form.receiptKey.removed)
       void client.invalidateQueries({ queryKey: queryKeys.accounting.all })
@@ -183,7 +186,8 @@ export const useQuitarComprobante = () => {
 export const useVoidMovement = () => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => apiFetch<Movement>(`/movements/${id}/void`, { method: 'POST' }),
+    mutationFn: ({ id, version }: Pick<Movement, 'id' | 'version'>) =>
+      apiFetch<Movement>(`/movements/${id}/void`, { method: 'POST', body: JSON.stringify({ version }) }),
     onSuccess: () => {
       toast.success(copy.movements.toast.voided)
       void client.invalidateQueries({ queryKey: queryKeys.accounting.all })

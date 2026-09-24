@@ -1,3 +1,5 @@
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { queryKeys } from '@/lib/query-keys'
 import { useState, type FormEvent } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { ArrowRight, Plus, Tags, TriangleAlert } from 'lucide-react'
@@ -227,9 +229,19 @@ const CategoriesScreen = () => {
   const unmapped = list.filter((category) => category.accountCode === null)
   const mapped = list.filter((category) => category.accountCode !== null)
 
+  // Rearmar el formulario abierto con la versión que guardó la otra persona.
+  useAlCargarLoUltimo((cache) =>
+    setEditing((actual) => {
+      const nueva = actual?.category && loUltimoDe<Category>(cache, queryKeys.accounting.all, actual.category.id)
+      return nueva ? { category: nueva } : actual
+    }),
+  )
+
   const submit = (values: FormValues) => {
     save.mutate(
-      editing?.category ? { id: editing.category.id, input: values } : { input: values },
+      editing?.category
+        ? { id: editing.category.id, input: { ...values, version: editing.category.version } }
+        : { input: values },
       { onSuccess: () => setEditing(null) },
     )
   }
@@ -257,7 +269,7 @@ const CategoriesScreen = () => {
       >
         {editing ? (
           <CategoryForm
-            key={editing.category?.id ?? 'nueva'}
+            key={editing.category ? `${editing.category.id}-${editing.category.version}` : 'nueva'}
             category={editing.category}
             postable={postable}
             pending={save.isPending}
@@ -358,7 +370,7 @@ const CategoriesScreen = () => {
             <AlertDialogCancel>{copy.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (deleting) remove.mutate(deleting.id)
+                if (deleting) remove.mutate(deleting)
                 setDeleting(null)
               }}
             >

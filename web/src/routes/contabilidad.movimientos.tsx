@@ -1,3 +1,5 @@
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { queryKeys } from '@/lib/query-keys'
 import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Paperclip, Plus, Receipt } from 'lucide-react'
@@ -233,6 +235,13 @@ const MovementsScreen = () => {
   }
 
   usePrimaryAction(copy.movements.new, () => setEditing({}))
+  // Rearmar el formulario abierto con la versión que guardó la otra persona.
+  useAlCargarLoUltimo((cache) =>
+    setEditing((actual) => {
+      const nuevo = actual?.movement && loUltimoDe<Movement>(cache, queryKeys.accounting.all, actual.movement.id)
+      return nuevo ? { movement: nuevo } : actual
+    }),
+  )
 
   const [page, setPage] = usePage(JSON.stringify(filters))
   const movements = useMovements(filters, page)
@@ -253,12 +262,16 @@ const MovementsScreen = () => {
   // eso se dice en vez de dejar creer que se perdió todo.
   const submit = ({ comprobante, ...values }: MovementFormValues) =>
     save.mutate(
-      editing?.movement ? { id: editing.movement.id, input: values } : { input: values },
+      // Al editar, la versión que se vio: si otra persona guardó antes, 409 y el aviso ofrece
+      // cargar lo último.
+      editing?.movement
+        ? { id: editing.movement.id, input: { ...values, version: editing.movement.version } }
+        : { input: values },
       {
         onSuccess: async (movimiento) => {
           if (comprobante) {
             await subirComprobante
-              .mutateAsync({ id: movimiento.id, archivo: comprobante })
+              .mutateAsync({ id: movimiento.id, archivo: comprobante, version: movimiento.version })
               .then(() => toast.success(copy.movements.form.receiptKey.uploaded))
               .catch(() => toast.error(copy.movements.form.receiptKey.uploadFailed))
           }
@@ -293,7 +306,7 @@ const MovementsScreen = () => {
       >
         {editing ? (
           <MovementForm
-            key={editing.movement?.id ?? 'nuevo'}
+            key={editing.movement ? `${editing.movement.id}-${editing.movement.version}` : 'nuevo'}
             movement={editing.movement}
             categories={categories.data ?? []}
             paymentAccounts={paymentAccounts}
@@ -302,7 +315,7 @@ const MovementsScreen = () => {
             onQuitarComprobante={
               editing?.movement
                 ? () =>
-                    quitarComprobante.mutate(editing.movement!.id, {
+                    quitarComprobante.mutate(editing.movement!, {
                       onSuccess: (movimiento) => setEditing({ movement: movimiento }),
                     })
                 : undefined
@@ -478,7 +491,7 @@ const MovementsScreen = () => {
             <AlertDialogCancel>{copy.common.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (voiding) voidMovement.mutate(voiding.id)
+                if (voiding) voidMovement.mutate(voiding)
                 setVoiding(null)
               }}
             >
