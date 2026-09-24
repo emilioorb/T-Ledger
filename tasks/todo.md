@@ -121,7 +121,9 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Archivos: `libro/application/borrar-libro.use-case.ts`, spec. (S)
 
 ### Checkpoint D
-- [ ] Suite completa verde; `check:full` limpio; la API publicable sola (acepta pedidos sin `version`).
+- [x] Suite completa verde; `check:full` limpio; la API publicable sola (acepta pedidos sin `version`).
+  (2026-09-24: 848 tests API, 195 web; LCP 2340 ms; axe 0; bundle de entrada 131,15 kB. gitleaks y osv-scanner no están
+  instalados en esta máquina: el diff se revisó a mano.)
 
 ## Fase 7: web
 
