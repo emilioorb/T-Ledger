@@ -7,11 +7,29 @@ import {
 } from '@nestjs/common'
 import { captureException } from '@sentry/node'
 import type { Response } from 'express'
-import { ConflictError, NotFoundError, SemanticValidationError } from './api-error.js'
+import { ChoqueDeTransaccionError } from '../prisma/choque-de-transaccion.js'
+import { ConflictError, EditadoPorOtroError, NotFoundError, SemanticValidationError } from './api-error.js'
 
 interface ErrorBody {
   error: { code: string; message: string; details?: unknown }
 }
+
+const propiedad = (valor: unknown, nombre: string): unknown =>
+  typeof valor === 'object' && valor !== null && nombre in valor
+    ? (valor as Record<string, unknown>)[nombre]
+    : undefined
+
+// Dos errores de la base que no son fallas del sistema sino carreras: dos personas creando lo
+// mismo (unicidad) o una borrando lo que la otra quería tocar (ausente). Se reconocen por sus
+// propiedades, como el choque de transacciones: Prisma no exporta clases para todas las formas.
+export const errorDeLaBase = (error: unknown): 'unicidad' | 'ausente' | null => {
+  const code = propiedad(error, 'code')
+  if (code === 'P2002') return 'unicidad'
+  if (code === 'P2025') return 'ausente'
+  return null
+}
+
+const cuerpo = (code: string, message: string): ErrorBody => ({ error: { code, message } })
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -35,8 +53,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof NotFoundError) {
       return { status: 404, body: { error: { code: exception.code, message: exception.message } } }
     }
-    if (exception instanceof ConflictError) {
-      return { status: 409, body: { error: { code: exception.code, message: exception.message } } }
+    if (exception instanceof ConflictError || exception instanceof EditadoPorOtroError) {
+      return { status: 409, body: cuerpo(exception.code, exception.message) }
+    }
+    if (exception instanceof ChoqueDeTransaccionError) {
+      return {
+        status: 409,
+        body: cuerpo('REINTENTAR', 'No se pudo guardar por un cruce momentáneo con otra escritura. Probá de nuevo.'),
+      }
+    }
+    const deLaBase = errorDeLaBase(exception)
+    if (deLaBase === 'unicidad') {
+      return { status: 409, body: cuerpo('CONFLICT', 'Ya existe algo con esos mismos datos.') }
+    }
+    if (deLaBase === 'ausente') {
+      return { status: 404, body: cuerpo('NOT_FOUND', 'Eso ya no existe: puede que lo hayan borrado recién.') }
     }
     if (exception instanceof SemanticValidationError) {
       return {

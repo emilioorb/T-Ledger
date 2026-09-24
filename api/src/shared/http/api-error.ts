@@ -24,3 +24,13 @@ export class SemanticValidationError extends Error {
     this.name = 'SemanticValidationError'
   }
 }
+
+// Lo que se quería guardar cambió desde que se leyó: otra pestaña, otra persona o el mismo
+// formulario abierto dos veces. El mensaje no culpa a nadie porque no se sabe quién fue.
+export class EditadoPorOtroError extends Error {
+  readonly code = 'EDITADO_POR_OTRO'
+  constructor() {
+    super('Esto cambió mientras lo editabas. Cargá lo último para ver cómo quedó antes de guardar.')
+    this.name = 'EditadoPorOtroError'
+  }
+}

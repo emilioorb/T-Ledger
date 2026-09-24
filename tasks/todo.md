@@ -10,7 +10,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Acepta: dos transacciones que chocan terminan una aplicada y otra reintentada; un test prueba que el adapter
     traduce 40001 y 40P01 (también en el `COMMIT`); una transacción anidada no reintenta por su cuenta.
   - Archivos: `shared/prisma/prisma.service.ts`, `shared/prisma/unit-of-work.port.ts`, spec nuevo. (S)
-- [ ] **2. Errores de la base con respuesta propia.** `EDITADO_POR_OTRO` (409), `REINTENTAR` (409), `P2002` a 409 y `P2025`
+- [x] **2. Errores de la base con respuesta propia.** `EDITADO_POR_OTRO` (409), `REINTENTAR` (409), `P2002` a 409 y `P2025`
   a 404, en vez de 500.
   - Acepta: cada caso tiene su código en la respuesta; ninguno va a Sentry como error; el mensaje de
     `EDITADO_POR_OTRO` dice «esto cambió mientras lo editabas», sin culpar a nadie.
