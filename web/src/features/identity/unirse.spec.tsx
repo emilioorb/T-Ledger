@@ -61,7 +61,7 @@ describe('unirse a un libro', { timeout: 15_000 }, () => {
     aceptar.mockResolvedValue({ data: { invitation: { organizationId: 'lib-1' } }, error: null })
     montar()
 
-    expect(await screen.findByText(copy.unirse.invitedBy('ana@correo.cr', 'Casa', 'todo el libro, menos la gente'))).toBeInTheDocument()
+    expect(await screen.findByText(copy.unirse.invitedBy('ana@correo.cr', 'Casa', '«Anota»: Todo el libro, menos la gente.'))).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: copy.unirse.join }))
 
     await waitFor(() => expect(navegar).toHaveBeenCalledWith({ to: '/tablero' }))

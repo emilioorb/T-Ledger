@@ -80,7 +80,7 @@ export const copy = {
     // Qué libro es y quién invita, antes del botón: unirse deja todo lo que anotes a la vista
     // de quien lleva ese libro.
     invitedBy: (quien: string, libro: string, rol: string) =>
-      `${quien} te invitó al libro «${libro}», para que ${rol}.`,
+      `${quien} te invitó al libro «${libro}» con el rol ${rol}.`,
     otherAccount: (correo: string) =>
       `Esta invitación no es para ${correo}. Salí y entrá con el correo al que te invitaron.`,
     switchAccount: 'Entrar con otra cuenta',

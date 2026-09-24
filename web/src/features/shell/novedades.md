@@ -32,6 +32,8 @@ sin leerla entera. Lo que está antes de la primera entrega, como este texto, no
 
 ### Corregido
 
+- **Sacar a alguien de un libro o cambiarle el rol daba error.** Ahora funciona, y el registro
+  anota quién lo hizo.
 - **Una meta, deuda o inversión en dólares tiraba la proyección y el tablero.** Ahora cada
   moneda se proyecta por separado, como en el resto del tablero.
 - **Los enlaces de invitación ahora son de quien los recibe.** Llevan una clave que sirve una

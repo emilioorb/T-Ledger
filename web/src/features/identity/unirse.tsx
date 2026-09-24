@@ -35,7 +35,7 @@ const olvidarToken = (invitacion: string) => {
 
 const ROLES = libro.gente.roles
 const queHara = (rol: string) =>
-  rol in ROLES ? ROLES[rol as keyof typeof ROLES].hint.toLowerCase().replace(/\.$/, '') : rol
+  rol in ROLES ? `«${ROLES[rol as keyof typeof ROLES].name}»: ${ROLES[rol as keyof typeof ROLES].hint}` : rol
 
 // Sin conexión no es culpa de la invitación: decirle «no está disponible» la mandaría a pedir
 // otra que no hace falta.
