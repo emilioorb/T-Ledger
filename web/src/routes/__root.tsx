@@ -104,10 +104,9 @@ const Shell = () => {
             <TooltipContent>{shortcuts.shortcuts.help}</TooltipContent>
           </Tooltip>
 
-          {/* Con la barra lateral abierta, el encabezado no da para las dos cosas hasta
-              bien entrado el escritorio, y saber dónde estás gana contra la tasa del día,
-              que vive completa en su propia pantalla. */}
-          <div className="hidden shrink-0 lg:block">
+          {/* En todos los anchos: es el único lugar donde se ve la tasa del día. Cuando falta
+              espacio cede la miga, que se recorta sola. */}
+          <div className="shrink-0">
             <ExchangeRateIndicator />
           </div>
         </header>
