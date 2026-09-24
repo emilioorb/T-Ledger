@@ -45,7 +45,7 @@ export const evaluationQuerySchema = z
   .meta({ id: 'BudgetEvaluationQuery', title: 'BudgetEvaluationQuery' })
 
 export const monthlyIncomeSchema = z
-  .object({ amount: nonNegativeMoneySchema })
+  .object({ amount: nonNegativeMoneySchema, version: version.optional() })
   .meta({ id: 'MonthlyIncomeInput', title: 'MonthlyIncomeInput' })
 
 export const budgetModelResponseSchema = z
@@ -91,7 +91,7 @@ export const budgetEvaluationResponseSchema = z
   .meta({ id: 'BudgetEvaluation', title: 'BudgetEvaluation' })
 
 export const monthlyIncomeResponseSchema = z
-  .object({ period: z.string(), amount: moneySchema })
+  .object({ period: z.string(), amount: moneySchema, version: z.number().int() })
   .meta({ id: 'MonthlyIncome', title: 'MonthlyIncome' })
 
 export type BudgetModelInput = z.infer<typeof budgetModelSchema>

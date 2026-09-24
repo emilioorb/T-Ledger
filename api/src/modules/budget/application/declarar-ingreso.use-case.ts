@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
+import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import {
@@ -18,10 +19,15 @@ export class DeclararIngresoUseCase {
     @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
-  async execute(ingreso: MonthlyIncome): Promise<void> {
-    await this.transaction.withTransaction(async () => {
+  // `version` es la del ingreso que se vio. Sin ingreso todavía no hay qué comparar: declararlo
+  // por primera vez no pisa a nadie.
+  execute(ingreso: MonthlyIncome, version?: number): Promise<MonthlyIncome> {
+    return this.transaction.withTransaction(async () => {
       const anterior = await this.incomes.find(ingreso.period)
-      await this.incomes.save(ingreso)
+      if (anterior) exigirVersion(version, anterior.version ?? 0, 'declarar el ingreso del mes')
+      const guardado = anterior
+        ? await this.incomes.update({ ...ingreso, version: anterior.version ?? 0 })
+        : await this.declararPorPrimeraVez(ingreso)
       await this.rastro.registrar({
         entidad: 'presupuesto',
         entidadId: `ingreso-${ingreso.period.toString()}`,
@@ -29,6 +35,12 @@ export class DeclararIngresoUseCase {
         ...(anterior ? { antes: { ingreso: anterior.amount } } : {}),
         despues: { ingreso: ingreso.amount },
       })
+      return guardado
     })
+  }
+
+  private async declararPorPrimeraVez(ingreso: MonthlyIncome): Promise<MonthlyIncome> {
+    await this.incomes.add(ingreso)
+    return { ...ingreso, version: 0 }
   }
 }

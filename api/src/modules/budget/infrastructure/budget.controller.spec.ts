@@ -235,3 +235,17 @@ describe('editar un modelo con versión', () => {
     expect(despues.find((cubeta) => cubeta.bucketKey === 'necesidades')?.percentage.toString()).toBe('80')
   })
 })
+
+describe('el ingreso del mes con versión', () => {
+  it('con una versión vieja responde 409 y no pisa; con la que trae la respuesta, guarda', async () => {
+    const { body: primero } = await put('/budget/income/2026-11', { amount: { minorUnits: '100000000', currency: 'CRC' } }).expect(200)
+    const { body: segundo } = await put('/budget/income/2026-11', {
+      amount: { minorUnits: '110000000', currency: 'CRC' },
+      version: primero.version,
+    }).expect(200)
+
+    await put('/budget/income/2026-11', { amount: { minorUnits: '1', currency: 'CRC' }, version: primero.version }).expect(409)
+    expect((await get('/budget/income/2026-11').expect(200)).body.amount.minorUnits).toBe('110000000')
+    expect(segundo.version).toBe(primero.version + 1)
+  })
+})

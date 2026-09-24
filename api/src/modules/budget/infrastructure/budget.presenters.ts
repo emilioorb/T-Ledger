@@ -45,7 +45,8 @@ export const toModelResponse = (
   }
 }
 
-export const toIncomeResponse = (income: MonthlyIncome): { period: string; amount: MoneyDto } => ({
+export const toIncomeResponse = (income: MonthlyIncome): { period: string; amount: MoneyDto; version: number } => ({
   period: income.period.toString(),
   amount: fromMoney(income.amount),
+  version: income.version ?? 0,
 })

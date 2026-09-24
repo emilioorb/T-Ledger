@@ -3421,6 +3421,7 @@ export interface components {
         /** MonthlyIncomeInput */
         MonthlyIncomeInput: {
             amount: components["schemas"]["NonNegativeMoney"];
+            version?: number;
         };
         /** NonNegativeMoney */
         NonNegativeMoney: components["schemas"]["Money"];
@@ -3886,6 +3887,7 @@ export interface components {
         MonthlyIncome: {
             period: string;
             amount: components["schemas"]["MoneyOutput"];
+            version: number;
         };
         /** BudgetModelResponse */
         BudgetModelResponse: {

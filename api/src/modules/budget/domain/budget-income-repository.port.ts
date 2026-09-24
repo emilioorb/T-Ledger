@@ -11,7 +11,10 @@ export interface BudgetIncomeRepository {
   // El último declarado en esa moneda: la proyección mira una moneda por vez, y un mes
   // declarado en otra no borra el ingreso que se venía arrastrando en esta.
   findLatestUpTo(period: PeriodKey, currency: CurrencyCode): Promise<MonthlyIncome | null>
-  save(income: MonthlyIncome): Promise<void>
+  add(income: MonthlyIncome): Promise<void>
+  // Solo si la fila sigue en la versión del ingreso: si no, `EditadoPorOtroError`. Devuelve el
+  // ingreso en su versión nueva.
+  update(income: MonthlyIncome & { version: number }): Promise<MonthlyIncome>
 }
 
 export const BUDGET_INCOME_REPOSITORY = Symbol('BUDGET_INCOME_REPOSITORY')

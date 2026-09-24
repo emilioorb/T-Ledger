@@ -6,4 +6,6 @@ import type { PeriodKey } from '../../accounting/domain/accounting-period.js'
 export interface MonthlyIncome {
   readonly period: PeriodKey
   readonly amount: Money
+  // La versión de la fila (6b). Sin fila todavía, no hay.
+  readonly version?: number
 }

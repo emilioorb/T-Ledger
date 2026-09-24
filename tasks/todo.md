@@ -112,7 +112,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 - [x] **16. Modelos de presupuesto.** Versión; activar uno sube la versión de los que apaga; cubetas diferenciadas.
   - Archivos: `prisma-budget-model.repository.ts`, `manage-budget-models.use-case.ts`, `budget.schemas.ts`,
     `budget.controller.spec.ts`. (M)
-- [ ] **17. Ingreso mensual con caso de uso propio** (hoy lo escribe el controller directo), con versión y rastro.
+- [x] **17. Ingreso mensual con caso de uso propio** (hoy lo escribe el controller directo), con versión y rastro.
   - Archivos: caso de uso nuevo, `budget.controller.ts`, `prisma-budget-income.repository.ts`, spec. (S)
 - [ ] **18. Categorías y cuentas.** Versión y transacción.
   - Archivos: `manage-categories.use-case.ts`, `save-account.use-case.ts`, sus repos, spec nuevo. (M)

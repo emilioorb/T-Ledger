@@ -58,8 +58,6 @@ export class BudgetController {
     @Body(new ZodValidationPipe(monthlyIncomeSchema)) input: MonthlyIncomeInput,
   ): Promise<{ period: string; amount: MoneyDto }> {
     const key = keyOf(period)
-    const income = { period: key, amount: toMoney(input.amount) }
-    await this.declararIngreso.execute(income)
-    return toIncomeResponse(income)
+    return toIncomeResponse(await this.declararIngreso.execute({ period: key, amount: toMoney(input.amount) }, input.version))
   }
 }
