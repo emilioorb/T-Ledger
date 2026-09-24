@@ -540,8 +540,8 @@ Estas no las resuelve este documento. Son del dueño del producto.
 9. **El nombre del bot, y si su `@username` es descubrible.** Un `@tledger_bot`
    público le anuncia al mundo que la instancia existe.
 10. **Un bot por instancia de T-Ledger, o uno solo.** Ya hay noción de instancia en
-    `ADMIN_USER_IDS` (el admin se identifica por id, no por correo), y un bot compartido entre instancias es un tercero más en el
-    medio.
+    `ADMIN_USER_IDS` (el admin se identifica por id, no por correo), y un bot compartido
+    entre instancias es un tercero más en el medio.
 
 ## Lo que queda explícitamente afuera de este diseño
 
