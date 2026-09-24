@@ -1,4 +1,4 @@
-import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/usar-lo-ultimo'
 import { queryKeys } from '@/lib/query-keys'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { createFileRoute } from '@tanstack/react-router'

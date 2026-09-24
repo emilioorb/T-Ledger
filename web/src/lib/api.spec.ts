@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, apiFetch, CABECERA_DE_VERSION, ErrorDeRed, esEditadoPorOtro, esReintentar, fetchAlServidor } from './api'
+import { ApiError, apiFetch, CABECERA_DE_VERSION, ErrorDeRed, fetchAlServidor } from './api'
+import { esEditadoPorOtro, esReintentar } from './errores-de-la-api'
 
 describe('llegar al servidor', () => {
   afterEach(() => vi.unstubAllGlobals())

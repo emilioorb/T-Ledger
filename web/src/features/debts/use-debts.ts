@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ApiError, apiFetch, esEditadoPorOtro, esReintentar } from '@/lib/api'
+import { ApiError, apiFetch } from '@/lib/api'
+import { esEditadoPorOtro, esReintentar } from '@/lib/errores-de-la-api'
 import { queryKeys } from '@/lib/query-keys'
 import { copy } from './copy'
 import type {

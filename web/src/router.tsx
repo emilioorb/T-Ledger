@@ -4,12 +4,10 @@ import { toast } from 'sonner'
 import { NotFound } from './components/not-found'
 import { ErrorDeCarga } from './features/pwa/error-de-carga'
 import { ApiError } from './lib/api'
-import { avisarErrorDeMutacion, avisos } from './lib/avisar-error-de-mutacion'
-import { cargarLoUltimo } from './lib/cargar-lo-ultimo'
 import { routeTree } from './routeTree.gen'
 
 const describe = (error: unknown): string =>
-  error instanceof ApiError ? error.message : avisos.fallo
+  error instanceof ApiError ? error.message : 'No se pudo completar la operación'
 
 // Una consulta que falla ya lo explica en pantalla con su ErrorState y su reintento: el toast
 // encima diría dos veces lo mismo. Por eso el aviso es opt-in, para la consulta secundaria que
@@ -22,13 +20,23 @@ export const queryClient = new QueryClient({
       toast.error(describe(error))
     },
   }),
+  // El aviso se carga cuando hace falta: una mutación que falla es rara, y así no pesa en el bundle
+  // de entrada. Si ni eso se puede cargar, queda el aviso de siempre.
   mutationCache: new MutationCache({
-    onError: (error, _variables, _resultado, mutation) =>
-      avisarErrorDeMutacion(error, {
-        tieneSuPropioAviso: mutation.options.onError !== undefined,
-        // Recargar lo que está en pantalla y rearmar los formularios abiertos con la versión nueva.
-        cargarLoUltimo: () => void cargarLoUltimo(queryClient),
-      }),
+    onError: (error, _variables, _resultado, mutation) => {
+      const tieneSuPropioAviso = mutation.options.onError !== undefined
+      void import('./lib/avisar-error-de-mutacion')
+        .then(({ avisarErrorDeMutacion }) =>
+          avisarErrorDeMutacion(error, {
+            tieneSuPropioAviso,
+            // Recargar lo que está en pantalla y rearmar los formularios abiertos con la versión nueva.
+            cargarLoUltimo: () => void import('./lib/cargar-lo-ultimo').then(({ cargarLoUltimo }) => cargarLoUltimo(queryClient)),
+          }),
+        )
+        .catch(() => {
+          if (!tieneSuPropioAviso) toast.error(describe(error))
+        })
+    },
   }),
 })
 

@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode } from 'react'
 import { renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { cargarLoUltimo, loUltimoDe, useAlCargarLoUltimo } from './cargar-lo-ultimo'
+import { cargarLoUltimo } from './cargar-lo-ultimo'
+import { loUltimoDe, useAlCargarLoUltimo } from './usar-lo-ultimo'
 
 const con = (client: QueryClient) => ({
   wrapper: ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client }, children),

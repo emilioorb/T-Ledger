@@ -1,5 +1,5 @@
 import { queryKeys } from '@/lib/query-keys'
-import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/usar-lo-ultimo'
 import { useState, type FormEvent } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Coins, Plus, Target } from 'lucide-react'

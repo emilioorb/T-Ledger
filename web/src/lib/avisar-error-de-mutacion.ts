@@ -1,5 +1,6 @@
 import { toast } from 'sonner'
-import { ApiError, esEditadoPorOtro } from './api'
+import { ApiError } from './api'
+import { esEditadoPorOtro } from './errores-de-la-api'
 
 export const avisos = {
   fallo: 'No se pudo completar la operación',
