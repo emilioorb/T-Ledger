@@ -41,8 +41,8 @@ Las pantallas con sesión quedan fuera de axe: pedirían credenciales en el scri
 
 | Métrica | Hoy | Dirección | Cómo se mide |
 |---|---|---|---|
-| Cobertura de líneas (api) | 85.72 | no baja | `node scripts/cobertura-del-proyecto.mjs` tras la suite completa |
-| Cobertura de líneas (web) | 29.11 | no baja | ídem |
+| Cobertura de líneas (api) | 86.91 | no baja | `node scripts/cobertura-del-proyecto.mjs` tras la suite completa |
+| Cobertura de líneas (web) | 33.58 | no baja | ídem |
 | Portada en 4G lento y CPU 4×, LCP | 2440 ms | no sube (avisa sobre 2900) | `node web/scripts/comprobar-portada.mjs`, mediana de tres cargas con la red y la CPU de PageSpeed móvil |
 | Portada en 4G lento y CPU 4×, hasta hidratar | 6571 ms | no sube (avisa sobre 6900) | ídem, con la marca `portada-hidratada` de `main.tsx` |
 | PageSpeed móvil de la portada, TBT | 20 ms | no sube | PageSpeed Insights (la web, no la API ni Lighthouse local), tres corridas, se anota la peor |
