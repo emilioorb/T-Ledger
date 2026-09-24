@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { version } from '../../../shared/http/version.schema.js'
 import { annualRate, nameText, termMonths } from '../../../shared/http/text.schema.js'
 import { isoDate } from '../../../shared/http/date.schema.js'
 import { moneySchema } from '../../../shared/http/money.schema.js'
@@ -23,6 +24,7 @@ export const createDebtSchema = z
   .meta({ id: 'CreateDebtInput', title: 'CreateDebtInput' })
 
 export const updateDebtSchema = createDebtSchema
+  .extend({ version })
   .partial()
   .meta({ id: 'UpdateDebtInput', title: 'UpdateDebtInput' })
 

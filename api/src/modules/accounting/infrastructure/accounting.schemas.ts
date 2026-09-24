@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { version } from '../../../shared/http/version.schema.js'
 import { longText, nameText } from '../../../shared/http/text.schema.js'
 import { isoDate, periodParam } from '../../../shared/http/date.schema.js'
 import { CURRENCIES } from '../../../shared/kernel/currency.js'
@@ -103,21 +104,10 @@ export const createMovementSchema = z
   })
   .meta({ id: 'CreateMovementInput', title: 'CreateMovementInput' })
 
-// La versión que se leyó. Opcional mientras haya clientes que no la mandan: sin ella se guarda
-// como antes, y queda contado.
-const version = z.number().int().nonnegative()
-
 export const updateMovementSchema = z
   .object({ ...movementFields, version })
   .partial()
   .meta({ id: 'UpdateMovementInput', title: 'UpdateMovementInput' })
-
-// La misma versión cuando no hay cuerpo JSON: un campo del formulario al subir el comprobante, o
-// `?version=` al quitarlo. Llega como texto.
-export const versionEnTextoSchema = z
-  .object({ version: z.string().regex(/^\d+$/).transform(Number) })
-  .partial()
-  .meta({ id: 'VersionEnTexto', title: 'VersionEnTexto' })
 
 // Sin cuerpo también vale: es lo que manda la app instalada que todavía no se actualizó.
 export const voidMovementSchema = z
@@ -202,7 +192,6 @@ export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>
 export type CreateMovementInput = z.infer<typeof createMovementSchema>
 export type UpdateMovementInput = z.infer<typeof updateMovementSchema>
 export type VoidMovementInput = z.infer<typeof voidMovementSchema>
-export type VersionEnTexto = z.infer<typeof versionEnTextoSchema>
 export type ListMovementsQuery = z.infer<typeof listMovementsQuerySchema>
 export type MovementTotalsQuery = z.infer<typeof movementTotalsQuerySchema>
 export type CreateJournalEntryInput = z.infer<typeof createJournalEntrySchema>

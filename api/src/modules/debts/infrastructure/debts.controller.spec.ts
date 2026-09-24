@@ -203,3 +203,38 @@ describe('GET, PATCH y DELETE /api/v1/debts/:id', () => {
     ).toBe(404)
   })
 })
+
+// La versión viaja opcional: con una vieja, 409; sin ella, como antes (ADR-006).
+describe('editar y borrar con versión', () => {
+  const http = () => request(app.getHttpServer())
+
+  it('la respuesta trae la versión nueva: con ella se puede volver a editar', async () => {
+    const { body: creada } = await http().post('/api/v1/debts').send(nuevaDeuda)
+
+    const primera = await http().patch(`/api/v1/debts/${creada.id}`).send({ name: 'Una', version: creada.version })
+    const segunda = await http().patch(`/api/v1/debts/${creada.id}`).send({ name: 'Dos', version: primera.body.version })
+
+    expect([primera.status, segunda.status]).toEqual([200, 200])
+  })
+
+  it('editar con una versión vieja responde 409 y no guarda', async () => {
+    const { body: creada } = await http().post('/api/v1/debts').send(nuevaDeuda)
+    await http().patch(`/api/v1/debts/${creada.id}`).send({ name: 'Primera', version: creada.version }).expect(200)
+
+    const response = await http().patch(`/api/v1/debts/${creada.id}`).send({ name: 'Pisada', version: creada.version })
+
+    expect(response.status).toBe(409)
+    expect(response.body.error.code).toBe('EDITADO_POR_OTRO')
+    expect((await http().get(`/api/v1/debts/${creada.id}`)).body.name).toBe('Primera')
+  })
+
+  it('borrar con una versión vieja responde 409 y la deuda sigue', async () => {
+    const { body: creada } = await http().post('/api/v1/debts').send(nuevaDeuda)
+    const { body: editada } = await http().patch(`/api/v1/debts/${creada.id}`).send({ name: 'Editada' })
+
+    await http().delete(`/api/v1/debts/${creada.id}?version=${creada.version}`).expect(409)
+    await http().get(`/api/v1/debts/${creada.id}`).expect(200)
+    await http().delete(`/api/v1/debts/${creada.id}?version=${editada.version}`).expect(204)
+  })
+})
+

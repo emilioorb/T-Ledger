@@ -1,3 +1,4 @@
+import { versionEnTextoSchema } from '../../../shared/http/version.schema.js'
 import type { ZodOpenApiPathsObject } from 'zod-openapi'
 import {
   accountsTreeQuerySchema,
@@ -18,7 +19,6 @@ import {
   updateCategorySchema,
   updateMovementSchema,
   voidMovementSchema,
-  versionEnTextoSchema,
 } from './accounting.schemas.js'
 import {
   accountResponseSchema,

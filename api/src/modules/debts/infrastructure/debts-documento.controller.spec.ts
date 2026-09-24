@@ -74,6 +74,22 @@ describe('el documento de una deuda', () => {
     expect(quitada.body.hasDocument).toBe(false)
   })
 
+  it('con una versión vieja no lo sube ni lo apunta', async () => {
+    const { body: creada } = await request(app.getHttpServer()).post('/api/v1/debts').send(deuda)
+    await request(app.getHttpServer()).patch(`/api/v1/debts/${creada.id}`).send({ name: 'Editada' }).expect(200)
+
+    const subida = await request(app.getHttpServer())
+      .post(`/api/v1/debts/${creada.id}/document`)
+      .field('version', String(creada.version))
+      .attach('archivo', PDF, { filename: 'contrato.pdf', contentType: 'application/pdf' })
+
+    expect(subida.status).toBe(409)
+    expect((await request(app.getHttpServer()).get(`/api/v1/debts/${creada.id}`)).body.hasDocument).toBe(false)
+    const carpeta = join(CARPETA, 'libros', LIBRO_DE_PRUEBA.bookId, 'documentos', 'deudas')
+    const archivos = await readdir(carpeta).catch(() => [])
+    expect(archivos.some((nombre) => nombre.startsWith(creada.id))).toBe(false)
+  })
+
   it('no acepta lo que no es una foto o un PDF', async () => {
     const { body: creada } = await request(app.getHttpServer()).post('/api/v1/debts').send(deuda)
 

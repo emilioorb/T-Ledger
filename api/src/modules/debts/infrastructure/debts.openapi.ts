@@ -1,3 +1,4 @@
+import { versionEnTextoSchema } from '../../../shared/http/version.schema.js'
 import type { ZodOpenApiPathsObject } from 'zod-openapi'
 import { createDebtSchema, debtResponseSchema, updateDebtSchema } from './debt.schemas.js'
 import {
@@ -44,6 +45,7 @@ export const debtsOpenApiPaths: ZodOpenApiPathsObject = {
     },
     delete: {
       summary: 'Borra una deuda',
+      requestParams: { query: versionEnTextoSchema },
       responses: { 204: { description: 'Deuda borrada' } },
     },
   },
@@ -73,7 +75,7 @@ export const debtsOpenApiPaths: ZodOpenApiPathsObject = {
   },
   '/debts/{id}/document': {
     post: {
-      summary: 'Adjunta el contrato de la deuda (PDF o foto, hasta 20 MB) en multipart/form-data, campo `archivo`',
+      summary: 'Adjunta el contrato de la deuda (PDF o foto, hasta 20 MB) en multipart/form-data, campo `archivo`; `version` opcional',
       responses: {
         200: { description: 'Deuda con documento', ...json(debtResponseSchema) },
         400: { description: 'El archivo no es un PDF o una foto, está vacío o pesa de más' },
@@ -85,6 +87,7 @@ export const debtsOpenApiPaths: ZodOpenApiPathsObject = {
     },
     delete: {
       summary: 'Quita el documento de la deuda',
+      requestParams: { query: versionEnTextoSchema },
       responses: { 200: { description: 'Deuda sin documento', ...json(debtResponseSchema) } },
     },
   },

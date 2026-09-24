@@ -4,6 +4,7 @@ import { InterestRate } from '../../../shared/kernel/interest-rate.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { toMoney } from '../../../shared/http/money.schema.js'
+import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import { BucketGuard } from '../../budget/application/bucket-guard.js'
@@ -20,9 +21,16 @@ export class UpdateDebtUseCase {
     @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
-  async execute(id: string, input: UpdateDebtInput): Promise<Debt> {
+  // Todo adentro del candado del libro: armada con lo leído afuera, una edición pisaba un pago
+  // que entraba en el medio (ADR-006).
+  execute(id: string, input: UpdateDebtInput): Promise<Debt> {
+    return this.transaction.withTransaction(() => this.editar(id, input))
+  }
+
+  private async editar(id: string, input: UpdateDebtInput): Promise<Debt> {
     const current = await this.debts.findById(id)
     if (!current) throw new NotFoundError(`No existe una deuda con el id ${id}`)
+    exigirVersion(input.version, current.version, 'editar una deuda')
 
     if (input.budgetBucket !== undefined) await this.buckets.assertExists(input.budgetBucket)
 
@@ -54,17 +62,14 @@ export class UpdateDebtUseCase {
     })
     if (isErr(updated)) throw new SemanticValidationError(updated.error.message)
 
-    await this.transaction.withTransaction(async () => {
-      await this.debts.update(updated.value)
-      await this.rastro.registrar({
-        entidad: 'deuda',
-        entidadId: id,
-        accion: 'editar',
-        antes: props,
-        despues: updated.value.toProps(),
-      })
+    const guardada = await this.debts.update(updated.value)
+    await this.rastro.registrar({
+      entidad: 'deuda',
+      entidadId: id,
+      accion: 'editar',
+      antes: props,
+      despues: updated.value.toProps(),
     })
-
-    return updated.value
+    return guardada
   }
 }

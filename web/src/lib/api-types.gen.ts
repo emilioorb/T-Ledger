@@ -128,7 +128,9 @@ export interface paths {
         /** Borra una deuda */
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    version?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -337,7 +339,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Adjunta el contrato de la deuda (PDF o foto, hasta 20 MB) en multipart/form-data, campo `archivo` */
+        /** Adjunta el contrato de la deuda (PDF o foto, hasta 20 MB) en multipart/form-data, campo `archivo`; `version` opcional */
         post: {
             parameters: {
                 query?: never;
@@ -368,7 +370,9 @@ export interface paths {
         /** Quita el documento de la deuda */
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    version?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -3300,6 +3304,7 @@ export interface components {
             direction?: "BORROWED" | "LENT";
             budgetBucket?: string | null;
             notes?: string | null;
+            version?: number;
         };
         /** PagarCuotaInput */
         PagarCuotaInput: {

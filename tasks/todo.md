@@ -72,7 +72,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Acepta: dos pagos a la vez de la misma cuota registran uno y no dejan gasto huérfano; dos «Deshacer» sobre la cuota 5
     deshacen una.
   - Archivos: `pagos-de-deuda.use-case.ts`, `debt.schemas.ts`, `debts.controller.ts`, `debts-pagos.controller.spec.ts`. (M)
-- [ ] **10. Editar, borrar y documento de una deuda** con versión y reglas adentro.
+- [x] **10. Editar, borrar y documento de una deuda** con versión y reglas adentro.
   - Archivos: `update-debt.use-case.ts`, `delete-debt.use-case.ts`, `documento-de-deuda.use-case.ts`,
     `debts.controller.spec.ts`. (M)
 

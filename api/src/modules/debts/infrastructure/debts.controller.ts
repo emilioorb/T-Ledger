@@ -1,3 +1,4 @@
+import { versionEnTextoSchema, type VersionEnTexto } from '../../../shared/http/version.schema.js'
 import {
   BadRequestException,
   Body,
@@ -175,12 +176,13 @@ export class DebtsController {
   async subirDocumento(
     @Param('id') id: string,
     @UploadedFile() archivo: ArchivoSubido | undefined,
+    @Body(new ZodValidationPipe(versionEnTextoSchema)) formulario: VersionEnTexto,
   ): Promise<DebtResponse> {
     if (!archivo) throw new BadRequestException('No llegó ningún archivo.')
     const rechazo = revisar(archivo, TAMANO_MAXIMO_DOCUMENTO)
     if (rechazo) throw new BadRequestException(MOTIVOS[rechazo])
 
-    const debt = await this.documento.guardar(id, { contenido: archivo.buffer, tipo: archivo.mimetype })
+    const debt = await this.documento.guardar(id, { contenido: archivo.buffer, tipo: archivo.mimetype }, formulario.version)
     return toDebtResponse(debt, new Date())
   }
 
@@ -193,8 +195,11 @@ export class DebtsController {
 
   @Permiso('deuda', 'write')
   @Delete(':id/document')
-  async quitarDocumento(@Param('id') id: string): Promise<DebtResponse> {
-    return toDebtResponse(await this.documento.quitar(id), new Date())
+  async quitarDocumento(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(versionEnTextoSchema)) query: VersionEnTexto,
+  ): Promise<DebtResponse> {
+    return toDebtResponse(await this.documento.quitar(id, query.version), new Date())
   }
 
   @Permiso('deuda', 'write')
@@ -229,7 +234,10 @@ export class DebtsController {
   @Permiso('deuda', 'write')
   @Delete(':id')
   @HttpCode(204)
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.deleteDebt.execute(id)
+  async remove(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(versionEnTextoSchema)) query: VersionEnTexto,
+  ): Promise<void> {
+    await this.deleteDebt.execute(id, query.version)
   }
 }

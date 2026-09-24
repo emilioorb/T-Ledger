@@ -1,3 +1,4 @@
+import { versionEnTextoSchema, type VersionEnTexto } from '../../../shared/http/version.schema.js'
 import {
   BadRequestException,
   Body,
@@ -36,13 +37,11 @@ import {
   movementTotalsQuerySchema,
   updateMovementSchema,
   voidMovementSchema,
-  versionEnTextoSchema,
   type CreateMovementInput,
   type ListMovementsQuery,
   type MovementTotalsQuery,
   type UpdateMovementInput,
   type VoidMovementInput,
-  type VersionEnTexto,
 } from './accounting.schemas.js'
 import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 
