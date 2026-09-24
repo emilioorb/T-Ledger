@@ -4,6 +4,7 @@ import { toMoney, type MoneyDto } from '../../../shared/http/money.schema.js'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { PeriodKey } from '../../accounting/domain/accounting-period.js'
+import { DeclararIngresoUseCase } from '../application/declarar-ingreso.use-case.js'
 import { EvaluateMonthUseCase } from '../application/evaluate-month.use-case.js'
 import {
   BUDGET_INCOME_REPOSITORY,
@@ -29,6 +30,7 @@ export class BudgetController {
   constructor(
     private readonly evaluateMonth: EvaluateMonthUseCase,
     @Inject(BUDGET_INCOME_REPOSITORY) private readonly incomes: BudgetIncomeRepository,
+    private readonly declararIngreso: DeclararIngresoUseCase,
   ) {}
 
   @Get('evaluation')
@@ -57,7 +59,7 @@ export class BudgetController {
   ): Promise<{ period: string; amount: MoneyDto }> {
     const key = keyOf(period)
     const income = { period: key, amount: toMoney(input.amount) }
-    await this.incomes.save(income)
+    await this.declararIngreso.execute(income)
     return toIncomeResponse(income)
   }
 }

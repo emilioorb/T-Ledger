@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import {
   ACCOUNT_REPOSITORY,
   type AccountRepository,
@@ -18,6 +19,7 @@ export class ManageBankAccountsUseCase {
   constructor(
     @Inject(BANK_ACCOUNT_REPOSITORY) private readonly accounts: BankAccountRepository,
     @Inject(ACCOUNT_REPOSITORY) private readonly chart: AccountRepository,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
   async list(): Promise<BankAccount[]> {
@@ -30,13 +32,16 @@ export class ManageBankAccountsUseCase {
     return account
   }
 
+  // En transacción, con el candado del libro: el plan de cuentas se lee adentro (ADR-006).
   async create(input: BankAccountInput): Promise<BankAccount> {
-    return this.save({ id: randomUUID(), ...input })
+    return this.transaction.withTransaction(() => this.save({ id: randomUUID(), ...input }))
   }
 
   async update(id: string, input: BankAccountInput): Promise<BankAccount> {
-    await this.find(id)
-    return this.save({ id, ...input })
+    return this.transaction.withTransaction(async () => {
+      await this.find(id)
+      return this.save({ id, ...input })
+    })
   }
 
   // Una cuenta bancaria apuntando a una agrupadora produciría movimientos que no se pueden

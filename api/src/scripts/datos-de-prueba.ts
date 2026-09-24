@@ -93,13 +93,15 @@ const borrar = async (prisma: PrismaService, creado: Creado): Promise<void> => {
   })
   const ids = asientos.map((asiento) => asiento.id)
 
-  await prisma.client.journalLine.deleteMany({ where: { entryId: { in: ids } } })
-  await prisma.client.journalEntry.deleteMany({ where: { id: { in: ids } } })
-  await prisma.client.auditLog.deleteMany({
-    where: { entityId: { in: [...creado.movimientos, ...creado.categorias] } },
+  await prisma.withTransaction(async () => {
+    await prisma.client.journalLine.deleteMany({ where: { entryId: { in: ids } } })
+    await prisma.client.journalEntry.deleteMany({ where: { id: { in: ids } } })
+    await prisma.client.auditLog.deleteMany({
+      where: { entityId: { in: [...creado.movimientos, ...creado.categorias] } },
+    })
+    await prisma.client.movement.deleteMany({ where: { id: { in: creado.movimientos } } })
+    await prisma.client.category.deleteMany({ where: { id: { in: creado.categorias } } })
   })
-  await prisma.client.movement.deleteMany({ where: { id: { in: creado.movimientos } } })
-  await prisma.client.category.deleteMany({ where: { id: { in: creado.categorias } } })
 
   unlinkSync(RASTRO)
   console.log(

@@ -9,6 +9,7 @@ import { Debt } from '../domain/debt.js'
 import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { PrismaDebtRepository } from './prisma-debt.repository.js'
 import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
+import { enTransaccion } from '../../../test/en-transaccion.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
 const utc = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
@@ -55,7 +56,7 @@ beforeAll(async () => {
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()
-  repository = new PrismaDebtRepository(prisma)
+  repository = enTransaccion(prisma, new PrismaDebtRepository(prisma))
 }, 180_000)
 
 afterAll(async () => {

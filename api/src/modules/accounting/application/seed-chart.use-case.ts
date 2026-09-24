@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { isErr } from '../../../shared/kernel/result.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { ACCOUNT_REPOSITORY, type AccountRepository } from '../domain/account-repository.port.js'
 import { Account } from '../domain/account.js'
 import { CHART_SEED } from '../infrastructure/chart-seed.js'
@@ -8,7 +9,10 @@ import { CHART_SEED } from '../infrastructure/chart-seed.js'
 export class SeedChartUseCase {
   private readonly logger = new Logger(SeedChartUseCase.name)
 
-  constructor(@Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository) {}
+  constructor(
+    @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
+  ) {}
 
   // Antes esto corría solo al arrancar la aplicación. Con libros dejó de tener sentido: un
   // plan de cuentas pertenece a un libro, y en el arranque no hay ninguno. Ahora lo llama la
@@ -17,7 +21,13 @@ export class SeedChartUseCase {
 
   // Solo con la tabla vacía. Si Emilio borró una cuenta semilla es porque no la quiere,
   // y volver a meterla en el siguiente arranque sería el sistema discutiéndole.
+  // En transacción: «¿está vacío?» y la siembra van con el candado del libro, así dos avisos de
+  // libro nuevo no siembran dos veces.
   async execute(): Promise<number> {
+    return this.transaction.withTransaction(() => this.sembrar())
+  }
+
+  private async sembrar(): Promise<number> {
     const chart = await this.accounts.loadChart()
     if (chart.all().length > 0) return 0
 

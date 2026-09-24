@@ -21,16 +21,19 @@ afterAll(async () => {
 beforeEach(entrarEnLibroDePrueba)
 
 const categoria = () =>
-  prisma.client.category.create({ data: { bookId: prisma.libro, name: `c-${Math.random()}`, kind: 'EXPENSE' } })
+  prisma.withTransaction(() =>
+    prisma.client.category.create({ data: { bookId: prisma.libro, name: `c-${Math.random()}`, kind: 'EXPENSE' } }),
+  )
 
 // Lo que haría un repositorio: escribir con la versión que se leyó y verificar.
-const renombrar = async (id: string, version: number | undefined, name: string) => {
-  const { count } = await prisma.client.category.updateMany({
-    where: { id, ...condicionDeVersion(version, 'renombrar una categoría') },
-    data: { name, ...SUBIR_VERSION },
+const renombrar = (id: string, version: number | undefined, name: string) =>
+  prisma.withTransaction(async () => {
+    const { count } = await prisma.client.category.updateMany({
+      where: { id, ...condicionDeVersion(version, 'renombrar una categoría') },
+      data: { name, ...SUBIR_VERSION },
+    })
+    await verificarEscritura(count, async () => (await prisma.client.category.count({ where: { id } })) > 0)
   })
-  await verificarEscritura(count, async () => (await prisma.client.category.count({ where: { id } })) > 0)
-}
 
 describe('escribir con la versión que se leyó', () => {
   it('con la versión al día, escribe y la sube', async () => {
@@ -51,7 +54,7 @@ describe('escribir con la versión que se leyó', () => {
 
   it('si ya no existe, dice que no existe y no que cambió', async () => {
     const { id, version } = await categoria()
-    await prisma.client.category.delete({ where: { id } })
+    await prisma.withTransaction(() => prisma.client.category.delete({ where: { id } }))
 
     await expect(renombrar(id, version, 'x')).rejects.toBeInstanceOf(NotFoundError)
   })

@@ -77,6 +77,19 @@ describe('dos escritores en el mismo libro', () => {
   })
 })
 
+describe('dos instancias del servicio', () => {
+  it('una no toma prestada la transacción de la otra: abre la suya y espera el candado', async () => {
+    const otra = new PrismaService(postgres.url, { esperaMaximaDelCandado: '500ms' })
+    try {
+      await expect(
+        enElLibro(() => prisma.withTransaction(() => otra.withTransaction(async () => undefined))),
+      ).rejects.toBeInstanceOf(ChoqueDeTransaccionError)
+    } finally {
+      await otra.$disconnect()
+    }
+  })
+})
+
 describe('dos libros distintos', () => {
   it('no se esperan: uno que retiene su candado no demora al otro', async () => {
     let soltar: () => void = () => {}

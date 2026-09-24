@@ -4,6 +4,7 @@ import { LIBRO_DE_PRUEBA, entrarEnLibroDePrueba } from '../../../shared/libro/li
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
 import { PrismaLibroRepository } from './prisma-libro.repository.js'
+import { enTransaccion } from '../../../test/en-transaccion.js'
 
 let postgres: RunningPostgres
 let prisma: PrismaService
@@ -40,7 +41,7 @@ beforeAll(async () => {
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()
-  repository = new PrismaLibroRepository(prisma)
+  repository = enTransaccion(prisma, new PrismaLibroRepository(prisma))
 
   // El otro libro tiene que existir de verdad: las filas llevan clave foránea al libro.
   await prisma.book.create({

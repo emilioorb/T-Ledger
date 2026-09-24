@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { ImportProfile, type ImportProfileProps } from '../domain/import-profile.js'
 import {
   IMPORT_PROFILE_REPOSITORY,
@@ -13,6 +14,7 @@ import type { ImportProfileInput } from '../infrastructure/banking.schemas.js'
 export class ManageImportProfilesUseCase {
   constructor(
     @Inject(IMPORT_PROFILE_REPOSITORY) private readonly profiles: ImportProfileRepository,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
   async list(): Promise<ImportProfile[]> {
@@ -25,13 +27,16 @@ export class ManageImportProfilesUseCase {
     return profile
   }
 
+  // En transacción, con el candado del libro (ADR-006).
   async create(input: ImportProfileInput): Promise<ImportProfile> {
-    return this.save({ id: randomUUID(), ...input })
+    return this.transaction.withTransaction(() => this.save({ id: randomUUID(), ...input }))
   }
 
   async update(id: string, input: ImportProfileInput): Promise<ImportProfile> {
-    await this.find(id)
-    return this.save({ id, ...input })
+    return this.transaction.withTransaction(async () => {
+      await this.find(id)
+      return this.save({ id, ...input })
+    })
   }
 
   private async save(props: ImportProfileProps): Promise<ImportProfile> {

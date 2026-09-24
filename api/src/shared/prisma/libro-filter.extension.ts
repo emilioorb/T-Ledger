@@ -1,5 +1,6 @@
 import { Prisma } from '../../generated/prisma/client.js'
 import { libroActual } from '../libro/libro-context.js'
+import { transaccionActual } from './transaccion-actual.js'
 
 // Fuera del filtro a propósito. Las tablas de Better Auth tienen su propio modelo de
 // pertenencia, y los tipos de cambio del BCCR son públicos y los mismos para todo el mundo:
@@ -25,9 +26,31 @@ export const SIN_LIBRO = new Set([
 
 const ESCRIBEN = new Set(['create', 'createMany', 'createManyAndReturn', 'upsert'])
 
+// Todo lo que cambia la base. Ninguna de estas corre sobre un libro fuera de una transacción: sin
+// el candado del libro, se colaría entre las lecturas de una regla de otra escritura (ADR-006).
+const MODIFICAN = new Set([
+  ...ESCRIBEN,
+  'update',
+  'updateMany',
+  'updateManyAndReturn',
+  'delete',
+  'deleteMany',
+])
+
+export class EscrituraSinTransaccionError extends Error {
+  constructor(operacion: string) {
+    super(`${operacion} escribe en un libro fuera de una transacción: sin el candado del libro no se escribe`)
+    this.name = 'EscrituraSinTransaccionError'
+  }
+}
+
 export class LibroAjenoError extends Error {
-  constructor(intentado: string, actual: string) {
-    super(`Se intentó escribir en el libro ${intentado} estando en el ${actual}`)
+  constructor(intentado: string, actual: string | undefined) {
+    super(
+      actual
+        ? `Se intentó escribir en el libro ${intentado} estando en el ${actual}`
+        : `Se intentó escribir en el libro ${intentado} dentro de una transacción abierta sin libro, que no tiene su candado`,
+    )
     this.name = 'LibroAjenoError'
   }
 }
@@ -60,6 +83,14 @@ export const filtroDeLibro = Prisma.defineExtension({
 
         const { bookId } = libroActual(`${model}.${operation}`)
         const entrada = args as Record<string, unknown>
+
+        if (MODIFICAN.has(operation)) {
+          const transaccion = transaccionActual()
+          if (!transaccion) throw new EscrituraSinTransaccionError(`${model}.${operation}`)
+          // El candado es de un libro; escribir en otro dentro de la misma transacción lo haría
+          // sin protección.
+          if (transaccion.libro !== bookId) throw new LibroAjenoError(bookId, transaccion.libro)
+        }
 
         if (ESCRIBEN.has(operation)) {
           const nuevas = operation === 'upsert' ? filasDe(entrada.create) : filasDe(entrada.data)

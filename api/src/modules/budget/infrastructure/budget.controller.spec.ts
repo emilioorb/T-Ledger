@@ -88,6 +88,20 @@ beforeEach(async () => {
   await prisma.budgetIncome.deleteMany()
 })
 
+describe('ingreso del mes', () => {
+  it('declararlo y cambiarlo queda en el rastro: primero crear, después editar con lo de antes', async () => {
+    await prisma.auditLog.deleteMany({ where: { entityId: 'ingreso-2026-10' } })
+    await put('/budget/income/2026-10', { amount: { minorUnits: '100000000', currency: 'CRC' } }).expect(200)
+    await put('/budget/income/2026-10', { amount: { minorUnits: '120000000', currency: 'CRC' } }).expect(200)
+
+    const entradas = await prisma.auditLog.findMany({ where: { entity: 'presupuesto', entityId: 'ingreso-2026-10' } })
+    expect(entradas.map((entrada) => entrada.action).sort()).toEqual(['crear', 'editar'])
+    const edicion = entradas.find((entrada) => entrada.action === 'editar')
+    expect(JSON.stringify(edicion?.changes)).toContain('100000000')
+    expect(JSON.stringify(edicion?.changes)).toContain('120000000')
+  })
+})
+
 describe('presupuesto contra la contabilidad', () => {
   it('evalúa el mes con el gasto real de los asientos', async () => {
     await post('/budget-models', modelo5030).expect(201)

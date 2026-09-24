@@ -76,3 +76,16 @@ Con eso, más lo que ya decía la spec:
   perfiles, ingreso mensual) pasan a ir en transacción. El plan suma esas tareas.
 - Si algún día hay varias instancias de la API, sigue funcionando: el candado es de la base.
   Nunca usar `pg_advisory_lock` de sesión, que PgBouncer rompe.
+
+## Límites conocidos
+
+- El filtro mira el contexto asíncrono, no la conexión. Una referencia a `prisma.client` guardada
+  antes de abrir la transacción escribiría por otra conexión, sin candado, y el filtro la
+  dejaría pasar. Hoy no existe ninguna; los repositorios piden `client` en cada consulta.
+- Las consultas crudas (`$executeRaw`) no pasan por el filtro. Las cuida
+  `consultas-crudas.spec.ts`, que solo admite las del candado.
+- `hashtext` da 32 bits: dos libros pueden caer en la misma clave y esperarse entre sí. Es
+  una espera de más, no un error, y con los libros que hay es improbable.
+- Lo que se guarda fuera de la base no vuelve atrás con la transacción. El enlace de una
+  invitación va al final, para que un fallo del rastro no lo cambie sin dejar constancia. Los
+  archivos en R2 se suben antes: un `REINTENTAR` puede dejar uno huérfano (tarea 7 del plan).

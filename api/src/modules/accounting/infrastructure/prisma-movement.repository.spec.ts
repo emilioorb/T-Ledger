@@ -13,6 +13,7 @@ import { PrismaAccountRepository } from './prisma-account.repository.js'
 import { PrismaJournalRepository } from './prisma-journal.repository.js'
 import { PrismaMovementRepository } from './prisma-movement.repository.js'
 import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
+import { enTransaccion } from '../../../test/en-transaccion.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
 const utc = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
@@ -87,9 +88,9 @@ beforeAll(async () => {
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()
-  const accounts = new PrismaAccountRepository(prisma)
-  journal = new PrismaJournalRepository(prisma, accounts)
-  repository = new PrismaMovementRepository(prisma)
+  const accounts = enTransaccion(prisma, new PrismaAccountRepository(prisma))
+  journal = enTransaccion(prisma, new PrismaJournalRepository(prisma, accounts))
+  repository = enTransaccion(prisma, new PrismaMovementRepository(prisma))
   await accounts.saveMany(CHART_SEED.map((props) => unwrap(Account.create(props))))
   chart = await accounts.loadChart()
 }, 180_000)

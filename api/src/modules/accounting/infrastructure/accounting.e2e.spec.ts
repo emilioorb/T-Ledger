@@ -19,6 +19,7 @@ import { JournalEntry } from '../domain/journal-entry.js'
 import { CHART_SEED } from './chart-seed.js'
 import { PrismaAccountRepository } from './prisma-account.repository.js'
 import { PrismaJournalRepository } from './prisma-journal.repository.js'
+import { enTransaccion } from '../../../test/en-transaccion.js'
 
 let postgres: RunningPostgres
 let app: INestApplication
@@ -467,7 +468,7 @@ describe('flujo completo de contabilidad', () => {
     })
     try {
       await conLibro(ajeno, async () => {
-        const cuentas = new PrismaAccountRepository(prisma)
+        const cuentas = enTransaccion(prisma, new PrismaAccountRepository(prisma))
         await cuentas.saveMany(CHART_SEED.map((props) => unwrap(Account.create(props))))
         const colones = Money.fromMinorUnits(77_000_00n, 'CRC')
         const gasto = unwrap(
@@ -487,7 +488,7 @@ describe('flujo completo de contabilidad', () => {
             await cuentas.loadChart(),
           ),
         )
-        await new PrismaJournalRepository(prisma, cuentas).save(gasto)
+        await enTransaccion(prisma, new PrismaJournalRepository(prisma, cuentas)).save(gasto)
       })
 
       const patrimonio = await get('/reports/net-worth?at=2026-09-30').expect(200)

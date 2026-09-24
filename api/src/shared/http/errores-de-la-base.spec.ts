@@ -33,16 +33,18 @@ const capturar = async (hacer: () => Promise<unknown>): Promise<unknown> => {
 describe('los errores de la base, como llegan de verdad', () => {
   it('una fila repetida se reconoce como choque de unicidad', async () => {
     const categoria = { bookId: prisma.libro, name: 'Repetida', kind: 'EXPENSE' as const }
-    await prisma.client.category.create({ data: categoria })
+    await prisma.withTransaction(() => prisma.client.category.create({ data: categoria }))
 
-    const error = await capturar(() => prisma.client.category.create({ data: categoria }))
+    const error = await capturar(() => prisma.withTransaction(() => prisma.client.category.create({ data: categoria })))
 
     expect(errorDeLaBase(error)).toBe('unicidad')
   })
 
   it('una fila que no existe se reconoce como ausente', async () => {
     const error = await capturar(() =>
-      prisma.client.category.update({ where: { id: '00000000-0000-7000-8000-000000000000' }, data: { name: 'x' } }),
+      prisma.withTransaction(() =>
+        prisma.client.category.update({ where: { id: '00000000-0000-7000-8000-000000000000' }, data: { name: 'x' } }),
+      ),
     )
 
     expect(errorDeLaBase(error)).toBe('ausente')

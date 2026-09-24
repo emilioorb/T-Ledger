@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { ACCOUNT_REPOSITORY, type AccountRepository } from '../domain/account-repository.port.js'
 import { CATEGORY_REPOSITORY, type CategoryRepository } from '../domain/category-repository.port.js'
 import { Category, type CategoryProps } from '../domain/category.js'
@@ -15,17 +16,24 @@ export class ManageCategoriesUseCase {
   constructor(
     @Inject(CATEGORY_REPOSITORY) private readonly categories: CategoryRepository,
     @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
   async list(): Promise<Category[]> {
     return this.categories.findAll()
   }
 
+  // Lo que escribe va en transacción: toma el candado del libro, y la cuenta de la regla se lee
+  // adentro (ADR-006).
   async create(input: CreateCategoryInput): Promise<Category> {
-    return this.save({ id: randomUUID(), ...input })
+    return this.transaction.withTransaction(() => this.save({ id: randomUUID(), ...input }))
   }
 
   async update(id: string, input: UpdateCategoryInput): Promise<Category> {
+    return this.transaction.withTransaction(() => this.actualizar(id, input))
+  }
+
+  private async actualizar(id: string, input: UpdateCategoryInput): Promise<Category> {
     const props = (await this.find(id)).toProps()
     return this.save({
       ...props,
@@ -41,9 +49,8 @@ export class ManageCategoriesUseCase {
   }
 
   async delete(id: string): Promise<void> {
-    if (!(await this.categories.delete(id))) {
-      throw new NotFoundError(`La categoría ${id} no existe.`)
-    }
+    const borrada = await this.transaction.withTransaction(() => this.categories.delete(id))
+    if (!borrada) throw new NotFoundError(`La categoría ${id} no existe.`)
   }
 
   async find(id: string): Promise<Category> {

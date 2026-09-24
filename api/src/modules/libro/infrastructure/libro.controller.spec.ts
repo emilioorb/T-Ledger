@@ -6,7 +6,9 @@ import { AllExceptionsFilter } from '../../../shared/http/all-exceptions.filter.
 import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
-import { RASTRO, type EntradaDeRastro } from '../../auditoria/domain/rastro.port.js'
+import { RASTRO } from '../../auditoria/domain/rastro.port.js'
+import { PrismaRastroRepository } from '../../auditoria/infrastructure/prisma-rastro.repository.js'
+import { UNIT_OF_WORK } from '../../../shared/prisma/unit-of-work.port.js'
 import { EnlacesDeInvitacion } from '../../identity/infrastructure/enlaces-de-invitacion.js'
 import { VerificadorDeContrasena } from '../../identity/infrastructure/verificador-de-contrasena.js'
 import { BorrarLibroUseCase } from '../application/borrar-libro.use-case.js'
@@ -18,7 +20,6 @@ import { LibroController } from './libro.controller.js'
 let postgres: RunningPostgres
 let app: INestApplication
 let prisma: PrismaService
-const rastro: EntradaDeRastro[] = []
 
 const enlace = (invitationId: string) =>
   request(app.getHttpServer()).post(`/api/v1/book/invitations/${invitationId}/link`)
@@ -47,7 +48,10 @@ beforeAll(async () => {
     providers: [
       EnlaceDeInvitacionUseCase,
       { provide: EnlacesDeInvitacion, useValue: new EnlacesDeInvitacion(prisma.clientSinFiltroDeLibro) },
-      { provide: RASTRO, useValue: { registrar: async (entrada: EntradaDeRastro) => void rastro.push(entrada) } },
+      // El rastro de verdad: un doble no pasa por el filtro de libro, y así no se veía que la
+      // entrada se escribía sin transacción.
+      { provide: RASTRO, useValue: new PrismaRastroRepository(prisma) },
+      { provide: UNIT_OF_WORK, useValue: prisma },
       { provide: VaciarLibroUseCase, useValue: {} },
       { provide: MisLibrosUseCase, useValue: {} },
       { provide: BorrarLibroUseCase, useValue: {} },
@@ -78,9 +82,8 @@ describe('POST /book/invitations/:id/link', () => {
 
     const encontrado = await new EnlacesDeInvitacion(prisma.clientSinFiltroDeLibro).buscar(body.token)
     expect(encontrado).toMatchObject({ email: 'inv_propia@ejemplo.com', invitacionVigente: true })
-    expect(rastro).toContainEqual(
-      expect.objectContaining({ entidad: 'miembro', entidadId: 'inv_propia', accion: 'editar' }),
-    )
+    const rastro = await prisma.clientSinFiltroDeLibro.auditLog.findMany({ where: { entityId: 'inv_propia' } })
+    expect(rastro).toEqual([expect.objectContaining({ entity: 'miembro', action: 'editar' })])
     expect(JSON.stringify(rastro)).not.toContain(body.token)
   })
 
@@ -88,6 +91,9 @@ describe('POST /book/invitations/:id/link', () => {
     await invitacion('inv_ajena', 'lib_otro')
 
     await enlace('inv_ajena').expect(404)
+
+    const rastro = await prisma.clientSinFiltroDeLibro.auditLog.count({ where: { entityId: 'inv_ajena' } })
+    expect(rastro).toBe(0)
 
     const enlaces = await prisma.clientSinFiltroDeLibro.invitationLink.count({
       where: { bookInvitationId: 'inv_ajena' },

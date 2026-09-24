@@ -30,7 +30,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Acepta: el ayudante distingue los tres casos; el test de dos libros pasa 20 veces seguidas sin `REINTENTAR`.
   - Archivos: `shared/prisma/escribir-con-version.ts`, su spec, spec de dos libros. (S)
 
-- [ ] **4b. Ninguna escritura de un libro fuera de una transacción.** El filtro de libro rechaza la escritura sin
+- [x] **4b. Ninguna escritura de un libro fuera de una transacción.** El filtro de libro rechaza la escritura sin
   transacción, y la que va a otro libro que el del candado. Antes, pasar a transacción las que hoy van sueltas:
   conciliar, categorías, cuentas, cuentas bancarias, perfiles de importación, ingreso mensual y altas sueltas.
   - Acepta: la suite completa corre con el guardia prendido; un test prueba que una escritura suelta tira.

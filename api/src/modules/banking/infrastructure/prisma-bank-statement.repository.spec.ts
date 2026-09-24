@@ -11,6 +11,7 @@ import { PrismaBankStatementRepository } from './prisma-bank-statement.repositor
 import { errorDeLaBase } from '../../../shared/http/all-exceptions.filter.js'
 import { LIBRO_DE_PRUEBA } from '../../../shared/libro/libro-de-prueba.js'
 import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
+import { enTransaccion } from '../../../test/en-transaccion.js'
 
 let postgres: RunningPostgres
 let prisma: PrismaService
@@ -45,7 +46,7 @@ beforeAll(async () => {
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()
-  repository = new PrismaBankStatementRepository(prisma)
+  repository = enTransaccion(prisma, new PrismaBankStatementRepository(prisma))
 }, 180_000)
 
 afterAll(async () => {

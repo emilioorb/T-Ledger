@@ -1,10 +1,10 @@
-import { AsyncLocalStorage } from 'node:async_hooks'
 import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Prisma, PrismaClient } from '../../generated/prisma/client.js'
 import { libroActual, libroActualSiHay } from '../libro/libro-context.js'
 import { ChoqueDeTransaccionError, esChoqueDeTransaccion, esEsperaVencida } from './choque-de-transaccion.js'
 import { filtroDeLibro } from './libro-filter.extension.js'
+import { transacciones, type Transaccion } from './transaccion-actual.js'
 import type { UnitOfWork } from './unit-of-work.port.js'
 
 // Tres alcanzan para un deadlock entre dos personas; si sigue, algo más está pasando y conviene
@@ -26,12 +26,6 @@ const CONEXIONES = 10
 const ESPERA_POR_CONEXION_MS = 5_000
 const DURACION_MAXIMA_MS = 15_000
 
-interface Transaccion {
-  tx: Prisma.TransactionClient
-  // El libro cuyo candado tiene esta transacción; ninguno si no es de un libro.
-  libro: string | undefined
-}
-
 interface Opciones {
   esperaMaximaDelCandado?: string
 }
@@ -45,7 +39,7 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy, UnitOfWork
 {
-  private readonly transaction = new AsyncLocalStorage<Transaccion>()
+  private readonly transaction = transacciones
 
   // `PrismaClient` devuelve un Proxy desde su constructor y sus trampas no reenvían el
   // receptor, así que dentro de un método `this` es el objeto crudo, sin los modelos. Esta
@@ -73,7 +67,12 @@ export class PrismaService
   // existe: piden `client` como siempre y reciben uno que ya no puede ver otros libros. Si no
   // hay libro en el contexto, la consulta tira en vez de devolver todo.
   get client(): Prisma.TransactionClient {
-    return this.transaction.getStore()?.tx ?? this.filtrado
+    return this.transaccionPropia()?.tx ?? this.filtrado
+  }
+
+  private transaccionPropia(): Transaccion | undefined {
+    const actual = this.transaction.getStore()
+    return actual?.abiertaPor === this.filtrado ? actual : undefined
   }
 
   // El libro de la petición en curso. Los repositorios lo escriben a la vista en cada fila
@@ -99,7 +98,7 @@ export class PrismaService
   // distintos no se esperan nunca (ADR-006). Sin libro —la sincronización del tipo de cambio—
   // no hay candado que tomar.
   async withTransaction<T>(run: () => Promise<T>): Promise<T> {
-    if (this.transaction.getStore()) return run()
+    if (this.transaccionPropia()) return run()
     const libro = libroActualSiHay()?.bookId
     for (let intento = 1; ; intento += 1) {
       try {
@@ -110,7 +109,9 @@ export class PrismaService
         return await this.filtrado.$transaction(
           async (tx) => {
             if (libro) await this.tomarCandado(tx, libro)
-            return this.transaction.run({ tx, libro }, run)
+            // Se espera adentro del contexto: una consulta de Prisma devuelta sin `await` se
+            // ejecuta recién cuando alguien la espera, y afuera ya no estaría en la transacción.
+            return this.transaction.run({ tx, libro, abiertaPor: this.filtrado }, async () => await run())
           },
           { maxWait: ESPERA_POR_CONEXION_MS, timeout: DURACION_MAXIMA_MS },
         )

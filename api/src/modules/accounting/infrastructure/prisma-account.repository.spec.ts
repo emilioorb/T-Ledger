@@ -8,6 +8,7 @@ import { CHART_SEED } from './chart-seed.js'
 import { PrismaAccountRepository } from './prisma-account.repository.js'
 import { LIBRO_DE_PRUEBA } from '../../../shared/libro/libro-de-prueba.js'
 import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
+import { enTransaccion } from '../../../test/en-transaccion.js'
 
 let postgres: RunningPostgres
 let prisma: PrismaService
@@ -22,7 +23,7 @@ beforeAll(async () => {
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()
-  repository = new PrismaAccountRepository(prisma)
+  repository = enTransaccion(prisma, new PrismaAccountRepository(prisma))
 }, 180_000)
 
 afterAll(async () => {
@@ -70,12 +71,12 @@ describe('PrismaAccountRepository', () => {
 
 describe('SeedChartUseCase', () => {
   it('siembra el plan cuando la tabla está vacía', async () => {
-    expect(await new SeedChartUseCase(repository).execute()).toBe(CHART_SEED.length)
+    expect(await new SeedChartUseCase(repository, prisma).execute()).toBe(CHART_SEED.length)
     expect(await prisma.account.count()).toBe(CHART_SEED.length)
   })
 
   it('no reaplica la semilla si ya hay cuentas', async () => {
-    const useCase = new SeedChartUseCase(repository)
+    const useCase = new SeedChartUseCase(repository, prisma)
     await useCase.execute()
     await prisma.account.delete({
       where: { bookId_code: { bookId: LIBRO_DE_PRUEBA.bookId, code: '1190' } },

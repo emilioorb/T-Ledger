@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { conLibro, type ContextoDeLibro } from '../libro/libro-context.js'
 import { startPostgres, type RunningPostgres } from '../../test/postgres-container.js'
 import { PrismaService } from './prisma.service.js'
-import { LibroAjenoError } from './libro-filter.extension.js'
+import { EscrituraSinTransaccionError, LibroAjenoError } from './libro-filter.extension.js'
 
 // Estos tests NO usan `conLibroDePrueba`: acá el libro es el sujeto de la prueba, y esconderlo
 // detrás de un ayudante sería esconder justo lo que se está probando.
@@ -14,9 +14,11 @@ let prisma: PrismaService
 
 const crearCategoria = (ctx: ContextoDeLibro, nombre: string) =>
   conLibro(ctx, () =>
-    prisma.client.category.create({
-      data: { bookId: ctx.bookId, name: nombre, kind: 'EXPENSE' },
-    }),
+    prisma.withTransaction(() =>
+      prisma.client.category.create({
+        data: { bookId: ctx.bookId, name: nombre, kind: 'EXPENSE' },
+      }),
+    ),
   )
 
 beforeAll(async () => {
@@ -68,7 +70,9 @@ describe('aislamiento entre libros', () => {
   it('actualizar una fila del otro libro no toca nada', async () => {
     const [deB] = await conLibro(enB, () => prisma.client.category.findMany())
     const { count } = await conLibro(enA, () =>
-      prisma.client.category.updateMany({ where: { id: deB!.id }, data: { name: 'Intervenida' } }),
+      prisma.withTransaction(() =>
+        prisma.client.category.updateMany({ where: { id: deB!.id }, data: { name: 'Intervenida' } }),
+      ),
     )
 
     expect(count).toBe(0)
@@ -77,7 +81,7 @@ describe('aislamiento entre libros', () => {
   it('borrar una fila del otro libro no borra nada', async () => {
     const [deB] = await conLibro(enB, () => prisma.client.category.findMany())
     const { count } = await conLibro(enA, () =>
-      prisma.client.category.deleteMany({ where: { id: deB!.id } }),
+      prisma.withTransaction(() => prisma.client.category.deleteMany({ where: { id: deB!.id } })),
     )
 
     expect(count).toBe(0)
@@ -88,9 +92,31 @@ describe('aislamiento entre libros', () => {
     // eso es un error de programación y taparlo lo dejaría vivo.
     await expect(
       conLibro(enA, () =>
-        prisma.client.category.create({
-          data: { bookId: enB.bookId, name: 'Colada', kind: 'EXPENSE' },
-        }),
+        prisma.withTransaction(() =>
+          prisma.client.category.create({
+            data: { bookId: enB.bookId, name: 'Colada', kind: 'EXPENSE' },
+          }),
+        ),
+      ),
+    ).rejects.toThrow(LibroAjenoError)
+  })
+
+  it('una escritura suelta, sin el candado del libro, se corta', async () => {
+    await expect(
+      conLibro(enA, () =>
+        prisma.client.category.create({ data: { bookId: enA.bookId, name: 'Suelta', kind: 'EXPENSE' } }),
+      ),
+    ).rejects.toThrow(EscrituraSinTransaccionError)
+  })
+
+  it('con el candado de un libro no se escribe en otro', async () => {
+    await expect(
+      conLibro(enA, () =>
+        prisma.withTransaction(() =>
+          conLibro(enB, () =>
+            prisma.client.category.create({ data: { bookId: enB.bookId, name: 'Cruzada', kind: 'EXPENSE' } }),
+          ),
+        ),
       ),
     ).rejects.toThrow(LibroAjenoError)
   })

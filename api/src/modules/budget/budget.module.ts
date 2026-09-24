@@ -4,6 +4,7 @@ import { RastroModule } from '../auditoria/rastro.module.js'
 import { AccountingModule } from '../accounting/accounting.module.js'
 import { BucketGuard } from './application/bucket-guard.js'
 import { EvaluateMonthUseCase } from './application/evaluate-month.use-case.js'
+import { DeclararIngresoUseCase } from './application/declarar-ingreso.use-case.js'
 import { ManageBudgetModelsUseCase } from './application/manage-budget-models.use-case.js'
 import { BUDGET_INCOME_REPOSITORY } from './domain/budget-income-repository.port.js'
 import { BUDGET_MODEL_REPOSITORY } from './domain/budget-model-repository.port.js'
@@ -25,6 +26,7 @@ import { PrismaBudgetModelRepository } from './infrastructure/prisma-budget-mode
     BucketGuard,
     EvaluateMonthUseCase,
     ManageBudgetModelsUseCase,
+    DeclararIngresoUseCase,
   ],
   // La proyección necesita el ingreso declarado del mes, no las tablas del presupuesto.
   exports: [BUDGET_INCOME_REPOSITORY, BucketGuard],

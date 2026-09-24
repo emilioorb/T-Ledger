@@ -5,6 +5,7 @@ import {
   SemanticValidationError,
 } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { ACCOUNT_REPOSITORY, type AccountRepository } from '../domain/account-repository.port.js'
 import { JOURNAL_REPOSITORY, type JournalRepository } from '../domain/journal-repository.port.js'
 import { Account, type AccountProps } from '../domain/account.js'
@@ -19,18 +20,29 @@ export class SaveAccountUseCase {
   constructor(
     @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
     @Inject(JOURNAL_REPOSITORY) private readonly journal: JournalRepository,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
   // `save` del repositorio es un upsert: sin esta guarda, crear un código que ya existe
   // renombraba la cuenta vieja y respondía 201, como si fuera una cuenta nueva.
+  // Todo en transacción: el plan entero y los asientos de la madre se leen con el candado del
+  // libro tomado, así nadie los cambia entre la validación y el guardado (ADR-006).
   async create(input: CreateAccountInput): Promise<Account> {
+    return this.transaction.withTransaction(() => this.crear(input))
+  }
+
+  async update(code: string, input: UpdateAccountInput): Promise<Account> {
+    return this.transaction.withTransaction(() => this.actualizar(code, input))
+  }
+
+  private async crear(input: CreateAccountInput): Promise<Account> {
     if (await this.accounts.findByCode(input.code)) {
       throw new ConflictError(`La cuenta ${input.code} ya existe en el plan.`)
     }
     return this.save(input)
   }
 
-  async update(code: string, input: UpdateAccountInput): Promise<Account> {
+  private async actualizar(code: string, input: UpdateAccountInput): Promise<Account> {
     const current = await this.accounts.findByCode(code)
     if (!current) throw new NotFoundError(`La cuenta ${code} no existe en el plan.`)
 

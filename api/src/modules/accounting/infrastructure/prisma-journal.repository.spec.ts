@@ -12,6 +12,7 @@ import { PrismaAccountRepository } from './prisma-account.repository.js'
 import { PrismaJournalRepository } from './prisma-journal.repository.js'
 import { conLibro, type ContextoDeLibro } from '../../../shared/libro/libro-context.js'
 import { entrarEnLibroDePrueba } from '../../../shared/libro/libro-de-prueba.js'
+import { enTransaccion } from '../../../test/en-transaccion.js'
 
 const crc = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'CRC')
 const usd = (minorUnits: bigint) => Money.fromMinorUnits(minorUnits, 'USD')
@@ -70,8 +71,8 @@ beforeAll(async () => {
   postgres = await startPostgres()
   prisma = new PrismaService(postgres.url)
   await prisma.$connect()
-  accounts = new PrismaAccountRepository(prisma)
-  repository = new PrismaJournalRepository(prisma, accounts)
+  accounts = enTransaccion(prisma, new PrismaAccountRepository(prisma))
+  repository = enTransaccion(prisma, new PrismaJournalRepository(prisma, accounts))
   await accounts.saveMany(CHART_SEED.map((props) => unwrap(Account.create(props))))
   chart = await accounts.loadChart()
 }, 180_000)

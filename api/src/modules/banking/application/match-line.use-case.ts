@@ -5,6 +5,7 @@ import {
   SemanticValidationError,
 } from '../../../shared/http/api-error.js'
 import type { Money } from '../../../shared/kernel/money.js'
+import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import {
   MOVEMENT_REPOSITORY,
   type MovementRepository,
@@ -24,9 +25,34 @@ export class MatchLineUseCase {
     @Inject(BANK_STATEMENT_REPOSITORY) private readonly statements: BankStatementRepository,
     @Inject(MOVEMENT_REPOSITORY) private readonly movements: MovementRepository,
     private readonly accounts: ManageBankAccountsUseCase,
+    @Inject(UNIT_OF_WORK) private readonly transaction: UnitOfWork,
   ) {}
 
+  // Cada paso va en transacción, con el candado del libro tomado: el estado de la línea y si el
+  // movimiento ya está tomado se leen adentro, así dos personas conciliando a la vez no pasan
+  // las dos el control (ADR-006). El índice único de la base es la segunda red.
   async match(lineId: string, movementId: string): Promise<void> {
+    await this.transaction.withTransaction(() => this.conciliar(lineId, movementId))
+  }
+
+  async unmatch(lineId: string): Promise<void> {
+    await this.transaction.withTransaction(async () => {
+      await this.find(lineId)
+      await this.statements.markPending(lineId)
+    })
+  }
+
+  async ignore(lineId: string): Promise<void> {
+    await this.transaction.withTransaction(async () => {
+      const line = await this.find(lineId)
+      if (line.status === 'MATCHED') {
+        throw new ConflictError('Esa línea está conciliada: deshacela antes de ignorarla.')
+      }
+      await this.statements.markIgnored(lineId)
+    })
+  }
+
+  private async conciliar(lineId: string, movementId: string): Promise<void> {
     const line = await this.find(lineId)
     if (line.status === 'MATCHED') {
       throw new ConflictError('Esa línea ya está conciliada. Deshacela antes de cambiarla.')
@@ -62,19 +88,6 @@ export class MatchLineUseCase {
     }
 
     await this.statements.markMatched(lineId, movementId)
-  }
-
-  async unmatch(lineId: string): Promise<void> {
-    await this.find(lineId)
-    await this.statements.markPending(lineId)
-  }
-
-  async ignore(lineId: string): Promise<void> {
-    const line = await this.find(lineId)
-    if (line.status === 'MATCHED') {
-      throw new ConflictError('Esa línea está conciliada: deshacela antes de ignorarla.')
-    }
-    await this.statements.markIgnored(lineId)
   }
 
   private async find(lineId: string) {

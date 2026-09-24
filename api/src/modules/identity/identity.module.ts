@@ -1,7 +1,6 @@
 import { Global, MiddlewareConsumer, Module, type NestModule } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { loadEnv } from '../../shared/config/env.js'
-import { conLibro } from '../../shared/libro/libro-context.js'
 import { PrismaService } from '../../shared/prisma/prisma.service.js'
 import { RASTRO, type Rastro } from '../auditoria/domain/rastro.port.js'
 import { RastroModule } from '../auditoria/rastro.module.js'
@@ -11,6 +10,7 @@ import { crearAuth, type Auth } from './infrastructure/auth.config.js'
 import { EnlacesDeInvitacion } from './infrastructure/enlaces-de-invitacion.js'
 import { LibroMiddleware } from './infrastructure/libro.middleware.js'
 import { PermisoGuard } from './infrastructure/permiso.guard.js'
+import { rastroDeMiembros } from './infrastructure/rastro-de-miembros.js'
 import { VerificadorDeContrasena } from './infrastructure/verificador-de-contrasena.js'
 
 // Global porque el middleware del libro corre sobre todas las rutas y la guardia de permiso se
@@ -36,21 +36,7 @@ import { VerificadorDeContrasena } from './infrastructure/verificador-de-contras
           async (bookId) => {
             await eventos.emitAsync(LIBRO_CREADO, { bookId })
           },
-          // El libro y el autor vienen del gancho, no del contexto de la petición. Dentro de
-          // los manejadores de Better Auth ese contexto no llega —probado: el rastro salió
-          // firmado por la persona equivocada—, y el gancho sí sabe quién invitó, quién
-          // canceló y quién aceptó.
-          async ({ bookId, aQuien, autorId, accion, antes, despues }) => {
-            await conLibro({ bookId, userId: autorId, rol: 'owner' }, () =>
-              rastro.registrar({
-                entidad: 'miembro',
-                entidadId: aQuien,
-                accion,
-                ...(antes ? { antes } : {}),
-                ...(despues ? { despues } : {}),
-              }),
-            )
-          },
+          rastroDeMiembros(prisma, rastro),
           async (bookIds) => {
             await Promise.all(bookIds.map((bookId) => eventos.emitAsync(LIBRO_BORRADO, { bookId })))
           },
