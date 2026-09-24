@@ -47,8 +47,11 @@ Con eso, más lo que ya decía la spec:
 - La versión optimista sigue igual: ahí la persona editó con datos que ya cambiaron, y eso
   ningún candado lo arregla.
 - El índice único parcial de conciliación sigue igual.
-- La espera tiene tope (`lock_timeout`) y el pool está configurado, para que una cola en un libro
-  no deje sin conexiones a los demás. Si el tope se agota, la respuesta es `REINTENTAR`.
+- La espera tiene tope (`lock_timeout`), y antes de pedir conexión hay una fila en el proceso: hasta
+  3 escrituras por libro y 4 por persona. Quien espera el candado ocupa una conexión, y el pool es
+  uno solo; sin la fila, una cuenta con decenas de escrituras en paralelo dejaba sin conexiones a
+  los demás libros (lo encontró la auditoría de `/ship`). Lo que no entra, o agota el tope,
+  responde `REINTENTAR`. La fila es del proceso: con varias instancias, cada una tendría la suya.
 - Se conserva un reintento acotado ante deadlocks (40P01), que Read Committed también puede dar.
 - Lo que no es de un libro (la sincronización del BCCR) corre sin candado.
 - Borrar un libro lleva un candado por persona: la regla «no borrar el último» cruza libros.
@@ -92,6 +95,12 @@ Con eso, más lo que ya decía la spec:
   de un libro compartido que se borra, a quien sacan o a quien se va de su único libro se les abre
   uno propio, vacío (decidido por Emilio el 2026-09-24): lo hacen los ganchos y, para lo que se les
   escape, el middleware del libro en el próximo pedido.
+- El índice único parcial de conciliación usa `partialIndexes`, que en Prisma 7 está en preview:
+  al actualizar Prisma, revisar que siga igual.
+- Darse de baja borra los libros de los que era la única dueña sin tomar los candados: una
+  escritura en curso de otro miembro puede fallar, y un pedido de la misma sesión en ese instante
+  podría abrirle un «Personal» que se va con la cuenta. Es raro y deja a lo sumo un libro sin
+  miembros; si aparece, un barrido de libros sin miembros lo limpia.
 - `hashtext` da 32 bits: dos libros pueden caer en la misma clave y esperarse entre sí. Es
   una espera de más, no un error, y con los libros que hay es improbable.
 - Lo que se guarda fuera de la base no vuelve atrás con la transacción. El enlace de una

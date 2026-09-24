@@ -130,7 +130,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 - [x] **19. Cliente.** Cada pedido manda la versión del cliente en una cabecera; los errores se distinguen por `code`
   (`EDITADO_POR_OTRO`, `REINTENTAR`, mes cerrado), ya no por el 409 a secas.
   - Archivos: `web/src/lib/api.ts`, `web/src/lib/api-types.gen.ts`, `web/src/features/debts/use-debts.ts`, spec. (S)
-- [ ] **20. Formularios y acciones.** Mandan la `version` que vieron (y pagar, la `cuota`: hasta que la mande, dos
+- [x] **20. Formularios y acciones.** Mandan la `version` que vieron (y pagar, la `cuota`: hasta que la mande, dos
   pagos a la vez de una deuda registran las cuotas n y n+1, como antes); ante `EDITADO_POR_OTRO`, el aviso ofrece «Cargar lo
   último» (según la respuesta a la pregunta abierta). Se reparte por pantalla en sub-tareas de ≤5 archivos al llegar acá.
 - [ ] **21. Medir, documentar y publicar.** Contador de pedidos sin `version` (log y Sentry), novedades, ADR si algo se

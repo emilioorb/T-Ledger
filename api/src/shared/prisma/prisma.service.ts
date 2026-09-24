@@ -1,4 +1,5 @@
 import { ESPACIO_DE_LIBROS, ESPACIO_DE_PERSONAS, ESPERA_MAXIMA_DEL_CANDADO } from './candados.js'
+import { FilaDeEscrituras } from './fila-de-escrituras.js'
 import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Prisma, PrismaClient } from '../../generated/prisma/client.js'
@@ -12,11 +13,6 @@ import type { UnitOfWork } from './unit-of-work.port.js'
 // que se vea en vez de insistir.
 const INTENTOS_ANTE_UN_CHOQUE = 3
 
-// El espacio de claves de los candados de libros, para no compartirlo con otros usos de los
-// advisory locks (Prisma migrate usa el suyo).
-
-// Cuánto espera una escritura a que termine la de otra persona en el mismo libro. Más que eso es
-// una cola, no una espera: se corta y se pide probar de nuevo, antes de que ocupe todo el pool.
 
 // Las conexiones y los tiempos van escritos: los defaults (10 conexiones, 2 s para conseguir una
 // y 5 s de transacción) decidían sin que nadie los eligiera cuándo un libro trabado dejaba sin
@@ -24,6 +20,10 @@ const INTENTOS_ANTE_UN_CHOQUE = 3
 const CONEXIONES = 10
 const ESPERA_POR_CONEXION_MS = 5_000
 const DURACION_MAXIMA_MS = 15_000
+// Cuántas escrituras esperan a la vez, antes de pedir conexión: por libro y por persona. Con 10
+// conexiones, una sola cuenta ocupa como mucho 4 y quedan 6 para todos los demás.
+const EN_FILA_POR_LIBRO = 3
+const EN_FILA_POR_PERSONA = 4
 
 interface Opciones {
   esperaMaximaDelCandado?: string
@@ -51,6 +51,8 @@ export class PrismaService
   private readonly filtrado: PrismaClient
 
   private readonly esperaMaximaDelCandado: string
+
+  private readonly fila = new FilaDeEscrituras({ porLibro: EN_FILA_POR_LIBRO, porPersona: EN_FILA_POR_PERSONA })
 
   constructor(connectionString: string, opciones: Opciones = {}) {
     super({ adapter: new PrismaPg({ connectionString, max: CONEXIONES }) })
@@ -98,7 +100,20 @@ export class PrismaService
   // no hay candado que tomar.
   async withTransaction<T>(run: () => Promise<T>): Promise<T> {
     if (this.transaccionPropia()) return run()
-    const libro = libroActualSiHay()?.bookId
+    const contexto = libroActualSiHay()
+    const libro = contexto?.bookId
+    if (!libro) return this.abrir(run, undefined)
+
+    const salir = this.fila.entrar(libro, contexto.userId)
+    if (!salir) throw new ChoqueDeTransaccionError(new Error(`Demasiadas escrituras en fila en el libro ${libro}`))
+    try {
+      return await this.abrir(run, libro)
+    } finally {
+      salir()
+    }
+  }
+
+  private async abrir<T>(run: () => Promise<T>, libro: string | undefined): Promise<T> {
     for (let intento = 1; ; intento += 1) {
       try {
         // La transacción se abre sobre el cliente **filtrado**, no sobre el crudo: el `tx` que

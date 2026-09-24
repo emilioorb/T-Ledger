@@ -44,13 +44,17 @@ export const loUltimoDe = <T extends object>(
   valor: string,
   campo: keyof T & string = 'id' as keyof T & string,
 ): T | undefined => {
+  // Con `version`: bajo la misma clave conviven otras formas con el mismo campo (el árbol de
+  // cuentas tiene `code` y no `version`), y rearmar un formulario con una de esas mandaría la
+  // edición sin versión, que es pisar a ciegas. Y de todas las copias, la más nueva: una consulta
+  // inactiva, de otra página o de una visita anterior, puede guardar una versión vieja.
+  let masNueva: Entidad | undefined
   for (const [, dato] of cache.getQueriesData({ queryKey })) {
-    // Con `version`: bajo la misma clave conviven otras formas con el mismo campo (el árbol de
-    // cuentas tiene `code` y no `version`), y rearmar un formulario con una de esas mandaría la
-    // edición sin versión, que es pisar a ciegas.
-    const encontrado = dentroDe(dato, campo).find((entidad) => entidad[campo] === valor && 'version' in entidad)
-    if (encontrado) return encontrado as T
+    for (const entidad of dentroDe(dato, campo)) {
+      if (entidad[campo] !== valor || typeof entidad.version !== 'number') continue
+      if (!masNueva || entidad.version > (masNueva.version as number)) masNueva = entidad
+    }
   }
-  return undefined
+  return masNueva as T | undefined
 }
 

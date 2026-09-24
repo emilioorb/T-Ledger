@@ -160,12 +160,14 @@ export const useBorrarLibro = (nombre: string) =>
     onError: (error: unknown) => toast.error(motivoDelRechazo(error)),
   })
 
-// Por el `status` y no por el texto, igual que al vaciar: el 401 es la contraseña y el 409
-// es el último libro, las dos cosas que la persona puede entender y corregir.
+// Por el `status` y el `code`, no por el texto: el 401 es la contraseña y el `CONFLICT` es el
+// último libro, las dos cosas que la persona puede entender y corregir. Otro 409 es un cruce
+// momentáneo (`REINTENTAR`), que trae su propio mensaje.
 const motivoDelRechazo = (error: unknown): string => {
   if (!(error instanceof ApiError)) return copy.borrar.failed
   if (error.status === 401) return copy.borrar.wrongPassword
-  if (error.status === 409) return copy.borrar.lastBook
+  if (error.code === 'REINTENTAR') return error.message
+  if (error.code === 'CONFLICT') return copy.borrar.lastBook
   return copy.borrar.failed
 }
 

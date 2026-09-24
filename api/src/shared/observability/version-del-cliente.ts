@@ -8,15 +8,15 @@ import type { NextFunction, Request, Response } from 'express'
 export const CABECERA_DE_VERSION = 'x-version-cliente'
 
 const SIN_CABECERA = 'sin cabecera'
-// Solo lo que tiene forma de versión: la cabecera la escribe cualquiera, y va al log y a las
-// métricas, donde un texto libre sería ruido o algo peor.
-const FORMA_DE_VERSION = /^[0-9A-Za-z.+-]{1,32}$/
+// Solo lo que tiene la forma de una versión de la app: la cabecera la escribe cualquiera, y va al
+// log y a las métricas, donde un texto libre sería ruido y cada valor distinto una serie más.
+const FORMA_DE_VERSION = /^\d{1,3}\.\d{1,3}\.\d{1,3}$/
 
 const almacen = new AsyncLocalStorage<string>()
 
 export const leerVersionDelCliente = (cabecera: string | undefined): string => {
   if (cabecera === undefined) return SIN_CABECERA
-  return FORMA_DE_VERSION.test(cabecera) ? cabecera : 'ilegible'
+  return FORMA_DE_VERSION.test(cabecera) ? cabecera : 'otra'
 }
 
 export const versionDelCliente = (): string => almacen.getStore() ?? 'fuera de un pedido'

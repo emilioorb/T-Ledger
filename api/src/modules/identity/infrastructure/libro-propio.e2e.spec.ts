@@ -140,5 +140,20 @@ describe('nadie se queda sin libros', { timeout: HASHEO }, () => {
     const sesiones = await db().authSession.findMany({ where: { userId: invitadaId } })
     expect(sesiones.map((sesion) => sesion.activeOrganizationId)).toEqual(sesiones.map(() => libros[0]!.organizationId))
   })
+
+  it('cinco pedidos a la vez de alguien sin libros: ninguno falla y se abre uno solo', async () => {
+    const { invitadaId } = await compartido('cinco')
+    const invitada = await sesionDe('invitada-cinco@propio.test')
+    await db().bookMember.deleteMany({ where: { userId: invitadaId } })
+    const middleware = new LibroMiddleware(prisma, auth)
+    const pedido = { headers: Object.fromEntries(invitada.entries()), header: () => undefined } as unknown as Request
+
+    const resultados = await Promise.all(
+      [1, 2, 3, 4, 5].map(() => new Promise<unknown>((listo) => void middleware.use(pedido, {} as Response, listo))),
+    )
+
+    expect(resultados).toEqual([undefined, undefined, undefined, undefined, undefined])
+    expect(await librosDe(invitadaId)).toHaveLength(1)
+  })
 })
 

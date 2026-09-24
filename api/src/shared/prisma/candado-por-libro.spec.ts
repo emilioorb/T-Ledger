@@ -77,6 +77,31 @@ describe('dos escritores en el mismo libro', () => {
   })
 })
 
+describe('la fila de un libro', () => {
+  it('pasado su tope, la escritura se rechaza enseguida, sin pedir conexión ni esperar el candado', async () => {
+    let soltar: () => void = () => {}
+    const retenido = new Promise<void>((listo) => (soltar = listo))
+    let tomado: () => void = () => {}
+    const yaTomo = new Promise<void>((listo) => (tomado = listo))
+    const primera = enElLibro(() =>
+      prisma.withTransaction(async () => {
+        tomado()
+        await retenido
+      }),
+    )
+    await yaTomo
+
+    const siguientes = [1, 2, 3].map(() => enElLibro(() => prisma.withTransaction(async () => undefined)))
+    const rechazada = await Promise.race([siguientes[2]!.then(() => 'entró', () => 'rechazada'), esperar(300).then(() => 'esperando')])
+    soltar()
+    await primera
+    const resultados = await Promise.allSettled(siguientes)
+
+    expect(rechazada).toBe('rechazada')
+    expect(resultados.map((r) => r.status)).toEqual(['fulfilled', 'fulfilled', 'rejected'])
+  })
+})
+
 describe('dos instancias del servicio', () => {
   it('una no toma prestada la transacción de la otra: abre la suya y espera el candado', async () => {
     const otra = new PrismaService(postgres.url, { esperaMaximaDelCandado: '500ms' })

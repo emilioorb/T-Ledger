@@ -17,10 +17,12 @@ const PALABRAS_SQL = new Set(['where', 'on', 'join', 'left', 'right', 'inner', '
 // cerrada; cualquier otra sin FROM sigue fallando.
 const SIN_TABLA_PERMITIDAS = [/^\s*SELECT set_config\('lock_timeout',/, /^\s*SELECT pg_advisory_xact_lock\(/]
 // Catálogos de Postgres, no tablas de un libro: los tests miran ahí quién espera el candado. La
-// lista también es cerrada.
+// lista también es cerrada, y vale solo en los ayudantes de test: el código de producción no
+// tiene nada que hacer ahí.
 const TABLAS_DEL_SISTEMA = new Set(['pg_locks'])
+const esAyudanteDeTest = (archivo: string): boolean => archivo.split(path.sep).includes('test')
 
-const problemasDe = (codigo: string): string[] =>
+const problemasDe = (codigo: string, aceptaSistema = false): string[] =>
   [...codigo.matchAll(USO_CRUDO)].flatMap((uso) => {
     PLANTILLA.lastIndex = uso.index
     const plantilla = PLANTILLA.exec(codigo)
@@ -31,7 +33,7 @@ const problemasDe = (codigo: string): string[] =>
       return SIN_TABLA_PERMITIDAS.some((permitida) => permitida.test(sql)) ? [] : [`consulta sin FROM que el test pueda leer`]
     }
     const alias = tablas
-      .filter(([, tabla]) => !TABLAS_DEL_SISTEMA.has((tabla ?? '').toLowerCase()))
+      .filter(([, tabla]) => !(aceptaSistema && TABLAS_DEL_SISTEMA.has((tabla ?? '').toLowerCase())))
       .map(([, tabla, nombre]) => (nombre && !PALABRAS_SQL.has(nombre.toLowerCase()) ? nombre : tabla))
       .filter((nombre): nombre is string => nombre !== undefined)
     return alias
@@ -51,7 +53,7 @@ describe('consultas crudas', () => {
   it('todas las del código filtran por libro, tabla por tabla', () => {
     const encontrados = [path.join(RAIZ, 'src'), path.join(RAIZ, 'scripts')].flatMap((dir) =>
       fuentes(dir).flatMap((archivo) =>
-        problemasDe(readFileSync(archivo, 'utf8')).map((problema) => `${path.relative(RAIZ, archivo)}: ${problema}`),
+        problemasDe(readFileSync(archivo, 'utf8'), esAyudanteDeTest(archivo)).map((problema) => `${path.relative(RAIZ, archivo)}: ${problema}`),
       ),
     )
 
@@ -83,12 +85,16 @@ describe('consultas crudas', () => {
     expect(problemasDe("tx.$executeRaw`SELECT set_config('search_path', ${x}, true)`")).toHaveLength(1)
   })
 
-  it('acepta los catálogos del sistema de la lista, y nada más que ellos', () => {
-    expect(problemasDe("x.$queryRaw`SELECT count(*) FROM pg_locks l WHERE l.locktype = 'advisory'`")).toEqual([])
-    expect(problemasDe('x.$queryRaw`SELECT 1 FROM pg_locks l JOIN journal_lines j ON true`')).toEqual([
+  it('acepta los catálogos del sistema de la lista en los ayudantes de test, y nada más que ellos', () => {
+    expect(problemasDe("x.$queryRaw`SELECT count(*) FROM pg_locks l WHERE l.locktype = 'advisory'`", true)).toEqual([])
+    expect(problemasDe('x.$queryRaw`SELECT 1 FROM pg_locks l JOIN journal_lines j ON true`', true)).toEqual([
       'la tabla j no filtra por libro',
     ])
-    expect(problemasDe('x.$queryRaw`SELECT 1 FROM pg_stat_activity a`')).toHaveLength(1)
+    expect(problemasDe('x.$queryRaw`SELECT 1 FROM pg_stat_activity a`', true)).toHaveLength(1)
+  })
+
+  it('en el código de producción, pg_locks no pasa', () => {
+    expect(problemasDe("x.$queryRaw`SELECT count(*) FROM pg_locks l WHERE l.locktype = 'advisory'`")).toHaveLength(1)
   })
 
   it('rechaza las formas que no sabe revisar, en vez de dejarlas pasar', () => {

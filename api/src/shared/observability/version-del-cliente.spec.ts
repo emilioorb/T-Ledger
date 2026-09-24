@@ -9,8 +9,8 @@ describe('la versión del cliente', () => {
 
   it('sin cabecera es la app sin actualizar, y lo que no tiene forma de versión no entra al log', () => {
     expect(leerVersionDelCliente(undefined)).toBe('sin cabecera')
-    expect(leerVersionDelCliente('1.0\n[ERROR] inventado')).toBe('ilegible')
-    expect(leerVersionDelCliente('x'.repeat(40))).toBe('ilegible')
+    expect(leerVersionDelCliente('1.0\n[ERROR] inventado')).toBe('otra')
+    expect(leerVersionDelCliente('1.4.0-beta.distinta-cada-vez')).toBe('otra')
   })
 
   it('queda en el contexto de todo lo que corre después del middleware', () => {

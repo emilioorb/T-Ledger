@@ -54,5 +54,13 @@ describe('lo último de una entidad en la caché', () => {
 
     expect(loUltimoDe<{ code: string; version: number }>(cache, ['cuentas'], '1', 'code')?.version).toBe(7)
   })
+
+  it('de varias copias, la de versión más alta: una consulta inactiva puede guardar una vieja', () => {
+    const cache = new QueryClient()
+    cache.setQueryData(['metas', 'detalle', 'a'], { id: 'a', version: 1 })
+    cache.setQueryData(['metas', 'lista'], [{ id: 'a', version: 4 }])
+
+    expect(loUltimoDe<{ id: string; version: number }>(cache, ['metas'], 'a')?.version).toBe(4)
+  })
 })
 

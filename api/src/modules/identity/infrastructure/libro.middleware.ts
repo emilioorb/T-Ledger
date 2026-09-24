@@ -21,6 +21,10 @@ export const CABECERA_LIBRO = 'x-libro'
 export class LibroMiddleware implements NestMiddleware {
   private readonly logger = new Logger(LibroMiddleware.name)
 
+  // La web pide varias cosas a la vez al cargar: todas verían cero libros. Comparten la misma
+  // apertura en vez de hacer cola en el candado de la persona, cada una con su conexión.
+  private readonly abriendo = new Map<string, Promise<string | null>>()
+
   constructor(
     private readonly prisma: PrismaService,
     @Inject(AUTH) private readonly auth: Auth,
@@ -68,8 +72,10 @@ export class LibroMiddleware implements NestMiddleware {
     // sacar a alguien; esto cubre lo que se les escape —irse por cuenta propia, un fallo al
     // abrirlo—, porque sin libro todo contesta 403 y no hay otra puerta para salir de ahí.
     if (suyas.length === 0) {
-      const nuevo = await asegurarLibroPropio(this.auth, this.prisma.clientSinFiltroDeLibro, userId)
-      if (nuevo) return elegirLibro({ pedido: libroPedido, activo: nuevo, suyas: await this.suyasDe(userId) })
+      const nuevo = await this.abrirLibroPropio(userId)
+      // Se relee aunque lo haya abierto otro pedido: sus membresías ya no son cero.
+      const ahora = await this.suyasDe(userId)
+      return elegirLibro({ pedido: libroPedido, activo: nuevo ?? ahora[0]?.organizationId, suyas: ahora })
     }
 
     const elegida = elegirLibro({ pedido: libroPedido, activo: libroActivo, suyas })
@@ -78,6 +84,16 @@ export class LibroMiddleware implements NestMiddleware {
       this.logger.warn(`El usuario ${userId} tiene varios libros y la petición no eligió ninguno`)
     }
     return elegida
+  }
+
+  private abrirLibroPropio(userId: string): Promise<string | null> {
+    const enCurso = this.abriendo.get(userId)
+    if (enCurso) return enCurso
+    const apertura = asegurarLibroPropio(this.auth, this.prisma.clientSinFiltroDeLibro, userId).finally(() =>
+      this.abriendo.delete(userId),
+    )
+    this.abriendo.set(userId, apertura)
+    return apertura
   }
 
   private suyasDe(userId: string) {
