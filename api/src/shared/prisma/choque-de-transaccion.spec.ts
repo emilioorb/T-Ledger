@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { esChoqueDeTransaccion } from './choque-de-transaccion.js'
+import { esChoqueDeTransaccion, esEsperaVencida } from './choque-de-transaccion.js'
 
 const conCausa = (cause: unknown) => Object.assign(new Error('falló el commit'), { cause })
 
@@ -28,5 +28,25 @@ describe('esChoqueDeTransaccion', () => {
     expect(esChoqueDeTransaccion(conCausa({ sqlState: '23505' }))).toBe(false)
     expect(esChoqueDeTransaccion(null)).toBe(false)
     expect(esChoqueDeTransaccion('40001')).toBe(false)
+  })
+})
+
+describe('esEsperaVencida', () => {
+  it('reconoce el lock_timeout como llega de una consulta cruda: P2010 con el error del adapter en meta', () => {
+    // Medido contra Postgres real.
+    const delAdapter = Object.assign(new Error('falló'), {
+      code: 'P2010',
+      meta: { driverAdapterError: { cause: { originalCode: '55P03', kind: 'postgres' } } },
+    })
+    expect(esEsperaVencida(delAdapter)).toBe(true)
+    expect(esChoqueDeTransaccion(delAdapter)).toBe(false)
+  })
+
+  it('reconoce una transacción que se pasó de su tiempo', () => {
+    expect(esEsperaVencida(Object.assign(new Error('x'), { code: 'P2028' }))).toBe(true)
+  })
+
+  it('no confunde un choque con una espera', () => {
+    expect(esEsperaVencida(conCausa({ sqlState: '40001' }))).toBe(false)
   })
 })

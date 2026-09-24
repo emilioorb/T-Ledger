@@ -7,7 +7,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 
 - [x] **1. Transacción serializable con reintento.** Hecha y medida: daba errores entre libros (27 de 120 con cuatro
   libros). Reemplazada por la 1b ([ADR-006](../docs/decisions/ADR-006-candado-por-libro-para-la-concurrencia.md)).
-- [ ] **1b. Candado por libro.** `withTransaction` en Read Committed toma `pg_advisory_xact_lock` del libro como primera
+- [x] **1b. Candado por libro.** `withTransaction` en Read Committed toma `pg_advisory_xact_lock` del libro como primera
   instrucción; sin libro (BCCR) no toma candado. La clave viaja con la transacción. `SET LOCAL lock_timeout`; pool,
   `timeout` y `maxWait` explícitos; 55P03 y P2028 a `REINTENTAR`; reintento acotado solo ante 40P01.
   - Acepta: dos escritores del mismo libro quedan en fila (la regla del cupo da una fila, sin reintentos); dos libros no

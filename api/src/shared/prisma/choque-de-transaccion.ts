@@ -1,33 +1,48 @@
-// Cuando dos transacciones serializables se cruzan, Postgres aborta una (40001, falla de
-// serialización; 40P01, deadlock). La documentación de Prisma lo describe como `P2034` o con el
-// código en `sqlState`. Medido con `@prisma/adapter-pg`: cuando el choque aparece en el COMMIT
-// llega como `DriverAdapterError` con `cause.kind === 'TransactionWriteConflict'` y el código en
-// `originalCode`. Se aceptan las tres formas, en el error o en su cadena de `cause`: Prisma no
-// exporta una clase para esto.
+// Los errores de la base llegan envueltos de formas distintas según dónde fallen, y Prisma no
+// exporta clases para todas. Medido con `@prisma/adapter-pg`:
+// - un choque en el COMMIT: `DriverAdapterError` con `cause.kind === 'TransactionWriteConflict'`
+//   y el código en `cause.originalCode`;
+// - una consulta cruda que falla: `P2010` con el error del adapter en `meta.driverAdapterError`;
+// - lo que describe la documentación: `P2034`, o el código de Postgres en `sqlState`.
+// Por eso se juntan los códigos de todas las capas y se decide sobre esa lista.
 // https://www.prisma.io/docs/orm/v7/prisma-client/queries/transactions (Write conflicts)
-const CODIGOS_DE_CHOQUE = new Set(['40001', '40P01'])
-const PROFUNDIDAD_MAXIMA = 5
+const PROFUNDIDAD_MAXIMA = 6
 
 const propiedad = (valor: unknown, nombre: string): unknown =>
   typeof valor === 'object' && valor !== null && nombre in valor
     ? (valor as Record<string, unknown>)[nombre]
     : undefined
 
-export const esChoqueDeTransaccion = (error: unknown): boolean => {
-  let actual = error
-  for (let nivel = 0; nivel < PROFUNDIDAD_MAXIMA && actual; nivel += 1) {
-    if (propiedad(actual, 'code') === 'P2034') return true
-    if (propiedad(actual, 'kind') === 'TransactionWriteConflict') return true
-    for (const campo of ['sqlState', 'originalCode']) {
-      const codigo = propiedad(actual, campo)
-      if (typeof codigo === 'string' && CODIGOS_DE_CHOQUE.has(codigo)) return true
+const codigosDe = (error: unknown): Set<string> => {
+  const codigos = new Set<string>()
+  const pendientes: { valor: unknown; nivel: number }[] = [{ valor: error, nivel: 0 }]
+  for (let siguiente = pendientes.pop(); siguiente; siguiente = pendientes.pop()) {
+    const { valor, nivel } = siguiente
+    if (!valor || nivel > PROFUNDIDAD_MAXIMA) continue
+    for (const campo of ['code', 'sqlState', 'originalCode', 'kind']) {
+      const codigo = propiedad(valor, campo)
+      if (typeof codigo === 'string') codigos.add(codigo)
     }
-    actual = propiedad(actual, 'cause')
+    pendientes.push({ valor: propiedad(valor, 'cause'), nivel: nivel + 1 })
+    pendientes.push({ valor: propiedad(propiedad(valor, 'meta'), 'driverAdapterError'), nivel: nivel + 1 })
   }
-  return false
+  return codigos
 }
 
-// Se agotaron los reintentos: el choque se repitió. No es un error de la persona ni de sus
+const tieneAlguno = (error: unknown, buscados: readonly string[]) => {
+  const codigos = codigosDe(error)
+  return buscados.some((codigo) => codigos.has(codigo))
+}
+
+// Postgres abortó la transacción por un cruce (40001) o un deadlock (40P01). Se puede reintentar.
+export const esChoqueDeTransaccion = (error: unknown): boolean =>
+  tieneAlguno(error, ['P2034', 'TransactionWriteConflict', '40001', '40P01'])
+
+// La espera por el candado del libro pasó su tope (`lock_timeout`, 55P03), o la transacción
+// entera se pasó de su tiempo (P2028). No es un error de la persona: hay una cola en su libro.
+export const esEsperaVencida = (error: unknown): boolean => tieneAlguno(error, ['55P03', 'P2028'])
+
+// Se agotaron los reintentos, o la cola del libro no avanzó. No es un error de la persona ni de sus
 // datos, así que la respuesta pide probar de nuevo en vez de hablar de una edición pisada.
 export class ChoqueDeTransaccionError extends Error {
   constructor(cause: unknown) {

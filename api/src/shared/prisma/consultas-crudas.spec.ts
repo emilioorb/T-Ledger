@@ -13,6 +13,9 @@ const USO_CRUDO = /\$(queryRaw|executeRaw)\w*|\$queryRawTyped|Prisma\.(raw|sql|j
 const PLANTILLA = /\$(queryRaw|executeRaw)\s*(<[^`]*?>)?\s*`([^`]*)`/y
 const TABLA = /\b(?:FROM|JOIN)\s+"?(\w+)"?\s+(?:AS\s+)?(\w+)/gi
 const PALABRAS_SQL = new Set(['where', 'on', 'join', 'left', 'right', 'inner', 'group', 'order', 'limit'])
+// Las únicas instrucciones sin tabla que se aceptan: no leen datos de ningún libro. La lista es
+// cerrada; cualquier otra sin FROM sigue fallando.
+const SIN_TABLA_PERMITIDAS = [/^\s*SELECT set_config\('lock_timeout',/, /^\s*SELECT pg_advisory_xact_lock\(/]
 
 const problemasDe = (codigo: string): string[] =>
   [...codigo.matchAll(USO_CRUDO)].flatMap((uso) => {
@@ -23,7 +26,9 @@ const problemasDe = (codigo: string): string[] =>
     const alias = [...sql.matchAll(TABLA)]
       .map(([, tabla, nombre]) => (nombre && !PALABRAS_SQL.has(nombre.toLowerCase()) ? nombre : tabla))
       .filter((nombre): nombre is string => nombre !== undefined)
-    if (alias.length === 0) return [`consulta sin FROM que el test pueda leer`]
+    if (alias.length === 0) {
+      return SIN_TABLA_PERMITIDAS.some((permitida) => permitida.test(sql)) ? [] : [`consulta sin FROM que el test pueda leer`]
+    }
     return alias
       .filter((nombre) => !new RegExp(`\\b${nombre}\\."bookId"\\s*=\\s*\\$\\{libro\\}`).test(sql))
       .map((nombre) => `la tabla ${nombre} no filtra por libro`)
@@ -64,6 +69,13 @@ describe('consultas crudas', () => {
     const sql = 'this.prisma.client.$queryRaw`SELECT 1 FROM journal_lines l WHERE l."bookId" = ${otroId}`'
 
     expect(problemasDe(sql)).toEqual(['la tabla l no filtra por libro'])
+  })
+
+  it('acepta solo las instrucciones sin tabla de la lista: el candado del libro y su tope de espera', () => {
+    expect(problemasDe('tx.$executeRaw`SELECT pg_advisory_xact_lock(${ESPACIO}::int, hashtext(${libro}))`')).toEqual([])
+    expect(problemasDe("tx.$executeRaw`SELECT set_config('lock_timeout', ${tope}, true)`")).toEqual([])
+    expect(problemasDe('tx.$executeRaw`SELECT pg_sleep(1)`')).toHaveLength(1)
+    expect(problemasDe("tx.$executeRaw`SELECT set_config('search_path', ${x}, true)`")).toHaveLength(1)
   })
 
   it('rechaza las formas que no sabe revisar, en vez de dejarlas pasar', () => {
