@@ -31,10 +31,12 @@ export const useMonthlyIncome = (month: string) =>
 export const useSetMonthlyIncome = () => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: ({ month, amount }: { month: string; amount: Money }) =>
+    // `version` es la del ingreso que se vio; `null`, que se vio el mes sin declarar. Si otra
+    // persona lo declaró o lo cambió en el medio, 409 en vez de pisarla.
+    mutationFn: ({ month, amount, version }: { month: string; amount: Money; version: number | null }) =>
       apiFetch<MonthlyIncome>(`/budget/income/${month}`, {
         method: 'PUT',
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({ amount, version }),
       }),
     onSuccess: () => {
       toast.success(copy.budget.toast.incomeSaved)
@@ -53,7 +55,7 @@ export const useBudgetModels = () =>
 export const useSaveBudgetModel = () => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: { id?: string; input: BudgetModelInput }) =>
+    mutationFn: ({ id, input }: { id?: string; input: BudgetModelInput & { version?: number } }) =>
       id
         ? apiFetch<BudgetModel>(`/budget-models/${id}`, {
             method: 'PATCH',

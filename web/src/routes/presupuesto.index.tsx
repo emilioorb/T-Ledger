@@ -109,7 +109,7 @@ const BudgetScreen = () => {
   const submitIncome = (event: FormEvent) => {
     event.preventDefault()
     setIncome.mutate(
-      { month, amount: parseMoneyInput(incomeDraft, currency) },
+      { month, amount: parseMoneyInput(incomeDraft, currency), version: income.data?.version ?? null },
       { onSuccess: () => setEditingIncome(false) },
     )
   }

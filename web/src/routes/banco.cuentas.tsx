@@ -1,3 +1,5 @@
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { queryKeys } from '@/lib/query-keys'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Banknote, FileSpreadsheet, Plus } from 'lucide-react'
@@ -379,6 +381,17 @@ const BankAccountsScreen = () => {
   const profiles = useImportProfiles()
   const accounts = useAccounts()
   const saveAccount = useSaveBankAccount()
+  // Rearmar los formularios abiertos con la versión que guardó la otra persona.
+  useAlCargarLoUltimo((cache) => {
+    setEditingAccount((actual) => {
+      const nueva = actual?.account && loUltimoDe<BankAccount>(cache, queryKeys.banking.all, actual.account.id)
+      return nueva ? { account: nueva } : actual
+    })
+    setEditingProfile((actual) => {
+      const nuevo = actual?.profile && loUltimoDe<ImportProfile>(cache, queryKeys.banking.all, actual.profile.id)
+      return nuevo ? { profile: nuevo } : actual
+    })
+  })
   const saveProfile = useSaveImportProfile()
 
   const all = accounts.data?.data ?? []
@@ -416,14 +429,17 @@ const BankAccountsScreen = () => {
         >
           {editingAccount ? (
             <AccountForm
-              key={editingAccount.account?.id ?? 'nueva'}
+              key={editingAccount.account ? `${editingAccount.account.id}-${editingAccount.account.version}` : 'nueva'}
               account={editingAccount.account}
               profiles={profiles.data ?? []}
               postable={postable}
               pending={saveAccount.isPending}
               onSubmit={(values) =>
                 saveAccount.mutate(
-                  { id: editingAccount.account?.id, input: values },
+                  {
+                    id: editingAccount.account?.id,
+                    input: editingAccount.account ? { ...values, version: editingAccount.account.version } : values,
+                  },
                   { onSuccess: () => setEditingAccount(null) },
                 )
               }
@@ -540,12 +556,15 @@ const BankAccountsScreen = () => {
         >
           {editingProfile ? (
             <ProfileForm
-              key={editingProfile.profile?.id ?? 'nuevo'}
+              key={editingProfile.profile ? `${editingProfile.profile.id}-${editingProfile.profile.version}` : 'nuevo'}
               profile={editingProfile.profile}
               pending={saveProfile.isPending}
               onSubmit={(values) =>
                 saveProfile.mutate(
-                  { id: editingProfile.profile?.id, input: values },
+                  {
+                    id: editingProfile.profile?.id,
+                    input: editingProfile.profile ? { ...values, version: editingProfile.profile.version } : values,
+                  },
                   { onSuccess: () => setEditingProfile(null) },
                 )
               }

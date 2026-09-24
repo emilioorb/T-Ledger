@@ -38,7 +38,7 @@ export const useBankAccounts = () =>
 export const useSaveBankAccount = () => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: { id?: string; input: BankAccountInput }) =>
+    mutationFn: ({ id, input }: { id?: string; input: BankAccountInput & { version?: number } }) =>
       id
         ? apiFetch<BankAccount>(`/bank-accounts/${id}`, {
             method: 'PATCH',
@@ -61,7 +61,7 @@ export const useImportProfiles = () =>
 export const useSaveImportProfile = () => {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: { id?: string; input: ImportProfileInput }) =>
+    mutationFn: ({ id, input }: { id?: string; input: ImportProfileInput & { version?: number } }) =>
       id
         ? apiFetch<ImportProfile>(`/import-profiles/${id}`, {
             method: 'PATCH',

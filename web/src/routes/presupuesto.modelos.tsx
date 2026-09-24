@@ -1,3 +1,5 @@
+import { loUltimoDe, useAlCargarLoUltimo } from '@/lib/cargar-lo-ultimo'
+import { queryKeys } from '@/lib/query-keys'
 import { useState, type FormEvent } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { Plus, Trash2, Wallet } from 'lucide-react'
@@ -426,6 +428,13 @@ const ModelsScreen = () => {
   const accounts = useAccounts()
   const income = useMonthlyIncome(today().slice(0, 7))
   const save = useSaveBudgetModel()
+  // Rearmar el formulario abierto con la versión que guardó la otra persona.
+  useAlCargarLoUltimo((cache) =>
+    setEditing((actual) => {
+      const nuevo = actual?.model && loUltimoDe<BudgetModel>(cache, queryKeys.budget.all, actual.model.id)
+      return nuevo ? { model: nuevo } : actual
+    }),
+  )
 
   const all = accounts.data?.data ?? []
   const parents = new Set(all.map((account) => account.parentCode).filter(Boolean))
@@ -459,13 +468,16 @@ const ModelsScreen = () => {
             {editing.model ? copy.models.form.editTitle : copy.models.form.createTitle}
           </h2>
           <ModelForm
+            key={editing.model ? `${editing.model.id}-${editing.model.version}` : 'nuevo'}
             model={editing.model}
             income={income.data?.amount ?? null}
             postable={postable}
             pending={save.isPending}
             onSubmit={(values) =>
               save.mutate(
-                { id: editing.model?.id, input: values },
+                // Al editar, la versión que se vio: si otra persona guardó antes, 409 y el aviso
+                // ofrece cargar lo último.
+                { id: editing.model?.id, input: editing.model ? { ...values, version: editing.model.version } : values },
                 { onSuccess: () => setEditing(null) },
               )
             }
