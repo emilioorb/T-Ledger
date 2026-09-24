@@ -5,7 +5,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 
 ## Fase 0: cimientos
 
-- [ ] **1. Transacción serializable con reintento.** `withTransaction` abre Serializable y reintenta hasta 3 veces ante
+- [x] **1. Transacción serializable con reintento.** `withTransaction` abre Serializable y reintenta hasta 3 veces ante
   `P2034`; agotado, lanza un error propio.
   - Acepta: dos transacciones que chocan terminan una aplicada y otra reintentada; un test prueba que el adapter
     traduce 40001 y 40P01 (también en el `COMMIT`); una transacción anidada no reintenta por su cuenta.

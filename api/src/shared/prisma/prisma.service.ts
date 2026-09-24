@@ -3,8 +3,13 @@ import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/com
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Prisma, PrismaClient } from '../../generated/prisma/client.js'
 import { libroActual } from '../libro/libro-context.js'
+import { ChoqueDeTransaccionError, esChoqueDeTransaccion } from './choque-de-transaccion.js'
 import { filtroDeLibro } from './libro-filter.extension.js'
 import type { UnitOfWork } from './unit-of-work.port.js'
+
+// Tres alcanzan para dos personas escribiendo en el mismo libro; si el choque sigue, algo más
+// está pasando y conviene que se vea en vez de insistir.
+const INTENTOS_ANTE_UN_CHOQUE = 3
 
 // Varios casos de uso escriben dos veces —el movimiento y su asiento, el aporte y su
 // asiento— y si la segunda falla la primera ya está en la base. El cliente transaccional
@@ -58,14 +63,29 @@ export class PrismaService
   }
 
   // Anidar reusa la transacción de afuera: un caso de uso puede llamar a otro sin que el
-  // interno cierre lo que el externo todavía puede tener que revertir.
+  // interno cierre lo que el externo todavía puede tener que revertir. Por lo mismo, solo la
+  // de afuera reintenta: la interna vuelve a correr cuando se repite la de afuera entera.
+  //
+  // Serializable: con dos personas escribiendo a la vez, el libro queda como si hubieran ido
+  // una detrás de la otra. Postgres aborta a una de las dos cuando se cruzan, y se reintenta:
+  // es seguro porque la función vuelve a leer todo adentro. Agotados los intentos, un error
+  // propio que la API responde como «probá de nuevo».
   async withTransaction<T>(run: () => Promise<T>): Promise<T> {
     if (this.transaction.getStore()) return run()
-    // La transacción se abre sobre el cliente **filtrado**, no sobre el crudo: el `tx` que
-    // entrega Prisma hereda las extensiones del cliente que lo abrió, así que dentro de una
-    // transacción el filtro de libro sigue puesto. Abrirla sobre `this.self` dejaría un
-    // agujero por el que toda escritura transaccional vería todos los libros.
-    return this.filtrado.$transaction((tx) => this.transaction.run(tx, run))
+    for (let intento = 1; ; intento += 1) {
+      try {
+        // La transacción se abre sobre el cliente **filtrado**, no sobre el crudo: el `tx` que
+        // entrega Prisma hereda las extensiones del cliente que lo abrió, así que dentro de una
+        // transacción el filtro de libro sigue puesto. Abrirla sobre `this.self` dejaría un
+        // agujero por el que toda escritura transaccional vería todos los libros.
+        return await this.filtrado.$transaction((tx) => this.transaction.run(tx, run), {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        })
+      } catch (error) {
+        if (!esChoqueDeTransaccion(error)) throw error
+        if (intento === INTENTOS_ANTE_UN_CHOQUE) throw new ChoqueDeTransaccionError(error)
+      }
+    }
   }
 
   async onModuleInit(): Promise<void> {
