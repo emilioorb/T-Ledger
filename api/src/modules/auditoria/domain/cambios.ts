@@ -6,8 +6,9 @@ export interface Cambio {
 
 // Lo que no dice nada al leer el rastro. El identificador y el libro no cambian nunca —si
 // cambiaran sería otro registro—, y las marcas de tiempo cambian en cada guardado sin que
-// nadie las haya tocado: listarlas convierte cada entrada en ruido.
-const SIN_INTERES = new Set(['id', 'bookId', 'createdAt', 'updatedAt'])
+// nadie las haya tocado: listarlas convierte cada entrada en ruido. La versión también: la sube
+// la base en cada escritura, y es para detectar choques, no algo que alguien cambió.
+const SIN_INTERES = new Set(['id', 'bookId', 'createdAt', 'updatedAt', 'version'])
 
 // Deja el valor en algo que sobreviva a `JSON`. Los montos del dominio son `BigInt` —céntimos,
 // para no perder plata en coma flotante— y `JSON.stringify` los rechaza de plano: sin esto, el

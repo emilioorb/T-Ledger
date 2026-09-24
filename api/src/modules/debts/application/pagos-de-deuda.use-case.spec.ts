@@ -54,7 +54,7 @@ const armar = (inicial: Debt) => {
     }),
   } as unknown as CreateMovementUseCase
   const anularMovimiento = {
-    execute: vi.fn(async (id: string) => {
+    porRegla: vi.fn(async (id: string) => {
       anulados.push(id)
     }),
   } as unknown as VoidMovementUseCase

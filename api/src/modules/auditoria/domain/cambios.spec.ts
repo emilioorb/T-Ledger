@@ -50,6 +50,12 @@ describe('calcularCambios', () => {
     expect(cambios).toEqual([])
   })
 
+  // Sin esto, cada alta mostraba «version: — → 0» en la auditoría.
+  it('la versión no es un cambio: la sube la base, nadie la edita', () => {
+    expect(calcularCambios({}, { version: 0 })).toEqual([])
+    expect(calcularCambios({ version: 3 }, { version: 4 })).toEqual([])
+  })
+
   it('cuenta un campo que aparece', () => {
     const cambios = calcularCambios({}, { receiptKey: 'https://x/y.pdf' })
 

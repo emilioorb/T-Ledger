@@ -25,17 +25,27 @@ export class VoidMovementUseCase {
   // anulado con sus asientos vivos, que es la peor combinación: el mayor sigue contándolo. Y
   // todo va adentro del candado del libro: dos anulaciones a la vez dejaban dos reversiones.
   execute(id: string, version?: number): Promise<PostedMovement> {
-    return this.transaction.withTransaction(() => this.anular(id, version))
+    return this.transaction.withTransaction(() =>
+      this.anular(id, (leida) => exigirVersion(version, leida, 'anular un movimiento')),
+    )
   }
 
-  private async anular(id: string, version: number | undefined): Promise<PostedMovement> {
+  // Cuando lo pide otra regla del libro dentro de su propia transacción —deshacer el pago de una
+  // deuda—, no una persona desde una pantalla: no hay versión que comparar, y contarla como
+  // cliente viejo inflaría esa cuenta.
+  porRegla(id: string): Promise<PostedMovement> {
+    return this.transaction.withTransaction(() => this.anular(id, () => undefined))
+  }
+
+  private async anular(id: string, comprobarVersion: (leida: number) => void): Promise<PostedMovement> {
     const movement = await this.movements.findById(id)
     if (!movement) throw new NotFoundError(`El movimiento ${id} no existe.`)
-    await this.guard.assertOpen(movement.date)
 
-    // Ya anulado es lo que se pedía, aunque la versión sea la de antes: la otra anulación ganó.
+    // Ya anulado es lo que se pedía, aunque la versión sea la de antes o el mes se haya cerrado
+    // después: la otra anulación ganó.
     if (movement.isVoided()) return { movement, journalEntryId: null }
-    exigirVersion(version, movement.version, 'anular un movimiento')
+    await this.guard.assertOpen(movement.date)
+    comprobarVersion(movement.version)
 
     const voided = movement.void_()
     // Primero el aviso: si quien escucha frena la anulación, no se llegó a escribir nada.

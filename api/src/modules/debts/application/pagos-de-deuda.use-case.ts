@@ -80,7 +80,7 @@ export class PagosDeDeudaUseCase {
     // ya no encuentra el pago. Al revés lo desharía dos veces, con dos rastros.
     await this.transaction.withTransaction(async () => {
       await this.guardar(sinElUltimo, 'anular', debt)
-      if (undone.movementId) await this.anularMovimiento.execute(undone.movementId)
+      if (undone.movementId) await this.anularMovimiento.porRegla(undone.movementId)
     })
     return sinElUltimo
   }

@@ -208,6 +208,14 @@ describe('el guardián de período', () => {
     await post('/movements', nuevoMovimiento()).expect(201)
   })
 
+  it('volver a anular lo ya anulado en un mes que se cerró después responde 200', async () => {
+    const movimiento = await crear({ date: '2026-08-15' })
+    await post(`/movements/${movimiento.id}/void`).expect(200)
+    await post('/periods/2026-08/close').expect(200)
+
+    await post(`/movements/${movimiento.id}/void`).expect(200)
+  })
+
   it('anular en un mes cerrado también se frena', async () => {
     const movimiento = await crear({ date: '2026-08-15' })
     await post('/periods/2026-08/close').expect(200)

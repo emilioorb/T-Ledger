@@ -124,6 +124,30 @@ describe('el comprobante de un movimiento', () => {
     expect((await movements.findById(movement.id))?.receiptKey).toBe(primero)
   })
 
+  it('con una versión vieja corta antes de subir el archivo', async () => {
+    const movement = await guardado()
+    await comprobantes.guardar(movement.id, archivo)
+    bucket.claves.clear()
+
+    await expect(comprobantes.guardar(movement.id, archivo, 0)).rejects.toBeInstanceOf(EditadoPorOtroError)
+
+    expect(bucket.claves.size).toBe(0)
+  })
+
+  it('si la versión cambia mientras se sube, no lo apunta y borra lo que subió', async () => {
+    const movement = await guardado()
+    const { soltar, llego } = bucket.frenarLaProxima()
+
+    const subida = comprobantes.guardar(movement.id, archivo, 0)
+    await llego
+    await prisma.withTransaction(() => movements.update(movement.void_()))
+    soltar()
+
+    await expect(subida).rejects.toBeInstanceOf(EditadoPorOtroError)
+    expect(bucket.claves.size).toBe(0)
+    expect((await movements.findById(movement.id))?.receiptKey).toBeNull()
+  })
+
   it('reemplazarlo borra el anterior una vez guardado el nuevo', async () => {
     const movement = await guardado()
     await comprobantes.guardar(movement.id, archivo)

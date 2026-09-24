@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
 import { ALMACENAMIENTO, type Almacenamiento } from '../../../shared/archivos/almacenamiento.port.js'
 import { borrarDelLibro, claveDeComprobante, esDelLibro } from '../../../shared/archivos/archivo.js'
-import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
+import { EditadoPorOtroError, NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { libroActual } from '../../../shared/libro/libro-context.js'
 import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
@@ -27,6 +27,9 @@ interface CambioDeComprobante {
 // Va aparte de editar el movimiento porque no cambia la contabilidad: adjuntar la foto de una
 // factura no revierte el asiento ni emite uno nuevo, y meterlo en `update` habría hecho
 // exactamente eso por cada archivo que alguien suba.
+//
+// Solo lo llama el controller, nunca otro caso de uso: los archivos se borran después de su
+// transacción, y dentro de una de afuera ese «después» no sería el commit de verdad.
 @Injectable()
 export class ManageComprobanteUseCase {
   constructor(
@@ -47,7 +50,10 @@ export class ManageComprobanteUseCase {
   // una anulación que entrara en el medio volvía el movimiento a activo.
   async guardar(id: string, archivo: ComprobanteNuevo, version?: number): Promise<Movement> {
     const { bookId } = libroActual('guardar un comprobante')
-    await this.buscar(id)
+    // Corte temprano, sin candado, para no subir cinco megas que van a terminar en un 409. La
+    // comparación que vale es la de adentro.
+    const previo = await this.buscar(id)
+    if (version !== undefined && version !== previo.version) throw new EditadoPorOtroError()
 
     const clave = claveDeComprobante(bookId, id, archivo.tipo, randomUUID().slice(0, 8))
     // El archivo primero y la fila después: al revés, un fallo al subir dejaría un movimiento
@@ -58,8 +64,7 @@ export class ManageComprobanteUseCase {
     const cambio = await this.transaction
       .withTransaction(() => this.apuntar(id, clave, version))
       .catch(async (error: unknown) => {
-        // Si la fila no se guardó, el archivo nuevo no lo va a usar nadie.
-        await borrarDelLibro(this.archivos, clave, bookId).catch(() => undefined)
+        await this.borrarSiNadieLoUsa(id, clave, bookId)
         throw error
       })
 
@@ -106,6 +111,15 @@ export class ManageComprobanteUseCase {
       despues: { comprobante: clave },
     })
     return { movement: guardado, anterior }
+  }
+
+  // Si la fila no se guardó, el archivo nuevo no lo va a usar nadie. Se relee antes de borrar: un
+  // corte de red justo en el COMMIT tira error aunque la fila haya quedado guardada, y borrar ahí
+  // dejaría el movimiento apuntando a un archivo que no existe.
+  private async borrarSiNadieLoUsa(id: string, clave: string, bookId: string): Promise<void> {
+    const guardado = await this.movements.findById(id).catch(() => null)
+    if (guardado?.receiptKey === clave) return
+    await borrarDelLibro(this.archivos, clave, bookId).catch(() => undefined)
   }
 
   // Al final y sin cortar si falla: un archivo huérfano en el bucket cuesta unos bytes; perder el

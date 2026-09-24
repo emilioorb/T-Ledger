@@ -42,8 +42,8 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 
 ## Fase 1: movimientos (lo que más se usa)
 
-- [x] **5. Movimiento con versión en el dominio y el repositorio.** El movimiento lleva su `version`; `save` crea o
-  actualiza condicionado.
+- [x] **5. Movimiento con versión en el dominio y el repositorio.** El movimiento lleva su `version`; `add` crea y
+  `update` actualiza condicionado (un upsert recreaba lo que no encontraba).
   - Acepta: guardar con versión vieja da 409; el mapper y el presenter exponen `version`.
   - Archivos: `accounting/domain/movement.ts`, `accounting.mappers.ts`, `prisma-movement.repository.ts`, presenter,
     spec del repo. (M)
