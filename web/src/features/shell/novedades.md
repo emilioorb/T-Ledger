@@ -8,6 +8,24 @@ Cada entrega abre con `## AAAA-MM-DD · vX.Y.Z` y lleva hasta tres grupos: `### 
 listas anidadas y tablas. La negrita marca **de qué** habla cada nota, para recorrer la lista
 sin leerla entera. Lo que está antes de la primera entrega, como este texto, no se muestra.
 
+## 2026-09-23 · v1.3.0
+
+### Nuevo
+
+- **«Enlace nuevo»** en cada invitación que sigue esperando, en «Dar acceso» y en la gente del
+  libro. Saca otro enlace y el anterior deja de servir: sirve si lo perdiste o si se lo
+  mandaste a quien no era.
+
+### Corregido
+
+- **Los enlaces de invitación ahora son de quien los recibe.** Llevan una clave que sirve una
+  sola vez, y hace falta para crear la cuenta y para entrar al libro: saber el correo invitado
+  ya no alcanza.
+  - Los enlaces que mandaste antes de esta versión dejan de servir: sacá uno nuevo desde la
+    invitación.
+  - Las invitaciones a la app que estaban esperando se borraron: volvé a darle acceso a esa
+    persona.
+
 ## 2026-09-23 · v1.2.0
 
 ### Mejorado
