@@ -88,6 +88,10 @@ Con eso, más lo que ya decía la spec:
   movimientos sin asentar. Medido el 2026-09-24 con cinco años de un libro activo (12 000
   movimientos, 24 000 líneas): 92 a 296 ms, lejos del tope de espera de 4 s. Si un libro llega
   a tardar, lo primero es contar los movimientos sin asentar con un `NOT EXISTS` en SQL.
+- El candado por persona protege a quien borra: nunca se queda sin libros. No cubre a los demás
+  miembros de un libro compartido que se borra (si era el único suyo, se quedan sin ninguno), ni
+  a quien sacan de un libro mientras borra otro. Las dos cosas son anteriores a la 6b y son una
+  decisión de producto pendiente, no de concurrencia.
 - `hashtext` da 32 bits: dos libros pueden caer en la misma clave y esperarse entre sí. Es
   una espera de más, no un error, y con los libros que hay es improbable.
 - Lo que se guarda fuera de la base no vuelve atrás con la transacción. El enlace de una

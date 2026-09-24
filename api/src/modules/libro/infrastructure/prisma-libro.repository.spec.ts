@@ -197,12 +197,14 @@ describe('borrar con el candado de la persona', () => {
     })
     await yaTomo
     const borrados = Promise.all(LIBROS.map((id) => repository.borrar(id, PERSONA, sePuede)))
-    for (let intento = 0; intento < 150; intento += 1) {
+    let esperando = 0
+    for (let intento = 0; intento < 150 && esperando < 2; intento += 1) {
       const [fila] = await db.$queryRaw<{ n: number }[]>`SELECT count(*)::int AS n FROM pg_locks l WHERE l.locktype = 'advisory' AND NOT l.granted`
-      if ((fila?.n ?? 0) >= 2) break
-      await new Promise((listo) => setTimeout(listo, 20))
+      esperando = fila?.n ?? 0
+      if (esperando < 2) await new Promise((listo) => setTimeout(listo, 20))
     }
     soltar()
+    expect(esperando).toBeGreaterThanOrEqual(2)
     await candado
 
     expect((await borrados).sort()).toEqual([false, true])

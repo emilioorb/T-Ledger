@@ -248,4 +248,12 @@ describe('el ingreso del mes con versión', () => {
     expect((await get('/budget/income/2026-11').expect(200)).body.amount.minorUnits).toBe('110000000')
     expect(segundo.version).toBe(primero.version + 1)
   })
+
+  it('dos que declaran a la vez un mes vacío no se pisan: el segundo recibe 409', async () => {
+    await put('/budget/income/2026-12', { amount: { minorUnits: '100', currency: 'CRC' }, version: null }).expect(200)
+
+    await put('/budget/income/2026-12', { amount: { minorUnits: '200', currency: 'CRC' }, version: null }).expect(409)
+    expect((await get('/budget/income/2026-12').expect(200)).body.amount.minorUnits).toBe('100')
+  })
 })
+

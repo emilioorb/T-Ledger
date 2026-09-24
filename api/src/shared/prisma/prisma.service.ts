@@ -14,6 +14,7 @@ const INTENTOS_ANTE_UN_CHOQUE = 3
 // El espacio de claves de los candados de libros, para no compartirlo con otros usos de los
 // advisory locks (Prisma migrate usa el suyo).
 const ESPACIO_DE_LIBROS = 624
+const ESPACIO_DE_PERSONAS = 625
 
 // Cuánto espera una escritura a que termine la de otra persona en el mismo libro. Más que eso es
 // una cola, no una espera: se corta y se pide probar de nuevo, antes de que ocupe todo el pool.
@@ -123,12 +124,41 @@ export class PrismaService
     }
   }
 
+  // Lo que decide cuántos libros le quedan a alguien no es de ningún libro: va con un candado por
+  // persona, sobre el cliente sin filtro, con los mismos tiempos y la misma traducción de errores
+  // que el de libro. Toma después el del libro que toca, para que ninguna escritura de ese libro
+  // corra a la par: quien tiene el de un libro nunca espera el de una persona, así que no hay ciclo.
+  async conCandadoDePersona<T>(
+    userId: string,
+    libro: string,
+    run: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await this.self.$transaction(
+        async (tx) => {
+          await this.esperarHasta(tx)
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(${ESPACIO_DE_PERSONAS}::int, hashtext(${userId}))`
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(${ESPACIO_DE_LIBROS}::int, hashtext(${libro}))`
+          return run(tx)
+        },
+        { maxWait: ESPERA_POR_CONEXION_MS, timeout: DURACION_MAXIMA_MS },
+      )
+    } catch (error) {
+      if (esEsperaVencida(error) || esChoqueDeTransaccion(error)) throw new ChoqueDeTransaccionError(error)
+      throw error
+    }
+  }
+
   // De transacción y no de sesión: se suelta solo con el COMMIT o el ROLLBACK, y sobrevive a un
   // PgBouncer en modo transacción. El tope de espera va antes, para que aplique a esta espera.
   private async tomarCandado(tx: Prisma.TransactionClient, libro: string): Promise<void> {
-    // `set_config` con `true` es el `SET LOCAL` parametrizado: vale solo para esta transacción.
-    await tx.$executeRaw`SELECT set_config('lock_timeout', ${this.esperaMaximaDelCandado}, true)`
+    await this.esperarHasta(tx)
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${ESPACIO_DE_LIBROS}::int, hashtext(${libro}))`
+  }
+
+  // `set_config` con `true` es el `SET LOCAL` parametrizado: vale solo para esta transacción.
+  private async esperarHasta(tx: Prisma.TransactionClient): Promise<void> {
+    await tx.$executeRaw`SELECT set_config('lock_timeout', ${this.esperaMaximaDelCandado}, true)`
   }
 
   async onModuleInit(): Promise<void> {

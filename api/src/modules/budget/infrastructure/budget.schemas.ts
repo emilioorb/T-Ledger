@@ -45,7 +45,8 @@ export const evaluationQuerySchema = z
   .meta({ id: 'BudgetEvaluationQuery', title: 'BudgetEvaluationQuery' })
 
 export const monthlyIncomeSchema = z
-  .object({ amount: nonNegativeMoneySchema, version: version.optional() })
+  // `null` es «lo vi sin declarar»: si otro lo declaró en el medio, 409.
+  .object({ amount: nonNegativeMoneySchema, version: version.nullable().optional() })
   .meta({ id: 'MonthlyIncomeInput', title: 'MonthlyIncomeInput' })
 
 export const budgetModelResponseSchema = z
