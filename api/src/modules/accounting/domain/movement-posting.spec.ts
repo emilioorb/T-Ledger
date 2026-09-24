@@ -54,6 +54,7 @@ const movimiento = (overrides: Partial<MovementProps> = {}) =>
       paymentAccountCode: '1101',
       receiptKey: null,
       status: 'ACTIVE',
+      version: 0,
       ...overrides,
     }),
   )

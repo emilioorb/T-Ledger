@@ -60,6 +60,8 @@ export const movementResponseSchema = z
     paymentAccountCode: z.string().nullable(),
     receiptKey: z.string().nullable(),
     status: z.enum(['ACTIVE', 'VOIDED']),
+    // La que hay que mandar al editar o anular: si no coincide con la de la base, 409.
+    version: z.number().int(),
     posted: z.boolean(),
     journalEntryId: z.string().nullable(),
   })

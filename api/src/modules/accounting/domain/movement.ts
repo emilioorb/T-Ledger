@@ -14,6 +14,9 @@ export interface MovementProps {
   readonly paymentAccountCode: string | null
   readonly receiptKey: string | null
   readonly status: MovementStatus
+  // La versión de la fila sobre la que se armó este estado. Guardarlo exige que la fila siga en
+  // ella: si otra persona guardó antes, la versión subió y el cambio no pisa el suyo.
+  readonly version: number
 }
 
 export class Movement {
@@ -58,6 +61,9 @@ export class Movement {
   }
   get status(): MovementStatus {
     return this.props.status
+  }
+  get version(): number {
+    return this.props.version
   }
 
   isVoided(): boolean {

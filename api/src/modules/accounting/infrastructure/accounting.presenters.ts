@@ -79,6 +79,7 @@ export const toMovementResponse = (
   paymentAccountCode: movement.paymentAccountCode,
   receiptKey: movement.receiptKey,
   status: movement.status,
+  version: movement.version,
   posted: journalEntryId !== null,
   journalEntryId,
 })

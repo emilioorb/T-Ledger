@@ -3667,6 +3667,7 @@ export interface components {
             receiptKey: string | null;
             /** @enum {string} */
             status: "ACTIVE" | "VOIDED";
+            version: number;
             posted: boolean;
             journalEntryId: string | null;
         };

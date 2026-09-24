@@ -37,11 +37,12 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Se reparte en sub-tareas de ≤5 archivos según lo que marque la suite al prender el guardia.
 
 ### Checkpoint A
-- [ ] Suite completa verde, `check:task` limpio. Si el test de dos libros mostró falsos conflictos, parar y revisar.
+- [x] Suite completa verde, `check:task` limpio. Si el test de dos libros mostró falsos conflictos, parar y revisar.
+  (2026-09-24: 791 tests; dos libros sin falsos conflictos; gitleaks no está instalado en esta máquina, revisé el diff a mano.)
 
 ## Fase 1: movimientos (lo que más se usa)
 
-- [ ] **5. Movimiento con versión en el dominio y el repositorio.** El movimiento lleva su `version`; `save` crea o
+- [x] **5. Movimiento con versión en el dominio y el repositorio.** El movimiento lleva su `version`; `save` crea o
   actualiza condicionado.
   - Acepta: guardar con versión vieja da 409; el mapper y el presenter exponen `version`.
   - Archivos: `accounting/domain/movement.ts`, `accounting.mappers.ts`, `prisma-movement.repository.ts`, presenter,

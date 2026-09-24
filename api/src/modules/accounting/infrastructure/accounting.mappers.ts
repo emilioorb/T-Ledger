@@ -109,6 +109,7 @@ export interface MovementRow {
   paymentAccountCode: string | null
   receiptKey: string | null
   status: string
+  version: number
 }
 
 export const movementToDomain = (row: MovementRow): Movement =>
@@ -123,6 +124,7 @@ export const movementToDomain = (row: MovementRow): Movement =>
       paymentAccountCode: row.paymentAccountCode,
       receiptKey: row.receiptKey,
       status: row.status as MovementStatus,
+      version: row.version,
     }),
   )
 

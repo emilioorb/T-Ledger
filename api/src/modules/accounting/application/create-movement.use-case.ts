@@ -44,6 +44,7 @@ export class CreateMovementUseCase {
       // Un movimiento nace sin comprobante: se adjunta después, con el archivo.
       receiptKey: null,
       status: 'ACTIVE',
+      version: 0,
     })
     if (isErr(movement)) throw new SemanticValidationError(movement.error.message)
 
@@ -51,7 +52,7 @@ export class CreateMovementUseCase {
     // falla —cuenta de pago inexistente, por ejemplo— antes quedaba el movimiento sin
     // asentar, y eso bloquea el cierre del mes con un error que no explica nada.
     const journalEntryId = await this.transaction.withTransaction(async () => {
-      await this.movements.save(movement.value)
+      await this.movements.add(movement.value)
       // Dentro de la misma transacción que el cambio (ADR-004): no puede quedar un movimiento
       // sin su rastro ni un rastro de algo que al final no se guardó.
       await this.rastro.registrar({

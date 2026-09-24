@@ -17,6 +17,7 @@ const props = (overrides: Partial<MovementProps> = {}): MovementProps => ({
   paymentAccountCode: '1101',
   receiptKey: null,
   status: 'ACTIVE',
+  version: 0,
   ...overrides,
 })
 

@@ -49,7 +49,12 @@ export interface MovementRepository {
   // primera página de mil movimientos de TODAS las cuentas y filtraba en memoria: pasado el
   // millar, el movimiento que explicaba la línea simplemente no aparecía y nadie lo decía.
   findByPaymentAccount(accountCode: string, range: DateRange): Promise<Movement[]>
-  save(movement: Movement): Promise<void>
+  add(movement: Movement): Promise<void>
+
+  // Solo si la fila sigue en la versión del movimiento. Si no, `EditadoPorOtroError`, o
+  // `NotFoundError` si ya no existe. Separado de `add` a propósito: un upsert recrearía en
+  // silencio lo que no encontró.
+  update(movement: Movement): Promise<void>
 
   // Un movimiento activo sin asiento es lo que impide cerrar el mes. Se cuenta en la
   // base: la pantalla de cierre solo necesita el número, no los movimientos.

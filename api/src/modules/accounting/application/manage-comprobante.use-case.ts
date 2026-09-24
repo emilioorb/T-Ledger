@@ -51,7 +51,7 @@ export class ManageComprobanteUseCase {
     if (isErr(movement)) throw new SemanticValidationError(movement.error.message)
 
     await this.transaction.withTransaction(async () => {
-      await this.movements.save(movement.value)
+      await this.movements.update(movement.value)
       await this.rastro.registrar({
         entidad: 'movimiento',
         entidadId: id,
@@ -91,7 +91,7 @@ export class ManageComprobanteUseCase {
     if (isErr(movement)) throw new SemanticValidationError(movement.error.message)
 
     await this.transaction.withTransaction(async () => {
-      await this.movements.save(movement.value)
+      await this.movements.update(movement.value)
       await this.rastro.registrar({
         entidad: 'movimiento',
         entidadId: id,

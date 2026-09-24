@@ -59,7 +59,7 @@ export class UpdateMovementUseCase {
 
     const journalEntryId = await this.transaction.withTransaction(async () => {
       await this.poster.reverse(id)
-      await this.movements.save(movement.value)
+      await this.movements.update(movement.value)
       await this.rastro.registrar({
         entidad: 'movimiento',
         entidadId: id,

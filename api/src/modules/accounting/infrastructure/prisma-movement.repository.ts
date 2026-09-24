@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import type { DateRange } from '../../../shared/kernel/date-range.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
+import { SUBIR_VERSION, verificarEscritura } from '../../../shared/prisma/escribir-con-version.js'
 import { PeriodKey } from '../domain/accounting-period.js'
 import type { Movement } from '../domain/movement.js'
 import type { CurrencyCode } from '../../../shared/kernel/currency.js'
@@ -12,6 +13,18 @@ import type {
   MovementRepository,
 } from '../domain/movement-repository.port.js'
 import { monthsOf, movementToDomain, type MovementRow } from './accounting.mappers.js'
+
+const datosDe = (movement: Movement) => ({
+  date: movement.date,
+  kind: movement.kind,
+  categoryId: movement.categoryId,
+  counterparty: movement.counterparty,
+  amountMinor: movement.amount.minorUnits,
+  currency: movement.amount.currency,
+  paymentAccountCode: movement.paymentAccountCode,
+  receiptKey: movement.receiptKey,
+  status: movement.status,
+})
 
 @Injectable()
 export class PrismaMovementRepository implements MovementRepository {
@@ -96,23 +109,18 @@ export class PrismaMovementRepository implements MovementRepository {
     return row ? movementToDomain(row as MovementRow) : null
   }
 
-  async save(movement: Movement): Promise<void> {
-    const data = {
-      date: movement.date,
-      kind: movement.kind,
-      categoryId: movement.categoryId,
-      counterparty: movement.counterparty,
-      amountMinor: movement.amount.minorUnits,
-      currency: movement.amount.currency,
-      paymentAccountCode: movement.paymentAccountCode,
-      receiptKey: movement.receiptKey,
-      status: movement.status,
-    }
-    await this.prisma.client.movement.upsert({
-      where: { id: movement.id },
-      create: { bookId: this.prisma.libro, id: movement.id, ...data },
-      update: data,
+  async add(movement: Movement): Promise<void> {
+    await this.prisma.client.movement.create({
+      data: { bookId: this.prisma.libro, id: movement.id, ...datosDe(movement) },
     })
+  }
+
+  async update(movement: Movement): Promise<void> {
+    const { count } = await this.prisma.client.movement.updateMany({
+      where: { id: movement.id, version: movement.version },
+      data: { ...datosDe(movement), ...SUBIR_VERSION },
+    })
+    await verificarEscritura(count, async () => (await this.prisma.client.movement.count({ where: { id: movement.id } })) > 0)
   }
 
   // Un movimiento anulado no cuenta: su falta de asiento es el estado esperado.

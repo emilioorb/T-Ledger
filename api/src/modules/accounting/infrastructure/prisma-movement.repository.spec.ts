@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { EditadoPorOtroError, NotFoundError } from '../../../shared/http/api-error.js'
 import { Money } from '../../../shared/kernel/money.js'
 import { unwrap } from '../../../shared/kernel/result.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
@@ -37,6 +38,7 @@ const movimiento = (id: string, date: Date, status: 'ACTIVE' | 'VOIDED' = 'ACTIV
       paymentAccountCode: '1101',
       receiptKey: null,
       status,
+      version: 0,
     }),
   )
 
@@ -57,6 +59,7 @@ const gasto = (
       paymentAccountCode: '1101',
       receiptKey: null,
       status,
+      version: 0,
     }),
   )
 
@@ -108,22 +111,22 @@ beforeEach(async () => {
 
 describe('PrismaMovementRepository', () => {
   it('cuenta los movimientos activos del mes que no generaron asiento', async () => {
-    await repository.save(movimiento('m1', utc('2026-09-03')))
-    await repository.save(movimiento('m2', utc('2026-09-10')))
+    await repository.add(movimiento('m1', utc('2026-09-03')))
+    await repository.add(movimiento('m2', utc('2026-09-10')))
     await journal.save(asientoDe('m1', utc('2026-09-03')))
 
     expect(await repository.countUnposted(septiembre)).toBe(1)
   })
 
   it('un movimiento anulado sin asiento no bloquea el cierre', async () => {
-    await repository.save(movimiento('m1', utc('2026-09-03'), 'VOIDED'))
+    await repository.add(movimiento('m1', utc('2026-09-03'), 'VOIDED'))
 
     expect(await repository.countUnposted(septiembre)).toBe(0)
   })
 
   it('no mira fuera del rango pedido', async () => {
-    await repository.save(movimiento('m1', utc('2026-08-31')))
-    await repository.save(movimiento('m2', utc('2026-10-01')))
+    await repository.add(movimiento('m1', utc('2026-08-31')))
+    await repository.add(movimiento('m2', utc('2026-10-01')))
 
     expect(await repository.countUnposted(septiembre)).toBe(0)
   })
@@ -136,9 +139,9 @@ describe('PrismaMovementRepository', () => {
   // página en vez del filtro, diría porcentajes falsos sobre el conjunto entero y nadie
   // tendría cómo notarlo.
   it('suma por categoría todo lo que cumple el filtro, no solo una página', async () => {
-    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
-    await repository.save(gasto('m2', 'cat-1', 5_000_00n))
-    await repository.save(gasto('m3', 'cat-2', 7_000_00n))
+    await repository.add(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.add(gasto('m2', 'cat-1', 5_000_00n))
+    await repository.add(gasto('m3', 'cat-2', 7_000_00n))
 
     const totals = await repository.totalsByCategory({ range: septiembre })
 
@@ -152,8 +155,8 @@ describe('PrismaMovementRepository', () => {
   })
 
   it('un anulado no suma aunque el filtro pida todos los estados', async () => {
-    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
-    await repository.save(gasto('m2', 'cat-1', 90_000_00n, 'VOIDED'))
+    await repository.add(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.add(gasto('m2', 'cat-1', 90_000_00n, 'VOIDED'))
 
     expect(await repository.totalsByCategory({})).toEqual([
       { categoryId: 'cat-1', total: crc(10_000_00n) },
@@ -163,8 +166,8 @@ describe('PrismaMovementRepository', () => {
   // La barra vive arriba de la tabla: si resume activos mientras la tabla lista anulados,
   // habla de filas que no están. Sin barra es mejor que con una que miente.
   it('pedir la composición de los anulados no devuelve la de los activos', async () => {
-    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
-    await repository.save(gasto('m2', 'cat-1', 90_000_00n, 'VOIDED'))
+    await repository.add(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.add(gasto('m2', 'cat-1', 90_000_00n, 'VOIDED'))
 
     expect(await repository.totalsByCategory({ status: 'VOIDED' })).toEqual([])
   })
@@ -172,8 +175,8 @@ describe('PrismaMovementRepository', () => {
   // Una barra apilada reparte un total entre partes. El salario no es una parte del gasto:
   // metido en la misma barra se come el setenta por ciento y esconde lo que se venía a ver.
   it('sin filtro de tipo compone el gasto, no el ingreso', async () => {
-    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
-    await repository.save(
+    await repository.add(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.add(
       unwrap(
         Movement.create({
           id: 'm2',
@@ -185,6 +188,7 @@ describe('PrismaMovementRepository', () => {
           paymentAccountCode: '1101',
           receiptKey: null,
           status: 'ACTIVE',
+          version: 0,
         }),
       ),
     )
@@ -198,8 +202,8 @@ describe('PrismaMovementRepository', () => {
   })
 
   it('respeta el filtro de categoría y el rango de fechas', async () => {
-    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
-    await repository.save(gasto('m2', 'cat-2', 90_000_00n))
+    await repository.add(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.add(gasto('m2', 'cat-2', 90_000_00n))
 
     expect(await repository.totalsByCategory({ categoryId: 'cat-1' })).toEqual([
       { categoryId: 'cat-1', total: crc(10_000_00n) },
@@ -210,8 +214,8 @@ describe('PrismaMovementRepository', () => {
   })
 
   it('separa las monedas: sumar colones con dólares daría un número que no existe', async () => {
-    await repository.save(gasto('m1', 'cat-1', 10_000_00n))
-    await repository.save(
+    await repository.add(gasto('m1', 'cat-1', 10_000_00n))
+    await repository.add(
       unwrap(
         Movement.create({
           id: 'm2',
@@ -223,6 +227,7 @@ describe('PrismaMovementRepository', () => {
           paymentAccountCode: '1101',
           receiptKey: null,
           status: 'ACTIVE',
+          version: 0,
         }),
       ),
     )
@@ -234,9 +239,9 @@ describe('PrismaMovementRepository', () => {
   })
 
   it('lista los meses con movimientos sin repetirlos', async () => {
-    await repository.save(movimiento('m1', utc('2026-08-31')))
-    await repository.save(movimiento('m2', utc('2026-09-03')))
-    await repository.save(movimiento('m3', utc('2026-09-10')))
+    await repository.add(movimiento('m1', utc('2026-08-31')))
+    await repository.add(movimiento('m2', utc('2026-09-03')))
+    await repository.add(movimiento('m3', utc('2026-09-10')))
 
     const months = await repository.monthsWithMovements()
 
@@ -246,7 +251,7 @@ describe('PrismaMovementRepository', () => {
 
 describe('PrismaJournalRepository · meses con asientos', () => {
   it('lista un mes por cada mes con asientos, sin repetirlos', async () => {
-    await repository.save(movimiento('m1', utc('2026-09-03')))
+    await repository.add(movimiento('m1', utc('2026-09-03')))
     await journal.save(asientoDe('m1', utc('2026-09-03')))
     await journal.save(asientoDe('m2', utc('2026-09-20')))
     await journal.save(asientoDe('m3', utc('2026-10-02')))
@@ -254,5 +259,37 @@ describe('PrismaJournalRepository · meses con asientos', () => {
     const months = await journal.monthsWithEntries()
 
     expect(months.map((key) => key.toString())).toEqual(['2026-09', '2026-10'])
+  })
+})
+
+describe('editar un movimiento guardado', () => {
+  const conOtraContraparte = (movement: Movement, counterparty: string) =>
+    unwrap(Movement.create({ ...movement.toProps(), counterparty }))
+
+  it('guarda sobre la versión que leyó y la sube', async () => {
+    await repository.add(movimiento('m1', utc('2026-09-03')))
+    const leido = (await repository.findById('m1'))!
+
+    await repository.update(conOtraContraparte(leido, 'Otro proveedor'))
+
+    const guardado = await repository.findById('m1')
+    expect(guardado?.counterparty).toBe('Otro proveedor')
+    expect(guardado?.version).toBe(leido.version + 1)
+  })
+
+  it('con una versión vieja no pisa lo que guardó otro', async () => {
+    await repository.add(movimiento('m1', utc('2026-09-03')))
+    const leidoPorLasDos = (await repository.findById('m1'))!
+    await repository.update(conOtraContraparte(leidoPorLasDos, 'Primera'))
+
+    await expect(repository.update(conOtraContraparte(leidoPorLasDos, 'Segunda'))).rejects.toBeInstanceOf(
+      EditadoPorOtroError,
+    )
+    expect((await repository.findById('m1'))?.counterparty).toBe('Primera')
+  })
+
+  it('si el movimiento no existe no lo crea: avisa que no está', async () => {
+    await expect(repository.update(movimiento('fantasma', utc('2026-09-03')))).rejects.toBeInstanceOf(NotFoundError)
+    expect(await repository.findById('fantasma')).toBeNull()
   })
 })

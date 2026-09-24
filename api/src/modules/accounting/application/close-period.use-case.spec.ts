@@ -77,7 +77,8 @@ const movementsStub = (unposted = 0, months: PeriodKey[] = []): MovementReposito
   totalsByCategory: vi.fn().mockResolvedValue([]),
   findById: vi.fn(),
   findByPaymentAccount: vi.fn().mockResolvedValue([]),
-  save: vi.fn(),
+  add: vi.fn(),
+  update: vi.fn(),
   countUnposted: vi.fn().mockResolvedValue(unposted),
   monthsWithMovements: vi.fn().mockResolvedValue(months),
 })
