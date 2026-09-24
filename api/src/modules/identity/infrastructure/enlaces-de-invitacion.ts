@@ -1,4 +1,4 @@
-import type { PrismaClient } from '../../../generated/prisma/client.js'
+import type { Prisma, PrismaClient } from '../../../generated/prisma/client.js'
 import { generarToken, hashDelToken, type EnlaceDeInvitacion } from './registro.js'
 
 // Los enlaces de invitación, del lado de la base. El token se muestra una sola vez, al crear el
@@ -19,6 +19,25 @@ export class EnlacesDeInvitacion {
     return this.reemplazar({ tipo: 'APP', accessInvitationId, ...invitacion })
   }
 
+  // Para una invitación a la app que se está creando, dentro de su misma transacción: si algo
+  // falla en el medio no queda una invitación sin enlace.
+  async paraUnaInvitacionNueva(
+    tx: Prisma.TransactionClient,
+    invitacion: { id: string; email: string; expiresAt: Date },
+  ): Promise<string> {
+    const token = generarToken()
+    await tx.invitationLink.create({
+      data: {
+        tipo: 'APP',
+        email: invitacion.email,
+        expiresAt: invitacion.expiresAt,
+        tokenHash: hashDelToken(token),
+        accessInvitationId: invitacion.id,
+      },
+    })
+    return token
+  }
+
   // Solo para una invitación pendiente y vigente del libro en el que se está: el id de una
   // invitación ajena no alcanza para sacarle un enlace, y el de una vencida daría uno que no
   // sirve. Sin invitación que coincida, `null`.
@@ -34,6 +53,7 @@ export class EnlacesDeInvitacion {
     const enlace = await this.db.invitationLink.findUnique({
       where: { tokenHash: hashDelToken(token) },
       select: {
+        tipo: true,
         email: true,
         expiresAt: true,
         usedAt: true,
@@ -46,7 +66,7 @@ export class EnlacesDeInvitacion {
     const invitacionVigente = enlace.accessInvitation
       ? enlace.accessInvitation.usedAt === null && enlace.accessInvitation.expiresAt > ahora
       : enlace.bookInvitation?.status === 'pending' && enlace.bookInvitation.expiresAt > ahora
-    return { email: enlace.email, expiresAt: enlace.expiresAt, usedAt: enlace.usedAt, invitacionVigente }
+    return { tipo: enlace.tipo, email: enlace.email, expiresAt: enlace.expiresAt, usedAt: enlace.usedAt, invitacionVigente }
   }
 
   // Aceptar una invitación a un libro exige el enlace de esa invitación, no solo el correo: el

@@ -14,7 +14,7 @@ describe('enlaceALaApp', () => {
 describe('enlaceAlLibro', () => {
   it('lleva la invitación en la búsqueda y el token en el fragmento', () => {
     expect(enlaceAlLibro('https://t-ledger.vercel.app', 'inv 1', TOKEN)).toBe(
-      `https://t-ledger.vercel.app/crear-cuenta?invitacion=inv%201#token=${TOKEN}`,
+      `https://t-ledger.vercel.app/unirse?invitacion=inv%201#token=${TOKEN}`,
     )
   })
 })

@@ -15,12 +15,17 @@ sin leerla entera. Lo que está antes de la primera entrega, como este texto, no
 - **«Enlace nuevo»** en cada invitación que sigue esperando, en «Dar acceso» y en la gente del
   libro. Saca otro enlace y el anterior deja de servir: sirve si lo perdiste o si se lo
   mandaste a quien no era.
+- **Unirte a un libro con tu cuenta.** El enlace de una invitación a un libro abre una pantalla
+  para entrar con tu cuenta y unirte. Si la persona todavía no tiene cuenta, primero le da
+  acceso quien administra T-Ledger.
 
 ### Corregido
 
 - **Los enlaces de invitación ahora son de quien los recibe.** Llevan una clave que sirve una
-  sola vez, y hace falta para crear la cuenta y para entrar al libro: saber el correo invitado
-  ya no alcanza.
+  sola vez, y hace falta para crear la cuenta y para unirse a un libro: saber el correo
+  invitado ya no alcanza.
+  - Las cuentas nuevas se crean solo con el enlace de «Dar acceso». Con el de un libro ya no se
+    puede crear una cuenta con el correo de otra persona.
   - Los enlaces que mandaste antes de esta versión dejan de servir: sacá uno nuevo desde la
     invitación.
   - Las invitaciones a la app que estaban esperando se borraron: volvé a darle acceso a esa

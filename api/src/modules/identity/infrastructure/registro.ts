@@ -12,12 +12,15 @@ import { createHash, randomBytes } from 'node:crypto'
 // de Better Auth recomienda para este caso: `disableSignUp` sirve para apagar el registro, y
 // para permitirlo *a veces* hay que decidirlo en el gancho de creación del usuario.
 //
-// La condición es **tener el enlace**, no que el correo esté invitado: quien sabía el correo de
-// alguien invitado se registraba antes que esa persona y entraba a su libro
+// La condición es **tener el enlace de una invitación a la app**, no que el correo esté invitado:
+// quien sabía el correo de alguien invitado se registraba antes que esa persona. Y solo el de la
+// app, que da el admin: el de un libro lo puede sacar cualquiera con cuenta para un correo ajeno,
+// y registrarse con él ocuparía el correo de otra persona
 // (docs/plans/2026-09-23-invitaciones-con-token.md).
 
 // Lo que el registro encuentra a partir del token que trae el pedido.
 export interface EnlaceDeInvitacion {
+  tipo: 'APP' | 'LIBRO'
   email: string
   expiresAt: Date
   usedAt: Date | null
@@ -39,6 +42,7 @@ const normalizar = (correo: string) => correo.trim().toLowerCase()
 export const puedeRegistrarse = ({ esLaPrimeraCuenta, email, enlace }: Solicitud, ahora: Date): boolean =>
   esLaPrimeraCuenta ||
   (enlace !== null &&
+    enlace.tipo === 'APP' &&
     normalizar(enlace.email) === normalizar(email) &&
     enlace.usedAt === null &&
     enlace.expiresAt > ahora &&

@@ -45,14 +45,18 @@ export class InvitacionesALaAppUseCase {
     const expiresAt = new Date(Date.now() + VIGENCIA_EN_DIAS * 86_400_000)
     // Volver a invitar renueva: la anterior sin usar se reemplaza, así el enlace que se manda
     // es siempre el de una invitación vigente y la lista no se llena de repetidos.
-    const invitacion = await this.db.$transaction(async (tx) => {
+    const conEnlace = await this.db.$transaction(async (tx) => {
       await tx.accessInvitation.deleteMany({ where: { email: correo, usedAt: null } })
-      return tx.accessInvitation.create({ data: { email: correo, expiresAt, createdBy }, select: SELECCION })
+      const invitacion = await tx.accessInvitation.create({
+        data: { email: correo, expiresAt, createdBy },
+        select: SELECCION,
+      })
+      return { ...invitacion, token: await this.enlaces.paraUnaInvitacionNueva(tx, invitacion) }
     })
 
     // Al log el hecho y no el correo: el ADR-005 no deja datos de personas en la telemetría.
     this.logger.log('La administración invitó a alguien a la app')
-    return { ...invitacion, token: await this.enlaces.paraLaApp(invitacion.id) }
+    return conEnlace
   }
 
   // Un enlace nuevo para una invitación que sigue esperando. El anterior deja de servir: es la

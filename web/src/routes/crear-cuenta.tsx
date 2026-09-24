@@ -4,7 +4,7 @@ import { TEXT_LINK } from '@/components/text-link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { organization, signUp } from '@/features/identity/auth-client'
+import { signUp } from '@/features/identity/auth-client'
 import { CampoDeContrasena } from '@/features/identity/campo-de-contrasena'
 import { copy } from '@/features/identity/copy'
 import { gestoDeFormulario } from '@/features/identity/gesto'
@@ -13,20 +13,16 @@ import { cabeceraDelToken, useTokenDelEnlace } from '@/features/identity/token-d
 import { queryClient } from '@/router'
 import { correoDeLaBusqueda } from '@/features/datos/enlace-de-invitacion'
 
-// La pantalla que faltaba para que una invitación sirva de algo. Aceptar una invitación es una
-// llamada con sesión —Better Auth la resuelve bajo su middleware de sesión, no a partir del
-// enlace—, así que el invitado necesita cuenta **antes** de poder aceptarla. Acá se crean las
-// dos cosas, en ese orden, y el servidor decide si puede: la regla vive en `puedeRegistrarse`
-// y no acá, porque una comprobación en el navegador no protege nada. Lo que la pantalla aporta
-// es el token del enlace, que el servidor exige para dejar registrarse a quien no es la primera
-// cuenta.
+// Crear la cuenta con el enlace de acceso que da quien administra la instancia. El servidor
+// decide si puede: la regla vive en `puedeRegistrarse` y no acá, porque una comprobación en el
+// navegador no protege nada. Lo que la pantalla aporta es el token del enlace. Los enlaces de un
+// libro no llegan acá: van a `/unirse`, con una cuenta que ya existe.
 //
-// Sirve también sin invitación, para la primera cuenta de una instancia recién levantada, a
-// quien no la puede invitar nadie. Es la misma pantalla y el mismo formulario: lo único que
-// cambia es si después hay una invitación que aceptar.
+// Sirve también sin enlace, para la primera cuenta de una instancia recién levantada, a quien
+// no la puede invitar nadie.
 const CrearCuentaScreen = () => {
   const navegar = useNavigate()
-  const { invitacion, correo: correoDelEnlace } = Route.useSearch()
+  const { correo: correoDelEnlace } = Route.useSearch()
   const token = useTokenDelEnlace()
   const [nombre, setNombre] = useState('')
   // Con el correo del enlace de invitación ya puesto: es el que la invitación deja pasar.
@@ -49,31 +45,12 @@ const CrearCuentaScreen = () => {
       { name: nombre, email: correo, password: contrasena },
       {
         headers: cabeceraDelToken(token),
-        onSuccess: async () => {
-          // Sin invitación no hay nada que aceptar: es la primera cuenta de la instancia, y su
-          // libro lo crea después desde adentro.
-          if (!invitacion) {
-            queryClient.clear()
-            void navegar({ to: '/tablero' })
-            return
-          }
-
-          // Aceptar también exige el enlace de esta invitación: el correo solo no alcanza.
-          const { error: rechazo } = await organization.acceptInvitation(
-            { invitationId: invitacion },
-            { headers: cabeceraDelToken(token) },
-          )
-
-          // La cuenta ya existe aunque la invitación haya vencido en el medio. Decirlo es lo
-          // único honesto: mandarla al tablero la dejaría adentro sin libro, sin entender por
-          // qué no ve nada.
-          if (rechazo) return fallar(copy.crear.accountWithoutBook)
-
+        onSuccess: () => {
           queryClient.clear()
           void navegar({ to: '/tablero' })
         },
-        // El 403 es la regla de registro del servidor: no hay invitación vigente para ese
-        // correo y ese enlace. El 422 es el correo repetido. Lo demás no se disfraza de error de tecleo.
+        // El 403 es la regla de registro del servidor: no hay enlace de acceso vigente para ese
+        // correo. El 422 es el correo repetido. Lo demás no se disfraza de error de tecleo.
         onError: ({ error: fallo }) => {
           if (fallo.status === 0) fallar(copy.entrar.unreachable)
           else if (fallo.status === 403) fallar(copy.crear.notInvited)
@@ -94,7 +71,7 @@ const CrearCuentaScreen = () => {
     >
       <h1 className="text-2xl font-semibold tracking-tight 2xl:text-3xl">{copy.crear.title}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {invitacion ? copy.crear.invited : copy.crear.alone}
+        {correoDelEnlace ? copy.crear.invited : copy.crear.alone}
       </p>
 
       <form onSubmit={crear} className="mt-8 space-y-4">
@@ -163,9 +140,8 @@ const CrearCuentaScreen = () => {
 }
 
 interface Busqueda {
-  // El id de la invitación, tal como viaja en el enlace que le llega al invitado. Sin él la
-  // pantalla sigue sirviendo: es el caso de la primera cuenta.
-  invitacion?: string
+  // El correo del enlace de acceso, ya puesto. Sin él la pantalla sigue sirviendo: es el caso
+  // de la primera cuenta.
   correo?: string
 }
 
@@ -173,9 +149,6 @@ export const Route = createFileRoute('/crear-cuenta')({
   component: CrearCuentaScreen,
   validateSearch: (busqueda: Record<string, unknown>): Busqueda => {
     const correo = correoDeLaBusqueda(busqueda)
-    return {
-      ...(typeof busqueda.invitacion === 'string' ? { invitacion: busqueda.invitacion } : {}),
-      ...(correo ? { correo } : {}),
-    }
+    return correo ? { correo } : {}
   },
 })

@@ -6,6 +6,7 @@ const enUnaSemana = new Date('2026-09-29T10:00:00Z')
 const laSemanaPasada = new Date('2026-09-15T10:00:00Z')
 
 const enlace = (cambios: Partial<EnlaceDeInvitacion> = {}): EnlaceDeInvitacion => ({
+  tipo: 'APP',
   email: 'pareja@ejemplo.com',
   expiresAt: enUnaSemana,
   usedAt: null,
@@ -26,7 +27,7 @@ describe('puedeRegistrarse', () => {
     expect(puedeRegistrarse(pedido({ esLaPrimeraCuenta: true, enlace: null }), AHORA)).toBe(true)
   })
 
-  it('deja pasar a quien trae el enlace de su invitación', () => {
+  it('deja pasar a quien trae el enlace de su invitación a la app', () => {
     expect(puedeRegistrarse(pedido(), AHORA)).toBe(true)
   })
 
@@ -48,6 +49,12 @@ describe('puedeRegistrarse', () => {
 
   it('no deja pasar con un enlace que vence en este instante', () => {
     expect(puedeRegistrarse(pedido({ enlace: enlace({ expiresAt: AHORA }) }), AHORA)).toBe(false)
+  })
+
+  it('con el enlace de un libro no se crea cuenta: las cuentas nuevas las habilita el admin', () => {
+    // Cualquiera con cuenta puede invitar un correo ajeno a su propio libro. Si ese enlace
+    // registrara, ocuparía el correo de otra persona.
+    expect(puedeRegistrarse(pedido({ enlace: enlace({ tipo: 'LIBRO' }) }), AHORA)).toBe(false)
   })
 
   it('no deja pasar con un enlace ya usado', () => {

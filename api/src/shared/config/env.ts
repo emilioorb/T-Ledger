@@ -38,11 +38,11 @@ const envSchema = z.object({
   // El secreto que Vercel agrega a lo que reenvía (web/vercel.json). Con él puesto, la API
   // rechaza todo lo que llega directo a Railway. Opcional: en local no hay proxy adelante.
   PROXY_SECRET: z.string().min(32, { error: 'PROXY_SECRET tiene que medir al menos 32 caracteres' }).optional(),
-  // Quién administra la **instancia**, separado por comas. No es el dueño de un libro: es
-  // quien ve los números del servidor entero. Va en el entorno y no en la base a propósito:
-  // un superusuario que se pueda crear desde una pantalla es un superusuario que alguien
-  // puede conseguir.
-  ADMIN_EMAILS: z.string().optional(),
+  // Quién administra la **instancia**: ids de usuario separados por comas. No es el dueño de
+  // un libro: es quien ve los números del servidor entero y habilita cuentas. Va en el entorno
+  // y no en la base a propósito: un superusuario que se pueda crear desde una pantalla es un
+  // superusuario que alguien puede conseguir.
+  ADMIN_USER_IDS: z.string().optional(),
   ...archivosFields,
 })
 

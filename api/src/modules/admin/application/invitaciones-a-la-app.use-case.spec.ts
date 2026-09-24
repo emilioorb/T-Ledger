@@ -96,6 +96,21 @@ describe('el enlace de la invitación', () => {
     expect(await enlaces.buscar(nuevo)).not.toBeNull()
   })
 
+  it('si el enlace no se puede crear, tampoco queda la invitación: no hay invitaciones sin enlace', async () => {
+    const sinEnlace = new EnlacesDeInvitacion(prisma.clientSinFiltroDeLibro)
+    sinEnlace.paraUnaInvitacionNueva = async () => {
+      throw new Error('la base se cayó en el medio')
+    }
+    const conFalla = new InvitacionesALaAppUseCase(prisma, sinEnlace)
+
+    await expect(conFalla.invitar('huerfana@ejemplo.com', LIBRO_DE_PRUEBA.userId)).rejects.toThrow()
+
+    const quedo = await prisma.clientSinFiltroDeLibro.accessInvitation.findFirst({
+      where: { email: 'huerfana@ejemplo.com' },
+    })
+    expect(quedo).toBeNull()
+  })
+
   it('no renueva el enlace de una invitación que no existe', async () => {
     await expect(invitaciones.renovarEnlace('no-existe')).rejects.toThrow(NotFoundException)
   })

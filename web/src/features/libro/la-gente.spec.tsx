@@ -37,7 +37,7 @@ describe('las invitaciones pendientes del libro', () => {
     fireEvent.click(primera!)
 
     expect(await screen.findByLabelText(copy.invitar.linkLabel)).toHaveValue(
-      `${window.location.origin}/crear-cuenta?invitacion=inv-2#token=tok-nuevo`,
+      `${window.location.origin}/unirse?invitacion=inv-2#token=tok-nuevo`,
     )
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/book/invitations/inv-2/link'),

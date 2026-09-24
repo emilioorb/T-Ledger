@@ -38,8 +38,10 @@ export interface CambioDeMiembro {
   despues?: object
 }
 
-// La cabecera en la que la pantalla de crear cuenta manda el token del enlace de invitación.
+// La cabecera en la que la web manda el token del enlace de invitación.
 export const CABECERA_DEL_TOKEN = 'x-token-invitacion'
+
+const RESPONDER_UNA_INVITACION = new Set(['/organization/accept-invitation', '/organization/reject-invitation'])
 
 export const crearAuth = (
   prisma: PrismaClient,
@@ -94,14 +96,14 @@ export const crearAuth = (
     // No corta nada si no hay sesión: entrar y registrarse pasan por acá, y ahí todavía no
     // hay nadie. Quien necesite el autor lo exige por su cuenta.
     //
-    // Aceptar una invitación a un libro exige el enlace de esa invitación: Better Auth acepta con
-    // solo comparar el correo de la sesión, y el correo no se verifica. Su gancho
+    // Aceptar o rechazar una invitación a un libro exige el enlace de esa invitación: Better Auth
+    // decide con solo comparar el correo de la sesión, y el correo no se verifica. Su gancho
     // `beforeAcceptInvitation` no recibe las cabeceras, por eso va acá.
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
         const sesion = await getSessionFromCtx(ctx).catch(() => null)
         if (sesion) entrarComoAutor(sesion.user.id)
-        if (ctx.path === '/organization/accept-invitation') {
+        if (RESPONDER_UNA_INVITACION.has(ctx.path)) {
           const token = tokenDelPedido(ctx)
           const { invitationId } = (ctx.body ?? {}) as { invitationId?: unknown }
           const abre =

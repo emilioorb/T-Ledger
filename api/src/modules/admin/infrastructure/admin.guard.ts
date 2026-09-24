@@ -12,7 +12,7 @@ import { esAdmin, leerAdmins } from '../domain/admin.js'
 // gente usa el servidor.
 @Injectable()
 export class AdminGuard implements CanActivate {
-  private readonly admins = leerAdmins(loadEnv(process.env).ADMIN_EMAILS)
+  private readonly admins = leerAdmins(loadEnv(process.env).ADMIN_USER_IDS)
 
   constructor(@Inject(AUTH) private readonly auth: Auth) {}
 
@@ -20,7 +20,7 @@ export class AdminGuard implements CanActivate {
     const peticion = contexto.switchToHttp().getRequest<Request>()
     const sesion = await this.auth.api.getSession({ headers: fromNodeHeaders(peticion.headers) })
 
-    if (!esAdmin(sesion?.user?.email, this.admins)) {
+    if (!esAdmin(sesion?.user?.id, this.admins)) {
       // 403 y no 404: quien pregunta tiene sesión, así que sabe que la aplicación existe. Lo
       // que no sabe —y sigue sin saber— es qué hay del otro lado.
       throw new ForbiddenException('Esto es de la administración de la instancia.')
@@ -31,6 +31,6 @@ export class AdminGuard implements CanActivate {
   // Para el endpoint que contesta «¿soy administrador?», que responde a todos.
   async loEs(peticion: Request): Promise<boolean> {
     const sesion = await this.auth.api.getSession({ headers: fromNodeHeaders(peticion.headers) })
-    return esAdmin(sesion?.user?.email, this.admins)
+    return esAdmin(sesion?.user?.id, this.admins)
   }
 }

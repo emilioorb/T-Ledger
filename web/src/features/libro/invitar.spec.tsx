@@ -30,7 +30,7 @@ describe('Invitar', () => {
     fireEvent.click(screen.getByRole('button', { name: copy.invitar.submit }))
 
     const enlace = await screen.findByLabelText(copy.invitar.linkLabel)
-    expect(enlace).toHaveValue(`${window.location.origin}/crear-cuenta?invitacion=inv-9#token=tok-libro`)
+    expect(enlace).toHaveValue(`${window.location.origin}/unirse?invitacion=inv-9#token=tok-libro`)
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('/book/invitations/inv-9/link'),
       expect.objectContaining({ method: 'POST' }),

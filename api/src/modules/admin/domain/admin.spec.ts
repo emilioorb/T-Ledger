@@ -2,35 +2,31 @@ import { describe, expect, it } from 'vitest'
 import { esAdmin, leerAdmins } from './admin.js'
 
 describe('quién administra la instancia', () => {
-  it('lee una lista separada por comas, con espacios de más', () => {
-    expect(leerAdmins(' uno@ejemplo.com , dos@ejemplo.com ')).toEqual([
-      'uno@ejemplo.com',
-      'dos@ejemplo.com',
-    ])
+  it('lee una lista de ids separada por comas, con espacios de más', () => {
+    expect(leerAdmins(' usr_uno , usr_dos ')).toEqual(['usr_uno', 'usr_dos'])
   })
 
   it('sin la variable no hay ningún administrador', () => {
-    // Una instancia recién levantada no tiene superusuarios hasta que alguien lo diga.
     expect(leerAdmins(undefined)).toEqual([])
     expect(leerAdmins('')).toEqual([])
   })
 
-  it('el correo se compara sin distinguir mayúsculas', () => {
-    const admins = leerAdmins('Emilio@Ejemplo.com')
+  it('administra quien tiene un id de la lista, tal cual', () => {
+    const admins = leerAdmins('usr_emilio')
 
-    expect(esAdmin('emilio@ejemplo.com', admins)).toBe(true)
-    expect(esAdmin('EMILIO@EJEMPLO.COM', admins)).toBe(true)
+    expect(esAdmin('usr_emilio', admins)).toBe(true)
+    expect(esAdmin('USR_EMILIO', admins)).toBe(false)
   })
 
-  it('quien no está en la lista no lo es', () => {
-    const admins = leerAdmins('emilio@ejemplo.com')
+  it('nadie más administra, ni sin sesión', () => {
+    const admins = leerAdmins('usr_emilio')
 
-    expect(esAdmin('otro@ejemplo.com', admins)).toBe(false)
+    expect(esAdmin('usr_otro', admins)).toBe(false)
     expect(esAdmin(undefined, admins)).toBe(false)
+    expect(esAdmin('', [])).toBe(false)
   })
 
-  it('sin lista, nadie lo es: ni siquiera con el correo vacío', () => {
-    expect(esAdmin('', [])).toBe(false)
-    expect(esAdmin('cualquiera@ejemplo.com', [])).toBe(false)
+  it('un correo no alcanza: el correo no se verifica y cualquiera puede registrarlo', () => {
+    expect(esAdmin('emilio@ejemplo.com', leerAdmins('usr_emilio'))).toBe(false)
   })
 })

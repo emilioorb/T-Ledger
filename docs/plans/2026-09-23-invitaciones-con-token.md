@@ -116,3 +116,22 @@ code-reviewer, security-auditor y test-engineer en paralelo sobre la implementac
 | 12 | Con cuenta se pueden crear cuentas con correos ajenos (ocupar el correo; `ADMIN_EMAILS` sin cuenta) | Compromiso | Los correos no se verifican; en producción el admin ya tiene cuenta |
 | 13 | El historial global del navegador puede guardar el fragmento | Compromiso | Un uso, un correo, una semana |
 | 14 | El enlace de la app se crea fuera de la transacción de la invitación | Compromiso | Si falla, se renueva desde la lista |
+
+## Revisión adversarial de los compromisos (2026-09-23)
+
+Los compromisos de la conciliación del /ship se revisaron con doubt-driven-development
+(security-auditor como revisor, sin segunda opinión de otro modelo: Emilio eligió saltarla).
+Ninguno quedó en pie como estaba escrito.
+
+- **Correos ajenos (12).** No se acepta. Con una cuenta cualquiera se creaba otra con un correo
+  de `ADMIN_EMAILS` que no tuviera cuenta (baja del admin, admin nuevo, otra instancia) y se
+  administraba la instancia; y se podía ocupar el correo de cualquiera. Decisión de Emilio:
+  **solo el admin habilita cuentas**. El enlace de un libro ya no registra: sirve para que
+  alguien con cuenta se una, en `/unirse`. El admin se identifica por **id de usuario**
+  (`ADMIN_USER_IDS`), que no se puede fabricar. Rechazar una invitación exige el mismo token que
+  aceptarla.
+- **Historial del navegador (13).** Se acepta con la cota correcta: hace falta acceso al
+  navegador de la persona, y solo hasta que ella use el enlace. Las invitaciones a un libro
+  vencen a las 48 h, no a los 7 días.
+- **Enlace fuera de la transacción (14).** No se acepta: el enlace de la app se crea dentro de
+  la misma transacción que la invitación.

@@ -53,9 +53,9 @@ export const copy = {
   crear: {
     title: 'Crear tu cuenta',
     tab: 'Crear cuenta',
-    // Con invitación se dice qué va a pasar después; sin ella, lo mismo que en la pantalla de
-    // entrar, porque es lo mismo que va a contestar el servidor.
-    invited: 'Te invitaron a un libro. Creá tu cuenta y entrás directo.',
+    // Con el enlace de acceso se dice qué va a pasar después; sin él, lo mismo que en la
+    // pantalla de entrar, porque es lo mismo que va a contestar el servidor.
+    invited: 'Te dieron acceso a T-Ledger. Creá tu cuenta con tu propia contraseña y arrancás con tu libro.',
     alone:
       'Se entra por invitación. Si estás levantando tu propio T-Ledger, esta va a ser la primera cuenta.',
     name: 'Tu nombre',
@@ -66,15 +66,26 @@ export const copy = {
     submitting: 'Creando…',
     // El 403 del servidor: no te invitaron, venció o ya se usó. Las tres dan lo mismo del lado
     // de acá, y separarlas sería decir qué correos tienen invitación.
-    notInvited: 'Esa invitación no está disponible. Pedile una nueva a quien lleva el libro.',
+    notInvited: 'Ese enlace no está disponible. Pedile uno nuevo a quien administra T-Ledger.',
     taken: 'Ese correo ya tiene cuenta.',
-    // La cuenta quedó creada pero la invitación no se pudo aceptar. Se dice tal cual: mandarla
-    // a entrar sin avisar la dejaría adentro sin libro y sin entender por qué.
-    accountWithoutBook:
-      'Tu cuenta quedó creada, pero la invitación ya no sirve. Entrá y pedí una nueva.',
     failed: 'No se pudo crear la cuenta. Probá de nuevo o escribinos.',
     haveAccount: '¿Ya tenés cuenta?',
     signIn: 'Entrar',
+  },
+  // Unirse a un libro ajeno con la cuenta propia. El enlace de un libro no crea cuentas: las
+  // cuentas nuevas las habilita quien administra la instancia.
+  unirse: {
+    title: 'Unirte a un libro',
+    withSession: (correo: string) => `Te invitaron a un libro. Vas a entrar con ${correo}.`,
+    join: 'Unirme al libro',
+    joining: 'Uniéndote…',
+    needsAccount: 'Te invitaron a un libro. Para unirte, entrá con tu cuenta de T-Ledger.',
+    signIn: 'Entrar para unirme',
+    noAccount:
+      '¿No tenés cuenta? Pedile acceso a quien administra T-Ledger: las cuentas nuevas las habilita esa persona.',
+    // Vencida, cancelada, ya usada o de otro correo: las cuatro dan lo mismo del lado de acá.
+    unavailable: 'Esa invitación no está disponible. Pedile un enlace nuevo a quien te invitó.',
+    incomplete: 'Este enlace está incompleto. Pedile uno nuevo a quien te invitó.',
   },
   panel: {
     // Lo que el producto puede demostrar de sí mismo, en vez de un testimonio inventado. Y se

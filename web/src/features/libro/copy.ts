@@ -34,7 +34,7 @@ export const copy = {
   invitar: {
     open: 'Invitar a alguien',
     title: 'Invitar al libro',
-    hint: 'Se crea la invitación y vos le pasás el enlace. Todavía no mandamos correos.',
+    hint: 'La persona tiene que tener cuenta en T-Ledger: si no tiene, primero pedile acceso a quien administra. Todavía no mandamos correos: el enlace se lo pasás vos.',
     email: 'Su correo',
     emailPlaceholder: 'nombre@correo.com',
     role: 'Qué va a poder hacer',

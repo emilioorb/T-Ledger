@@ -21,6 +21,7 @@ import { Route as NovedadesRouteImport } from './routes/novedades'
 import { Route as PlanDePagoRouteImport } from './routes/plan-de-pago'
 import { Route as ProyeccionRouteImport } from './routes/proyeccion'
 import { Route as TableroRouteImport } from './routes/tablero'
+import { Route as UnirseRouteImport } from './routes/unirse'
 import { Route as BancoConciliacionRouteImport } from './routes/banco.conciliacion'
 import { Route as BancoCuentasRouteImport } from './routes/banco.cuentas'
 import { Route as BancoImportarRouteImport } from './routes/banco.importar'
@@ -101,6 +102,11 @@ const ProyeccionRoute = ProyeccionRouteImport.update({
 const TableroRoute = TableroRouteImport.update({
   id: '/tablero',
   path: '/tablero',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnirseRoute = UnirseRouteImport.update({
+  id: '/unirse',
+  path: '/unirse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BancoConciliacionRoute = BancoConciliacionRouteImport.update({
@@ -223,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/plan-de-pago': typeof PlanDePagoRoute
   '/proyeccion': typeof ProyeccionRoute
   '/tablero': typeof TableroRoute
+  '/unirse': typeof UnirseRoute
   '/banco/conciliacion': typeof BancoConciliacionRoute
   '/banco/cuentas': typeof BancoCuentasRoute
   '/banco/importar': typeof BancoImportarRoute
@@ -257,6 +264,7 @@ export interface FileRoutesByTo {
   '/plan-de-pago': typeof PlanDePagoRoute
   '/proyeccion': typeof ProyeccionRoute
   '/tablero': typeof TableroRoute
+  '/unirse': typeof UnirseRoute
   '/banco/conciliacion': typeof BancoConciliacionRoute
   '/banco/cuentas': typeof BancoCuentasRoute
   '/banco/importar': typeof BancoImportarRoute
@@ -293,6 +301,7 @@ export interface FileRoutesById {
   '/plan-de-pago': typeof PlanDePagoRoute
   '/proyeccion': typeof ProyeccionRoute
   '/tablero': typeof TableroRoute
+  '/unirse': typeof UnirseRoute
   '/banco/conciliacion': typeof BancoConciliacionRoute
   '/banco/cuentas': typeof BancoCuentasRoute
   '/banco/importar': typeof BancoImportarRoute
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/plan-de-pago'
     | '/proyeccion'
     | '/tablero'
+    | '/unirse'
     | '/banco/conciliacion'
     | '/banco/cuentas'
     | '/banco/importar'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/plan-de-pago'
     | '/proyeccion'
     | '/tablero'
+    | '/unirse'
     | '/banco/conciliacion'
     | '/banco/cuentas'
     | '/banco/importar'
@@ -399,6 +410,7 @@ export interface FileRouteTypes {
     | '/plan-de-pago'
     | '/proyeccion'
     | '/tablero'
+    | '/unirse'
     | '/banco/conciliacion'
     | '/banco/cuentas'
     | '/banco/importar'
@@ -435,6 +447,7 @@ export interface RootRouteChildren {
   PlanDePagoRoute: typeof PlanDePagoRoute
   ProyeccionRoute: typeof ProyeccionRoute
   TableroRoute: typeof TableroRoute
+  UnirseRoute: typeof UnirseRoute
   BancoConciliacionRoute: typeof BancoConciliacionRoute
   BancoCuentasRoute: typeof BancoCuentasRoute
   BancoImportarRoute: typeof BancoImportarRoute
@@ -540,6 +553,13 @@ declare module '@tanstack/react-router' {
       path: '/tablero'
       fullPath: '/tablero'
       preLoaderRoute: typeof TableroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unirse': {
+      id: '/unirse'
+      path: '/unirse'
+      fullPath: '/unirse'
+      preLoaderRoute: typeof UnirseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/banco/conciliacion': {
@@ -718,6 +738,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlanDePagoRoute: PlanDePagoRoute,
   ProyeccionRoute: ProyeccionRoute,
   TableroRoute: TableroRoute,
+  UnirseRoute: UnirseRoute,
   BancoConciliacionRoute: BancoConciliacionRoute,
   BancoCuentasRoute: BancoCuentasRoute,
   BancoImportarRoute: BancoImportarRoute,

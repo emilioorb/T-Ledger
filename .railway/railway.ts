@@ -12,7 +12,7 @@ export default defineRailway(() => {
     start: "npm run start:prod",
     healthcheck: "/api/v1/openapi.json",
     replicas: { "us-east4-eqdc4a": 1 },
-    env: { ADMIN_EMAILS: preserve(), AUTH_BASE_URL: preserve(), AUTH_SECRET: preserve(), BCCR_API_URL: preserve(), BCCR_EMAIL: preserve(), BCCR_TOKEN: preserve(), CORS_ORIGIN: preserve(), DATABASE_URL: preserve(), NODE_ENV: preserve(), R2_ACCESS_KEY_ID: preserve(), R2_ACCOUNT_ID: preserve(), R2_BUCKET: preserve(), R2_SECRET_ACCESS_KEY: preserve(), SENTRY_ENVIRONMENT: preserve() },
+    env: { ADMIN_USER_IDS: preserve(), AUTH_BASE_URL: preserve(), AUTH_SECRET: preserve(), BCCR_API_URL: preserve(), BCCR_EMAIL: preserve(), BCCR_TOKEN: preserve(), CORS_ORIGIN: preserve(), DATABASE_URL: preserve(), NODE_ENV: preserve(), R2_ACCESS_KEY_ID: preserve(), R2_ACCOUNT_ID: preserve(), R2_BUCKET: preserve(), R2_SECRET_ACCESS_KEY: preserve(), SENTRY_ENVIRONMENT: preserve() },
   });
 
   return project("T-Ledger", {
