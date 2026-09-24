@@ -15,6 +15,7 @@ export const toGoalResponse = (goal: Goal, at: Date) => {
     priority: goal.priority,
     accountCode: goal.accountCode,
     active: goal.active,
+    version: goal.version,
     contributed: fromMoney(goal.contributed()),
     remaining: fromMoney(goal.remaining()),
     progress: goal.progress().value.toString(),

@@ -1886,7 +1886,9 @@ export interface paths {
         /** Borra una meta y sus aportes */
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    version?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -3459,6 +3461,7 @@ export interface components {
             priority?: number;
             accountCode?: string | null;
             active?: boolean;
+            version?: number;
         };
         /** CreateContributionInput */
         CreateContributionInput: {
@@ -3896,6 +3899,7 @@ export interface components {
             priority: number;
             accountCode: string | null;
             active: boolean;
+            version: number;
             contributed: components["schemas"]["MoneyOutput"];
             remaining: components["schemas"]["MoneyOutput"];
             progress: string;

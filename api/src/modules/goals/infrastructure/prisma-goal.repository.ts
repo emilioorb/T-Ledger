@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import { Money } from '../../../shared/kernel/money.js'
 import { unwrap } from '../../../shared/kernel/result.js'
+import { SUBIR_VERSION, verificarEscritura } from '../../../shared/prisma/escribir-con-version.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import type { Contribution } from '../domain/contribution.js'
 import { Goal } from '../domain/goal.js'
@@ -23,6 +24,7 @@ interface GoalRow {
   priority: number
   accountCode: string | null
   active: boolean
+  version: number
   contributions: ContributionRow[]
 }
 
@@ -36,6 +38,7 @@ const toDomain = (row: GoalRow): Goal =>
       priority: row.priority,
       accountCode: row.accountCode,
       active: row.active,
+      version: row.version,
       contributions: row.contributions.map((contribution) => ({
         id: contribution.id,
         date: contribution.date,
@@ -46,6 +49,16 @@ const toDomain = (row: GoalRow): Goal =>
       })),
     }),
   )
+
+const datosDe = (goal: Goal) => ({
+  name: goal.name,
+  targetMinor: goal.target.minorUnits,
+  currency: goal.target.currency,
+  desiredDate: goal.desiredDate,
+  priority: goal.priority,
+  accountCode: goal.accountCode,
+  active: goal.active,
+})
 
 const WITH_CONTRIBUTIONS = { contributions: { orderBy: { date: 'asc' } } } as const
 
@@ -69,26 +82,23 @@ export class PrismaGoalRepository implements GoalRepository {
     return row ? toDomain(row as GoalRow) : null
   }
 
+  async add(goal: Goal): Promise<void> {
+    await this.prisma.client.goal.create({ data: { bookId: this.prisma.libro, id: goal.id, ...datosDe(goal) } })
+  }
+
   // Los aportes no se reescriben al guardar la meta: tienen su propio camino de alta,
   // y sobrescribirlos acá convertiría una edición de nombre en un borrado de historia.
-  async save(goal: Goal): Promise<void> {
-    const data = {
-      name: goal.name,
-      targetMinor: goal.target.minorUnits,
-      currency: goal.target.currency,
-      desiredDate: goal.desiredDate,
-      priority: goal.priority,
-      accountCode: goal.accountCode,
-      active: goal.active,
-    }
-    await this.prisma.client.goal.upsert({
-      where: { id: goal.id },
-      create: { bookId: this.prisma.libro, id: goal.id, ...data },
-      update: data,
+  async update(goal: Goal): Promise<Goal> {
+    const { count } = await this.prisma.client.goal.updateMany({
+      where: { id: goal.id, version: goal.version },
+      data: { ...datosDe(goal), ...SUBIR_VERSION },
     })
+    await verificarEscritura(count, async () => (await this.prisma.client.goal.count({ where: { id: goal.id } })) > 0)
+    return goal.guardada()
   }
 
   async addContribution(goalId: string, contribution: Contribution): Promise<void> {
+    await this.prisma.client.goal.updateMany({ where: { id: goalId }, data: SUBIR_VERSION })
     await this.prisma.client.goalContribution.create({
       data: {
         bookId: this.prisma.libro,

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { nameText } from '../../../shared/http/text.schema.js'
 import { isoDate } from '../../../shared/http/date.schema.js'
 import { moneySchema } from '../../../shared/http/money.schema.js'
+import { version } from '../../../shared/http/version.schema.js'
 
 const accountCode = z
   .string()
@@ -31,7 +32,7 @@ export const createGoalSchema = z
   .meta({ id: 'CreateGoalInput', title: 'CreateGoalInput' })
 
 export const updateGoalSchema = z
-  .object(goalFields)
+  .object({ ...goalFields, version })
   .partial()
   .meta({ id: 'UpdateGoalInput', title: 'UpdateGoalInput' })
 
@@ -50,6 +51,8 @@ export const goalResponseSchema = z
     priority: z.number(),
     accountCode: z.string().nullable(),
     active: z.boolean(),
+    // La que hay que mandar al editar o borrar: si no coincide con la de la base, 409.
+    version: z.number().int(),
     contributed: moneySchema,
     remaining: moneySchema,
     progress: z.string(),

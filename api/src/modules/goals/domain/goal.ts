@@ -15,6 +15,8 @@ export interface GoalProps {
   // Una meta en pausa conserva lo aportado pero no pide plata: sale de la proyección y del
   // tablero hasta que se reactive. Opcional al crear: nace activa.
   readonly active?: boolean
+  // La versión de la fila sobre la que se armó este estado. Opcional al crear: nace en 0.
+  readonly version?: number
 }
 
 const HUNDRED = 100
@@ -76,6 +78,15 @@ export class Goal {
   }
   get active(): boolean {
     return this.props.active ?? true
+  }
+  get version(): number {
+    return this.props.version ?? 0
+  }
+
+  // Lo que queda después de guardarse: la base sube la versión en cada escritura, también al
+  // agregar un aporte.
+  guardada(): Goal {
+    return new Goal({ ...this.props, version: this.version + 1 })
   }
 
   withActive(active: boolean): Goal {

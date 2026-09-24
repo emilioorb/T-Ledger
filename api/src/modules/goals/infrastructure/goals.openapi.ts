@@ -1,4 +1,5 @@
 import type { ZodOpenApiPathsObject } from 'zod-openapi'
+import { versionEnTextoSchema } from '../../../shared/http/version.schema.js'
 import {
   createContributionSchema,
   createGoalSchema,
@@ -32,6 +33,7 @@ export const goalsOpenApiPaths: ZodOpenApiPathsObject = {
     },
     delete: {
       summary: 'Borra una meta y sus aportes',
+      requestParams: { query: versionEnTextoSchema },
       responses: { 204: { description: 'Borrada' } },
     },
   },

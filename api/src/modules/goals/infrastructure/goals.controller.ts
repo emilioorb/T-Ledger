@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common'
+import { versionEnTextoSchema, type VersionEnTexto } from '../../../shared/http/version.schema.js'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { ManageGoalsUseCase } from '../application/manage-goals.use-case.js'
 import { toGoalResponse } from './goals.presenters.js'
@@ -59,7 +60,10 @@ export class GoalsController {
   @Permiso('meta', 'write')
   @Delete(':id')
   @HttpCode(204)
-  async delete(@Param('id') id: string): Promise<void> {
-    await this.goals.delete(id)
+  async delete(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(versionEnTextoSchema)) query: VersionEnTexto,
+  ): Promise<void> {
+    await this.goals.delete(id, query.version)
   }
 }

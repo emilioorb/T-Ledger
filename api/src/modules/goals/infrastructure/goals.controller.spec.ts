@@ -192,3 +192,42 @@ describe('una meta en pausa', () => {
     expect(reactivada.body.requiredMonthlyContribution.minorUnits).not.toBe('0')
   })
 })
+
+// Dos personas sobre la misma meta, de verdad en paralelo: la meta se lee dentro del candado del
+// libro (ADR-006).
+describe('dos personas sobre la misma meta', () => {
+  const patch = (path: string, body: object) => request(app.getHttpServer()).patch(`${BASE}${path}`).send(body)
+  const del = (path: string) => request(app.getHttpServer()).delete(`${BASE}${path}`)
+
+  it('dos aportes a la vez que juntos la cruzan: los dos entran y se anuncia una vez', async () => {
+    const listener = vi.fn()
+    events.on(GOAL_REACHED, listener)
+    const meta = await crearMeta()
+
+    const respuestas = await Promise.all([
+      post(`/goals/${meta.id}/contributions`, aporte('300000000')),
+      post(`/goals/${meta.id}/contributions`, aporte('300000000')),
+    ])
+
+    expect(respuestas.map((r) => r.status)).toEqual([201, 201])
+    expect(listener).toHaveBeenCalledTimes(1)
+    events.off(GOAL_REACHED, listener)
+  })
+
+  it('editar con la versión de antes de un aporte responde 409; con la nueva, guarda', async () => {
+    const { body: creada } = await post('/goals', nuevaMeta).expect(201)
+    const { body: aportada } = await post(`/goals/${creada.id}/contributions`, aporte('100000')).expect(201)
+
+    await patch(`/goals/${creada.id}`, { name: 'Pisada', version: creada.version }).expect(409)
+    await patch(`/goals/${creada.id}`, { name: 'Japón', version: aportada.version }).expect(200)
+    expect((await get(`/goals/${creada.id}`)).body.name).toBe('Japón')
+  })
+
+  it('borrar con una versión vieja responde 409 y la meta sigue', async () => {
+    const { body: creada } = await post('/goals', nuevaMeta).expect(201)
+    const { body: editada } = await patch(`/goals/${creada.id}`, { name: 'Otra' }).expect(200)
+
+    await del(`/goals/${creada.id}?version=${creada.version}`).expect(409)
+    await del(`/goals/${creada.id}?version=${editada.version}`).expect(204)
+  })
+})
