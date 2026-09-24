@@ -206,6 +206,40 @@ describe('CashFlowProjectionUseCase', () => {
     expect(enUsd[0]?.income).toEqual(Money.fromMinorUnits(500_000n, 'USD'))
   })
 
+  it('arrastra el último ingreso de la moneda que se mira, no el último de cualquier moneda', async () => {
+    incomes.findLatestUpTo.mockImplementation(async (_periodo: unknown, moneda: string) =>
+      moneda === 'CRC' ? { amount: crc(900_000n) } : { amount: Money.fromMinorUnits(500_000n, 'USD') },
+    )
+
+    const enColones = await useCase.execute(1, utc('2026-02-01'), 'CRC')
+
+    expect(incomes.findLatestUpTo).toHaveBeenCalledWith(expect.anything(), 'CRC')
+    expect(enColones[0]?.income).toEqual(crc(900_000n))
+  })
+
+  it('una inversión en dólares solo cuenta en la vista en dólares', async () => {
+    const enDolares = unwrap(
+      Investment.create({
+        id: 'plazo-usd',
+        name: 'Certificado en dólares',
+        principal: Money.fromMinorUnits(1_000_000n, 'USD'),
+        rate: unwrap(InterestRate.create(12, 'MONTHLY')),
+        openedAt: utc('2026-01-15'),
+        kind: 'FIXED_TERM',
+        maturesAt: utc('2026-03-15'),
+        accountCode: null,
+        contributions: [],
+      }),
+    )
+    investments.findAll.mockResolvedValue([enDolares])
+
+    const enColones = await useCase.execute(3, utc('2026-01-01'), 'CRC')
+    const enUsd = await useCase.execute(3, utc('2026-01-01'), 'USD')
+
+    expect(enColones[2]?.maturingInvestments.isZero()).toBe(true)
+    expect(enUsd[2]?.maturingInvestments.isZero()).toBe(false)
+  })
+
   it('sin nada cargado proyecta meses en cero, no falla', async () => {
     const flow = await useCase.execute(3, utc('2026-02-01'))
 

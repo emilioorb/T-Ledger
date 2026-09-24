@@ -4,7 +4,7 @@ import { PrismaClient } from '../../../generated/prisma/client.js'
 import { loadEnv } from '../../../shared/config/env.js'
 import { LIBRO_DE_PRUEBA } from '../../../shared/libro/libro-de-prueba.js'
 import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
-import { CABECERA_DEL_TOKEN, crearAuth, type Auth } from './auth.config.js'
+import { CABECERA_DEL_TOKEN, crearAuth, RESPONDER_UNA_INVITACION, type Auth } from './auth.config.js'
 import { EnlacesDeInvitacion } from './enlaces-de-invitacion.js'
 import { SIN_INVITACION } from './registro.js'
 
@@ -288,6 +288,21 @@ describe('aceptar una invitación a un libro', { timeout: HASHEO }, () => {
     expect(miembro?.role).toBe('viewer')
   })
 
+  it('rechazar con el enlace de otra invitación al mismo correo no sirve', async () => {
+    await prisma.book.create({
+      data: { id: 'lib_ajeno_eli', name: 'Ajeno', slug: 'libro-ajeno-eli', createdAt: new Date() },
+    })
+    await invitar('inv_de_eli', LIBRO_DE_PRUEBA.bookId, 'eli@tape.test')
+    const otro = await invitar('inv_otra_de_eli', 'lib_ajeno_eli', 'eli@tape.test')
+    await registrarConEnlace('eli@tape.test', 'Eli')
+
+    await expect(
+      auth.api.rejectInvitation({ headers: await conSesion('eli@tape.test', otro), body: { invitationId: 'inv_de_eli' } }),
+    ).rejects.toThrow(SIN_INVITACION)
+    const invitacion = await prisma.bookInvitation.findUniqueOrThrow({ where: { id: 'inv_de_eli' } })
+    expect(invitacion.status).toBe('pending')
+  })
+
   it('rechazar una invitación también exige su enlace', async () => {
     const token = await invitar('inv_de_dani', LIBRO_DE_PRUEBA.bookId, 'dani@tape.test')
     await registrarConEnlace('dani@tape.test', 'Dani')
@@ -302,6 +317,28 @@ describe('aceptar una invitación a un libro', { timeout: HASHEO }, () => {
 
     const invitacion = await prisma.bookInvitation.findUniqueOrThrow({ where: { id: 'inv_de_dani' } })
     expect(invitacion.status).toBe('rejected')
+  })
+})
+
+describe('las rutas de invitaciones de Better Auth', () => {
+  // Las que solo leen o las usa quien invita dentro de su libro. Cualquier otra ruta con
+  // «invitation» que traiga una versión nueva tiene que decidirse a mano: si responde una
+  // invitación, va al gancho.
+  const SIN_TOKEN = new Set([
+    '/organization/invite-member',
+    '/organization/cancel-invitation',
+    '/organization/get-invitation',
+    '/organization/list-invitations',
+    '/organization/list-user-invitations',
+  ])
+
+  it('toda ruta que responde una invitación pasa por el gancho del token', () => {
+    const rutas = Object.values(auth.api)
+      .map((endpoint) => (endpoint as { path?: unknown }).path)
+      .filter((ruta): ruta is string => typeof ruta === 'string' && ruta.includes('invitation'))
+
+    expect(rutas.length).toBeGreaterThan(0)
+    expect(rutas.filter((ruta) => !RESPONDER_UNA_INVITACION.has(ruta) && !SIN_TOKEN.has(ruta))).toEqual([])
   })
 })
 
@@ -342,6 +379,9 @@ describe('el enlace desaparece antes de gastarlo', { timeout: HASHEO }, () => {
 
     const personal = await prisma.bookMember.findFirst({ where: { userId: user.id, role: 'owner' } })
     expect(personal).not.toBeNull()
+    // Y su invitación deja de figurar como pendiente: el correo ya tiene cuenta.
+    const despues = await prisma.accessInvitation.findUniqueOrThrow({ where: { id: invitacion.id } })
+    expect(despues.usedAt).not.toBeNull()
   })
 })
 

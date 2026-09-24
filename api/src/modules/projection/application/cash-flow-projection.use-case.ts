@@ -103,7 +103,7 @@ export class CashFlowProjectionUseCase {
       const declared = enLaMoneda(await this.incomes.find(key))
       // Sin declarar, se arrastra el último conocido: un mes sin el dato no es un mes
       // sin ingreso, y tratarlo así llenaría la proyección de rojos falsos.
-      const income_ = declared ?? enLaMoneda(await this.incomes.findLatestUpTo(key))
+      const income_ = declared ?? (await this.incomes.findLatestUpTo(key, currency))
       const estimatedSpending = zero
 
       const income = unwrap(

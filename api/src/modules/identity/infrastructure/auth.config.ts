@@ -41,7 +41,7 @@ export interface CambioDeMiembro {
 // La cabecera en la que la web manda el token del enlace de invitación.
 export const CABECERA_DEL_TOKEN = 'x-token-invitacion'
 
-const RESPONDER_UNA_INVITACION = new Set(['/organization/accept-invitation', '/organization/reject-invitation'])
+export const RESPONDER_UNA_INVITACION = new Set(['/organization/accept-invitation', '/organization/reject-invitation'])
 
 export const crearAuth = (
   prisma: PrismaClient,
@@ -174,7 +174,7 @@ export const crearAuth = (
           after: async (usuario, ctx) => {
             // El enlace sirve una sola vez: se gasta el que se usó, y con él su invitación a la app.
             const token = tokenDelPedido(ctx)
-            if (token) await enlaces.gastar(token)
+            if (token) await enlaces.gastar(token, usuario.email)
             await auth.api.createOrganization({
               body: { name: 'Personal', slug: `personal-${usuario.id}`, userId: usuario.id },
             })

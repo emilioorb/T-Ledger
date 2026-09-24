@@ -98,7 +98,7 @@ describe('EnlacesDeInvitacion', () => {
     const invitacion = await invitacionALaApp('f@ejemplo.com')
     const token = await enlaces.paraLaApp(invitacion.id)
 
-    await enlaces.gastar(token)
+    await enlaces.gastar(token, 'f@ejemplo.com')
 
     expect((await enlaces.buscar(token))?.usedAt).not.toBeNull()
     const despues = await prisma.clientSinFiltroDeLibro.accessInvitation.findUnique({ where: { id: invitacion.id } })
@@ -110,8 +110,8 @@ describe('EnlacesDeInvitacion', () => {
     const viejo = await enlaces.paraLaApp(invitacion.id)
     await enlaces.paraLaApp(invitacion.id)
 
-    await expect(enlaces.gastar(viejo)).resolves.toBeUndefined()
-    await expect(enlaces.gastar('B'.repeat(43))).resolves.toBeUndefined()
+    await expect(enlaces.gastar(viejo, 'h@ejemplo.com')).resolves.toBeUndefined()
+    await expect(enlaces.gastar('B'.repeat(43), 'nadie@ejemplo.com')).resolves.toBeUndefined()
   })
 
   it('una invitación a un libro que ya venció no da enlace', async () => {
@@ -130,11 +130,10 @@ describe('EnlacesDeInvitacion', () => {
     expect(await enlaces.paraUnLibro(invitacion.id, 'lib_test')).toBeNull()
   })
 
-  it('el enlace abre su invitación y no otra, aunque ya se haya gastado', async () => {
+  it('el enlace de un libro abre su invitación y no otra', async () => {
     const propia = await invitacionAlLibro('j@ejemplo.com')
     const otra = await invitacionAlLibro('k@ejemplo.com')
     const token = (await enlaces.paraUnLibro(propia.id, 'lib_test')) ?? ''
-    await enlaces.gastar(token)
 
     expect(await enlaces.abreLaInvitacion(token, propia.id)).toBe(true)
     expect(await enlaces.abreLaInvitacion(token, otra.id)).toBe(false)

@@ -76,7 +76,7 @@ describe('el enlace de la invitación', () => {
     const invitacion = await invitaciones.invitar('enlace@correo.test', admin)
 
     const enlace = await new EnlacesDeInvitacion(prisma.clientSinFiltroDeLibro).buscar(invitacion.token)
-    expect(enlace).toMatchObject({ email: 'enlace@correo.test', invitacionVigente: true })
+    expect(enlace).toMatchObject({ tipo: 'APP', email: 'enlace@correo.test', invitacionVigente: true })
   })
 
   it('la lista de pendientes no trae tokens: se muestran una sola vez', async () => {

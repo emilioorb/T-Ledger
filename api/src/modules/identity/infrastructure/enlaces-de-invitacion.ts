@@ -8,6 +8,22 @@ import { generarToken, hashDelToken, type EnlaceDeInvitacion } from './registro.
 //
 // Trabaja con el cliente sin filtro de libro: los enlaces se buscan antes de que exista una
 // sesión, y la invitación a la app no pertenece a ningún libro.
+type DeLaInvitacion = { tipo: 'APP'; accessInvitationId: string } | { tipo: 'LIBRO'; bookInvitationId: string }
+
+const relacionCon = (invitacion: DeLaInvitacion) =>
+  invitacion.tipo === 'APP'
+    ? { accessInvitationId: invitacion.accessInvitationId }
+    : { bookInvitationId: invitacion.bookInvitationId }
+
+// Lo que lleva un enlace, en un solo lugar: el token en claro no, su hash sí.
+const datosDelEnlace = (token: string, invitacion: { email: string; expiresAt: Date } & DeLaInvitacion) => ({
+  tipo: invitacion.tipo,
+  email: invitacion.email,
+  expiresAt: invitacion.expiresAt,
+  tokenHash: hashDelToken(token),
+  ...relacionCon(invitacion),
+})
+
 export class EnlacesDeInvitacion {
   constructor(private readonly db: PrismaClient) {}
 
@@ -27,13 +43,7 @@ export class EnlacesDeInvitacion {
   ): Promise<string> {
     const token = generarToken()
     await tx.invitationLink.create({
-      data: {
-        tipo: 'APP',
-        email: invitacion.email,
-        expiresAt: invitacion.expiresAt,
-        tokenHash: hashDelToken(token),
-        accessInvitationId: invitacion.id,
-      },
+      data: datosDelEnlace(token, { ...invitacion, tipo: 'APP', accessInvitationId: invitacion.id }),
     })
     return token
   }
@@ -69,64 +79,38 @@ export class EnlacesDeInvitacion {
     return { tipo: enlace.tipo, email: enlace.email, expiresAt: enlace.expiresAt, usedAt: enlace.usedAt, invitacionVigente }
   }
 
-  // Aceptar una invitación a un libro exige el enlace de esa invitación, no solo el correo: el
-  // correo no se verifica, y cualquiera con cuenta puede invitar a un correo ajeno a su propio
-  // libro, sacar ese enlace y registrarse con él. Sirve aunque el enlace ya se haya gastado al
-  // registrarse, porque aceptar es el paso siguiente de ese mismo registro.
+  // Aceptar o rechazar una invitación a un libro exige el enlace de esa invitación, no solo el
+  // correo: el correo no se verifica. El enlace de un libro no se gasta al usarlo; lo que hace
+  // que sirva una sola vez es la invitación, que Better Auth pasa a aceptada o rechazada.
   async abreLaInvitacion(token: string, bookInvitationId: string): Promise<boolean> {
     const enlace = await this.db.invitationLink.findFirst({
-      where: { tokenHash: hashDelToken(token), bookInvitationId },
+      where: { tokenHash: hashDelToken(token), tipo: 'LIBRO', bookInvitationId },
       select: { id: true },
     })
     return enlace !== null
   }
 
-  // Se gasta el enlace que se usó, por su hash, y no las invitaciones de ese correo: con el
-  // enlace de un libro no se gasta una invitación a la app que estaba aparte. Corre después de
-  // crear la cuenta, así que no falla si el enlace ya no está (se renovó o se canceló en el
-  // medio): la cuenta existe igual y tiene que nacer con su libro.
-  async gastar(token: string): Promise<void> {
+  // Después de crear la cuenta: se gasta el enlace que se usó, por su hash, y se cierra la
+  // invitación a la app de ese correo, que ya tiene cuenta. No falla si el enlace ya no está
+  // (se renovó o se canceló en el medio): la cuenta existe igual y tiene que nacer con su libro,
+  // y su invitación no puede quedar como pendiente.
+  async gastar(token: string, email: string): Promise<void> {
     const ahora = new Date()
-    const tokenHash = hashDelToken(token)
-    const { count } = await this.db.invitationLink.updateMany({
-      where: { tokenHash, usedAt: null },
+    await this.db.invitationLink.updateMany({
+      where: { tokenHash: hashDelToken(token), usedAt: null },
       data: { usedAt: ahora },
     })
-    if (count === 0) return
-    const enlace = await this.db.invitationLink.findUnique({
-      where: { tokenHash },
-      select: { accessInvitationId: true },
+    await this.db.accessInvitation.updateMany({
+      where: { email: email.trim().toLowerCase(), usedAt: null },
+      data: { usedAt: ahora },
     })
-    if (enlace?.accessInvitationId) {
-      await this.db.accessInvitation.updateMany({
-        where: { id: enlace.accessInvitationId },
-        data: { usedAt: ahora },
-      })
-    }
   }
 
-  private async reemplazar(
-    datos: { email: string; expiresAt: Date } & (
-      | { tipo: 'APP'; accessInvitationId: string }
-      | { tipo: 'LIBRO'; bookInvitationId: string }
-    ),
-  ): Promise<string> {
+  private async reemplazar(invitacion: { email: string; expiresAt: Date } & DeLaInvitacion): Promise<string> {
     const token = generarToken()
-    const deLaInvitacion =
-      datos.tipo === 'APP'
-        ? { accessInvitationId: datos.accessInvitationId }
-        : { bookInvitationId: datos.bookInvitationId }
     await this.db.$transaction([
-      this.db.invitationLink.deleteMany({ where: deLaInvitacion }),
-      this.db.invitationLink.create({
-        data: {
-          tipo: datos.tipo,
-          email: datos.email,
-          expiresAt: datos.expiresAt,
-          tokenHash: hashDelToken(token),
-          ...deLaInvitacion,
-        },
-      }),
+      this.db.invitationLink.deleteMany({ where: relacionCon(invitacion) }),
+      this.db.invitationLink.create({ data: datosDelEnlace(token, invitacion) }),
     ])
     return token
   }

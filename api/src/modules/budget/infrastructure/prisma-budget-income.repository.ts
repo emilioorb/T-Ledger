@@ -24,9 +24,9 @@ export class PrismaBudgetIncomeRepository implements BudgetIncomeRepository {
   }
 
   // El período es AAAA-MM, así que el orden lexicográfico es el cronológico.
-  async findLatestUpTo(period: PeriodKey): Promise<MonthlyIncome | null> {
+  async findLatestUpTo(period: PeriodKey, currency: CurrencyCode): Promise<MonthlyIncome | null> {
     const row = await this.prisma.client.budgetIncome.findFirst({
-      where: { period: { lte: period.toString() } },
+      where: { period: { lte: period.toString() }, currency },
       orderBy: { period: 'desc' },
     })
     if (!row) return null
