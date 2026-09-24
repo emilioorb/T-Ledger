@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
 import { ALMACENAMIENTO, type Almacenamiento } from '../../../shared/archivos/almacenamiento.port.js'
-import { claveDeComprobante, esDelLibro } from '../../../shared/archivos/archivo.js'
+import { borrarDelLibro, claveDeComprobante, esDelLibro } from '../../../shared/archivos/archivo.js'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
 import { libroActual } from '../../../shared/libro/libro-context.js'
@@ -63,7 +63,7 @@ export class ManageComprobanteUseCase {
 
     // El anterior se borra al final y sin cortar si falla: un archivo huérfano en el bucket
     // cuesta unos bytes; perder el nuevo porque no se pudo borrar el viejo cuesta la factura.
-    if (props.receiptKey) await this.archivos.borrar(props.receiptKey).catch(() => undefined)
+    if (props.receiptKey) await borrarDelLibro(this.archivos, props.receiptKey, bookId).catch(() => undefined)
 
     return movement.value
   }
@@ -101,7 +101,9 @@ export class ManageComprobanteUseCase {
       })
     })
 
-    await this.archivos.borrar(props.receiptKey).catch(() => undefined)
+    await borrarDelLibro(this.archivos, props.receiptKey, libroActual('quitar un comprobante').bookId).catch(
+      () => undefined,
+    )
 
     return movement.value
   }

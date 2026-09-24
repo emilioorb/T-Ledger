@@ -32,6 +32,10 @@ export class ArchivosController {
   @Get(':clave')
   // Privado y sin caché compartida: son facturas, con nombres y montos adentro.
   @Header('Cache-Control', 'private, max-age=60')
+  // El tipo sale de la extensión, que sale de lo que declaró quien subió: `nosniff` impide que
+  // el navegador adivine otro, e `inline` que lo trate como una descarga con nombre propio.
+  @Header('X-Content-Type-Options', 'nosniff')
+  @Header('Content-Disposition', 'inline')
   async leer(@Param('clave') clave: string): Promise<StreamableFile> {
     if (!(this.archivos instanceof DiscoAdapter)) {
       throw new NotFoundException('Los archivos no se sirven desde acá.')

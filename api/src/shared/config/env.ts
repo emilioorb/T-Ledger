@@ -13,6 +13,8 @@ const archivosFields = {
   R2_BUCKET: z.string().optional(),
   // Dónde caen los archivos mientras no haya R2. Relativo a donde corre la API.
   ARCHIVOS_DIR: z.string().default('.archivos'),
+  // Solo para decidir si el disco es aceptable: únicamente en `development` o `test`.
+  NODE_ENV: z.string().optional(),
 }
 
 const archivosSchema = z.object(archivosFields)

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
 import { ALMACENAMIENTO, type Almacenamiento } from '../../../shared/archivos/almacenamiento.port.js'
-import { claveDeDocumentoDeDeuda, esDelLibro } from '../../../shared/archivos/archivo.js'
+import { borrarDelLibro, claveDeDocumentoDeDeuda, esDelLibro } from '../../../shared/archivos/archivo.js'
 import { NotFoundError } from '../../../shared/http/api-error.js'
 import { libroActual } from '../../../shared/libro/libro-context.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
@@ -35,7 +35,7 @@ export class DocumentoDeDeudaUseCase {
     const conDocumento = actual.withDocumentKey(clave)
     await this.registrar(actual, conDocumento)
 
-    if (actual.documentKey) await this.archivos.borrar(actual.documentKey).catch(() => undefined)
+    if (actual.documentKey) await borrarDelLibro(this.archivos, actual.documentKey, bookId).catch(() => undefined)
     return conDocumento
   }
 
@@ -53,7 +53,9 @@ export class DocumentoDeDeudaUseCase {
 
     const sinDocumento = actual.withDocumentKey(null)
     await this.registrar(actual, sinDocumento)
-    await this.archivos.borrar(actual.documentKey).catch(() => undefined)
+    await borrarDelLibro(this.archivos, actual.documentKey, libroActual('quitar el documento de una deuda').bookId).catch(
+      () => undefined,
+    )
     return sinDocumento
   }
 

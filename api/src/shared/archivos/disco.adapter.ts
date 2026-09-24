@@ -1,5 +1,5 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, join, resolve, sep } from 'node:path'
 import { Injectable } from '@nestjs/common'
 import type { Almacenamiento, ArchivoNuevo } from './almacenamiento.port.js'
 
@@ -17,8 +17,10 @@ export class DiscoAdapter implements Almacenamiento {
     // `resolve` y comprobación: una clave con `..` podría escribir fuera de la carpeta. Las
     // claves las arma el servidor, pero esto es lo que hace que siga siendo cierto el día que
     // alguien construya una desde la petición.
-    const ruta = resolve(join(this.raiz, clave))
-    if (!ruta.startsWith(resolve(this.raiz))) throw new Error(`Clave fuera de lugar: ${clave}`)
+    // Con el separador al final: sin él, `/datos/archivos-otra` pasaba por `/datos/archivos`.
+    const raiz = resolve(this.raiz)
+    const ruta = resolve(join(raiz, clave))
+    if (!ruta.startsWith(raiz + sep)) throw new Error(`Clave fuera de lugar: ${clave}`)
     return ruta
   }
 

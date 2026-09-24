@@ -1,3 +1,5 @@
+import type { Almacenamiento } from './almacenamiento.port.js'
+
 // Qué se acepta como comprobante y cómo se nombra una vez guardado.
 //
 // Las reglas viven acá, puras, y no adentro del adaptador de turno: son las mismas contra R2
@@ -80,8 +82,29 @@ export const enTandas = <T>(elementos: readonly T[], tamano: number): T[][] =>
     elementos.slice(i * tamano, (i + 1) * tamano),
   )
 
+const EXTENSIONES = Object.values(TIPOS_ACEPTADOS).join('|')
+
+// La forma exacta de las claves que arma el servidor: libro, carpeta conocida y un nombre sin
+// barras ni puntos de más. Nada de prefijos: `libros/<propio>/../<otro>/…` empieza bien y el
+// disco resuelve el `..` hacia la factura de otra familia.
+const FORMA_DE_CLAVE = new RegExp(
+  `^libros/(?<libro>[A-Za-z0-9_-]+)/(?:comprobantes|documentos/deudas)/[A-Za-z0-9_-]+\\.(?:${EXTENSIONES})$`,
+)
+
 // Un comprobante pertenece al libro que dice su clave. Se comprueba antes de firmar el enlace
 // de lectura: sin esto, quien conozca la clave de otro libro podría pedir su factura y el
 // servidor la firmaría sin mirar.
 export const esDelLibro = (clave: string, bookId: string): boolean =>
-  clave.startsWith(`libros/${bookId}/`)
+  FORMA_DE_CLAVE.exec(clave)?.groups?.libro === bookId
+
+// Borrar pasa por la misma comprobación que leer. Las claves que se borran salen de la base, y
+// si alguna vez una de otro libro terminara guardada donde no va, en R2 se borraría la factura
+// de otra familia.
+export const borrarDelLibro = async (
+  archivos: Pick<Almacenamiento, 'borrar'>,
+  clave: string,
+  bookId: string,
+): Promise<void> => {
+  if (!esDelLibro(clave, bookId)) throw new Error('Esa clave no es de este libro: no se borra.')
+  await archivos.borrar(clave)
+}

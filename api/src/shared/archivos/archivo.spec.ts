@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
+  borrarDelLibro,
   claveDeComprobante,
   claveDeDocumentoDeDeuda,
   esDelLibro,
@@ -70,6 +71,21 @@ describe('de qué libro es un comprobante', () => {
     expect(esDelLibro('../../etc/passwd', 'lib_1')).toBe(false)
     expect(esDelLibro('libros/otro/../lib_1/x.png', 'lib_1')).toBe(false)
   })
+
+  it('una clave que arranca en el libro propio y se escapa con «..» no pasa', () => {
+    // El caso que un prefijo no ve: empieza bien y el disco resuelve el `..` hacia otro libro.
+    expect(esDelLibro('libros/lib_1/../lib_2/comprobantes/x.png', 'lib_1')).toBe(false)
+    expect(esDelLibro('libros/lib_1/comprobantes/..%2F..%2Flib_2/x.png', 'lib_1')).toBe(false)
+    expect(esDelLibro('libros/lib_1/comprobantes\\..\\..\\lib_2\\x.png', 'lib_1')).toBe(false)
+  })
+
+  it('solo reconoce claves con la forma exacta que arma el servidor', () => {
+    expect(esDelLibro('libros/lib_1/comprobantes/mov-1-abcd1234.pdf', 'lib_1')).toBe(true)
+    expect(esDelLibro('libros/lib_1/documentos/deudas/deuda-1-abcd1234.jpg', 'lib_1')).toBe(true)
+    expect(esDelLibro('libros/lib_1/otra-carpeta/x.pdf', 'lib_1')).toBe(false)
+    expect(esDelLibro('libros/lib_1/comprobantes/x.exe', 'lib_1')).toBe(false)
+    expect(esDelLibro('libros/lib_1/comprobantes/', 'lib_1')).toBe(false)
+  })
 })
 
 describe('el documento de una deuda', () => {
@@ -111,5 +127,17 @@ describe('las carpetas que se van al vaciar un libro', () => {
     expect(
       claveDeDocumentoDeDeuda('lib_1', 'deu', 'application/pdf', 'a').startsWith(prefijoDeDocumentosDeDeudas('lib_1')),
     ).toBe(true)
+  })
+})
+
+describe('borrar un archivo', () => {
+  it('borra solo claves del libro, igual que la lectura', async () => {
+    const archivos = { borrar: vi.fn(async () => undefined) }
+
+    await borrarDelLibro(archivos, 'libros/lib_1/comprobantes/mov-1-abcd1234.pdf', 'lib_1')
+    await expect(borrarDelLibro(archivos, 'libros/lib_2/comprobantes/mov-1-abcd1234.pdf', 'lib_1')).rejects.toThrow()
+    await expect(borrarDelLibro(archivos, 'libros/lib_1/../lib_2/comprobantes/x.pdf', 'lib_1')).rejects.toThrow()
+
+    expect(archivos.borrar).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ALMACENAMIENTO, type Almacenamiento } from '../../../shared/archivos/almacenamiento.port.js'
+import { borrarDelLibro } from '../../../shared/archivos/archivo.js'
+import { libroActual } from '../../../shared/libro/libro-context.js'
 import { NotFoundError } from '../../../shared/http/api-error.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
@@ -36,8 +38,7 @@ export class DeleteDebtUseCase {
     // cortar si falla: la deuda ya no existe, y un archivo huérfano ocupa unos bytes.
     const contrato = deuda?.documentKey
     if (contrato) {
-      await this.archivos
-        .borrar(contrato)
+      await borrarDelLibro(this.archivos, contrato, libroActual('borrar una deuda').bookId)
         .catch((error: unknown) => this.logger.error(`No se pudo borrar el contrato de la deuda ${id}`, error))
     }
   }

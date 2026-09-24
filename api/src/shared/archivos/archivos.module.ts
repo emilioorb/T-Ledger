@@ -13,6 +13,11 @@ import { R2Adapter } from './r2.adapter.js'
 export const almacenamientoDe = (env: EnvDeArchivos, registro = new Logger('Archivos')) => {
   const { R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET } = env
 
+  const credenciales = [R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET]
+  if (credenciales.some(Boolean) && !credenciales.every(Boolean)) {
+    throw new Error('R2 a medias: faltan credenciales. Cargá las cuatro o ninguna.')
+  }
+
   if (R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET) {
     registro.log(`Comprobantes en R2, bucket ${R2_BUCKET}`)
     return new R2Adapter({
@@ -23,6 +28,11 @@ export const almacenamientoDe = (env: EnvDeArchivos, registro = new Logger('Arch
     })
   }
 
+  // El disco hay que pedirlo: en producción es el del contenedor, que se borra en cada
+  // despliegue. Falla cerrado, así una variable que falta o dice «prod» no lo enciende.
+  if (env.NODE_ENV !== 'development' && env.NODE_ENV !== 'test') {
+    throw new Error('Sin R2 los comprobantes solo van al disco en desarrollo o tests (NODE_ENV).')
+  }
   registro.warn(`Comprobantes en el disco (${env.ARCHIVOS_DIR}): falta configurar R2`)
   return new DiscoAdapter(env.ARCHIVOS_DIR)
 }
