@@ -114,7 +114,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
     `budget.controller.spec.ts`. (M)
 - [x] **17. Ingreso mensual con caso de uso propio** (hoy lo escribe el controller directo), con versión y rastro.
   - Archivos: caso de uso nuevo, `budget.controller.ts`, `prisma-budget-income.repository.ts`, spec. (S)
-- [ ] **18. Categorías y cuentas.** Versión y transacción.
+- [x] **18. Categorías y cuentas.** Versión y transacción.
   - Archivos: `manage-categories.use-case.ts`, `save-account.use-case.ts`, sus repos, spec nuevo. (M)
 
 - [ ] **18b. Borrar un libro** con candado por persona: dos borrados a la vez no la dejan sin libros.

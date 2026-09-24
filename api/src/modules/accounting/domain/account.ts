@@ -11,6 +11,8 @@ export interface AccountProps {
   // El tránsito entre monedas no es una tenencia: ver el comentario del esquema. Es opcional
   // porque casi ninguna cuenta lo es, y una cuenta nueva no debería tener que declararlo.
   readonly isCurrencyBridge?: boolean
+  // La versión de la fila sobre la que se armó (6b). Opcional al crear: nace en 0.
+  readonly version?: number
 }
 
 export class Account {
@@ -51,6 +53,14 @@ export class Account {
   }
   get active(): boolean {
     return this.props.active
+  }
+  get version(): number {
+    return this.props.version ?? 0
+  }
+
+  // Lo que queda después de guardarse: la base sube la versión en cada escritura.
+  guardada(): Account {
+    return new Account({ ...this.props, version: this.version + 1 })
   }
   get sortOrder(): number {
     return this.props.sortOrder

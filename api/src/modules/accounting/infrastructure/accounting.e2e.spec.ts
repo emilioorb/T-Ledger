@@ -549,3 +549,35 @@ describe('flujo completo de contabilidad', () => {
     expect((await del(`/journal-entries/${entry.body.id}`)).status).toBe(404)
   })
 })
+
+// Categorías y cuentas llevan versión (ADR-006).
+describe('categorías y cuentas con versión', () => {
+  const patch = (path: string, body: object) => request(app.getHttpServer()).patch(`${BASE}${path}`).send(body)
+
+  it('editar una categoría con una versión vieja responde 409; con la que trae la respuesta, guarda', async () => {
+    await crearCategoria({ name: 'Mercado', kind: 'EXPENSE', accountCode: '6100' })
+    const { body: [leida] } = await get('/categories').expect(200)
+    const { body: editada } = await patch(`/categories/${leida.id}`, { name: 'Súper', version: leida.version }).expect(200)
+
+    await patch(`/categories/${leida.id}`, { name: 'Pisada', version: leida.version }).expect(409)
+    await patch(`/categories/${leida.id}`, { name: 'Feria', version: editada.version }).expect(200)
+    expect(editada.version).toBe(leida.version + 1)
+  })
+
+  it('borrar una categoría con una versión vieja responde 409 y la categoría sigue', async () => {
+    const { id } = await crearCategoria({ name: 'Borrable', kind: 'EXPENSE', accountCode: null })
+    const { body: editada } = await patch(`/categories/${id}`, { name: 'Otra' }).expect(200)
+
+    await del(`/categories/${id}?version=${editada.version - 1}`).expect(409)
+    await del(`/categories/${id}?version=${editada.version}`).expect(204)
+  })
+
+  it('editar una cuenta con una versión vieja responde 409', async () => {
+    const { body: leida } = await get('/accounts/1101').expect(200)
+    const { body: editada } = await patch('/accounts/1101', { name: 'Caja chica', version: leida.version }).expect(200)
+
+    await patch('/accounts/1101', { name: 'Pisada', version: leida.version }).expect(409)
+    expect(editada.version).toBe(leida.version + 1)
+    expect((await get('/accounts/1101')).body.name).toBe('Caja chica')
+  })
+})

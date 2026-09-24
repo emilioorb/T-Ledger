@@ -13,6 +13,8 @@ export interface CategoryProps {
   // Cuál de los diez colores del sistema, por número. `null` es «el que le toque»: el color
   // se elige, no se exige.
   readonly colorIndex: number | null
+  // La versión de la fila sobre la que se armó (6b). Opcional al crear: nace en 0.
+  readonly version?: number
 }
 
 export class Category {
@@ -45,6 +47,14 @@ export class Category {
   }
   get colorIndex(): number | null {
     return this.props.colorIndex
+  }
+  get version(): number {
+    return this.props.version ?? 0
+  }
+
+  // Lo que queda después de guardarse: la base sube la versión en cada escritura.
+  guardada(): Category {
+    return new Category({ ...this.props, version: this.version + 1 })
   }
 
   isPostable(): boolean {

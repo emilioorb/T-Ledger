@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common'
+import { versionEnTextoSchema, type VersionEnTexto } from '../../../shared/http/version.schema.js'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common'
 import { ZodValidationPipe } from '../../../shared/http/zod-validation.pipe.js'
 import { ManageCategoriesUseCase } from '../application/manage-categories.use-case.js'
 import { toCategoryResponse } from './accounting.presenters.js'
@@ -48,7 +49,10 @@ export class CategoriesController {
   @Permiso('categoria', 'write')
   @Delete(':id')
   @HttpCode(204)
-  async delete(@Param('id') id: string): Promise<void> {
-    await this.categories.delete(id)
+  async delete(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(versionEnTextoSchema)) query: VersionEnTexto,
+  ): Promise<void> {
+    await this.categories.delete(id, query.version)
   }
 }

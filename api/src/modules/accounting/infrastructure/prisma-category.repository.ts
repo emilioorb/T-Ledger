@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { SUBIR_VERSION } from '../../../shared/prisma/escribir-con-version.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import type { CategoryRepository } from '../domain/category-repository.port.js'
 import type { Category } from '../domain/category.js'
@@ -32,7 +33,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
     await this.prisma.client.category.upsert({
       where: { id: category.id },
       create: { bookId: this.prisma.libro, id: category.id, ...data },
-      update: data,
+      update: { ...data, ...SUBIR_VERSION },
     })
   }
 

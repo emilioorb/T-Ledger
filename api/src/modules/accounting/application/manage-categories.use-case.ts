@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { ACCOUNT_REPOSITORY, type AccountRepository } from '../domain/account-repository.port.js'
 import { CATEGORY_REPOSITORY, type CategoryRepository } from '../domain/category-repository.port.js'
@@ -33,9 +34,11 @@ export class ManageCategoriesUseCase {
     return this.transaction.withTransaction(() => this.actualizar(id, input))
   }
 
-  private async actualizar(id: string, input: UpdateCategoryInput): Promise<Category> {
-    const props = (await this.find(id)).toProps()
-    return this.save({
+  private async actualizar(id: string, { version, ...input }: UpdateCategoryInput): Promise<Category> {
+    const actual = await this.find(id)
+    exigirVersion(version, actual.version, 'editar una categoría')
+    const props = actual.toProps()
+    const guardada = await this.save({
       ...props,
       name: input.name ?? props.name,
       kind: input.kind ?? props.kind,
@@ -46,11 +49,15 @@ export class ManageCategoriesUseCase {
       // con `??` esa elección se perdía contra el color que ya tenía.
       colorIndex: input.colorIndex === undefined ? props.colorIndex : input.colorIndex,
     })
+    return guardada.guardada()
   }
 
-  async delete(id: string): Promise<void> {
-    const borrada = await this.transaction.withTransaction(() => this.categories.delete(id))
-    if (!borrada) throw new NotFoundError(`La categoría ${id} no existe.`)
+  async delete(id: string, version?: number): Promise<void> {
+    await this.transaction.withTransaction(async () => {
+      const actual = await this.find(id)
+      exigirVersion(version, actual.version, 'borrar una categoría')
+      await this.categories.delete(id)
+    })
   }
 
   async find(id: string): Promise<Category> {

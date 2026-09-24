@@ -11,6 +11,8 @@ export const accountResponseSchema = z
     parentCode: z.string().nullable(),
     active: z.boolean(),
     sortOrder: z.number(),
+    // La que hay que mandar al editar: si no coincide con la de la base, 409.
+    version: z.number().int(),
   })
   .meta({ id: 'Account', title: 'Account' })
 
@@ -45,6 +47,7 @@ export const categoryResponseSchema = z
     // Cuál de los diez colores, por número. `null` cuando no se eligió: la pantalla le da el
     // que le toca, y así una categoría sin color no se ve rota, se ve sin elegir.
     colorIndex: z.number().nullable(),
+    version: z.number().int(),
     postable: z.boolean(),
   })
   .meta({ id: 'Category', title: 'Category' })

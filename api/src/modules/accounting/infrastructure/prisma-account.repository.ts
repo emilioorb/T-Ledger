@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { unwrap } from '../../../shared/kernel/result.js'
+import { SUBIR_VERSION } from '../../../shared/prisma/escribir-con-version.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import type { AccountRepository } from '../domain/account-repository.port.js'
 import type { Account } from '../domain/account.js'
@@ -49,7 +50,7 @@ export class PrismaAccountRepository implements AccountRepository {
       await this.prisma.client.account.upsert({
         where: { bookId_code: { bookId: this.prisma.libro, code: account.code } },
         create: { bookId: this.prisma.libro, code: account.code, ...data },
-        update: data,
+        update: { ...data, ...SUBIR_VERSION },
       })
     }
   }

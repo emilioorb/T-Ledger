@@ -17,6 +17,7 @@ export interface AccountRow {
   active: boolean
   sortOrder: number
   isCurrencyBridge: boolean
+  version: number
 }
 
 export const accountToDomain = (row: AccountRow): Account =>
@@ -29,6 +30,7 @@ export const accountToDomain = (row: AccountRow): Account =>
       active: row.active,
       sortOrder: row.sortOrder,
       isCurrencyBridge: row.isCurrencyBridge,
+      version: row.version,
     }),
   )
 
@@ -83,6 +85,7 @@ export interface CategoryRow {
   sortOrder: number
   active: boolean
   colorIndex: number | null
+  version: number
 }
 
 export const categoryToDomain = (row: CategoryRow): Category =>
@@ -95,6 +98,7 @@ export const categoryToDomain = (row: CategoryRow): Category =>
       sortOrder: row.sortOrder,
       active: row.active,
       colorIndex: row.colorIndex,
+      version: row.version,
     }),
   )
 

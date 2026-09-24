@@ -51,6 +51,7 @@ export const toAccountResponse = (account: Account): Account_ => ({
   parentCode: account.parentCode,
   active: account.active,
   sortOrder: account.sortOrder,
+  version: account.version,
 })
 
 export const toCategoryResponse = (category: Category): Category_ => ({
@@ -61,6 +62,7 @@ export const toCategoryResponse = (category: Category): Category_ => ({
   sortOrder: category.sortOrder,
   active: category.active,
   colorIndex: category.colorIndex,
+  version: category.version,
   postable: category.isPostable(),
 })
 

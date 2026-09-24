@@ -803,7 +803,9 @@ export interface paths {
         /** Borra una categoría */
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    version?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -3351,6 +3353,7 @@ export interface components {
             parentCode?: string | null;
             active?: boolean;
             sortOrder?: number;
+            version?: number;
         };
         /** CreateCategoryInput */
         CreateCategoryInput: {
@@ -3375,6 +3378,7 @@ export interface components {
             sortOrder?: number;
             active?: boolean;
             colorIndex?: number | null;
+            version?: number;
         };
         /** CreateMovementInput */
         CreateMovementInput: {
@@ -3713,6 +3717,7 @@ export interface components {
             parentCode: string | null;
             active: boolean;
             sortOrder: number;
+            version: number;
         };
         /** ReportNode */
         ReportNode: {
@@ -3732,6 +3737,7 @@ export interface components {
             sortOrder: number;
             active: boolean;
             colorIndex: number | null;
+            version: number;
             postable: boolean;
         };
         /** Movement */

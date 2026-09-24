@@ -5,6 +5,7 @@ import {
   SemanticValidationError,
 } from '../../../shared/http/api-error.js'
 import { isErr } from '../../../shared/kernel/result.js'
+import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { ACCOUNT_REPOSITORY, type AccountRepository } from '../domain/account-repository.port.js'
 import { JOURNAL_REPOSITORY, type JournalRepository } from '../domain/journal-repository.port.js'
@@ -42,12 +43,13 @@ export class SaveAccountUseCase {
     return this.save(input)
   }
 
-  private async actualizar(code: string, input: UpdateAccountInput): Promise<Account> {
+  private async actualizar(code: string, { version, ...input }: UpdateAccountInput): Promise<Account> {
     const current = await this.accounts.findByCode(code)
     if (!current) throw new NotFoundError(`La cuenta ${code} no existe en el plan.`)
+    exigirVersion(version, current.version, 'editar una cuenta')
 
     const props = current.toProps()
-    return this.save({
+    const guardada = await this.save({
       ...props,
       name: input.name ?? props.name,
       accountClass: input.accountClass ?? props.accountClass,
@@ -55,6 +57,7 @@ export class SaveAccountUseCase {
       active: input.active ?? props.active,
       sortOrder: input.sortOrder ?? props.sortOrder,
     })
+    return guardada.guardada()
   }
 
   // La cuenta se valida contra el plan entero, no sola: colgar de una madre inexistente

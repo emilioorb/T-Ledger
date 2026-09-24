@@ -36,7 +36,7 @@ export const createAccountSchema = z
   .meta({ id: 'CreateAccountInput', title: 'CreateAccountInput' })
 
 export const updateAccountSchema = z
-  .object(accountFields)
+  .object({ ...accountFields, version })
   .partial()
   .meta({ id: 'UpdateAccountInput', title: 'UpdateAccountInput' })
 
@@ -80,7 +80,7 @@ export const createCategorySchema = z
   .meta({ id: 'CreateCategoryInput', title: 'CreateCategoryInput' })
 
 export const updateCategorySchema = z
-  .object(categoryFields)
+  .object({ ...categoryFields, version })
   .partial()
   .meta({ id: 'UpdateCategoryInput', title: 'UpdateCategoryInput' })
 

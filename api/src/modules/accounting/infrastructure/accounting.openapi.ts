@@ -95,7 +95,11 @@ export const accountingOpenApiPaths: ZodOpenApiPathsObject = {
       requestBody: json(updateCategorySchema),
       responses: { 200: { description: 'Categoría modificada', ...json(categoryResponseSchema) } },
     },
-    delete: { summary: 'Borra una categoría', responses: { 204: { description: 'Borrada' } } },
+    delete: {
+      summary: 'Borra una categoría',
+      requestParams: { query: versionEnTextoSchema },
+      responses: { 204: { description: 'Borrada' } },
+    },
   },
   '/movements': {
     get: {
