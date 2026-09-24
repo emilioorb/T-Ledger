@@ -18,4 +18,7 @@ export const LIBRO_BORRADO = 'libro.borrado'
 
 export interface LibroBorrado {
   bookId: string
+  // Quiénes eran sus miembros, leídos antes del borrado: después ya no hay a quién preguntarle.
+  // Quien se quede sin libros por esto recibe uno propio.
+  miembros: readonly string[]
 }

@@ -1,3 +1,4 @@
+import { ESPACIO_DE_LIBROS, ESPACIO_DE_PERSONAS, ESPERA_MAXIMA_DEL_CANDADO } from './candados.js'
 import { Injectable, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Prisma, PrismaClient } from '../../generated/prisma/client.js'
@@ -13,12 +14,9 @@ const INTENTOS_ANTE_UN_CHOQUE = 3
 
 // El espacio de claves de los candados de libros, para no compartirlo con otros usos de los
 // advisory locks (Prisma migrate usa el suyo).
-const ESPACIO_DE_LIBROS = 624
-const ESPACIO_DE_PERSONAS = 625
 
 // Cuánto espera una escritura a que termine la de otra persona en el mismo libro. Más que eso es
 // una cola, no una espera: se corta y se pide probar de nuevo, antes de que ocupe todo el pool.
-const ESPERA_MAXIMA_DEL_CANDADO = '4s'
 
 // Las conexiones y los tiempos van escritos: los defaults (10 conexiones, 2 s para conseguir una
 // y 5 s de transacción) decidían sin que nadie los eligiera cuándo un libro trabado dejaba sin

@@ -17,10 +17,9 @@ export class BorrarLibroUseCase {
   async execute(): Promise<void> {
     const { bookId, userId } = libroActual('borrar el libro')
 
-    if (!(await this.libro.borrar(bookId, userId, puedeBorrarse))) {
-      throw new ConflictException('Es tu único libro. Para empezar de cero, vacialo.')
-    }
-    await this.eventos.emitAsync(LIBRO_BORRADO, { bookId } satisfies LibroBorrado)
+    const borrado = await this.libro.borrar(bookId, userId, puedeBorrarse)
+    if (!borrado) throw new ConflictException('Es tu único libro. Para empezar de cero, vacialo.')
+    await this.eventos.emitAsync(LIBRO_BORRADO, { bookId, miembros: borrado.miembros } satisfies LibroBorrado)
 
     // Al log y no al registro de auditoría: el registro vive dentro del libro y se va con él.
     // Solo ids, como pide el ADR-005: ni el nombre del libro ni nada de lo que tenía.

@@ -1,3 +1,5 @@
+import { asegurarLibroPropio } from './libro-propio.js'
+import type { LibroBorrado } from '../identity.tokens.js'
 import { Logger } from '@nestjs/common'
 import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
@@ -50,7 +52,7 @@ export const crearAuth = (
   alCambiarMiembro: (cambio: CambioDeMiembro) => Promise<void>,
   // Los libros que se fueron con una cuenta dada de baja. Quien guarda cosas de un libro fuera
   // de la base —los archivos— las limpia al enterarse.
-  alBorrarLibros: (bookIds: string[]) => Promise<void>,
+  alBorrarLibros: (libros: LibroBorrado[]) => Promise<void>,
 ) => {
   const enlaces = new EnlacesDeInvitacion(prisma)
   const logger = new Logger('Registro')
@@ -215,8 +217,17 @@ export const crearAuth = (
 
           const aBorrar = librosQueSeVanConLaCuenta(libros)
           if (aBorrar.length > 0) {
+            const miembros = await prisma.bookMember.findMany({
+              where: { organizationId: { in: aBorrar }, userId: { not: usuario.id } },
+              select: { organizationId: true, userId: true },
+            })
             await prisma.book.deleteMany({ where: { id: { in: aBorrar } } })
-            await alBorrarLibros(aBorrar)
+            await alBorrarLibros(
+              aBorrar.map((bookId) => ({
+                bookId,
+                miembros: miembros.filter((miembro) => miembro.organizationId === bookId).map((miembro) => miembro.userId),
+              })),
+            )
           }
         },
       },
@@ -331,6 +342,15 @@ export const crearAuth = (
               accion: 'eliminar',
               antes: { quien: user.name, correo: user.email, rol: member.role },
             })
+          },
+
+          // Después y no antes: recién sin la membresía se sabe si le quedó algún libro. Si era el
+          // único, recibe uno propio, vacío. Sin cortar si falla: la membresía ya se borró, y el
+          // middleware del libro se lo abre en su próximo pedido.
+          afterRemoveMember: async ({ user, organization }) => {
+            await asegurarLibroPropio(auth, prisma, user.id).catch((error: unknown) =>
+              logger.error(`No se pudo abrir un libro propio para ${user.id} al salir de ${organization.id}`, error),
+            )
           },
         },
       }),

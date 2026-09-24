@@ -11,6 +11,7 @@ import { EnlacesDeInvitacion } from './infrastructure/enlaces-de-invitacion.js'
 import { LibroMiddleware } from './infrastructure/libro.middleware.js'
 import { PermisoGuard } from './infrastructure/permiso.guard.js'
 import { rastroDeMiembros } from './infrastructure/rastro-de-miembros.js'
+import { LibroPropioAlBorrarse } from './application/libro-propio-al-borrarse.listener.js'
 import { VerificadorDeContrasena } from './infrastructure/verificador-de-contrasena.js'
 
 // Global porque el middleware del libro corre sobre todas las rutas y la guardia de permiso se
@@ -37,8 +38,8 @@ import { VerificadorDeContrasena } from './infrastructure/verificador-de-contras
             await eventos.emitAsync(LIBRO_CREADO, { bookId })
           },
           rastroDeMiembros(prisma, rastro),
-          async (bookIds) => {
-            await Promise.all(bookIds.map((bookId) => eventos.emitAsync(LIBRO_BORRADO, { bookId })))
+          async (libros) => {
+            await Promise.all(libros.map((libro) => eventos.emitAsync(LIBRO_BORRADO, libro)))
           },
         ),
     },
@@ -52,6 +53,7 @@ import { VerificadorDeContrasena } from './infrastructure/verificador-de-contras
     LibroMiddleware,
     VerificadorDeContrasena,
     { provide: APP_GUARD, useClass: PermisoGuard },
+    LibroPropioAlBorrarse,
   ],
   exports: [AUTH, VerificadorDeContrasena, EnlacesDeInvitacion],
 })

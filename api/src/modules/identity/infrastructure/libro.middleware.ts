@@ -3,6 +3,7 @@ import { fromNodeHeaders } from 'better-auth/node'
 import type { NextFunction, Request, Response } from 'express'
 import { conLibroEnCadena, type Rol } from '../../../shared/libro/libro-context.js'
 import { elegirLibro } from './elegir-libro.js'
+import { asegurarLibroPropio } from './libro-propio.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import { AUTH } from '../identity.tokens.js'
 import type { Auth } from './auth.config.js'
@@ -61,10 +62,15 @@ export class LibroMiddleware implements NestMiddleware {
     //
     // Se traen todas y se elige en memoria: son dos o tres filas por persona, y con la
     // decisión en una función pura se puede probar sin base.
-    const suyas = await this.prisma.clientSinFiltroDeLibro.bookMember.findMany({
-      where: { userId },
-      select: { organizationId: true, role: true },
-    })
+    const suyas = await this.suyasDe(userId)
+
+    // Nadie se queda sin libros (ver `asegurarLibroPropio`). Los ganchos lo abren al borrar o al
+    // sacar a alguien; esto cubre lo que se les escape —irse por cuenta propia, un fallo al
+    // abrirlo—, porque sin libro todo contesta 403 y no hay otra puerta para salir de ahí.
+    if (suyas.length === 0) {
+      const nuevo = await asegurarLibroPropio(this.auth, this.prisma.clientSinFiltroDeLibro, userId)
+      if (nuevo) return elegirLibro({ pedido: libroPedido, activo: nuevo, suyas: await this.suyasDe(userId) })
+    }
 
     const elegida = elegirLibro({ pedido: libroPedido, activo: libroActivo, suyas })
 
@@ -72,5 +78,12 @@ export class LibroMiddleware implements NestMiddleware {
       this.logger.warn(`El usuario ${userId} tiene varios libros y la petición no eligió ninguno`)
     }
     return elegida
+  }
+
+  private suyasDe(userId: string) {
+    return this.prisma.clientSinFiltroDeLibro.bookMember.findMany({
+      where: { userId },
+      select: { organizationId: true, role: true },
+    })
   }
 }

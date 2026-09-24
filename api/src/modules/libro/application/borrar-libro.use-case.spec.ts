@@ -20,10 +20,10 @@ const repositorioCon = (libros: LibroPropio[]) => {
   const repositorio: LibroRepository = {
     deLaPersona: async () => libros,
     vaciar: async () => ({}),
-    borrar: async (bookId, _userId, sePuede) => {
-      if (!sePuede(libros.length)) return false
+    borrar: async (bookId, userId, sePuede) => {
+      if (!sePuede(libros.length)) return null
       borrados.push(bookId)
-      return true
+      return { miembros: [userId, 'usr_invitado'] }
     },
   }
   return { repositorio, borrados }
@@ -44,7 +44,7 @@ describe('BorrarLibroUseCase', () => {
     await conLibro(DUENNA, () => new BorrarLibroUseCase(repositorio, emisor).execute())
 
     expect(borrados).toEqual(['lib_casa'])
-    expect(emitidos).toEqual([[LIBRO_BORRADO, { bookId: 'lib_casa' }]])
+    expect(emitidos).toEqual([[LIBRO_BORRADO, { bookId: 'lib_casa', miembros: ['usr_duenna', 'usr_invitado'] }]])
   })
 
   it('si no se pudo borrar, no avisa', async () => {

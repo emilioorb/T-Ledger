@@ -29,8 +29,8 @@ beforeAll(async () => {
       librosSembrados.push(bookId)
     },
     async () => {},
-    async (bookIds) => {
-      librosBorrados.push(...bookIds)
+    async (libros) => {
+      librosBorrados.push(...libros.map((libro) => libro.bookId))
     },
   )
   enlaces = new EnlacesDeInvitacion(prisma)

@@ -21,8 +21,12 @@ export interface LibroRepository {
 
   // Borra el libro entero, con su gente, sus invitaciones y su registro. Con el candado de la
   // persona tomado: cuenta sus libros y decide `sePuede` adentro, así dos borrados a la vez no la
-  // dejan sin ninguno. Devuelve si lo borró.
-  borrar(bookId: string, userId: string, sePuede: (librosDeLaPersona: number) => boolean): Promise<boolean>
+  // dejan sin ninguno. Devuelve quiénes eran sus miembros, o `null` si no se pudo borrar.
+  borrar(
+    bookId: string,
+    userId: string,
+    sePuede: (librosDeLaPersona: number) => boolean,
+  ): Promise<{ miembros: string[] } | null>
 }
 
 export const LIBRO_REPOSITORY = Symbol('LIBRO_REPOSITORY')

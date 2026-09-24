@@ -68,16 +68,21 @@ export class PrismaLibroRepository implements LibroRepository {
   // cada tabla que cuelga del libro siga cayendo con él. Las sesiones no cuelgan del libro,
   // solo lo nombran, así que se sueltan a mano en la misma transacción: si no, quien lo tenía
   // abierto quedaría parado en un libro que ya no existe.
-  async borrar(bookId: string, userId: string, sePuede: (librosDeLaPersona: number) => boolean): Promise<boolean> {
+  async borrar(
+    bookId: string,
+    userId: string,
+    sePuede: (librosDeLaPersona: number) => boolean,
+  ): Promise<{ miembros: string[] } | null> {
     return this.prisma.conCandadoDePersona(userId, bookId, async (tx) => {
-      if (!sePuede(await tx.bookMember.count({ where: { userId } }))) return false
+      if (!sePuede(await tx.bookMember.count({ where: { userId } }))) return null
+      const miembros = await tx.bookMember.findMany({ where: { organizationId: bookId }, select: { userId: true } })
 
       await tx.authSession.updateMany({
         where: { activeOrganizationId: bookId },
         data: { activeOrganizationId: null },
       })
       await tx.book.delete({ where: { id: bookId } })
-      return true
+      return { miembros: miembros.map((miembro) => miembro.userId) }
     })
   }
 }

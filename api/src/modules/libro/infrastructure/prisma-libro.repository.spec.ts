@@ -207,7 +207,7 @@ describe('borrar con el candado de la persona', () => {
     expect(esperando).toBeGreaterThanOrEqual(2)
     await candado
 
-    expect((await borrados).sort()).toEqual([false, true])
+    expect((await borrados).map((borrado) => borrado !== null).sort()).toEqual([false, true])
     expect(await db.bookMember.count({ where: { userId: PERSONA } })).toBe(1)
   })
 })

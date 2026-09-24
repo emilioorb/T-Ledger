@@ -13,7 +13,7 @@ describe('BorrarArchivosDelLibro', () => {
   it('se lleva todo lo que cuelga de la carpeta del libro', async () => {
     const borrar = vi.fn(async () => {})
 
-    await new BorrarArchivosDelLibro(almacenamiento(borrar)).manejar({ bookId: 'lib_casa' })
+    await new BorrarArchivosDelLibro(almacenamiento(borrar)).manejar({ bookId: 'lib_casa', miembros: [] })
 
     expect(borrar).toHaveBeenCalledWith('libros/lib_casa/')
   })
@@ -25,6 +25,6 @@ describe('BorrarArchivosDelLibro', () => {
       throw new Error('R2 caído')
     })
 
-    await expect(new BorrarArchivosDelLibro(almacenamiento(borrar)).manejar({ bookId: 'lib_casa' })).resolves.toBeUndefined()
+    await expect(new BorrarArchivosDelLibro(almacenamiento(borrar)).manejar({ bookId: 'lib_casa', miembros: [] })).resolves.toBeUndefined()
   })
 })
