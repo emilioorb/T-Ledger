@@ -57,6 +57,12 @@ describe('la url del evento', () => {
 
     expect(limpio.request?.url).toBe('https://t-ledger.vercel.app/contabilidad/mayor')
   })
+
+  it('pierde el fragmento, que puede llevar el token de una invitación', () => {
+    const limpio = scrub(evento({ request: { url: 'https://t-ledger.vercel.app/crear-cuenta#token=abc' } }))
+
+    expect(limpio.request?.url).toBe('https://t-ledger.vercel.app/crear-cuenta')
+  })
 })
 
 describe('un error de la API', () => {

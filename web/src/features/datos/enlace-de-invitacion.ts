@@ -9,8 +9,5 @@ export const enlaceALaApp = (origen: string, correo: string, token: string): str
 export const enlaceAlLibro = (origen: string, invitationId: string, token: string): string =>
   conToken(`${origen}/crear-cuenta?invitacion=${encodeURIComponent(invitationId)}`, token)
 
-export const tokenDelFragmento = (fragmento: string): string | undefined =>
-  new URLSearchParams(fragmento.replace(/^#/, '')).get('token') || undefined
-
 export const correoDeLaBusqueda = (busqueda: Record<string, unknown>): string | undefined =>
   typeof busqueda.correo === 'string' ? busqueda.correo : undefined

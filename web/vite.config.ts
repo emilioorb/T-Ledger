@@ -54,9 +54,10 @@ export default defineConfig(({ isSsrBuild }) => ({
     __BUILD_YEAR__: JSON.stringify(String(new Date().getFullYear())),
   },
   // tanstackRouter() va antes que react(): al revés, la generación del árbol de rutas
-  // y el code splitting fallan en silencio.
+  // y el code splitting fallan en silencio. En los tests no se parte: el componente de la ruta
+  // quedaría detrás de un import perezoso que ahí nunca resuelve, y la pantalla no se podría montar.
   plugins: [
-    tanstackRouter({ target: 'react', autoCodeSplitting: true }),
+    tanstackRouter({ target: 'react', autoCodeSplitting: !process.env.VITEST }),
     react(),
     tailwindcss(),
     !isSsrBuild && portadaPrerenderizada(),

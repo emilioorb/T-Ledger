@@ -11,8 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { enlaceAlLibro } from '@/features/datos/enlace-de-invitacion'
 import { copy } from './copy'
-import { EnlaceDeLaInvitacion, enlaceDeLaInvitacion } from './enlace-de-la-invitacion'
+import { EnlaceDeLaInvitacion } from './enlace-de-la-invitacion'
 import { useEnlaceDeInvitacion, useInvitar, type RolDelLibro } from './use-libro'
 
 const ROLES: RolDelLibro[] = ['editor', 'viewer', 'owner']
@@ -42,7 +43,10 @@ export const Invitar = () => {
         onSuccess: (invitacion) =>
           invitacion &&
           sacarEnlace.mutate(invitacion.id, {
-            onSuccess: ({ token }) => setEnlace(enlaceDeLaInvitacion(invitacion.id, token)),
+            onSuccess: ({ token }) => setEnlace(enlaceAlLibro(window.location.origin, invitacion.id, token)),
+            // La invitación ya quedó creada: reenviar el formulario chocaría con ella. El aviso
+            // manda a sacar el enlace desde la lista.
+            onError: () => cerrar(false),
           }),
       },
     )

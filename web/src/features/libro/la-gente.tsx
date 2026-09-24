@@ -21,8 +21,9 @@ import {
 } from '@/components/ui/select'
 import { Seccion } from '@/features/cuenta/seccion'
 import { formatLongDate } from '@/lib/dates'
+import { enlaceAlLibro } from '@/features/datos/enlace-de-invitacion'
 import { copy } from './copy'
-import { EnlaceDeLaInvitacion, enlaceDeLaInvitacion } from './enlace-de-la-invitacion'
+import { EnlaceDeLaInvitacion } from './enlace-de-la-invitacion'
 import { Invitar } from './invitar'
 import {
   useCambiarRol,
@@ -66,7 +67,7 @@ export const LaGente = ({ miembros, soyYo, puedoAdministrar }: Props) => {
   const sacarOtroEnlace = (invitationId: string) =>
     sacarEnlace.mutate(invitationId, {
       onSuccess: ({ token }) =>
-        setEnlaceNuevo({ invitationId, enlace: enlaceDeLaInvitacion(invitationId, token) }),
+        setEnlaceNuevo({ invitationId, enlace: enlaceAlLibro(window.location.origin, invitationId, token) }),
     })
   const cambiarRol = useCambiarRol()
   const sacar = useSacarMiembro()

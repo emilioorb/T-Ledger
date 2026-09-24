@@ -3,11 +3,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { enlaceAlLibro } from '@/features/datos/enlace-de-invitacion'
 import { copy } from './copy'
-
-export const enlaceDeLaInvitacion = (invitationId: string, token: string) =>
-  enlaceAlLibro(window.location.origin, invitationId, token)
 
 // El enlace se ve una sola vez: el token no se guarda, así que perderlo es pedir otro.
 export const EnlaceDeLaInvitacion = ({ id, enlace }: { id: string; enlace: string }) => {

@@ -15,8 +15,9 @@ export const scrub = (event: ErrorEvent): ErrorEvent => {
   if (limpio.request) {
     const { url, method } = limpio.request
     limpio.request = {
-      // La query puede llevar fechas, montos o lo que se buscó.
-      ...(url !== undefined && { url: url.split('?')[0] }),
+      // La query puede llevar fechas, montos o lo que se buscó, y el fragmento el token de una
+      // invitación.
+      ...(url !== undefined && { url: url.split(/[?#]/)[0] }),
       ...(method !== undefined && { method }),
     }
   }

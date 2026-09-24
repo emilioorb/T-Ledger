@@ -58,9 +58,11 @@ const CrearCuentaScreen = () => {
             return
           }
 
-          const { error: rechazo } = await organization.acceptInvitation({
-            invitationId: invitacion,
-          })
+          // Aceptar también exige el enlace de esta invitación: el correo solo no alcanza.
+          const { error: rechazo } = await organization.acceptInvitation(
+            { invitationId: invitacion },
+            { headers: cabeceraDelToken(token) },
+          )
 
           // La cuenta ya existe aunque la invitación haya vencido en el medio. Decirlo es lo
           // único honesto: mandarla al tablero la dejaría adentro sin libro, sin entender por
