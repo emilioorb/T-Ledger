@@ -78,7 +78,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
 
 ## Fase 3: banco y conciliación
 
-- [ ] **11. Conciliar, desconciliar e ignorar.** En transacción, `markX` condicionado por estado, índice único.
+- [x] **11. Conciliar, desconciliar e ignorar.** En transacción, `markX` condicionado por estado, índice único.
   - Acepta: dos conciliaciones del mismo movimiento con dos líneas: una gana, la otra 409; dos conciliaciones de la misma
     línea: una.
   - Archivos: `match-line.use-case.ts`, `prisma-bank-statement.repository.ts`, `bank-statement` port,

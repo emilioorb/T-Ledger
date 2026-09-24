@@ -35,6 +35,7 @@ export interface BankStatementRepository {
   allLines(bankAccountId: string, range: DateRange): Promise<StoredBankLine[]>
   findLine(id: string): Promise<StoredBankLine | null>
   isMovementTaken(movementId: string, exceptLineId?: string): Promise<boolean>
+  // Una línea conciliada no se concilia de nuevo ni se ignora: `ConflictError`.
   markMatched(lineId: string, movementId: string): Promise<void>
   markPending(lineId: string): Promise<void>
   markIgnored(lineId: string): Promise<void>

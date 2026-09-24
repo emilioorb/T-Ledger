@@ -316,3 +316,53 @@ describe('conciliación', () => {
     expect(octubre.body.statementMovement.minorUnits).toBe('0')
   })
 })
+
+// Dos personas conciliando a la vez, de verdad en paralelo: la línea y el movimiento se miran
+// dentro del candado del libro, y el índice único de la base es la segunda red (ADR-006).
+describe('dos personas conciliando a la vez', () => {
+  const DOS_IGUALES = [
+    'Fecha,Descripcion,Referencia,Monto',
+    '15/09/2026,SUPERMERCADO,REF-A,-45000.00',
+    '17/09/2026,SUPERMERCADO,REF-B,-45000.00',
+    '',
+  ].join('\n')
+
+  const importarDosIguales = () =>
+    request(app.getHttpServer())
+      .post(`${BASE}/bank-statements`)
+      .field('bankAccountId', cuentaId)
+      .field('profileId', perfilId)
+      .attach('file', Buffer.from(DOS_IGUALES, 'utf-8'), 'extracto.csv')
+      .expect(201)
+
+  it('el mismo movimiento contra dos líneas: una gana y la otra recibe 409', async () => {
+    await importarDosIguales()
+    const movimiento = await crearMovimiento('4500000')
+    const [primera, segunda] = await lineasPendientes()
+
+    const respuestas = await Promise.all([
+      post(`/bank-lines/${primera!.id}/match`, { movementId: movimiento.id }),
+      post(`/bank-lines/${segunda!.id}/match`, { movementId: movimiento.id }),
+    ])
+
+    expect(respuestas.map((r) => r.status).sort()).toEqual([200, 409])
+    expect(await prisma.bankLine.count({ where: { movementId: movimiento.id, status: 'MATCHED' } })).toBe(1)
+  })
+
+  it('la misma línea contra dos movimientos: queda uno', async () => {
+    await importar()
+    const uno = await crearMovimiento('4500000')
+    const otro = await crearMovimiento('4500000')
+    const [linea] = await lineasPendientes()
+
+    const respuestas = await Promise.all([
+      post(`/bank-lines/${linea!.id}/match`, { movementId: uno.id }),
+      post(`/bank-lines/${linea!.id}/match`, { movementId: otro.id }),
+    ])
+
+    expect(respuestas.map((r) => r.status).sort()).toEqual([200, 409])
+    const conciliada = await prisma.bankLine.findUniqueOrThrow({ where: { id: linea!.id } })
+    expect([uno.id, otro.id]).toContain(conciliada.movementId)
+  })
+})
+

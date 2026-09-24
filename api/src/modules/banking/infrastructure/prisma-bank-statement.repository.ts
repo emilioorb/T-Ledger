@@ -1,3 +1,4 @@
+import { ConflictError } from '../../../shared/http/api-error.js'
 import { Injectable } from '@nestjs/common'
 import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import type { DateRange } from '../../../shared/kernel/date-range.js'
@@ -151,24 +152,31 @@ export class PrismaBankStatementRepository implements BankStatementRepository {
     return count > 0
   }
 
+  // Condicionados por el estado: el caso de uso ya lo miró adentro del candado, y esto es la
+  // segunda red. Una línea conciliada no se concilia de nuevo ni se ignora sin deshacerla antes.
   async markMatched(lineId: string, movementId: string): Promise<void> {
-    await this.prisma.client.bankLine.update({
-      where: { id: lineId },
-      data: { status: 'MATCHED', movementId },
-    })
+    await this.marcarSiNoEstaConciliada(lineId, { status: 'MATCHED', movementId })
   }
 
   async markPending(lineId: string): Promise<void> {
-    await this.prisma.client.bankLine.update({
+    await this.prisma.client.bankLine.updateMany({
       where: { id: lineId },
       data: { status: 'PENDING', movementId: null },
     })
   }
 
   async markIgnored(lineId: string): Promise<void> {
-    await this.prisma.client.bankLine.update({
-      where: { id: lineId },
-      data: { status: 'IGNORED', movementId: null },
+    await this.marcarSiNoEstaConciliada(lineId, { status: 'IGNORED', movementId: null })
+  }
+
+  private async marcarSiNoEstaConciliada(
+    lineId: string,
+    data: { status: 'MATCHED' | 'IGNORED'; movementId: string | null },
+  ): Promise<void> {
+    const { count } = await this.prisma.client.bankLine.updateMany({
+      where: { id: lineId, status: { not: 'MATCHED' } },
+      data,
     })
+    if (count === 0) throw new ConflictError('Esa línea ya está conciliada. Deshacela antes de cambiarla.')
   }
 }
