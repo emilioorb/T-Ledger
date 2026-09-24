@@ -1,3 +1,4 @@
+import { VersionDelClienteMiddleware } from '../../shared/observability/version-del-cliente.js'
 import { Global, MiddlewareConsumer, Module, type NestModule } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { loadEnv } from '../../shared/config/env.js'
@@ -61,6 +62,6 @@ export class IdentityModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // Sobre todo: el middleware sale temprano si no hay sesión, así que las rutas públicas no
     // pagan nada, y ninguna ruta del libro puede quedarse afuera por olvido.
-    consumer.apply(LibroMiddleware).forRoutes('*')
+    consumer.apply(VersionDelClienteMiddleware, LibroMiddleware).forRoutes('*')
   }
 }
