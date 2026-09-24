@@ -46,6 +46,8 @@ import { toDebtScheduleResponse, toProjectionResponse } from './schedule.present
 import {
   marcarCuotaPagadaSchema,
   pagarCuotaSchema,
+  deshacerPagoQuerySchema,
+  type DeshacerPagoQuery,
   payoffPlanQuerySchema,
   simulateExtraPaymentSchema,
   type DebtScheduleResponse,
@@ -197,8 +199,11 @@ export class DebtsController {
 
   @Permiso('deuda', 'write')
   @Delete(':id/payments/last')
-  async undoPayment(@Param('id') id: string): Promise<DebtResponse> {
-    return toDebtResponse(await this.pagos.deshacerUltimo(id), new Date())
+  async undoPayment(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(deshacerPagoQuerySchema)) query: DeshacerPagoQuery,
+  ): Promise<DebtResponse> {
+    return toDebtResponse(await this.pagos.deshacerUltimo(id, query.cuota), new Date())
   }
 
   // 200 y no 201: simular no crea nada.

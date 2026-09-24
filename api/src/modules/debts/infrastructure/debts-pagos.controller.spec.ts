@@ -186,3 +186,46 @@ describe('anular desde Movimientos el gasto de una cuota', () => {
     expect(await prisma.debtPayment.count({ where: {} })).toBe(1)
   })
 })
+
+// Dos personas sobre la misma cuota, de verdad en paralelo: las reglas se leen dentro del candado
+// del libro, así que la segunda ve lo que dejó la primera (ADR-006).
+describe('dos personas sobre la misma cuota', () => {
+  const pagarLa = (id: string, cuota: number) =>
+    http()
+      .post(`/api/v1/debts/${id}/payments`)
+      .send({ date: hoy, paymentAccountCode: '1101', categoryId: 'cat-prestamos', cuota })
+
+  it('dos pagos a la vez de la cuota 1 registran uno, sin gasto de más', async () => {
+    const { body: deuda } = await http().post('/api/v1/debts').send(tresCuotas)
+
+    const respuestas = await Promise.all([pagarLa(deuda.id, 1), pagarLa(deuda.id, 1)])
+
+    expect(respuestas.map((r) => r.status).sort()).toEqual([201, 409])
+    expect(await prisma.debtPayment.count({ where: {} })).toBe(1)
+    expect(await prisma.movement.count({ where: {} })).toBe(1)
+  })
+
+  it('dos «Deshacer» a la vez sobre la cuota 2 deshacen una', async () => {
+    const { body: deuda } = await http().post('/api/v1/debts').send(tresCuotas)
+    await pagarLa(deuda.id, 1).expect(201)
+    await pagarLa(deuda.id, 2).expect(201)
+
+    const respuestas = await Promise.all([
+      http().delete(`/api/v1/debts/${deuda.id}/payments/last?cuota=2`),
+      http().delete(`/api/v1/debts/${deuda.id}/payments/last?cuota=2`),
+    ])
+
+    expect(respuestas.map((r) => r.status)).toEqual([200, 200])
+    expect(await prisma.debtPayment.count({ where: {} })).toBe(1)
+    expect(await prisma.movement.count({ where: { status: 'VOIDED' } })).toBe(1)
+  })
+
+  it('la respuesta trae la versión que quedó en la base', async () => {
+    const { body: deuda } = await http().post('/api/v1/debts').send(tresCuotas)
+
+    const pago = await pagarLa(deuda.id, 1).expect(201)
+
+    const guardada = await prisma.debt.findUniqueOrThrow({ where: { id: deuda.id } })
+    expect(pago.body.version).toBe(guardada.version)
+  })
+})

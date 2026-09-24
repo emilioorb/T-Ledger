@@ -4,6 +4,7 @@ import {
   debtScheduleResponseSchema,
   marcarCuotaPagadaSchema,
   pagarCuotaSchema,
+  deshacerPagoQuerySchema,
   payoffPlanResponseSchema,
   projectionResponseSchema,
   simulateExtraPaymentSchema,
@@ -90,6 +91,7 @@ export const debtsOpenApiPaths: ZodOpenApiPathsObject = {
   '/debts/{id}/payments/last': {
     delete: {
       summary: 'Deshace el último pago y anula su movimiento, si tiene',
+      requestParams: { query: deshacerPagoQuerySchema },
       responses: { 200: { description: 'Deuda sin ese pago', ...json(debtResponseSchema) } },
     },
   },

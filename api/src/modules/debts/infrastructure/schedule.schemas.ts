@@ -37,17 +37,28 @@ export const debtScheduleResponseSchema = scheduleResponseSchema
   .extend({ installments: z.array(debtInstallmentSchema) })
   .meta({ id: 'DebtSchedule', title: 'DebtSchedule' })
 
+// La cuota que se vio como siguiente (al pagar) o como última (al deshacer). Opcional mientras haya
+// clientes que no la mandan.
+const cuota = z.number().int().positive()
+
 export const pagarCuotaSchema = z
   .object({
     date: isoDate,
     paymentAccountCode: z.string().regex(/^\d{3,10}$/),
     categoryId: z.string().min(1),
+    cuota: cuota.optional(),
   })
   .meta({ id: 'PagarCuotaInput', title: 'PagarCuotaInput' })
 
 export const marcarCuotaPagadaSchema = z
-  .object({ date: isoDate })
+  .object({ date: isoDate, cuota: cuota.optional() })
   .meta({ id: 'MarcarCuotaPagadaInput', title: 'MarcarCuotaPagadaInput' })
+
+// Al deshacer va en `?cuota=`: un DELETE no lleva cuerpo.
+export const deshacerPagoQuerySchema = z
+  .object({ cuota: z.string().regex(/^\d+$/).transform(Number) })
+  .partial()
+  .meta({ id: 'DeshacerPagoQuery', title: 'DeshacerPagoQuery' })
 
 export const simulateExtraPaymentSchema = z
   .object({
@@ -96,5 +107,6 @@ export type ScheduleResponse = z.infer<typeof scheduleResponseSchema>
 export type DebtScheduleResponse = z.infer<typeof debtScheduleResponseSchema>
 export type PagarCuotaInput = z.infer<typeof pagarCuotaSchema>
 export type MarcarCuotaPagadaInput = z.infer<typeof marcarCuotaPagadaSchema>
+export type DeshacerPagoQuery = z.infer<typeof deshacerPagoQuerySchema>
 export type ProjectionResponse = z.infer<typeof projectionResponseSchema>
 export type PayoffPlanResponse = z.infer<typeof payoffPlanResponseSchema>

@@ -68,7 +68,7 @@ un commit por tarea. Rutas relativas a `api/src/` salvo que diga `web/`.
   - Acepta: editar el nombre mientras otro paga no borra el pago.
   - Archivos: `debts/domain/debt.ts`, `debt.mapper.ts`, `prisma-debt.repository.ts`, `debt-repository.port.ts`, spec
     del repo. (M)
-- [ ] **9. Pagar y deshacer.** Reglas adentro; deshacer manda la cuota que espera.
+- [x] **9. Pagar y deshacer.** Reglas adentro; deshacer manda la cuota que espera.
   - Acepta: dos pagos a la vez de la misma cuota registran uno y no dejan gasto huérfano; dos «Deshacer» sobre la cuota 5
     deshacen una.
   - Archivos: `pagos-de-deuda.use-case.ts`, `debt.schemas.ts`, `debts.controller.ts`, `debts-pagos.controller.spec.ts`. (M)

@@ -404,7 +404,9 @@ export interface paths {
         /** Deshace el último pago y anula su movimiento, si tiene */
         delete: {
             parameters: {
-                query?: never;
+                query?: {
+                    cuota?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -3304,10 +3306,12 @@ export interface components {
             date: string;
             paymentAccountCode: string;
             categoryId: string;
+            cuota?: number;
         };
         /** MarcarCuotaPagadaInput */
         MarcarCuotaPagadaInput: {
             date: string;
+            cuota?: number;
         };
         /** SimulateExtraPaymentInput */
         SimulateExtraPaymentInput: {
@@ -3567,6 +3571,7 @@ export interface components {
             budgetBucket: string | null;
             notes: string | null;
             hasDocument: boolean;
+            version: number;
             monthlyPayment: components["schemas"]["MoneyOutput"];
             totalInterest: components["schemas"]["MoneyOutput"];
             payoffDate: string;

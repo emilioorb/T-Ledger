@@ -2,6 +2,7 @@ import { ConflictException, Inject, Injectable } from '@nestjs/common'
 import { NotFoundError, SemanticValidationError } from '../../../shared/http/api-error.js'
 import { fromMoney } from '../../../shared/http/money.schema.js'
 import { isErr, type Result } from '../../../shared/kernel/result.js'
+import { exigirVersion } from '../../../shared/prisma/escribir-con-version.js'
 import { UNIT_OF_WORK, type UnitOfWork } from '../../../shared/prisma/unit-of-work.port.js'
 import { CreateMovementUseCase } from '../../accounting/application/create-movement.use-case.js'
 import { VoidMovementUseCase } from '../../accounting/application/void-movement.use-case.js'
@@ -9,14 +10,18 @@ import { RASTRO, type Rastro } from '../../auditoria/domain/rastro.port.js'
 import type { Debt } from '../domain/debt.js'
 import { DEBT_REPOSITORY, type DebtRepository } from '../domain/debt-repository.port.js'
 
+// `cuota` es la que quien paga vio como siguiente. Sin ella (la app sin actualizar) se paga la
+// que siga, y queda contado; con ella, dos pagos a la vez de la misma cuota registran uno.
 export interface PagoConMovimiento {
   date: string
   paymentAccountCode: string
   categoryId: string
+  cuota?: number | undefined
 }
 
 export interface PagoSinMovimiento {
   date: string
+  cuota?: number | undefined
 }
 
 const utc = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
@@ -40,16 +45,20 @@ export class PagosDeDeudaUseCase {
     @Inject(RASTRO) private readonly rastro: Rastro,
   ) {}
 
-  async pagar(id: string, pago: PagoConMovimiento): Promise<Debt> {
-    const debt = await this.propia(id)
-    const date = utc(pago.date)
-    // Primero se valida la cuota con el dominio: no se crea un gasto para una cuota que no se
-    // puede pagar.
-    oFallar(debt.registerPayment({ date, movementId: null }))
-    const cuota = debt.schedule().installmentNumber(debt.payments.length + 1)
-    if (!cuota) throw new SemanticValidationError('La deuda ya no tiene cuotas por pagar')
-
+  // Todo adentro del candado del libro: leída afuera, dos pagos a la vez veían la misma cuota
+  // libre, y el segundo pagaba la siguiente con otro gasto (ADR-006).
+  pagar(id: string, pago: PagoConMovimiento): Promise<Debt> {
     return this.transaction.withTransaction(async () => {
+      const debt = await this.propia(id)
+      const siguiente = debt.payments.length + 1
+      exigirVersion(pago.cuota, siguiente, 'pagar una cuota')
+      const date = utc(pago.date)
+      // Primero se valida la cuota con el dominio: no se crea un gasto para una cuota que no se
+      // puede pagar.
+      oFallar(debt.registerPayment({ date, movementId: null }))
+      const cuota = debt.schedule().installmentNumber(siguiente)
+      if (!cuota) throw new SemanticValidationError('La deuda ya no tiene cuotas por pagar')
+
       const { movement } = await this.crearMovimiento.execute({
         date: pago.date,
         kind: 'EXPENSE',
@@ -58,31 +67,35 @@ export class PagosDeDeudaUseCase {
         amount: fromMoney(cuota.payment),
         paymentAccountCode: pago.paymentAccountCode,
       })
-      const pagada = oFallar(debt.registerPayment({ date, movementId: movement.id }))
-      await this.guardar(pagada, 'pagar')
-      return pagada
+      return this.guardar(oFallar(debt.registerPayment({ date, movementId: movement.id })), 'pagar')
     })
   }
 
   // Para una cuota pagada fuera del libro: la salda sin tocar la contabilidad.
-  async marcarPagada(id: string, pago: PagoSinMovimiento): Promise<Debt> {
-    const debt = await this.propia(id)
-    const pagada = oFallar(debt.registerPayment({ date: utc(pago.date), movementId: null }))
-    await this.transaction.withTransaction(() => this.guardar(pagada, 'pagar'))
-    return pagada
+  marcarPagada(id: string, pago: PagoSinMovimiento): Promise<Debt> {
+    return this.transaction.withTransaction(async () => {
+      const debt = await this.propia(id)
+      exigirVersion(pago.cuota, debt.payments.length + 1, 'saldar una cuota')
+      return this.guardar(oFallar(debt.registerPayment({ date: utc(pago.date), movementId: null })), 'pagar')
+    })
   }
 
-  async deshacerUltimo(id: string): Promise<Debt> {
-    const debt = await this.propia(id)
-    const { debt: sinElUltimo, undone } = oFallar(debt.undoLastPayment())
+  // `cuota` es la que quien deshace vio como última. Si ya no está, otro la deshizo: es lo que se
+  // pedía y no se deshace una más. Si hay pagos después, cambió algo que no vio.
+  deshacerUltimo(id: string, cuota?: number): Promise<Debt> {
+    return this.transaction.withTransaction(async () => {
+      const debt = await this.propia(id)
+      const ultima = debt.payments.length
+      if (cuota !== undefined && cuota > ultima) return debt
+      exigirVersion(cuota, ultima, 'deshacer el pago de una cuota')
+      const { debt: sinElUltimo, undone } = oFallar(debt.undoLastPayment())
 
-    // Primero la deuda y después el gasto: al anularlo, contabilidad avisa y `alAnularSuGasto`
-    // ya no encuentra el pago. Al revés lo desharía dos veces, con dos rastros.
-    await this.transaction.withTransaction(async () => {
-      await this.guardar(sinElUltimo, 'anular', debt)
+      // Primero la deuda y después el gasto: al anularlo, contabilidad avisa y `alAnularSuGasto`
+      // ya no encuentra el pago. Al revés lo desharía dos veces, con dos rastros.
+      const guardada = await this.guardar(sinElUltimo, 'anular', debt)
       if (undone.movementId) await this.anularMovimiento.porRegla(undone.movementId)
+      return guardada
     })
-    return sinElUltimo
   }
 
   // Cuando alguien anula desde Movimientos el gasto de una cuota: la cuota vuelve a quedar sin
@@ -112,8 +125,8 @@ export class PagosDeDeudaUseCase {
     return debt
   }
 
-  private async guardar(debt: Debt, accion: 'pagar' | 'anular', antes?: Debt): Promise<void> {
-    await this.debts.update(debt)
+  private async guardar(debt: Debt, accion: 'pagar' | 'anular', antes?: Debt): Promise<Debt> {
+    const guardada = await this.debts.update(debt)
     await this.rastro.registrar({
       entidad: 'deuda',
       entidadId: debt.id,
@@ -121,6 +134,7 @@ export class PagosDeDeudaUseCase {
       ...(antes ? { antes: { pagos: antes.payments } } : {}),
       despues: { pagos: debt.payments },
     })
+    return guardada
   }
 }
 
