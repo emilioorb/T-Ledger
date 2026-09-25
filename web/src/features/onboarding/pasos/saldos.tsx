@@ -13,6 +13,7 @@ interface Props {
   bancos: BancoCreado[]
 }
 
+// Mismos códigos que CAJAS en api/src/modules/accounting/infrastructure/cajas.ts.
 const CAJA: Record<Moneda, string> = { CRC: '1101', USD: '1102' }
 
 // La fecha del teléfono y no la del servidor: allá es UTC, y después de las 18:00 en Costa Rica
@@ -57,7 +58,15 @@ export const Saldos = ({ hecho, onListo, monedas, bancos }: Props) => {
     for (const { accountCode, currency, admiteNegativo } of filas) {
       const texto = montos[accountCode]?.trim()
       if (!texto) continue
-      const { minorUnits } = parseMoneyInput(texto, currency)
+      let minorUnits: string
+      // El texto tipeado nunca llega al mensaje de error ni a lo que se manda: parseMoneyInput
+      // lo mete en el RangeError, y ese RangeError no sale de acá.
+      try {
+        minorUnits = parseMoneyInput(texto, currency).minorUnits
+      } catch {
+        siguientesErrores[accountCode] = copy.montoIlegible
+        continue
+      }
       // El mismo admiteNegativo del inputMode: si no lo admite, el pedido no se arma con ese
       // monto y el paso no llega a mandarlo.
       if (!admiteNegativo && minorUnits.startsWith('-')) {

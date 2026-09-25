@@ -16,6 +16,12 @@ interface Props {
 
 const clave = (name: string, currency: Moneda) => `${name}|${currency}`
 
+const normalizar = (texto: string) => texto.trim().toLowerCase().replace(/\s+/g, ' ')
+
+// El nombre de la cuenta en la api es "<nombre> colones"/"<nombre> dólares" (mismo largo que el
+// sufijo): no puede pasar el NAME_MAX de api/src/shared/http/text.schema.ts.
+const NOMBRE_MAX = 120 - ' colones'.length
+
 export const Bancos = ({ hecho, onListo, monedas }: Props) => {
   const [nombres, setNombres] = useState<string[]>([...copy.bancos.sugeridos])
   const [marcados, setMarcados] = useState<Set<string>>(new Set())
@@ -34,8 +40,8 @@ export const Bancos = ({ hecho, onListo, monedas }: Props) => {
   const marcar = (llave: string) => setMarcados((actuales) => alternar(actuales, llave))
 
   const agregarOtro = () => {
-    const nombre = otro.trim()
-    if (!nombre || nombres.includes(nombre)) return
+    const nombre = otro.trim().replace(/\s+/g, ' ')
+    if (!nombre || nombres.some((existente) => normalizar(existente) === normalizar(nombre))) return
     setNombres([...nombres, nombre])
     marcar(clave(nombre, 'CRC'))
     setOtro('')
@@ -74,6 +80,7 @@ export const Bancos = ({ hecho, onListo, monedas }: Props) => {
           onChange={(evento) => setOtro(evento.target.value)}
           placeholder={copy.bancos.otroPlaceholder}
           aria-label={copy.bancos.otro}
+          maxLength={NOMBRE_MAX}
           onKeyDown={(evento) => {
             if (evento.key === 'Enter') {
               evento.preventDefault()
