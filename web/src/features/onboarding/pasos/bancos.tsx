@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { copy } from '../copy'
 import type { BancoCreado, Moneda } from '../types'
+import { alternar } from './alternar'
 import { FORM_ID } from './intro'
 
 interface Props {
@@ -30,19 +31,13 @@ export const Bancos = ({ hecho, onListo, monedas }: Props) => {
     )
   }
 
-  const alternar = (llave: string) =>
-    setMarcados((actuales) => {
-      const siguientes = new Set(actuales)
-      if (siguientes.has(llave)) siguientes.delete(llave)
-      else siguientes.add(llave)
-      return siguientes
-    })
+  const marcar = (llave: string) => setMarcados((actuales) => alternar(actuales, llave))
 
   const agregarOtro = () => {
     const nombre = otro.trim()
     if (!nombre || nombres.includes(nombre)) return
     setNombres([...nombres, nombre])
-    alternar(clave(nombre, 'CRC'))
+    marcar(clave(nombre, 'CRC'))
     setOtro('')
   }
 
@@ -65,7 +60,7 @@ export const Bancos = ({ hecho, onListo, monedas }: Props) => {
                 <Checkbox
                   aria-label={`${name} · ${copy.bancos.moneda[currency]}`}
                   checked={marcados.has(clave(name, currency))}
-                  onCheckedChange={() => alternar(clave(name, currency))}
+                  onCheckedChange={() => marcar(clave(name, currency))}
                 />
                 {copy.bancos.moneda[currency]}
               </Label>
