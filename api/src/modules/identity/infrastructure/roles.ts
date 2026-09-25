@@ -24,6 +24,8 @@ const statements = {
   // eso es información sobre las personas, no sobre la plata. Quien administra a la gente es
   // el mismo que puede mirar lo que hicieron.
   auditoria: ['read'],
+  // Crea cuentas, bancos, categorías y asientos de una vez: arma el libro, y eso lo decide el dueño.
+  bienvenida: ['write'],
 } as const
 
 export const ac = createAccessControl(statements)
@@ -68,6 +70,7 @@ export const owner = ac.newRole({
   member: ['create', 'update', 'delete'],
   invitation: ['create', 'cancel'],
   auditoria: ['read'],
+  bienvenida: ['write'],
 })
 
 export const roles = { owner, editor, viewer }

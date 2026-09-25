@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { editor, owner, viewer } from './roles.js'
+import { puede } from './permisos.js'
 
 describe('roles del libro', () => {
   it('el que mira no escribe: es la razón de que el rol exista', () => {
@@ -45,5 +46,11 @@ describe('roles del libro', () => {
   it('el dueño renombra por Better Auth pero no borra por ahí', () => {
     expect(owner.authorize({ organization: ['update'] }).success).toBe(true)
     expect(owner.authorize({ organization: ['delete'] }).success).toBe(false)
+  })
+
+  it('solo el dueño configura el libro desde la bienvenida', () => {
+    expect(puede('owner', 'bienvenida', 'write')).toBe(true)
+    expect(puede('editor', 'bienvenida', 'write')).toBe(false)
+    expect(puede('viewer', 'bienvenida', 'write')).toBe(false)
   })
 })
