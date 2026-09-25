@@ -47,3 +47,13 @@ export const openingBalancesResponseSchema = z
   .meta({ id: 'OpeningBalancesResult', title: 'OpeningBalancesResult' })
 
 export type OpeningBalancesInput = z.infer<typeof openingBalancesSchema>
+
+export const categoriesSchema = z
+  .object({ categories: z.array(z.object({ name: nameText, kind: z.enum(['EXPENSE', 'INCOME']) })).min(1).max(60) })
+  .meta({ id: 'OnboardingCategoriesInput', title: 'OnboardingCategoriesInput' })
+
+export const categoriaCreadaSchema = z
+  .object({ name: z.string(), kind: z.enum(['EXPENSE', 'INCOME']), accountCode: z.string(), categoryId: z.string() })
+  .meta({ id: 'OnboardingCategory', title: 'OnboardingCategory' })
+
+export type CategoriesInput = z.infer<typeof categoriesSchema>
