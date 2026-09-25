@@ -16,6 +16,7 @@ export type Recurso =
   | 'member'
   | 'invitation'
   | 'auditoria'
+  | 'bienvenida'
 
 // La segunda capa del aislamiento. La extensión de Prisma sabe **de qué libro** es cada fila;
 // no sabe si quien pide puede escribirla. Alguien con rol de solo mirar, correctamente
