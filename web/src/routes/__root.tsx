@@ -31,8 +31,10 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 import { Toaster } from '@/components/ui/sonner'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { esPublica } from '@/features/shell/rutas-publicas'
+import { cn } from '@/lib/utils'
 
 const CONTENT_ID = 'contenido'
+const RUTA_DEL_TABLERO = '/tablero'
 
 const Shell = () => {
   // Del lado privado y no en la raíz: sin sesión no hay libro que elegir.
@@ -88,13 +90,13 @@ const Shell = () => {
           </div>
 
           {/* Los atajos tienen que poder descubrirse sin saber que existen: por eso hay un
-              botón, además de la tecla que lo abre. */}
+              botón, además de la tecla que lo abre. En el teléfono no hay teclado que los use. */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+                className="hidden size-7 shrink-0 text-muted-foreground hover:text-foreground md:inline-flex"
                 aria-label={shortcuts.shortcuts.help}
                 onClick={alternarAyuda}
               >
@@ -104,9 +106,9 @@ const Shell = () => {
             <TooltipContent>{shortcuts.shortcuts.help}</TooltipContent>
           </Tooltip>
 
-          {/* En todos los anchos: es el único lugar donde se ve la tasa del día. Cuando falta
-              espacio cede la miga, que se recorta sola. */}
-          <div className="shrink-0">
+          {/* En el teléfono el renglón no alcanza para la miga y la tasa: la tasa queda solo
+              en el tablero, que es donde se mira. */}
+          <div className={cn('shrink-0', pathname !== RUTA_DEL_TABLERO && 'hidden md:block')}>
             <ExchangeRateIndicator />
           </div>
         </header>
