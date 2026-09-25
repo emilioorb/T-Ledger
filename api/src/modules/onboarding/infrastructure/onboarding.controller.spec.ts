@@ -4,12 +4,14 @@ import { Global, Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { Test } from '@nestjs/testing'
 import request from 'supertest'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AllExceptionsFilter } from '../../../shared/http/all-exceptions.filter.js'
+import { SemanticValidationError } from '../../../shared/http/api-error.js'
 import { entrarEnLibro } from '../../../shared/libro/libro-context.js'
 import { LIBRO_DE_PRUEBA } from '../../../shared/libro/libro-de-prueba.js'
 import { PrismaService } from '../../../shared/prisma/prisma.service.js'
 import { startPostgres, type RunningPostgres } from '../../../test/postgres-container.js'
+import { ManageBankAccountsUseCase } from '../../banking/application/manage-bank-accounts.use-case.js'
 import { MARCA_DE_BIENVENIDA, type MarcaDeBienvenida } from '../../identity/domain/marca-de-bienvenida.port.js'
 import { PermisoGuard } from '../../identity/infrastructure/permiso.guard.js'
 import { RastroModule } from '../../auditoria/rastro.module.js'
@@ -17,6 +19,7 @@ import { OnboardingModule } from '../onboarding.module.js'
 
 let postgres: RunningPostgres
 let app: INestApplication
+let prisma: PrismaService
 const vistas = new Set<string>()
 
 // La marca de verdad vive en tablas de Better Auth; acá alcanza con un doble en memoria.
@@ -41,9 +44,36 @@ const pedir = {
 const comoDueno = () => entrarEnLibro(LIBRO_DE_PRUEBA)
 const comoEditor = () => entrarEnLibro({ ...LIBRO_DE_PRUEBA, rol: 'editor' })
 
-beforeEach(() => {
+// Los pasos de la bienvenida escriben cuentas y cuentas bancarias; entre tests hay que dejar
+// solo la semilla. Rangos precisos, no `>= '1121'`: la 1190 (Traslados entre monedas) es
+// semilla y de otro modo caería con una comparación de string.
+const limpiar = (): Promise<void> =>
+  prisma.withTransaction(async () => {
+    await prisma.client.onboardingStep.deleteMany()
+    await prisma.client.bankAccount.deleteMany()
+    await prisma.client.category.deleteMany()
+    await prisma.client.journalLine.deleteMany()
+    await prisma.client.journalEntry.deleteMany()
+    await prisma.client.budgetIncome.deleteMany()
+    await prisma.client.account.deleteMany({
+      where: {
+        OR: [
+          { code: { gte: '1121', lte: '1189' } },
+          { code: { gte: '4200', lte: '4299' } },
+          { code: { gte: '6200', lte: '6299' } },
+        ],
+      },
+    })
+  })
+
+beforeEach(async () => {
   comoDueno()
   vistas.clear()
+  await limpiar()
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 beforeAll(async () => {
@@ -59,6 +89,7 @@ beforeAll(async () => {
   app.setGlobalPrefix('api/v1')
   app.useGlobalFilters(new AllExceptionsFilter())
   await app.init()
+  prisma = app.get(PrismaService)
 }, 180_000)
 
 afterAll(async () => {
@@ -88,5 +119,43 @@ describe('estado', () => {
   it('un editor no puede empezarla', async () => {
     comoEditor()
     await pedir.post('/start').expect(403)
+  })
+})
+
+describe('bancos', () => {
+  const bancos = { banks: [{ name: 'BAC', currency: 'CRC' }, { name: 'BAC', currency: 'USD' }] }
+
+  it('crea una cuenta bajo 1100 y su cuenta bancaria por cada uno', async () => {
+    const { body } = await pedir.post('/banks', bancos).expect(201)
+    expect(body).toEqual([
+      { name: 'BAC colones', currency: 'CRC', accountCode: '1121', bankAccountId: expect.any(String) },
+      { name: 'BAC dólares', currency: 'USD', accountCode: '1122', bankAccountId: expect.any(String) },
+    ])
+    const cuenta = await prisma.client.account.findFirst({ where: { code: '1121' } })
+    expect(cuenta).toMatchObject({ parentCode: '1100', accountClass: 'ASSET', name: 'BAC colones' })
+  })
+
+  it('repetido devuelve lo mismo y no crea nada nuevo', async () => {
+    const primera = await pedir.post('/banks', bancos).expect(201)
+    const segunda = await pedir.post('/banks', { banks: [{ name: 'Otro', currency: 'CRC' }] }).expect(201)
+    expect(segunda.body).toEqual(primera.body)
+    expect(await prisma.client.bankAccount.count()).toBe(2)
+  })
+
+  it('si uno falla no queda ninguno ni la anotación del paso', async () => {
+    const casoDeUso = app.get(ManageBankAccountsUseCase, { strict: false })
+    const original = casoDeUso.create.bind(casoDeUso)
+    vi.spyOn(casoDeUso, 'create')
+      .mockImplementationOnce(original)
+      .mockRejectedValueOnce(new SemanticValidationError('falla a propósito'))
+    await pedir.post('/banks', { banks: [{ name: 'BAC', currency: 'CRC' }, { name: 'BCR', currency: 'CRC' }] }).expect(422)
+    expect(await prisma.client.bankAccount.count()).toBe(0)
+    expect(await prisma.client.account.count({ where: { code: { in: ['1121', '1122'] } } })).toBe(0)
+    expect(await prisma.client.onboardingStep.count()).toBe(0)
+  })
+
+  it('un editor recibe 403', async () => {
+    comoEditor()
+    await pedir.post('/banks', bancos).expect(403)
   })
 })

@@ -3,6 +3,7 @@ import { PrismaModule } from '../../shared/prisma/prisma.module.js'
 import { AccountingModule } from '../accounting/accounting.module.js'
 import { BankingModule } from '../banking/banking.module.js'
 import { BudgetModule } from '../budget/budget.module.js'
+import { CrearBancosUseCase } from './application/crear-bancos.use-case.js'
 import { EstadoDeBienvenidaUseCase } from './application/estado-de-bienvenida.use-case.js'
 import { PasoIdempotente } from './application/paso-idempotente.js'
 import { ONBOARDING_STEP_REPOSITORY } from './domain/onboarding-step-repository.port.js'
@@ -18,6 +19,7 @@ import { PrismaOnboardingStepRepository } from './infrastructure/prisma-onboardi
     { provide: ONBOARDING_STEP_REPOSITORY, useClass: PrismaOnboardingStepRepository },
     PasoIdempotente,
     EstadoDeBienvenidaUseCase,
+    CrearBancosUseCase,
   ],
 })
 export class OnboardingModule {}
