@@ -48,13 +48,13 @@ describe('Bienvenida', () => {
     )
   })
 
-  it('saltear no llama a nada', async () => {
+  it('saltar no llama a nada', async () => {
     const fetch = conEstado({ pending: true, bookId: 'b1', steps: {} })
     montar()
     fireEvent.click(await screen.findByRole('button', { name: copy.botones.empezar }))
     fireEvent.click(screen.getByRole('button', { name: copy.botones.siguiente })) // monedas no llama
     const antes = fetch.mock.calls.length
-    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // bancos
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltar })) // bancos
     expect(fetch.mock.calls.length).toBe(antes)
     expect(screen.getByRole('heading', { name: copy.saldos.title })).toBeInTheDocument()
   })
@@ -67,7 +67,7 @@ describe('Bienvenida', () => {
     fireEvent.click(siguiente)
     expect(screen.getByRole('heading', { name: copy.bancos.title })).toBeInTheDocument()
     // En el navegador React re-renderiza antes de la acción por defecto del mismo clic: si el
-    // botón tocado pasa a ser el envío de Bancos, manda el formulario vacío y saltea el paso.
+    // botón tocado pasa a ser el envío de Bancos, manda el formulario vacío y salta el paso.
     // jsdom corre esa acción antes del re-render, así que se comprueba que no sea el mismo nodo.
     expect(siguiente).not.toHaveAttribute('type', 'submit')
   })
@@ -140,10 +140,10 @@ describe('Bienvenida', () => {
     const client = montar()
     fireEvent.click(await screen.findByRole('button', { name: copy.botones.empezar })) // intro -> monedas
     fireEvent.click(screen.getByRole('button', { name: copy.botones.siguiente })) // monedas -> bancos
-    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // bancos -> saldos
-    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // saldos -> categorias
-    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // categorias -> ingreso
-    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // ingreso -> cierre
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltar })) // bancos -> saldos
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltar })) // saldos -> categorias
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltar })) // categorias -> ingreso
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltar })) // ingreso -> cierre
 
     fireEvent.click(await screen.findByRole('button', { name: copy.cierre.guia }))
 
@@ -165,7 +165,7 @@ describe('Bienvenida', () => {
     expect(await screen.findByRole('button', { name: copy.botones.reintentar })).toBeInTheDocument()
   })
 
-  it('recorre monedas, salteando bancos, saldos y categorías, hasta declarar el ingreso y llegar al cierre', async () => {
+  it('recorre monedas, saltando bancos, saldos y categorías, hasta declarar el ingreso y llegar al cierre', async () => {
     const fetch = conEstado({ pending: true, bookId: 'b1', steps: {} }, async (url) =>
       url.includes('/income') ? respuesta({ month: '2026-09', amount: { minorUnits: '5000000', currency: 'CRC' } }, 201) : respuesta(null, 204),
     )
@@ -175,9 +175,9 @@ describe('Bienvenida', () => {
     fireEvent.click(screen.getByRole('radio', { name: copy.monedas.ambas }))
     fireEvent.click(screen.getByRole('button', { name: copy.botones.siguiente })) // monedas -> bancos
 
-    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // bancos -> saldos
-    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // saldos -> categorias
-    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // categorias -> ingreso
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltar })) // bancos -> saldos
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltar })) // saldos -> categorias
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltar })) // categorias -> ingreso
 
     expect(screen.getByRole('heading', { name: copy.ingreso.title })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText(copy.ingreso.label), { target: { value: '50000' } })
