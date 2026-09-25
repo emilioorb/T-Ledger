@@ -17,10 +17,12 @@ export const copy = {
     seguir: 'Seguir',
   },
   hecho: 'Hecho',
+  montoIlegible: 'No entendí ese monto. Escribilo solo con números, como 150000.',
+  errorDeRed: 'No se pudo conectar. Probá de nuevo.',
   intro: {
     title: 'Soy Nimbo',
     nimbo:
-      'Te ayudo a dejar el libro listo en cinco pasos: tus monedas, tus bancos, lo que tenés hoy, en qué gastás y cuánto entra este mes. Cualquiera se puede saltear.',
+      'Te ayudo a dejar el libro listo en seis pasos: tus monedas, tus bancos, lo que tenés hoy, en qué gastás, cuánto entra este mes y un resumen al final. Cualquiera se puede saltear.',
   },
   monedas: {
     title: 'Monedas',
@@ -36,7 +38,6 @@ export const copy = {
     otroPlaceholder: 'Nombre del banco',
     agregar: 'Agregar',
     moneda: { CRC: 'Colones', USD: 'Dólares' },
-    vacio: 'Elegí al menos un banco, o salteá el paso.',
   },
   saldos: {
     title: 'Saldos de hoy',
@@ -61,7 +62,7 @@ export const copy = {
   ingreso: {
     title: 'Ingreso del mes',
     nimbo: '¿Cuánto entra este mes? Con eso se mide el presupuesto. El reparto lo armás después, en Modelos.',
-    label: 'Ingreso de este mes',
+    label: 'Ingreso de este mes, en colones',
   },
   cierre: {
     title: 'Listo',
