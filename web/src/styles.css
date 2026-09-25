@@ -375,10 +375,23 @@
     animation: pata-crece 500ms cubic-bezier(0.25, 1, 0.5, 1) backwards;
   }
 
+  /* El paso de la bienvenida que entra: la escala de DESIGN.md, 200 ms y ease-out-quart. */
+  @keyframes paso-entra {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  .paso-entra {
+    animation: paso-entra var(--duration-overlay) var(--ease-out-quart) backwards;
+  }
+
   /* Quien pidió menos movimiento ve la pantalla entera de una. No es una versión degradada:
      la página dice exactamente lo mismo sin escribirse sola. */
   @media (prefers-reduced-motion: reduce) {
     .asiento-entra,
+    .paso-entra,
     .sale-de-la-pata,
     .pata-crece,
     .raya-se-traza {

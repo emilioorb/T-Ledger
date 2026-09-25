@@ -65,8 +65,12 @@ const Acciones = ({ paso, conFormulario, ocupado, conError, onAvanzar, onIr }: O
   )
 }
 
+// El pie deja libre la barra de inicio del iPhone. `env()` vale 0 mientras `index.html` no
+// declare `viewport-fit=cover`, así que hoy queda el padding de siempre.
+const PADDING = 'p-4 pb-[max(1rem,env(safe-area-inset-bottom))]'
+
 export const Pie = ({ onRetroceder, ...props }: Props) => (
-  <DialogFooter className="flex-nowrap border-t p-4">
+  <DialogFooter className={`flex-nowrap border-t ${PADDING}`}>
     {props.paso === 'intro' || props.paso === 'cierre' ? null : (
       <Button variant="ghost" className={TACTIL} onClick={onRetroceder} disabled={props.ocupado}>
         {copy.botones.atras}
