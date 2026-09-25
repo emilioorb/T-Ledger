@@ -516,18 +516,21 @@ model AuditLog {
 }
 
 model authUser {
-  id              String           @id
-  name            String
-  email           String
-  emailVerified   Boolean          @default(false)
-  image           String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  authsessions    authSession[]
-  authaccounts    authAccount[]
-  bookmembers     bookMember[]
-  bookinvitations bookInvitation[]
-  auditLogs       AuditLog[]
+  id                String           @id
+  name              String
+  email             String
+  emailVerified     Boolean          @default(false)
+  image             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  // Cuándo vio la bienvenida. `null`: todavía no. Se marca al abrirla, no al terminarla, porque
+  // se muestra una sola vez aunque se cierre a mitad.
+  bienvenidaVistaEn DateTime?        @db.Timestamptz(3)
+  authsessions      authSession[]
+  authaccounts      authAccount[]
+  bookmembers       bookMember[]
+  bookinvitations   bookInvitation[]
+  auditLogs         AuditLog[]
 
   @@unique([email])
   @@map("authUser")
@@ -611,6 +614,7 @@ model book {
   auditLogs               AuditLog[]
   bankStatements          BankStatement[]
   bankLines               BankLine[]
+  onboardingSteps         OnboardingStep[]
 
   @@unique([slug])
   @@map("book")
@@ -689,4 +693,19 @@ model InvitationLink {
   @@index([accessInvitationId])
   @@index([bookInvitationId])
   @@map("enlaces_de_invitacion")
+}
+
+// Qué pasos de la bienvenida ya se hicieron en este libro y qué crearon. Es lo que hace
+// idempotente cada paso: un reintento con la respuesta perdida devuelve lo mismo en vez de
+// duplicar bancos o asientos.
+model OnboardingStep {
+  bookId    String
+  step      String
+  result    Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  book book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@id([bookId, step])
+  @@map("onboarding_steps")
 }

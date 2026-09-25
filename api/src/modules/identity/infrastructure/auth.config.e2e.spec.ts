@@ -75,6 +75,15 @@ describe('registro', { timeout: HASHEO }, () => {
     expect(membresias[0]).toMatchObject({ role: 'owner', book: { name: 'Personal' } })
     expect(librosSembrados).toContain(membresias[0]?.organizationId)
   })
+
+  it('la marca de la bienvenida no se puede mandar al registrarse', async () => {
+    const token = await enlaceALaApp('marca@tape.test')
+    const alta = auth.api.signUpEmail({
+      headers: conEnlace(token),
+      body: { name: 'Marca', email: 'marca@tape.test', password: 'una-clave-larga', bienvenidaVistaEn: new Date() } as never,
+    })
+    await expect(alta).rejects.toThrow()
+  })
 })
 
 // Entra con correo y contraseña y devuelve las cabeceras de esa sesión, como las mandaría el
