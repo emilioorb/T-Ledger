@@ -286,3 +286,50 @@ describe('saldos iniciales', () => {
     await pedir.post('/opening-balances', { date: '2026-09-25', balances: [{ accountCode: '1101', amount: '5' }] }).expect(403)
   })
 })
+
+describe('categorías', () => {
+  it('cada una con su cuenta bajo la agrupadora de su tipo', async () => {
+    const { body } = await pedir
+      .post('/categories', { categories: [{ name: 'Supermercado', kind: 'EXPENSE' }, { name: 'Casa', kind: 'EXPENSE' }, { name: 'Salario', kind: 'INCOME' }] })
+      .expect(201)
+    expect(body).toEqual([
+      { name: 'Supermercado', kind: 'EXPENSE', accountCode: '6201', categoryId: expect.any(String) },
+      { name: 'Casa', kind: 'EXPENSE', accountCode: '6202', categoryId: expect.any(String) },
+      { name: 'Salario', kind: 'INCOME', accountCode: '4201', categoryId: expect.any(String) },
+    ])
+    expect(await prisma.client.account.findFirst({ where: { code: '6200' } })).toMatchObject({ parentCode: '6000', accountClass: 'OPERATING_EXPENSE' })
+    expect(await prisma.client.account.findFirst({ where: { code: '6201' } })).toMatchObject({ parentCode: '6200', name: 'Supermercado' })
+    expect(await prisma.client.category.findFirst({ where: { name: 'Salario' } })).toMatchObject({ kind: 'INCOME', accountCode: '4201' })
+  })
+
+  it('un nombre repetido en el pedido, sin importar mayúsculas ni espacios, da 409 y no crea nada', async () => {
+    await pedir.post('/categories', { categories: [{ name: 'Casa', kind: 'EXPENSE' }, { name: ' casa ', kind: 'EXPENSE' }] }).expect(409)
+    expect(await prisma.client.category.count()).toBe(0)
+  })
+
+  it('un nombre que ya existe en el libro da 409', async () => {
+    await prisma.withTransaction(() =>
+      prisma.client.category.create({ data: { id: 'c1', bookId: LIBRO_DE_PRUEBA.bookId, name: 'Casa', kind: 'EXPENSE', sortOrder: 0, active: true } }),
+    )
+    await pedir.post('/categories', { categories: [{ name: 'Casa', kind: 'EXPENSE' }] }).expect(409)
+  })
+
+  it('si 6200 ya existe y acepta asientos, 422', async () => {
+    await prisma.withTransaction(() =>
+      prisma.client.account.create({ data: { bookId: LIBRO_DE_PRUEBA.bookId, code: '6200', name: 'Mía', accountClass: 'OPERATING_EXPENSE', parentCode: '6000' } }),
+    )
+    await pedir.post('/categories', { categories: [{ name: 'Casa', kind: 'EXPENSE' }] }).expect(422)
+  })
+
+  it('repetido devuelve lo mismo', async () => {
+    const pedido = { categories: [{ name: 'Casa', kind: 'EXPENSE' }] }
+    const primera = await pedir.post('/categories', pedido).expect(201)
+    const segunda = await pedir.post('/categories', pedido).expect(201)
+    expect(segunda.body).toEqual(primera.body)
+  })
+
+  it('un editor recibe 403', async () => {
+    comoEditor()
+    await pedir.post('/categories', { categories: [{ name: 'Casa', kind: 'EXPENSE' }] }).expect(403)
+  })
+})
