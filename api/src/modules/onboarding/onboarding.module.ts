@@ -3,6 +3,7 @@ import { PrismaModule } from '../../shared/prisma/prisma.module.js'
 import { AccountingModule } from '../accounting/accounting.module.js'
 import { BankingModule } from '../banking/banking.module.js'
 import { BudgetModule } from '../budget/budget.module.js'
+import { CargarSaldosUseCase } from './application/cargar-saldos.use-case.js'
 import { CrearBancosUseCase } from './application/crear-bancos.use-case.js'
 import { EstadoDeBienvenidaUseCase } from './application/estado-de-bienvenida.use-case.js'
 import { PasoIdempotente } from './application/paso-idempotente.js'
@@ -20,6 +21,7 @@ import { PrismaOnboardingStepRepository } from './infrastructure/prisma-onboardi
     PasoIdempotente,
     EstadoDeBienvenidaUseCase,
     CrearBancosUseCase,
+    CargarSaldosUseCase,
   ],
 })
 export class OnboardingModule {}
