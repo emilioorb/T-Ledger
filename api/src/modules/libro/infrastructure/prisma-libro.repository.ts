@@ -30,6 +30,7 @@ export class PrismaLibroRepository implements LibroRepository {
       budgetIncome: () => cliente.budgetIncome.deleteMany({}),
       bankLine: () => cliente.bankLine.deleteMany({}),
       bankStatement: () => cliente.bankStatement.deleteMany({}),
+      onboardingStep: () => cliente.onboardingStep.deleteMany({}),
     }
   }
 

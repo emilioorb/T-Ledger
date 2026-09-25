@@ -189,6 +189,12 @@ export const crearAuth = (
     // es del dominio.
     user: {
       modelName: 'authUser',
+      // Declarada para que la CLI de Better Auth no la borre al regenerar el esquema (ADR-001).
+      // `input: false`: ni el alta ni `/update-user` la escriben. Si se pudiera mandar `null`,
+      // la bienvenida volvería a abrirse y sus pasos se repetirían.
+      additionalFields: {
+        bienvenidaVistaEn: { type: 'date', required: false, input: false },
+      },
       // Darse de baja se pide desde la pantalla de cuenta y hay que habilitarlo acá: Better
       // Auth lo trae apagado, que es lo correcto para algo irreversible.
       deleteUser: {

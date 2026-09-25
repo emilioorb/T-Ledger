@@ -28,6 +28,8 @@ export const SE_BORRA = [
   'budgetIncome',
   'bankLine',
   'bankStatement',
+  // El progreso de la bienvenida nombra asientos que el vaciado se lleva: se va con ellos.
+  'onboardingStep',
 ] as const
 
 export const SE_CONSERVA = [
