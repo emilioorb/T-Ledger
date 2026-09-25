@@ -43,6 +43,7 @@ export const copy = {
     nimbo: 'Pasame el saldo de hoy, tal cual lo dice el banco. Si una cuenta está sobregirada, ponelo en negativo.',
     caja: { CRC: 'Efectivo en colones', USD: 'Efectivo en dólares' },
     sinBancos: 'Sin bancos creados, solo se carga el efectivo.',
+    cajaNegativa: 'El efectivo no puede quedar en negativo.',
   },
   categorias: {
     title: 'Categorías',

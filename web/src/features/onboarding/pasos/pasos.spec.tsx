@@ -53,6 +53,15 @@ describe('Saldos', () => {
       balances: [{ accountCode: '1121', amount: '-150000' }],
     })
   })
+
+  it('el efectivo no se puede cargar en negativo', () => {
+    const onListo = vi.fn()
+    render(<Saldos hecho={undefined} onListo={onListo} monedas={['CRC']} bancos={[]} />)
+    fireEvent.change(screen.getByLabelText(copy.saldos.caja.CRC), { target: { value: '-1000' } })
+    enviar()
+    expect(onListo).not.toHaveBeenCalled()
+    expect(screen.getByText(copy.saldos.cajaNegativa)).toBeVisible()
+  })
 })
 
 describe('Categorias', () => {

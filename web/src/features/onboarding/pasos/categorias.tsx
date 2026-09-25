@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { copy } from '../copy'
 import type { CategoriaCreada } from '../types'
+import { alternar } from './alternar'
 import { FORM_ID } from './intro'
 
 type Tipo = 'EXPENSE' | 'INCOME'
@@ -29,13 +30,7 @@ export const Categorias = ({ hecho, onListo }: Props) => {
 
   if (hecho) return <p className="text-sm text-muted-foreground">{copy.cierre.resumen.categorias(hecho.length)}</p>
 
-  const alternar = (name: string) =>
-    setMarcadas((actuales) => {
-      const siguientes = new Set(actuales)
-      if (siguientes.has(name)) siguientes.delete(name)
-      else siguientes.add(name)
-      return siguientes
-    })
+  const marcar = (name: string) => setMarcadas((actuales) => alternar(actuales, name))
 
   const agregar = () => {
     const name = propia.trim()
@@ -61,7 +56,7 @@ export const Categorias = ({ hecho, onListo }: Props) => {
               .filter((c) => c.kind === kind)
               .map(({ name }) => (
                 <Label key={name} className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm font-normal">
-                  <Checkbox aria-label={name} checked={marcadas.has(name)} onCheckedChange={() => alternar(name)} />
+                  <Checkbox aria-label={name} checked={marcadas.has(name)} onCheckedChange={() => marcar(name)} />
                   {name}
                 </Label>
               ))}

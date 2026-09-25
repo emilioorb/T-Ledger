@@ -23,11 +23,21 @@ const hoyLocal = () => {
   return `${ahora.getFullYear()}-${dos(ahora.getMonth() + 1)}-${dos(ahora.getDate())}`
 }
 
+const omitir = (errores: Record<string, string>, accountCode: string): Record<string, string> => {
+  const copia = { ...errores }
+  delete copia[accountCode]
+  return copia
+}
+
 export const Saldos = ({ hecho, onListo, monedas, bancos }: Props) => {
   const [montos, setMontos] = useState<Record<string, string>>({})
+  const [errores, setErrores] = useState<Record<string, string>>({})
 
   if (hecho) return <p className="text-sm text-muted-foreground">{copy.hecho}</p>
 
+  // admiteNegativo decide las dos cosas a la vez, para que no se desalineen: el teclado que se
+  // ofrece (inputMode, más abajo) y si el signo «-» se acepta al enviar (en enviar()). El
+  // efectivo nunca es negativo; un banco sí, porque puede estar sobregirado.
   const filas = [
     ...monedas.map((currency) => ({ accountCode: CAJA[currency], label: copy.saldos.caja[currency], currency, admiteNegativo: false })),
     ...bancos
@@ -35,31 +45,59 @@ export const Saldos = ({ hecho, onListo, monedas, bancos }: Props) => {
       .map((banco) => ({ accountCode: banco.accountCode, label: banco.name, currency: banco.currency, admiteNegativo: true })),
   ]
 
+  const cambiarMonto = (accountCode: string, valor: string) => {
+    setMontos({ ...montos, [accountCode]: valor })
+    setErrores((actuales) => (accountCode in actuales ? omitir(actuales, accountCode) : actuales))
+  }
+
   const enviar = (evento: FormEvent) => {
     evento.preventDefault()
-    const balances = filas.flatMap(({ accountCode, currency }) => {
+    const siguientesErrores: Record<string, string> = {}
+    const balances: { accountCode: string; amount: string }[] = []
+    for (const { accountCode, currency, admiteNegativo } of filas) {
       const texto = montos[accountCode]?.trim()
-      if (!texto) return []
-      return [{ accountCode, amount: parseMoneyInput(texto, currency).minorUnits }]
-    })
+      if (!texto) continue
+      const { minorUnits } = parseMoneyInput(texto, currency)
+      // El mismo admiteNegativo del inputMode: si no lo admite, el pedido no se arma con ese
+      // monto y el paso no llega a mandarlo.
+      if (!admiteNegativo && minorUnits.startsWith('-')) {
+        siguientesErrores[accountCode] = copy.saldos.cajaNegativa
+        continue
+      }
+      balances.push({ accountCode, amount: minorUnits })
+    }
+    if (Object.keys(siguientesErrores).length > 0) {
+      setErrores(siguientesErrores)
+      return
+    }
     onListo(balances.length > 0 ? { date: hoyLocal(), balances } : null)
   }
 
   return (
     <form id={FORM_ID} onSubmit={enviar} className="space-y-3">
       {bancos.length === 0 ? <p className="text-sm text-muted-foreground">{copy.saldos.sinBancos}</p> : null}
-      {filas.map(({ accountCode, label, admiteNegativo }) => (
-        <div key={accountCode} className="grid gap-1">
-          <Label htmlFor={`saldo-${accountCode}`}>{label}</Label>
-          <Input
-            id={`saldo-${accountCode}`}
-            inputMode={admiteNegativo ? 'text' : 'decimal'}
-            className="num"
-            value={montos[accountCode] ?? ''}
-            onChange={(evento) => setMontos({ ...montos, [accountCode]: evento.target.value })}
-          />
-        </div>
-      ))}
+      {filas.map(({ accountCode, label, admiteNegativo }) => {
+        const error = errores[accountCode]
+        return (
+          <div key={accountCode} className="grid gap-1">
+            <Label htmlFor={`saldo-${accountCode}`}>{label}</Label>
+            <Input
+              id={`saldo-${accountCode}`}
+              inputMode={admiteNegativo ? 'text' : 'decimal'}
+              className="num"
+              value={montos[accountCode] ?? ''}
+              aria-invalid={error !== undefined}
+              aria-describedby={error ? `error-${accountCode}` : undefined}
+              onChange={(evento) => cambiarMonto(accountCode, evento.target.value)}
+            />
+            {error ? (
+              <p id={`error-${accountCode}`} role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+          </div>
+        )
+      })}
     </form>
   )
 }
