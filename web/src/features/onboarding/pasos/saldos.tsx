@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { parseMoneyInput } from '@/lib/money'
 import { copy } from '../copy'
 import type { BancoCreado, Moneda, SaldosCargados } from '../types'
 import { FORM_ID } from './intro'
+import { Monto } from './monto'
 
 interface Props {
   hecho: SaldosCargados | undefined
@@ -85,22 +85,22 @@ export const Saldos = ({ hecho, onListo, monedas, bancos }: Props) => {
   return (
     <form id={FORM_ID} onSubmit={enviar} className="space-y-3">
       {bancos.length === 0 ? <p className="text-sm text-muted-foreground">{copy.saldos.sinBancos}</p> : null}
-      {filas.map(({ accountCode, label, admiteNegativo }) => {
+      {filas.map(({ accountCode, label, currency, admiteNegativo }) => {
         const error = errores[accountCode]
         return (
-          <div key={accountCode} className="grid gap-1">
+          <div key={accountCode} className="grid gap-1 sm:grid-cols-2 sm:items-center">
             <Label htmlFor={`saldo-${accountCode}`}>{label}</Label>
-            <Input
+            <Monto
               id={`saldo-${accountCode}`}
+              moneda={currency}
               inputMode={admiteNegativo ? 'text' : 'decimal'}
-              className="num"
               value={montos[accountCode] ?? ''}
               aria-invalid={error !== undefined}
               aria-describedby={error ? `error-${accountCode}` : undefined}
               onChange={(evento) => cambiarMonto(accountCode, evento.target.value)}
             />
             {error ? (
-              <p id={`error-${accountCode}`} role="alert" className="text-sm text-destructive">
+              <p id={`error-${accountCode}`} role="alert" className="text-sm text-destructive sm:col-span-2">
                 {error}
               </p>
             ) : null}

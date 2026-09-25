@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { parseMoneyInput } from '@/lib/money'
 import { copy } from '../copy'
 import type { IngresoDeclarado } from '../types'
 import { FORM_ID } from './intro'
+import { Monto } from './monto'
 
 interface Props {
   hecho: IngresoDeclarado | undefined
@@ -34,12 +34,12 @@ export const Ingreso = ({ hecho, onListo }: Props) => {
   }
 
   return (
-    <form id={FORM_ID} onSubmit={enviar} className="grid gap-1">
+    <form id={FORM_ID} onSubmit={enviar} className="grid gap-1 sm:grid-cols-2 sm:items-center">
       <Label htmlFor="ingreso-inicial">{copy.ingreso.label}</Label>
-      <Input
+      <Monto
         id="ingreso-inicial"
+        moneda="CRC"
         inputMode="decimal"
-        className="num"
         value={monto}
         aria-invalid={error !== null}
         aria-describedby={error ? 'error-ingreso-inicial' : undefined}
@@ -49,7 +49,7 @@ export const Ingreso = ({ hecho, onListo }: Props) => {
         }}
       />
       {error ? (
-        <p id="error-ingreso-inicial" role="alert" className="text-sm text-destructive">
+        <p id="error-ingreso-inicial" role="alert" className="text-sm text-destructive sm:col-span-2">
           {error}
         </p>
       ) : null}

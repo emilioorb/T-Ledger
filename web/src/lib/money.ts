@@ -6,7 +6,7 @@ export interface MoneyDto {
 }
 
 const MINOR_UNIT_EXPONENT: Record<CurrencyCode, number> = { CRC: 2, USD: 2 }
-const SYMBOL: Record<CurrencyCode, string> = { CRC: '₡', USD: '$' }
+export const SYMBOL: Record<CurrencyCode, string> = { CRC: '₡', USD: '$' }
 
 // U+202F, espacio fino sin salto: separa los miles y nunca deja que el monto se parta en
 // dos renglones. La consecuencia es de diseño, no de formato: un monto es un bloque

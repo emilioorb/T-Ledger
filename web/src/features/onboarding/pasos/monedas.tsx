@@ -10,14 +10,14 @@ interface Props {
 }
 
 export const Monedas = ({ valor, onCambio }: Props) => (
-  <RadioGroup value={valor} onValueChange={(nuevo) => onCambio(nuevo as EleccionDeMonedas)} className="gap-3">
+  <RadioGroup value={valor} onValueChange={(nuevo) => onCambio(nuevo as EleccionDeMonedas)} className="gap-0 divide-y rounded-lg border">
     {(
       [
         ['CRC', copy.monedas.soloColones],
         ['CRC+USD', copy.monedas.ambas],
       ] as const
     ).map(([clave, texto]) => (
-      <Label key={clave} className="flex items-center gap-3 rounded-lg border border-border p-3">
+      <Label key={clave} className="h-11 gap-3 px-3 font-normal">
         <RadioGroupItem value={clave} />
         {texto}
       </Label>

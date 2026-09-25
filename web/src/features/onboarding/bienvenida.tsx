@@ -11,25 +11,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog } from '@/components/ui/dialog'
 import { ApiError } from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import type { NombreDeGesto } from '@/features/shell/bloub'
 import { copy } from './copy'
+import { ENTRADA } from './entrada'
+import { Marco } from './marco'
 import { NimboDice } from './nimbo-dice'
+import { PASOS, type Paso } from './orden'
+import { Pie, type Destino } from './pie'
 import { Bancos } from './pasos/bancos'
 import { Categorias } from './pasos/categorias'
 import { Cierre } from './pasos/cierre'
-import { FORM_ID } from './pasos/intro'
 import { Ingreso } from './pasos/ingreso'
 import { Monedas, type EleccionDeMonedas } from './pasos/monedas'
 import { Saldos } from './pasos/saldos'
 import type { BancoCreado, CategoriaCreada, IngresoDeclarado, Moneda, OnboardingStatus, SaldosCargados } from './types'
 import { useEmpezarBienvenida, useOnboardingStatus, usePasoDeBienvenida } from './use-onboarding'
-
-const PASOS = ['intro', 'monedas', 'bancos', 'saldos', 'categorias', 'ingreso', 'cierre'] as const
-type Paso = (typeof PASOS)[number]
 
 const GESTO: Record<Paso, NombreDeGesto> = {
   intro: 'contento',
@@ -130,7 +129,7 @@ export default function Bienvenida() {
       actual ? { ...actual, pending: false } : actual,
     )
   }
-  const ir = (to: '/guia' | '/presupuesto/modelos') => {
+  const ir = (to: Destino) => {
     cerrar()
     void navegar({ to })
   }
@@ -143,92 +142,65 @@ export default function Bienvenida() {
           if (!abrir) setConfirmarCierre(true)
         }}
       >
-        <DialogContent
-          aria-describedby={`dice-${paso}`}
-          className="flex flex-col sm:max-w-xl"
+        <Marco
+          actual={indice + 1}
+          total={PASOS.length}
+          titulo={copy[paso].title}
+          tituloRef={titulo}
+          describedBy={`dice-${paso}`}
+          onFuera={() => setConfirmarCierre(true)}
         >
-          <DialogHeader>
-            <p className="text-xs text-muted-foreground">{copy.pasoDe(indice + 1, PASOS.length)}</p>
-            <DialogTitle ref={titulo} tabIndex={-1} className="outline-none">
-              {copy[paso].title}
-            </DialogTitle>
-          </DialogHeader>
-
-          <NimboDice gesto={GESTO[paso]} id={`dice-${paso}`}>
-            {copy[paso].nimbo}
-          </NimboDice>
-
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {paso === 'monedas' ? <Monedas valor={monedas} onCambio={setMonedas} /> : null}
-            {paso === 'bancos' ? (
-              <Bancos hecho={hechos.bancos} monedas={listaDeMonedas} onListo={(p) => void mandar(bancos, p, (r) => setHechos({ ...hechos, bancos: r }))} />
-            ) : null}
-            {paso === 'saldos' ? (
-              <Saldos
-                hecho={hechos.saldos}
-                monedas={listaDeMonedas}
-                bancos={hechos.bancos ?? []}
-                onListo={(p) => void mandar(saldos, p, (r) => setHechos({ ...hechos, saldos: r }))}
-              />
-            ) : null}
-            {paso === 'categorias' ? (
-              <Categorias hecho={hechos.categorias} onListo={(p) => void mandar(categorias, p, (r) => setHechos({ ...hechos, categorias: r }))} />
-            ) : null}
-            {paso === 'ingreso' ? (
-              <Ingreso hecho={hechos.ingreso} onListo={(p) => void mandar(ingreso, p, (r) => setHechos({ ...hechos, ingreso: r }))} />
-            ) : null}
-            {paso === 'cierre' ? (
-              <Cierre
-                resumen={{
-                  bancos: hechos.bancos?.length ?? 0,
-                  categorias: hechos.categorias?.length ?? 0,
-                  saldos: (hechos.saldos?.entries.length ?? 0) > 0,
-                  ingreso: hechos.ingreso !== undefined,
-                }}
-              />
-            ) : null}
-            {error ? (
-              <p role="alert" className="mt-3 text-sm text-destructive">
-                {error}
-              </p>
-            ) : null}
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+            <NimboDice gesto={GESTO[paso]} id={`dice-${paso}`}>
+              {copy[paso].nimbo}
+            </NimboDice>
+            <div key={paso} className={ENTRADA}>
+              {paso === 'monedas' ? <Monedas valor={monedas} onCambio={setMonedas} /> : null}
+              {paso === 'bancos' ? (
+                <Bancos hecho={hechos.bancos} monedas={listaDeMonedas} onListo={(p) => void mandar(bancos, p, (r) => setHechos({ ...hechos, bancos: r }))} />
+              ) : null}
+              {paso === 'saldos' ? (
+                <Saldos
+                  hecho={hechos.saldos}
+                  monedas={listaDeMonedas}
+                  bancos={hechos.bancos ?? []}
+                  onListo={(p) => void mandar(saldos, p, (r) => setHechos({ ...hechos, saldos: r }))}
+                />
+              ) : null}
+              {paso === 'categorias' ? (
+                <Categorias hecho={hechos.categorias} onListo={(p) => void mandar(categorias, p, (r) => setHechos({ ...hechos, categorias: r }))} />
+              ) : null}
+              {paso === 'ingreso' ? (
+                <Ingreso hecho={hechos.ingreso} onListo={(p) => void mandar(ingreso, p, (r) => setHechos({ ...hechos, ingreso: r }))} />
+              ) : null}
+              {paso === 'cierre' ? (
+                <Cierre
+                  resumen={{
+                    bancos: hechos.bancos?.length ?? 0,
+                    categorias: hechos.categorias?.length ?? 0,
+                    saldos: (hechos.saldos?.entries.length ?? 0) > 0,
+                    ingreso: hechos.ingreso !== undefined,
+                  }}
+                />
+              ) : null}
+              {error ? (
+                <p role="alert" className="mt-3 text-sm text-destructive">
+                  {error}
+                </p>
+              ) : null}
+            </div>
           </div>
 
-          <DialogFooter className="gap-2">
-            {paso === 'intro' ? (
-              <Button onClick={avanzar}>{copy.botones.empezar}</Button>
-            ) : paso === 'cierre' ? (
-              <>
-                <Button variant="outline" onClick={() => ir('/presupuesto/modelos')}>
-                  {copy.cierre.modelos}
-                </Button>
-                <Button onClick={() => ir('/guia')}>{copy.cierre.guia}</Button>
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" onClick={retroceder} disabled={ocupado}>
-                  {copy.botones.atras}
-                </Button>
-                {conFormulario ? (
-                  <Button variant="outline" onClick={avanzar} disabled={ocupado}>
-                    {copy.botones.saltear}
-                  </Button>
-                ) : null}
-                {/* Una `key` por paso: sin ella React reusa el mismo <button> de un paso sin formulario
-                    en el siguiente con formulario, y la acción por defecto del clic lo envía vacío. */}
-                {conFormulario ? (
-                  <Button key={paso} type="submit" form={FORM_ID} disabled={ocupado}>
-                    {error ? copy.botones.reintentar : copy.botones.siguiente}
-                  </Button>
-                ) : (
-                  <Button key={paso} onClick={avanzar}>
-                    {copy.botones.siguiente}
-                  </Button>
-                )}
-              </>
-            )}
-          </DialogFooter>
-        </DialogContent>
+          <Pie
+            paso={paso}
+            conFormulario={conFormulario}
+            ocupado={ocupado}
+            conError={error !== null}
+            onAvanzar={avanzar}
+            onRetroceder={retroceder}
+            onIr={ir}
+          />
+        </Marco>
       </Dialog>
 
       <AlertDialog open={confirmarCierre} onOpenChange={setConfirmarCierre}>

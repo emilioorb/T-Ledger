@@ -1,7 +1,9 @@
 // Tono de PRODUCT.md: directo, sin felicitar de más. Nimbo habla en segunda persona y en voseo.
 export const copy = {
   title: 'Bienvenida',
+  progreso: 'Progreso de la bienvenida',
   pasoDe: (actual: number, total: number) => `Paso ${actual} de ${total}`,
+  deTotal: (actual: number, total: number) => `${actual} de ${total}`,
   botones: {
     siguiente: 'Siguiente',
     saltear: 'Saltear',
@@ -32,7 +34,7 @@ export const copy = {
   },
   bancos: {
     title: 'Bancos',
-    nimbo: 'Cada banco que uses es una cuenta. Contra ella vas a conciliar el estado de cuenta.',
+    nimbo: 'Cada banco que uses es una cuenta, y contra ella vas a conciliar el estado de cuenta. Marcá en qué moneda tenés cada una.',
     sugeridos: ['BAC Credomatic', 'BCR', 'BN', 'Promerica', 'Davivienda', 'Banco Popular'],
     otro: 'Otro banco',
     otroPlaceholder: 'Nombre del banco',
@@ -57,6 +59,7 @@ export const copy = {
     },
     propia: 'Agregar una propia',
     propiaPlaceholder: 'Nombre',
+    tipoLabel: 'Tipo',
     tipo: { EXPENSE: 'Gasto', INCOME: 'Ingreso' },
   },
   ingreso: {
@@ -68,8 +71,8 @@ export const copy = {
     title: 'Listo',
     nimbo: 'Tu libro quedó armado. Si querés saber qué hace cada pantalla, la guía lo cuenta.',
     resumen: {
-      bancos: (n: number) => (n === 1 ? '1 banco' : `${n} bancos`),
-      categorias: (n: number) => (n === 1 ? '1 categoría' : `${n} categorías`),
+      bancos: (n: number) => (n === 1 ? 'banco' : 'bancos'),
+      categorias: (n: number) => (n === 1 ? 'categoría' : 'categorías'),
       saldos: 'Saldos de hoy cargados',
       ingreso: 'Ingreso del mes declarado',
       nada: 'No cargaste nada todavía: todo se puede hacer desde su pantalla.',
