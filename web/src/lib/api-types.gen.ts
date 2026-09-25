@@ -3274,6 +3274,13 @@ export interface paths {
                         "application/json": components["schemas"]["OnboardingIncome"];
                     };
                 };
+                /** @description El ingreso de ese mes ya estaba declarado */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
             };
         };
         delete?: never;

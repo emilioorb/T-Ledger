@@ -49,7 +49,10 @@ export const onboardingOpenApiPaths: ZodOpenApiPathsObject = {
     post: {
       summary: 'Declara el ingreso del mes',
       requestBody: json(incomeSchema),
-      responses: { 201: { description: 'Ingreso declarado', ...json(incomeResponseSchema) } },
+      responses: {
+        201: { description: 'Ingreso declarado', ...json(incomeResponseSchema) },
+        409: { description: 'El ingreso de ese mes ya estaba declarado' },
+      },
     },
   },
 }
