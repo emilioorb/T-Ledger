@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ApiError } from '@/lib/api'
+import { queryKeys } from '@/lib/query-keys'
 import type { NombreDeGesto } from '@/features/shell/bloub'
 import { copy } from './copy'
 import { NimboDice } from './nimbo-dice'
@@ -23,7 +25,7 @@ import { FORM_ID } from './pasos/intro'
 import { Ingreso } from './pasos/ingreso'
 import { Monedas, type EleccionDeMonedas } from './pasos/monedas'
 import { Saldos } from './pasos/saldos'
-import type { BancoCreado, CategoriaCreada, IngresoDeclarado, Moneda, SaldosCargados } from './types'
+import type { BancoCreado, CategoriaCreada, IngresoDeclarado, Moneda, OnboardingStatus, SaldosCargados } from './types'
 import { useEmpezarBienvenida, useOnboardingStatus, usePasoDeBienvenida } from './use-onboarding'
 
 const PASOS = ['intro', 'monedas', 'bancos', 'saldos', 'categorias', 'ingreso', 'cierre'] as const
@@ -64,6 +66,7 @@ const hechoDe = (paso: Paso, hechos: Hechos): boolean =>
 export default function Bienvenida() {
   const estado = useOnboardingStatus()
   const empezar = useEmpezarBienvenida()
+  const queryClient = useQueryClient()
   const [abierta, setAbierta] = useState(false)
   const [confirmarCierre, setConfirmarCierre] = useState(false)
   const [paso, setPaso] = useState<Paso>('intro')
@@ -71,14 +74,17 @@ export default function Bienvenida() {
   const [hechos, setHechos] = useState<Hechos>({})
   const [error, setError] = useState<string | null>(null)
   const titulo = useRef<HTMLHeadingElement>(null)
+  const yaAbrio = useRef(false)
   const navegar = useNavigate()
 
   const bookId = estado.data?.bookId ?? ''
   const { bancos, saldos, categorias, ingreso } = usePasos(bookId)
 
-  // Se abre una vez y se marca en el acto: aunque se cierre la pestaña a mitad, no vuelve.
+  // Se abre una vez y se marca en el acto, con una ref y no con `abierta`: si dependiera de ese
+  // estado, cerrar el modal (que lo vuelve a `false`) haría que el efecto lo abriera de nuevo.
   useEffect(() => {
-    if (!estado.data?.pending || abierta) return
+    if (!estado.data?.pending || yaAbrio.current) return
+    yaAbrio.current = true
     const pasos = estado.data.steps as Record<string, unknown>
     setHechos({
       bancos: pasos.banks as BancoCreado[] | undefined,
@@ -88,7 +94,7 @@ export default function Bienvenida() {
     })
     setAbierta(true)
     empezar.mutate(estado.data.bookId)
-  }, [estado.data, abierta, empezar])
+  }, [estado.data, empezar])
 
   useEffect(() => titulo.current?.focus(), [paso])
 
@@ -108,7 +114,7 @@ export default function Bienvenida() {
       guardar(await mutacion.mutateAsync(pedido))
       avanzar()
     } catch (causa) {
-      setError(causa instanceof ApiError ? causa.message : copy.botones.reintentar)
+      setError(causa instanceof ApiError ? causa.message : copy.errorDeRed)
     }
   }
 
@@ -116,7 +122,14 @@ export default function Bienvenida() {
   const ocupado = bancos.isPending || saldos.isPending || categorias.isPending || ingreso.isPending
   const conFormulario = ['bancos', 'saldos', 'categorias', 'ingreso'].includes(paso) && !hechoDe(paso, hechos)
 
-  const cerrar = () => setAbierta(false)
+  // Marca el estado como no pendiente además de cerrar: `BienvenidaSiHaceFalta` lee esa misma
+  // consulta, así que deja de montar el modal y no hay forma de que reaparezca.
+  const cerrar = () => {
+    setAbierta(false)
+    queryClient.setQueryData<OnboardingStatus>(queryKeys.onboarding.status(), (actual) =>
+      actual ? { ...actual, pending: false } : actual,
+    )
+  }
   const ir = (to: '/guia' | '/presupuesto/modelos') => {
     cerrar()
     void navegar({ to })
@@ -132,7 +145,7 @@ export default function Bienvenida() {
       >
         <DialogContent
           aria-describedby={`dice-${paso}`}
-          className="max-sm:h-svh max-sm:max-w-none max-sm:rounded-none sm:max-w-xl"
+          className="flex flex-col sm:max-w-xl"
         >
           <DialogHeader>
             <p className="text-xs text-muted-foreground">{copy.pasoDe(indice + 1, PASOS.length)}</p>

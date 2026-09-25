@@ -1,22 +1,30 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { queryKeys } from '@/lib/query-keys'
 import Bienvenida from './bienvenida'
 import { copy } from './copy'
 
-vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn() }))
+const { navegar } = vi.hoisted(() => ({ navegar: vi.fn() }))
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => navegar }))
 
 const respuesta = (cuerpo: unknown, status = 200) =>
   new Response(status === 204 ? null : JSON.stringify(cuerpo), { status, headers: { 'content-type': 'application/json' } })
 
-const montar = () =>
+const montar = () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider client={client}>
       <Bienvenida />
     </QueryClientProvider>,
   )
+  return client
+}
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  navegar.mockClear()
+})
 
 const conEstado = (estado: object, alPost: (url: string) => Promise<Response> = async () => respuesta(null, 204)) =>
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) =>
@@ -57,6 +65,40 @@ describe('Bienvenida', () => {
     await screen.findByRole('dialog')
     fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
     expect(await screen.findByText(copy.cerrar.description)).toBeInTheDocument()
+  })
+
+  it('confirmar cerrar: el diálogo no vuelve a aparecer y start se llamó una sola vez', async () => {
+    const fetch = conEstado({ pending: true, bookId: 'b1', steps: {} })
+    const client = montar()
+    await screen.findByRole('dialog')
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
+    fireEvent.click(await screen.findByRole('button', { name: copy.cerrar.confirmar }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(client.getQueryData(queryKeys.onboarding.status())).toMatchObject({ pending: false })
+    // Nada volvió a marcar la bienvenida como pendiente: aunque el componente siga montado,
+    // el efecto de apertura no se repite.
+    await waitFor(() =>
+      expect(fetch.mock.calls.filter(([url]) => String(url).includes('/onboarding/start'))).toHaveLength(1),
+    )
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('leer la guía: navega, cierra el diálogo y no vuelve a aparecer', async () => {
+    conEstado({ pending: true, bookId: 'b1', steps: {} })
+    const client = montar()
+    fireEvent.click(await screen.findByRole('button', { name: copy.botones.empezar })) // intro -> monedas
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.siguiente })) // monedas -> bancos
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // bancos -> saldos
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // saldos -> categorias
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // categorias -> ingreso
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.saltear })) // ingreso -> cierre
+
+    fireEvent.click(await screen.findByRole('button', { name: copy.cierre.guia }))
+
+    expect(navegar).toHaveBeenCalledWith({ to: '/guia' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(client.getQueryData(queryKeys.onboarding.status())).toMatchObject({ pending: false })
   })
 
   it('un error de red deja el paso con reintentar', async () => {
