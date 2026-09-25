@@ -8,6 +8,13 @@ Cada entrega abre con `## AAAA-MM-DD · vX.Y.Z` y lleva hasta tres grupos: `### 
 listas anidadas y tablas. La negrita marca **de qué** habla cada nota, para recorrer la lista
 sin leerla entera. Lo que está antes de la primera entrega, como este texto, no se muestra.
 
+## 2026-09-25 · v1.4.1
+
+### Corregido
+
+- **Declarar el ingreso sin modelo.** Ya se puede declarar el ingreso del mes antes de armar
+  el primer modelo, y el primer modelo nace activo.
+
 ## 2026-09-24 · v1.4.0
 
 ### Nuevo
