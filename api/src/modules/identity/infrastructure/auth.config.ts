@@ -13,6 +13,7 @@ import { puedeCrearLibro } from './cuantos-libros.js'
 import { ac, roles } from './roles.js'
 import { EnlacesDeInvitacion } from './enlaces-de-invitacion.js'
 import { esToken, puedeRegistrarse, SIN_INVITACION } from './registro.js'
+import { marcarSiTieneInvitacion } from './bienvenida-al-registrarse.js'
 
 // Better Auth trae su propio modelo de datos y su propio router, que no pasan por el dominio
 // hexagonal ni por el contrato Zod del resto de la app. Es el precio de no escribir a mano las
@@ -167,6 +168,10 @@ export const crearAuth = (
             // El enlace sirve una sola vez: se gasta el que se usó, y con él su invitación a la app.
             const token = tokenDelPedido(ctx)
             if (token) await enlaces.gastar(token, usuario.email)
+            // Una bienvenida de más es mejor que un registro roto: si esto falla, se sigue.
+            await marcarSiTieneInvitacion(prisma, usuario.id, usuario.email, new Date()).catch((error: unknown) =>
+              logger.warn(`No se pudo revisar la invitación al registrarse: ${error instanceof Error ? error.name : 'desconocido'}`),
+            )
             await auth.api.createOrganization({
               body: { name: 'Personal', slug: `personal-${usuario.id}`, userId: usuario.id },
             })
