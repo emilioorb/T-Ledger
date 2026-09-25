@@ -83,13 +83,16 @@ interface FormProps {
   income: MoneyDto | null
   postable: { code: string; name: string }[]
   pending: boolean
+  hasActiveModel: boolean
   onSubmit: (values: { name: string; active: boolean; buckets: BucketDraft[] }) => void
   onCancel: () => void
 }
 
-const ModelForm = ({ model, income, postable, pending, onSubmit, onCancel }: FormProps) => {
+const ModelForm = ({ model, income, postable, pending, hasActiveModel, onSubmit, onCancel }: FormProps) => {
   const [name, setName] = useState(model?.name ?? '')
-  const [active, setActive] = useState(model?.active ?? false)
+  // Un modelo nuevo en un libro sin ninguno activo nace activo: si no, la evaluación seguiría
+  // sin encontrar uno después de crearlo. Al editar manda el valor que ya tenía el modelo.
+  const [active, setActive] = useState(model?.active ?? !hasActiveModel)
   const [buckets, setBuckets] = useState<BucketDraft[]>(
     model
       ? model.buckets.map((bucket) => ({
@@ -436,6 +439,8 @@ const ModelsScreen = () => {
     }),
   )
 
+  const hasActiveModel = models.data?.some((model) => model.active) ?? false
+
   const all = accounts.data?.data ?? []
   const parents = new Set(all.map((account) => account.parentCode).filter(Boolean))
   const postable = all
@@ -473,6 +478,7 @@ const ModelsScreen = () => {
             income={income.data?.amount ?? null}
             postable={postable}
             pending={save.isPending}
+            hasActiveModel={hasActiveModel}
             onSubmit={(values) =>
               save.mutate(
                 // Al editar, la versión que se vio: si otra persona guardó antes, 409 y el aviso

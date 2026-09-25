@@ -117,6 +117,16 @@ const BudgetScreen = () => {
     )
   }
 
+  // Declarar y editar son el mismo formulario: sin ingreso todavía arranca vacío, y con uno
+  // ya declarado precarga el monto y la versión que se vio, para que guardar no lo pise a
+  // ciegas. Los tres botones que abren el diálogo —sin modelo, sin ingreso, y para editarlo—
+  // usan esta misma función.
+  const openIncomeForm = () => {
+    setIncomeDraft(income.data ? income.data.amount.minorUnits.slice(0, -2) : '')
+    setVersionVista(income.data?.version ?? null)
+    setEditingIncome(true)
+  }
+
   const incomeForm = (
     <form onSubmit={submitIncome} className="grid gap-4">
       <div className="space-y-1.5">
@@ -163,9 +173,16 @@ const BudgetScreen = () => {
           title={copy.budget.noModel.title}
           description={copy.budget.noModel.description}
           action={
-            <Button size="sm" asChild>
-              <Link to="/presupuesto/modelos">{copy.budget.noModel.action}</Link>
-            </Button>
+            // Sin modelo el ingreso no se puede evaluar contra nada, pero sí declararse: la
+            // API lo acepta igual, y no tiene sentido esperar al primer modelo para eso.
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" asChild>
+                <Link to="/presupuesto/modelos">{copy.budget.noModel.action}</Link>
+              </Button>
+              <Button size="sm" variant="secondary" onClick={openIncomeForm}>
+                {copy.budget.editIncome}
+              </Button>
+            </div>
           }
         />
       ) : evaluation.isError ? (
@@ -238,39 +255,19 @@ const BudgetScreen = () => {
               title={copy.budget.noIncome.title}
               description={copy.budget.noIncome.description}
               action={
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setVersionVista(income.data?.version ?? null)
-                    setEditingIncome(true)
-                  }}
-                >
+                <Button size="sm" onClick={openIncomeForm}>
                   {copy.budget.noIncome.action}
                 </Button>
               }
             />
           ) : null}
 
-          <FormDialog
-            icon={Wallet}
-            open={editingIncome}
-            title={copy.budget.editIncome}
-            description={copy.budget.incomeHint}
-            onOpenChange={setEditingIncome}
-          >
-            {incomeForm}
-          </FormDialog>
-
           {evaluation.data.incomeDeclared && !editingIncome ? (
             <Button
               variant="ghost"
               size="sm"
               className="text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                setIncomeDraft(income.data ? income.data.amount.minorUnits.slice(0, -2) : '')
-                setVersionVista(income.data?.version ?? null)
-                setEditingIncome(true)
-              }}
+              onClick={openIncomeForm}
             >
               {copy.budget.editIncome}
             </Button>
@@ -285,6 +282,18 @@ const BudgetScreen = () => {
           </div>
         </div>
       )}
+
+      {/* Fuera de las ramas de arriba: se abre tanto sin modelo como con la evaluación
+          completa, y en ambos casos es el mismo formulario. */}
+      <FormDialog
+        icon={Wallet}
+        open={editingIncome}
+        title={copy.budget.editIncome}
+        description={copy.budget.incomeHint}
+        onOpenChange={setEditingIncome}
+      >
+        {incomeForm}
+      </FormDialog>
     </section>
   )
 }
