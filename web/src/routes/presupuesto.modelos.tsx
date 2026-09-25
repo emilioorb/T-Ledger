@@ -425,9 +425,15 @@ const ModelCard = ({ model, onEdit }: { model: BudgetModel; onEdit: () => void }
 const ModelsScreen = () => {
   const [editing, setEditing] = useState<{ model?: BudgetModel } | null>(null)
 
-  usePrimaryAction(copy.models.new, () => setEditing({}))
-
   const models = useBudgetModels()
+
+  // Mientras la lista todavía no llegó no se sabe si el libro ya tiene un modelo activo: el
+  // atajo se queda quieto en vez de abrir un formulario que podría nacer activo por error.
+  usePrimaryAction(copy.models.new, () => {
+    if (models.data === undefined) return
+    setEditing({})
+  })
+
   const accounts = useAccounts()
   const income = useMonthlyIncome(today().slice(0, 7))
   const save = useSaveBudgetModel()
@@ -439,7 +445,9 @@ const ModelsScreen = () => {
     }),
   )
 
-  const hasActiveModel = models.data?.some((model) => model.active) ?? false
+  // Sin la lista todavía no se sabe si el libro tiene un modelo activo: se asume que sí, para
+  // que el formulario nunca nazca activo por error y le apague el que ya estaba a alguien.
+  const hasActiveModel = models.data ? models.data.some((model) => model.active) : true
 
   const all = accounts.data?.data ?? []
   const parents = new Set(all.map((account) => account.parentCode).filter(Boolean))
@@ -460,7 +468,7 @@ const ModelsScreen = () => {
           <h1 className="text-xl font-semibold tracking-tight">{copy.models.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{copy.models.description}</p>
         </div>
-        <Button size="sm" onClick={() => setEditing({})}>
+        <Button size="sm" disabled={models.data === undefined} onClick={() => setEditing({})}>
           <Plus className="size-4" aria-hidden="true" />
           {copy.models.new}
         </Button>
