@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
 import {
   Outlet,
@@ -16,6 +16,7 @@ import { auth } from '@/features/identity/auth-client'
 import { useAsegurarLibroActivo } from '@/features/identity/libro-activo'
 import { recuerdoDeSesion } from '@/features/identity/recuerdo-de-sesion'
 import { MarcoPublico } from '@/features/identity/marco-publico'
+import { useOnboardingStatus } from '@/features/onboarding/use-onboarding'
 import { AvisoDeVersion } from '@/features/pwa/aviso-de-version'
 import { AvisoSinConexion } from '@/features/pwa/aviso-sin-conexion'
 import { ErrorDeCarga } from '@/features/pwa/error-de-carga'
@@ -35,6 +36,19 @@ import { cn } from '@/lib/utils'
 
 const CONTENT_ID = 'contenido'
 const RUTA_DEL_TABLERO = '/tablero'
+
+// El modal pesa y lo ve una persona una sola vez: se descarga solo si hace falta.
+const Bienvenida = lazy(() => import('@/features/onboarding/bienvenida'))
+
+const BienvenidaSiHaceFalta = () => {
+  const { data } = useOnboardingStatus()
+  if (!data?.pending) return null
+  return (
+    <Suspense fallback={null}>
+      <Bienvenida />
+    </Suspense>
+  )
+}
 
 const Shell = () => {
   // Del lado privado y no en la raíz: sin sesión no hay libro que elegir.
@@ -133,6 +147,7 @@ const Shell = () => {
       </SidebarInset>
 
       <ShortcutsSheet open={helpOpen} onOpenChange={setHelpOpen} />
+      <BienvenidaSiHaceFalta />
     </SidebarProvider>
   )
 }
