@@ -18,16 +18,15 @@ interface Props {
 // El contenido del diálogo es un fondo transparente que ocupa la pantalla, y adentro va el
 // panel. En el teléfono el panel crece hasta llenarla (`flex-1`); en el escritorio el fondo pasa
 // a grilla, `flex-1` deja de valer y el panel queda centrado con un alto que no depende del paso:
-// cuadrado sobre el ancho máximo, 576 px. Así, y no con utilidades nuevas
-// por ancho, porque el CSS está en el límite del presupuesto y cada regla nueva lo pasa.
+// cuadrado sobre el ancho máximo, 576 px. En el teléfono va de borde a borde, sin esquinas.
 //
-// El tope va en línea por lo mismo: sin él, en una pantalla baja y ancha (un teléfono
-// acostado, o el escritorio con zoom) el cuadrado medía más que la pantalla y el pie quedaba
-// afuera. Con el tope el panel nunca pasa del alto visible y el que se desplaza es el cuerpo.
+// El tope va en línea porque no hay una utilidad generada que lo diga: sin él, en una pantalla
+// baja y ancha (un teléfono acostado, o el escritorio con zoom) el cuadrado medía más que la
+// pantalla y el pie quedaba afuera. Con el tope el panel nunca pasa del alto visible y el que se desplaza es el cuerpo.
 // En el teléfono no cambia nada: el panel ya mide exactamente eso.
 const TOPE = { maxHeight: '100dvh' }
 const FONDO = 'flex w-full max-w-full min-h-dvh flex-col bg-transparent p-0 sm:grid sm:items-center'
-const PANEL = 'mx-auto flex aspect-square w-full flex-1 flex-col overflow-hidden rounded-xl bg-popover ring-1 ring-foreground/10 sm:max-w-xl'
+const PANEL = 'mx-auto flex aspect-square w-full flex-1 flex-col overflow-hidden bg-popover ring-1 ring-foreground/10 sm:max-w-xl sm:rounded-xl'
 
 export const Marco = ({ actual, total, titulo, tituloRef, describedBy, onFuera, children }: Props) => (
   <DialogContent

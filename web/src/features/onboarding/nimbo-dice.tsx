@@ -19,10 +19,10 @@ interface Props {
 // pero un `div` evita depender de ese detalle para no anidar un `<p>` dentro de otro.
 export const NimboDice = ({ gesto, id, children }: Props) => (
   <div className="flex items-start gap-3">
-    <div aria-hidden="true" className="w-10 shrink-0">
+    <div aria-hidden="true" className="w-10 shrink-0 sm:w-14">
       <Bloub gesto={gesto} className="h-auto w-full" />
     </div>
-    <div key={id} id={id} className={cn('rounded-lg bg-secondary px-3 py-2 text-sm text-pretty text-muted-foreground', ENTRADA)}>
+    <div key={id} id={id} className={cn('rounded-lg bg-secondary px-3 py-2 text-sm text-pretty text-text-secondary', ENTRADA)}>
       <TextoMarkdown enLinea>{children}</TextoMarkdown>
     </div>
   </div>
