@@ -72,6 +72,26 @@ describe('Bienvenida', () => {
     expect(siguiente).not.toHaveAttribute('type', 'submit')
   })
 
+  it('de un paso con formulario al siguiente, el envío es otro botón y no se manda nada solo', async () => {
+    const fetch = conEstado({ pending: true, bookId: 'b1', steps: {} }, async (url) =>
+      url.includes('/banks')
+        ? respuesta([{ name: 'BN colones', currency: 'CRC', accountCode: '1121', bankAccountId: 'x1' }], 201)
+        : respuesta(null, 204),
+    )
+    montar()
+    fireEvent.click(await screen.findByRole('button', { name: copy.botones.empezar }))
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.siguiente })) // monedas -> bancos
+    fireEvent.click(screen.getByRole('checkbox', { name: 'BN · Colones' }))
+    const enviarBancos = screen.getByRole('button', { name: copy.botones.siguiente })
+    fireEvent.click(enviarBancos)
+
+    expect(await screen.findByRole('heading', { name: copy.saldos.title })).toBeInTheDocument()
+    // Con la misma `key` React reusaría el <button> de Bancos como el envío de Saldos.
+    expect(enviarBancos.isConnected).toBe(false)
+    expect(screen.getByRole('button', { name: copy.botones.siguiente })).toHaveAttribute('type', 'submit')
+    expect(fetch.mock.calls.filter(([url]) => String(url).includes('/opening-balances'))).toHaveLength(0)
+  })
+
   it('el progreso dice en qué paso está, también al lector de pantalla', async () => {
     conEstado({ pending: true, bookId: 'b1', steps: {} })
     montar()
