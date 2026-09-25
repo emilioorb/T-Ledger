@@ -74,4 +74,6 @@ export const queryKeys = {
     cashFlow: (months: number, currency: string) =>
       ['projection', 'cash-flow', months, currency] as const,
   },
+
+  onboarding: { status: () => ['onboarding', 'status'] as const },
 }
