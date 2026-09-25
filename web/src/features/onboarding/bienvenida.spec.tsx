@@ -59,6 +59,19 @@ describe('Bienvenida', () => {
     expect(screen.getByRole('heading', { name: copy.saldos.title })).toBeInTheDocument()
   })
 
+  it('«Siguiente» en Monedas deja Bancos en pantalla', async () => {
+    conEstado({ pending: true, bookId: 'b1', steps: {} })
+    montar()
+    fireEvent.click(await screen.findByRole('button', { name: copy.botones.empezar }))
+    const siguiente = screen.getByRole('button', { name: copy.botones.siguiente })
+    fireEvent.click(siguiente)
+    expect(screen.getByRole('heading', { name: copy.bancos.title })).toBeInTheDocument()
+    // En el navegador React re-renderiza antes de la acción por defecto del mismo clic: si el
+    // botón tocado pasa a ser el envío de Bancos, manda el formulario vacío y saltea el paso.
+    // jsdom corre esa acción antes del re-render, así que se comprueba que no sea el mismo nodo.
+    expect(siguiente).not.toHaveAttribute('type', 'submit')
+  })
+
   it('cerrar pide confirmación', async () => {
     conEstado({ pending: true, bookId: 'b1', steps: {} })
     montar()

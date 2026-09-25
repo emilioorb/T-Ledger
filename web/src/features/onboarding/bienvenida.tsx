@@ -214,12 +214,16 @@ export default function Bienvenida() {
                     {copy.botones.saltear}
                   </Button>
                 ) : null}
+                {/* Una `key` por paso: sin ella React reusa el mismo <button> de un paso sin formulario
+                    en el siguiente con formulario, y la acción por defecto del clic lo envía vacío. */}
                 {conFormulario ? (
-                  <Button type="submit" form={FORM_ID} disabled={ocupado}>
+                  <Button key={paso} type="submit" form={FORM_ID} disabled={ocupado}>
                     {error ? copy.botones.reintentar : copy.botones.siguiente}
                   </Button>
                 ) : (
-                  <Button onClick={avanzar}>{copy.botones.siguiente}</Button>
+                  <Button key={paso} onClick={avanzar}>
+                    {copy.botones.siguiente}
+                  </Button>
                 )}
               </>
             )}
