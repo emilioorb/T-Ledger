@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { isoDate } from '../../../shared/http/date.schema.js'
+import { withinRange } from '../../../shared/http/money.schema.js'
 import { nameText } from '../../../shared/http/text.schema.js'
 import { CURRENCIES } from '../../../shared/kernel/currency.js'
 
@@ -21,7 +22,13 @@ export const bancoCreadoSchema = z
 
 export type BanksInput = z.infer<typeof banksSchema>
 
-const montoConSigno = z.string().regex(/^-?\d{1,15}$/, { error: 'El monto debe ser un entero en unidades mínimas' })
+// Quince dígitos son el tope del formato; el tope real es `MAX_MINOR_UNITS`, el mismo que
+// `moneySchema` — este monto todavía no pasa por ahí porque el caso de uso arma la línea a
+// mano, así que el refine se repite acá en vez de perder el chequeo.
+const montoConSigno = z
+  .string()
+  .regex(/^-?\d{1,15}$/, { error: 'El monto debe ser un entero en unidades mínimas' })
+  .refine(withinRange, { error: 'El monto supera el máximo que el sistema puede sumar' })
 
 export const openingBalancesSchema = z
   .object({
