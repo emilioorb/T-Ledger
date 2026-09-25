@@ -6,6 +6,7 @@ import { BudgetModule } from '../budget/budget.module.js'
 import { CargarSaldosUseCase } from './application/cargar-saldos.use-case.js'
 import { CrearBancosUseCase } from './application/crear-bancos.use-case.js'
 import { CrearCategoriasUseCase } from './application/crear-categorias.use-case.js'
+import { DeclararIngresoInicialUseCase } from './application/declarar-ingreso-inicial.use-case.js'
 import { EstadoDeBienvenidaUseCase } from './application/estado-de-bienvenida.use-case.js'
 import { PasoIdempotente } from './application/paso-idempotente.js'
 import { ONBOARDING_STEP_REPOSITORY } from './domain/onboarding-step-repository.port.js'
@@ -24,6 +25,7 @@ import { PrismaOnboardingStepRepository } from './infrastructure/prisma-onboardi
     CrearBancosUseCase,
     CargarSaldosUseCase,
     CrearCategoriasUseCase,
+    DeclararIngresoInicialUseCase,
   ],
 })
 export class OnboardingModule {}

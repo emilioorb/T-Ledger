@@ -4,6 +4,7 @@ import { Permiso } from '../../identity/infrastructure/permiso.guard.js'
 import { CargarSaldosUseCase, type SaldosCargados } from '../application/cargar-saldos.use-case.js'
 import { CrearBancosUseCase, type BancoCreado } from '../application/crear-bancos.use-case.js'
 import { CrearCategoriasUseCase, type CategoriaCreada } from '../application/crear-categorias.use-case.js'
+import { DeclararIngresoInicialUseCase } from '../application/declarar-ingreso-inicial.use-case.js'
 import {
   EstadoDeBienvenidaUseCase,
   type EstadoDeBienvenida,
@@ -11,9 +12,11 @@ import {
 import {
   banksSchema,
   categoriesSchema,
+  incomeSchema,
   openingBalancesSchema,
   type BanksInput,
   type CategoriesInput,
+  type IncomeInput,
   type OpeningBalancesInput,
 } from './onboarding.schemas.js'
 
@@ -24,6 +27,7 @@ export class OnboardingController {
     private readonly crearBancos: CrearBancosUseCase,
     private readonly cargarSaldos: CargarSaldosUseCase,
     private readonly crearCategorias: CrearCategoriasUseCase,
+    private readonly declararIngreso: DeclararIngresoInicialUseCase,
   ) {}
 
   @Get()
@@ -57,5 +61,11 @@ export class OnboardingController {
   @Post('categories')
   categories(@Body(new ZodValidationPipe(categoriesSchema)) input: CategoriesInput): Promise<CategoriaCreada[]> {
     return this.crearCategorias.execute(input)
+  }
+
+  @Permiso('bienvenida', 'write')
+  @Post('income')
+  income(@Body(new ZodValidationPipe(incomeSchema)) input: IncomeInput): Promise<IncomeInput> {
+    return this.declararIngreso.execute(input)
   }
 }

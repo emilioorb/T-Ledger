@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { isoDate } from '../../../shared/http/date.schema.js'
-import { withinRange } from '../../../shared/http/money.schema.js'
+import { isoDate, periodParam } from '../../../shared/http/date.schema.js'
+import { moneySchema, nonNegativeMoneySchema, withinRange } from '../../../shared/http/money.schema.js'
 import { nameText } from '../../../shared/http/text.schema.js'
 import { CURRENCIES } from '../../../shared/kernel/currency.js'
 
@@ -57,3 +57,13 @@ export const categoriaCreadaSchema = z
   .meta({ id: 'OnboardingCategory', title: 'OnboardingCategory' })
 
 export type CategoriesInput = z.infer<typeof categoriesSchema>
+
+export const incomeSchema = z
+  .object({ month: periodParam, amount: nonNegativeMoneySchema })
+  .meta({ id: 'OnboardingIncomeInput', title: 'OnboardingIncomeInput' })
+
+export const incomeResponseSchema = z
+  .object({ month: z.string(), amount: moneySchema })
+  .meta({ id: 'OnboardingIncome', title: 'OnboardingIncome' })
+
+export type IncomeInput = z.infer<typeof incomeSchema>
