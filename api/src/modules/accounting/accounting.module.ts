@@ -111,6 +111,8 @@ import { ReportsController } from './infrastructure/reports.controller.js'
     CreateMovementUseCase,
     CreateJournalEntryUseCase,
     VoidMovementUseCase,
+    SaveAccountUseCase,
+    ManageCategoriesUseCase,
   ],
 })
 export class AccountingModule {}
