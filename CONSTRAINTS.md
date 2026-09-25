@@ -3,7 +3,7 @@
 La vara de T-Ledger: qué tiene que cumplir un cambio para entregarse, con el comando que lo
 decide. Si un número no tiene comando al lado, es un deseo y no una regla.
 
-Última revisión: 2026-09-23, Emilio Rodríguez.
+Última revisión: 2026-09-25, Emilio Rodríguez.
 
 ## Piso (siempre bloquea)
 
@@ -31,7 +31,7 @@ también bloquea: se sacan los `|| echo AVISO` de `package.json`.
 | Secretos | Ninguno en lo sin commitear ni en lo que va a subir | El repo es público: un secreto que llega a GitHub está filtrado | `gitleaks git --pre-commit --redact` y `gitleaks git --redact --log-opts=origin/main..HEAD` | edición, completo |
 | Cobertura de lo nuevo | ≥ 80 % de las líneas ejecutables que cambiaron | Obliga a un test sin exigirlo para una línea de config | `node scripts/cobertura-de-lo-nuevo.mjs` sobre el lcov de `vitest --coverage` | tarea |
 | Dependencias | Ninguna vulnerabilidad conocida sin excepción anotada | osv-scanner no filtra por severidad; la excepción obliga a leer cada caso | `osv-scanner scan source -r .` | completo |
-| Bundle | JS de entrada ≤ 115,4 kB, CSS ≤ 17,7 kB, fondo 3D ≤ 195,6 kB (brotli; no sube) | Lo de hoy más 0,5 %: el JS de entrada es lo que la portada evalúa antes de pintar | `npx size-limit` (en `web`, después de `vite build`) | completo |
+| Bundle | JS de entrada ≤ 115,4 kB, CSS ≤ 17,9 kB, fondo 3D ≤ 195,6 kB (brotli; no sube) | Lo de hoy más 0,5 %: el JS de entrada es lo que la portada evalúa antes de pintar. El CSS subió 0,2 kB para pulir la bienvenida, aprobado por Emilio el 2026-09-25 | `npx size-limit` (en `web`, después de `vite build`) | completo |
 | Portada prerenderizada | `/` llega escrita en el HTML, hidrata sin errores ni violaciones de CSP, conserva el mismo `<h1>`, respeta el tema guardado, y ninguna otra ruta la trae | Si la hidratación no calza, React redibuja la portada y las animaciones arrancan dos veces; es un bug, no un aviso | `node web/scripts/comprobar-portada.mjs` (después del build) | completo |
 | Accesibilidad | Cero violaciones críticas o serias en `/` y `/entrar`, claro y oscuro | Las moderadas suelen ser discutibles; las graves dejan a alguien afuera | `node web/scripts/accesibilidad.mjs` sobre el `dist` local; con una URL, contra ese sitio (axe-core, WCAG 2.2 AA) | completo |
 
