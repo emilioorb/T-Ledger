@@ -39,5 +39,6 @@ import { ReconciliationController } from './infrastructure/reconciliation.contro
     MatchLineUseCase,
     LineToMovementUseCase,
   ],
+  exports: [ManageBankAccountsUseCase],
 })
 export class BankingModule {}

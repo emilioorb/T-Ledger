@@ -16,6 +16,7 @@ import { ProjectionModule } from './modules/projection/projection.module.js'
 import { DebtsModule } from './modules/debts/debts.module.js'
 import { MoneyModule } from './modules/money/money.module.js'
 import { AuditoriaModule } from './modules/auditoria/auditoria.module.js'
+import { OnboardingModule } from './modules/onboarding/onboarding.module.js'
 import { PrismaModule } from './shared/prisma/prisma.module.js'
 
 // ScheduleModule.forRoot() va una sola vez: declararlo en más de un módulo duplica
@@ -36,6 +37,7 @@ import { PrismaModule } from './shared/prisma/prisma.module.js'
     InvestmentsModule,
     ProjectionModule,
     BankingModule,
+    OnboardingModule,
     LibroModule,
     AdminModule,
     ArchivosModule,
