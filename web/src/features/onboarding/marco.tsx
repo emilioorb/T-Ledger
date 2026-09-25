@@ -20,6 +20,12 @@ interface Props {
 // a grilla, `flex-1` deja de valer y el panel queda centrado con un alto que no depende del paso:
 // cuadrado sobre el ancho máximo, 576 px. Así, y no con utilidades nuevas
 // por ancho, porque el CSS está en el límite del presupuesto y cada regla nueva lo pasa.
+//
+// El tope va en línea por lo mismo: sin él, en una pantalla baja y ancha (un teléfono
+// acostado, o el escritorio con zoom) el cuadrado medía más que la pantalla y el pie quedaba
+// afuera. Con el tope el panel nunca pasa del alto visible y el que se desplaza es el cuerpo.
+// En el teléfono no cambia nada: el panel ya mide exactamente eso.
+const TOPE = { maxHeight: '100dvh' }
 const FONDO = 'flex w-full max-w-full min-h-dvh flex-col bg-transparent p-0 sm:grid sm:items-center'
 const PANEL = 'mx-auto flex aspect-square w-full flex-1 flex-col overflow-hidden rounded-xl bg-popover ring-1 ring-foreground/10 sm:max-w-xl'
 
@@ -38,7 +44,7 @@ export const Marco = ({ actual, total, titulo, tituloRef, describedBy, onFuera, 
       if (evento.target === evento.currentTarget) onFuera()
     }}
   >
-    <div className={PANEL}>
+    <div className={PANEL} style={TOPE}>
       <DialogHeader className="gap-2 border-b px-4 pt-2 pb-3">
         <div className="flex items-center gap-3">
           <Progreso actual={actual} total={total} />
