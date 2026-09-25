@@ -17,7 +17,7 @@ export const Monedas = ({ valor, onCambio }: Props) => (
         ['CRC+USD', copy.monedas.ambas],
       ] as const
     ).map(([clave, texto]) => (
-      <Label key={clave} className="flex items-center gap-3 rounded-lg border border-border p-3 has-data-[state=checked]:border-primary">
+      <Label key={clave} className="flex items-center gap-3 rounded-lg border border-border p-3">
         <RadioGroupItem value={clave} />
         {texto}
       </Label>

@@ -4,6 +4,7 @@ import { copy } from '../copy'
 import { Bancos } from './bancos'
 import { Categorias } from './categorias'
 import { FORM_ID } from './intro'
+import { Ingreso } from './ingreso'
 import { Saldos } from './saldos'
 
 const enviar = () => fireEvent.submit(document.getElementById(FORM_ID) as HTMLFormElement)
@@ -33,6 +34,13 @@ describe('Bancos', () => {
     expect(screen.getByText('BN colones')).toBeInTheDocument()
     expect(screen.queryByRole('checkbox')).toBeNull()
   })
+
+  it('«Otro» no duplica un sugerido que difiere en mayúsculas o espacios', () => {
+    render(<Bancos hecho={undefined} onListo={vi.fn()} monedas={['CRC']} />)
+    fireEvent.change(screen.getByLabelText(copy.bancos.otro), { target: { value: '  bac   credomatic  ' } })
+    fireEvent.click(screen.getByRole('button', { name: copy.bancos.agregar }))
+    expect(screen.getAllByText(/bac credomatic/i)).toHaveLength(1)
+  })
 })
 
 describe('Saldos', () => {
@@ -61,6 +69,34 @@ describe('Saldos', () => {
     enviar()
     expect(onListo).not.toHaveBeenCalled()
     expect(screen.getByText(copy.saldos.cajaNegativa)).toBeVisible()
+  })
+
+  it.each(['₡150000', '150,000', '$1500'])('un monto ilegible (%s) no manda nada y muestra el error', (texto) => {
+    const onListo = vi.fn()
+    render(<Saldos hecho={undefined} onListo={onListo} monedas={['CRC']} bancos={[]} />)
+    fireEvent.change(screen.getByLabelText(copy.saldos.caja.CRC), { target: { value: texto } })
+    enviar()
+    expect(onListo).not.toHaveBeenCalled()
+    expect(screen.getByText(copy.montoIlegible)).toBeVisible()
+  })
+})
+
+describe('Ingreso', () => {
+  it('manda el monto en unidades mínimas', () => {
+    const onListo = vi.fn()
+    render(<Ingreso hecho={undefined} onListo={onListo} />)
+    fireEvent.change(screen.getByLabelText(copy.ingreso.label), { target: { value: '50000' } })
+    enviar()
+    expect(onListo).toHaveBeenCalledWith({ month: expect.stringMatching(/^\d{4}-\d{2}$/) as string, amount: { minorUnits: '5000000', currency: 'CRC' } })
+  })
+
+  it('un monto ilegible no manda nada y muestra el error', () => {
+    const onListo = vi.fn()
+    render(<Ingreso hecho={undefined} onListo={onListo} />)
+    fireEvent.change(screen.getByLabelText(copy.ingreso.label), { target: { value: '150,000' } })
+    enviar()
+    expect(onListo).not.toHaveBeenCalled()
+    expect(screen.getByText(copy.montoIlegible)).toBeVisible()
   })
 })
 
