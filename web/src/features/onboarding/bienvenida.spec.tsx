@@ -72,6 +72,44 @@ describe('Bienvenida', () => {
     expect(siguiente).not.toHaveAttribute('type', 'submit')
   })
 
+  it('el progreso dice en qué paso está, también al lector de pantalla', async () => {
+    conEstado({ pending: true, bookId: 'b1', steps: {} })
+    montar()
+    expect(await screen.findByRole('progressbar', { name: copy.progreso })).toHaveAttribute('aria-valuenow', '1')
+    fireEvent.click(screen.getByRole('button', { name: copy.botones.empezar }))
+    const progreso = screen.getByRole('progressbar', { name: copy.progreso })
+    expect(progreso).toHaveAttribute('aria-valuenow', '2')
+    expect(progreso).toHaveAttribute('aria-valuetext', copy.pasoDe(2, 7))
+  })
+
+  it('al abrir, el foco va al título del paso', async () => {
+    conEstado({ pending: true, bookId: 'b1', steps: {} })
+    montar()
+    const titulo = await screen.findByRole('heading', { name: copy.intro.title })
+    await waitFor(() => expect(titulo).toHaveFocus())
+  })
+
+  it('la cruz de cerrar pide confirmación', async () => {
+    conEstado({ pending: true, bookId: 'b1', steps: {} })
+    montar()
+    fireEvent.click(await screen.findByRole('button', { name: copy.botones.cerrar }))
+    expect(await screen.findByText(copy.cerrar.description)).toBeInTheDocument()
+  })
+
+  it('tocar el fondo alrededor del panel pide confirmación', async () => {
+    conEstado({ pending: true, bookId: 'b1', steps: {} })
+    montar()
+    fireEvent.pointerDown(await screen.findByRole('dialog'))
+    expect(await screen.findByText(copy.cerrar.description)).toBeInTheDocument()
+  })
+
+  it('tocar adentro del panel no pide confirmación', async () => {
+    conEstado({ pending: true, bookId: 'b1', steps: {} })
+    montar()
+    fireEvent.pointerDown(await screen.findByRole('heading', { name: copy.intro.title }))
+    expect(screen.queryByText(copy.cerrar.description)).toBeNull()
+  })
+
   it('cerrar pide confirmación', async () => {
     conEstado({ pending: true, bookId: 'b1', steps: {} })
     montar()

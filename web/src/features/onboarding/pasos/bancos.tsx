@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SYMBOL } from '@/lib/money'
 import { copy } from '../copy'
 import type { BancoCreado, Moneda } from '../types'
 import { alternar } from './alternar'
@@ -29,9 +30,11 @@ export const Bancos = ({ hecho, onListo, monedas }: Props) => {
 
   if (hecho) {
     return (
-      <ul className="space-y-1 text-sm">
+      <ul className="divide-y rounded-lg border text-sm">
         {hecho.map((banco) => (
-          <li key={banco.bankAccountId}>{banco.name}</li>
+          <li key={banco.bankAccountId} className="px-3 py-2">
+            {banco.name}
+          </li>
         ))}
       </ul>
     )
@@ -57,18 +60,20 @@ export const Bancos = ({ hecho, onListo, monedas }: Props) => {
 
   return (
     <form id={FORM_ID} onSubmit={enviar} className="space-y-3">
-      <ul className="grid gap-2">
+      {/* Una fila por banco y una casilla corta por moneda: con «Colones» y «Dólares» escritos,
+          la segunda se caía de renglón en el teléfono. El nombre completo va en aria-label. */}
+      <ul className="divide-y rounded-lg border">
         {nombres.map((name) => (
-          <li key={name} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border px-3 py-2">
-            <span className="min-w-32 text-sm font-medium">{name}</span>
+          <li key={name} className="flex items-center pl-3">
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
             {monedas.map((currency) => (
-              <Label key={currency} className="flex items-center gap-2 text-sm font-normal">
+              <Label key={currency} className="num h-11 px-3 font-normal sm:h-9">
                 <Checkbox
                   aria-label={`${name} · ${copy.bancos.moneda[currency]}`}
                   checked={marcados.has(clave(name, currency))}
                   onCheckedChange={() => marcar(clave(name, currency))}
                 />
-                {copy.bancos.moneda[currency]}
+                {SYMBOL[currency]}
               </Label>
             ))}
           </li>
@@ -76,6 +81,7 @@ export const Bancos = ({ hecho, onListo, monedas }: Props) => {
       </ul>
       <div className="flex gap-2">
         <Input
+          className="h-11 sm:h-9"
           value={otro}
           onChange={(evento) => setOtro(evento.target.value)}
           placeholder={copy.bancos.otroPlaceholder}
@@ -88,7 +94,7 @@ export const Bancos = ({ hecho, onListo, monedas }: Props) => {
             }
           }}
         />
-        <Button type="button" variant="outline" onClick={agregarOtro}>
+        <Button type="button" variant="outline" className="h-11 sm:h-9" onClick={agregarOtro}>
           {copy.bancos.agregar}
         </Button>
       </div>
