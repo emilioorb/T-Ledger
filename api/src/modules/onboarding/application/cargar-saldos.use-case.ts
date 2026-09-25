@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { SemanticValidationError } from '../../../shared/http/api-error.js'
+import { MAX_MINOR_UNITS } from '../../../shared/http/money.schema.js'
 import type { CurrencyCode } from '../../../shared/kernel/currency.js'
 import { CreateJournalEntryUseCase } from '../../accounting/application/create-journal-entry.use-case.js'
 import { CAJAS } from '../../accounting/infrastructure/cajas.js'
@@ -47,7 +48,9 @@ export class CargarSaldosUseCase {
         const currency = monedas.get(accountCode)
         if (!currency) throw new SemanticValidationError(`La cuenta ${accountCode} no es una caja ni un banco de la bienvenida.`)
         // Una caja no se sobregira: un negativo ahí es un error de tipeo, no un saldo.
-        if (monto < 0n && accountCode in CAJAS) throw new SemanticValidationError('El efectivo no puede quedar en negativo.')
+        if (monto < 0n && Object.hasOwn(CAJAS, accountCode)) {
+          throw new SemanticValidationError('El efectivo no puede quedar en negativo.')
+        }
 
         porMoneda.set(currency, [...(porMoneda.get(currency) ?? []), linea(accountCode, monto, currency, 'DEBIT', 'CREDIT')])
         netos.set(currency, (netos.get(currency) ?? 0n) + monto)
@@ -56,6 +59,11 @@ export class CargarSaldosUseCase {
       const entries: SaldosCargados['entries'] = []
       for (const [currency, lineas] of porMoneda) {
         const neto = netos.get(currency) ?? 0n
+        // Cada monto ya respeta el tope por separado, pero la suma de hasta cien no: sin este
+        // chequeo, Aportes podía terminar con un monto que ni siquiera `moneySchema` deja pasar.
+        if ((neto < 0n ? -neto : neto) > MAX_MINOR_UNITS) {
+          throw new SemanticValidationError(`El neto en ${currency} supera el máximo que el sistema puede sumar.`)
+        }
         // Con neto cero Aportes no se mueve, y una línea en cero la rechaza el asiento.
         const contrapartida = neto === 0n ? [] : [linea(APORTES, neto, currency, 'CREDIT', 'DEBIT')]
         const asiento = await this.asientos.execute({

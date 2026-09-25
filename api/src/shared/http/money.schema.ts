@@ -17,8 +17,9 @@ const ENTERO = /^-?\d+$/
 // es por donde se escapó uno a Sentry el 21/09/2026.
 //
 // Devuelve `true` cuando el formato es inválido porque de ese error ya se encarga el regex:
-// este check solo opina del rango.
-const withinRange = (minorUnits: string): boolean => {
+// este check solo opina del rango. Se exporta porque quien arma un monto a mano, sin pasar por
+// `moneySchema` (como el saldo inicial de la bienvenida), igual tiene que respetar el mismo tope.
+export const withinRange = (minorUnits: string): boolean => {
   if (!ENTERO.test(minorUnits)) return true
   const value = BigInt(minorUnits)
   return value <= MAX_MINOR_UNITS && value >= -MAX_MINOR_UNITS

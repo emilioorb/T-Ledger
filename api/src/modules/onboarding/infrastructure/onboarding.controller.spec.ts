@@ -221,4 +221,68 @@ describe('saldos iniciales', () => {
     expect(segunda.body).toEqual(primera.body)
     expect(await prisma.client.journalEntry.count()).toBe(1)
   })
+
+  it('un monto por encima del tope del sistema da 400', async () => {
+    await pedir
+      .post('/opening-balances', { date: '2026-09-25', balances: [{ accountCode: '1101', amount: '200000000000000' }] })
+      .expect(400)
+  })
+
+  it('la suma de montos válidos por encima del tope da 422', async () => {
+    await pedir.post('/banks', { banks: [{ name: 'BAC', currency: 'CRC' }] }).expect(201)
+    await pedir
+      .post('/opening-balances', {
+        date: '2026-09-25',
+        balances: [
+          { accountCode: '1101', amount: '60000000000000' },
+          { accountCode: '1121', amount: '60000000000000' },
+        ],
+      })
+      .expect(422)
+  })
+
+  it('un sobregiro de banco mayor a la caja deja Aportes al debe con el neto negativo', async () => {
+    await pedir.post('/banks', { banks: [{ name: 'BAC', currency: 'CRC' }] }).expect(201)
+    await pedir
+      .post('/opening-balances', {
+        date: '2026-09-25',
+        balances: [
+          { accountCode: '1101', amount: '100' },
+          { accountCode: '1121', amount: '-500' },
+        ],
+      })
+      .expect(201)
+    expect(await lineas('CRC')).toEqual(
+      expect.arrayContaining([
+        { accountCode: '1101', side: 'DEBIT', amountMinor: 100n },
+        { accountCode: '1121', side: 'CREDIT', amountMinor: 500n },
+        { accountCode: '3110', side: 'DEBIT', amountMinor: 400n },
+      ]),
+    )
+  })
+
+  it('CRC y USD en el mismo pedido dan un asiento por moneda', async () => {
+    const { body } = await pedir
+      .post('/opening-balances', {
+        date: '2026-09-25',
+        balances: [
+          { accountCode: '1101', amount: '100' },
+          { accountCode: '1102', amount: '50' },
+        ],
+      })
+      .expect(201)
+    expect(body.entries).toHaveLength(2)
+    expect((body.entries as { currency: string }[]).map((entry) => entry.currency).sort()).toEqual(['CRC', 'USD'])
+    expect(await lineas('USD')).toEqual(
+      expect.arrayContaining([
+        { accountCode: '1102', side: 'DEBIT', amountMinor: 50n },
+        { accountCode: '3110', side: 'CREDIT', amountMinor: 50n },
+      ]),
+    )
+  })
+
+  it('un editor recibe 403', async () => {
+    comoEditor()
+    await pedir.post('/opening-balances', { date: '2026-09-25', balances: [{ accountCode: '1101', amount: '5' }] }).expect(403)
+  })
 })
