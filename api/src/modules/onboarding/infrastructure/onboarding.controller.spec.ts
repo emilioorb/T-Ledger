@@ -159,3 +159,66 @@ describe('bancos', () => {
     await pedir.post('/banks', bancos).expect(403)
   })
 })
+
+describe('saldos iniciales', () => {
+  const lineas = async (currency: string) =>
+    prisma.client.journalLine.findMany({ where: { currency }, select: { accountCode: true, side: true, amountMinor: true } })
+
+  it('un asiento por moneda, contra Aportes, con sobregiro al haber', async () => {
+    await pedir.post('/banks', { banks: [{ name: 'BAC', currency: 'CRC' }, { name: 'BN', currency: 'CRC' }] }).expect(201)
+    const { body } = await pedir
+      .post('/opening-balances', {
+        date: '2026-09-25',
+        balances: [
+          { accountCode: '1101', amount: '50000' },
+          { accountCode: '1121', amount: '300000' },
+          { accountCode: '1122', amount: '-20000' },
+        ],
+      })
+      .expect(201)
+    expect(body.entries).toHaveLength(1)
+    expect(await lineas('CRC')).toEqual(
+      expect.arrayContaining([
+        { accountCode: '1101', side: 'DEBIT', amountMinor: 50000n },
+        { accountCode: '1121', side: 'DEBIT', amountMinor: 300000n },
+        { accountCode: '1122', side: 'CREDIT', amountMinor: 20000n },
+        { accountCode: '3110', side: 'CREDIT', amountMinor: 330000n },
+      ]),
+    )
+  })
+
+  it('una caja en negativo da 422', async () => {
+    await pedir.post('/opening-balances', { date: '2026-09-25', balances: [{ accountCode: '1101', amount: '-1' }] }).expect(422)
+  })
+
+  it('neto cero no lleva contrapartida', async () => {
+    await pedir.post('/banks', { banks: [{ name: 'BAC', currency: 'CRC' }] }).expect(201)
+    await pedir
+      .post('/opening-balances', { date: '2026-09-25', balances: [{ accountCode: '1101', amount: '100' }, { accountCode: '1121', amount: '-100' }] })
+      .expect(201)
+    expect((await lineas('CRC')).map((linea) => linea.accountCode).sort()).toEqual(['1101', '1121'])
+  })
+
+  it('los ceros se ignoran y sin nada que asentar no hay asientos', async () => {
+    const { body } = await pedir.post('/opening-balances', { date: '2026-09-25', balances: [{ accountCode: '1101', amount: '0' }] }).expect(201)
+    expect(body.entries).toEqual([])
+  })
+
+  it('una cuenta que no es caja ni banco de la bienvenida da 422', async () => {
+    await pedir.post('/opening-balances', { date: '2026-09-25', balances: [{ accountCode: '1111', amount: '5' }] }).expect(422)
+  })
+
+  it('una cuenta repetida en el pedido da 400', async () => {
+    await pedir
+      .post('/opening-balances', { date: '2026-09-25', balances: [{ accountCode: '1101', amount: '5' }, { accountCode: '1101', amount: '6' }] })
+      .expect(400)
+  })
+
+  it('repetido no duplica el asiento', async () => {
+    const pedido = { date: '2026-09-25', balances: [{ accountCode: '1101', amount: '5' }] }
+    const primera = await pedir.post('/opening-balances', pedido).expect(201)
+    const segunda = await pedir.post('/opening-balances', pedido).expect(201)
+    expect(segunda.body).toEqual(primera.body)
+    expect(await prisma.client.journalEntry.count()).toBe(1)
+  })
+})
