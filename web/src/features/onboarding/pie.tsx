@@ -56,7 +56,7 @@ const Acciones = ({ paso, conFormulario, ocupado, conError, onAvanzar, onIr }: O
   return (
     <>
       <Button variant="ghost" className={`${TACTIL} text-muted-foreground`} onClick={onAvanzar} disabled={ocupado}>
-        {copy.botones.saltear}
+        {copy.botones.saltar}
       </Button>
       <Button key={paso} type="submit" form={FORM_ID} className={`${PRINCIPAL} ${SEGUNDO}`} disabled={ocupado}>
         {conError ? copy.botones.reintentar : copy.botones.siguiente}
