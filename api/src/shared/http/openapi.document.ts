@@ -9,6 +9,7 @@ import { goalsOpenApiPaths } from '../../modules/goals/infrastructure/goals.open
 import { investmentsOpenApiPaths } from '../../modules/investments/infrastructure/investments.openapi.js'
 import { libroOpenApiPaths } from '../../modules/libro/infrastructure/libro.openapi.js'
 import { exchangeRatesOpenApiPaths } from '../../modules/money/infrastructure/exchange-rates.openapi.js'
+import { onboardingOpenApiPaths } from '../../modules/onboarding/infrastructure/onboarding.openapi.js'
 import { projectionOpenApiPaths } from '../../modules/projection/infrastructure/projection.openapi.js'
 
 // Fuera de `main.ts` para que se pueda armar sin levantar el servidor. El front genera sus
@@ -34,6 +35,7 @@ export const openApiDocument: ReturnType<typeof createDocument> = createDocument
     ...bankingOpenApiPaths,
     ...auditoriaOpenApiPaths,
     ...libroOpenApiPaths,
+    ...onboardingOpenApiPaths,
     ...adminOpenApiPaths,
   },
 })

@@ -333,3 +333,22 @@ describe('categorías', () => {
     await pedir.post('/categories', { categories: [{ name: 'Casa', kind: 'EXPENSE' }] }).expect(403)
   })
 })
+
+describe('ingreso', () => {
+  it('declara el ingreso del mes y repetido devuelve lo mismo', async () => {
+    const pedido = { month: '2026-09', amount: { minorUnits: '85000000', currency: 'CRC' } }
+    const primera = await pedir.post('/income', pedido).expect(201)
+    expect(primera.body).toEqual(pedido)
+    const segunda = await pedir.post('/income', { ...pedido, amount: { minorUnits: '1', currency: 'CRC' } }).expect(201)
+    expect(segunda.body).toEqual(pedido)
+  })
+
+  it('un mes con otra forma da 400', async () => {
+    await pedir.post('/income', { month: '2026-13', amount: { minorUnits: '1', currency: 'CRC' } }).expect(400)
+  })
+
+  it('un editor recibe 403', async () => {
+    comoEditor()
+    await pedir.post('/income', { month: '2026-09', amount: { minorUnits: '1', currency: 'CRC' } }).expect(403)
+  })
+})

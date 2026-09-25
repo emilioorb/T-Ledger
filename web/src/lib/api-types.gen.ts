@@ -3031,6 +3031,257 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Si la bienvenida está pendiente, en qué libro y qué pasos ya se hicieron */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Estado de la bienvenida */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OnboardingStatus"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marca la bienvenida como vista: se muestra una sola vez */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Marcada */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/banks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Crea la cuenta contable y la cuenta bancaria de cada banco */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OnboardingBanksInput"];
+                };
+            };
+            responses: {
+                /** @description Bancos creados */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OnboardingBank"][];
+                    };
+                };
+                /** @description Regla del plan de cuentas */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/opening-balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Asienta los saldos de hoy contra Aportes, un asiento por moneda */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OpeningBalancesInput"];
+                };
+            };
+            responses: {
+                /** @description Asientos de apertura */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OpeningBalancesResult"];
+                    };
+                };
+                /** @description Cuenta o monto no válidos */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Crea cada categoría con su propia cuenta */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OnboardingCategoriesInput"];
+                };
+            };
+            responses: {
+                /** @description Categorías creadas */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OnboardingCategory"][];
+                    };
+                };
+                /** @description Nombre repetido */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding/income": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Declara el ingreso del mes */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OnboardingIncomeInput"];
+                };
+            };
+            responses: {
+                /** @description Ingreso declarado */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OnboardingIncome"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/me": {
         parameters: {
             query?: never;
@@ -3425,7 +3676,7 @@ export interface components {
         /** MonthlyIncomeInput */
         MonthlyIncomeInput: {
             amount: components["schemas"]["NonNegativeMoney"];
-            version?: number;
+            version?: number | null;
         };
         /** NonNegativeMoney */
         NonNegativeMoney: components["schemas"]["Money"];
@@ -3609,6 +3860,35 @@ export interface components {
         /** VaciarLibro */
         VaciarLibro: {
             password: string;
+        };
+        /** OnboardingBanksInput */
+        OnboardingBanksInput: {
+            banks: {
+                name: string;
+                /** @enum {string} */
+                currency: "CRC" | "USD";
+            }[];
+        };
+        /** OpeningBalancesInput */
+        OpeningBalancesInput: {
+            date: string;
+            balances: {
+                accountCode: string;
+                amount: string;
+            }[];
+        };
+        /** OnboardingCategoriesInput */
+        OnboardingCategoriesInput: {
+            categories: {
+                name: string;
+                /** @enum {string} */
+                kind: "EXPENSE" | "INCOME";
+            }[];
+        };
+        /** OnboardingIncomeInput */
+        OnboardingIncomeInput: {
+            month: string;
+            amount: components["schemas"]["NonNegativeMoney"];
         };
         /** InvitarALaAppInput */
         InvitarALaAppInput: {
@@ -4083,6 +4363,43 @@ export interface components {
                 [key: string]: number;
             };
             total: number;
+        };
+        /** OnboardingStatus */
+        OnboardingStatus: {
+            pending: boolean;
+            bookId: string;
+            steps: {
+                [key: string]: unknown;
+            };
+        };
+        /** OnboardingBank */
+        OnboardingBank: {
+            name: string;
+            /** @enum {string} */
+            currency: "CRC" | "USD";
+            accountCode: string;
+            bankAccountId: string;
+        };
+        /** OpeningBalancesResult */
+        OpeningBalancesResult: {
+            entries: {
+                /** @enum {string} */
+                currency: "CRC" | "USD";
+                journalEntryId: string;
+            }[];
+        };
+        /** OnboardingCategory */
+        OnboardingCategory: {
+            name: string;
+            /** @enum {string} */
+            kind: "EXPENSE" | "INCOME";
+            accountCode: string;
+            categoryId: string;
+        };
+        /** OnboardingIncome */
+        OnboardingIncome: {
+            month: string;
+            amount: components["schemas"]["MoneyOutput"];
         };
         /** SoyAdmin */
         SoyAdmin: {
