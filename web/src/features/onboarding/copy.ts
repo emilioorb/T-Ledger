@@ -1,0 +1,78 @@
+// Tono de PRODUCT.md: directo, sin felicitar de más. Nimbo habla en segunda persona y en voseo.
+export const copy = {
+  title: 'Bienvenida',
+  pasoDe: (actual: number, total: number) => `Paso ${actual} de ${total}`,
+  botones: {
+    siguiente: 'Siguiente',
+    saltear: 'Saltear',
+    atras: 'Atrás',
+    reintentar: 'Reintentar',
+    empezar: 'Empezar',
+    cerrar: 'Cerrar',
+  },
+  cerrar: {
+    title: '¿Cerrar la bienvenida?',
+    description: 'Lo que ya confirmaste queda. La bienvenida no vuelve a aparecer.',
+    confirmar: 'Cerrar',
+    seguir: 'Seguir',
+  },
+  hecho: 'Hecho',
+  intro: {
+    title: 'Soy Nimbo',
+    nimbo:
+      'Te ayudo a dejar el libro listo en cinco pasos: tus monedas, tus bancos, lo que tenés hoy, en qué gastás y cuánto entra este mes. Cualquiera se puede saltear.',
+  },
+  monedas: {
+    title: 'Monedas',
+    nimbo: '¿Manejás dólares o solo colones?',
+    soloColones: 'Solo colones',
+    ambas: 'Colones y dólares',
+  },
+  bancos: {
+    title: 'Bancos',
+    nimbo: 'Cada banco que uses es una cuenta. Contra ella vas a conciliar el estado de cuenta.',
+    sugeridos: ['BAC Credomatic', 'BCR', 'BN', 'Promerica', 'Davivienda', 'Banco Popular'],
+    otro: 'Otro banco',
+    otroPlaceholder: 'Nombre del banco',
+    agregar: 'Agregar',
+    moneda: { CRC: 'Colones', USD: 'Dólares' },
+    vacio: 'Elegí al menos un banco, o salteá el paso.',
+  },
+  saldos: {
+    title: 'Saldos de hoy',
+    nimbo: 'Pasame el saldo de hoy, tal cual lo dice el banco. Si una cuenta está sobregirada, ponelo en negativo.',
+    caja: { CRC: 'Efectivo en colones', USD: 'Efectivo en dólares' },
+    sinBancos: 'Sin bancos creados, solo se carga el efectivo.',
+  },
+  categorias: {
+    title: 'Categorías',
+    nimbo: 'Cada categoría es una cuenta, así los reportes te dicen en qué se fue la plata. Desmarcá las que no usás.',
+    gasto: 'Gastos',
+    ingreso: 'Ingresos',
+    sugeridas: {
+      EXPENSE: ['Supermercado', 'Casa', 'Servicios', 'Transporte', 'Salud', 'Comidas afuera', 'Entretenimiento', 'Suscripciones', 'Educación'],
+      INCOME: ['Salario', 'Otros ingresos'],
+    },
+    propia: 'Agregar una propia',
+    propiaPlaceholder: 'Nombre',
+    tipo: { EXPENSE: 'Gasto', INCOME: 'Ingreso' },
+  },
+  ingreso: {
+    title: 'Ingreso del mes',
+    nimbo: '¿Cuánto entra este mes? Con eso se mide el presupuesto. El reparto lo armás después, en Modelos.',
+    label: 'Ingreso de este mes',
+  },
+  cierre: {
+    title: 'Listo',
+    nimbo: 'Tu libro quedó armado. Si querés saber qué hace cada pantalla, la guía lo cuenta.',
+    resumen: {
+      bancos: (n: number) => (n === 1 ? '1 banco' : `${n} bancos`),
+      categorias: (n: number) => (n === 1 ? '1 categoría' : `${n} categorías`),
+      saldos: 'Saldos de hoy cargados',
+      ingreso: 'Ingreso del mes declarado',
+      nada: 'No cargaste nada todavía: todo se puede hacer desde su pantalla.',
+    },
+    guia: 'Leer la guía',
+    modelos: 'Armar el reparto',
+  },
+} as const
