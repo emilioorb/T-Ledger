@@ -14,6 +14,8 @@ import { PermisoGuard } from './infrastructure/permiso.guard.js'
 import { rastroDeMiembros } from './infrastructure/rastro-de-miembros.js'
 import { LibroPropioAlBorrarse } from './application/libro-propio-al-borrarse.listener.js'
 import { VerificadorDeContrasena } from './infrastructure/verificador-de-contrasena.js'
+import { MARCA_DE_BIENVENIDA } from './domain/marca-de-bienvenida.port.js'
+import { PrismaMarcaDeBienvenida } from './infrastructure/prisma-marca-de-bienvenida.js'
 
 // Global porque el middleware del libro corre sobre todas las rutas y la guardia de permiso se
 // registra una vez para toda la aplicación: son infraestructura transversal, no un servicio
@@ -55,8 +57,14 @@ import { VerificadorDeContrasena } from './infrastructure/verificador-de-contras
     VerificadorDeContrasena,
     { provide: APP_GUARD, useClass: PermisoGuard },
     LibroPropioAlBorrarse,
+    // Sin filtro de libro: la marca es de la persona.
+    {
+      provide: MARCA_DE_BIENVENIDA,
+      inject: [PrismaService],
+      useFactory: (prisma: PrismaService) => new PrismaMarcaDeBienvenida(prisma.clientSinFiltroDeLibro),
+    },
   ],
-  exports: [AUTH, VerificadorDeContrasena, EnlacesDeInvitacion],
+  exports: [AUTH, VerificadorDeContrasena, EnlacesDeInvitacion, MARCA_DE_BIENVENIDA],
 })
 export class IdentityModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
