@@ -8,6 +8,14 @@ Cada entrega abre con `## AAAA-MM-DD · vX.Y.Z` y lleva hasta tres grupos: `### 
 listas anidadas y tablas. La negrita marca **de qué** habla cada nota, para recorrer la lista
 sin leerla entera. Lo que está antes de la primera entrega, como este texto, no se muestra.
 
+## 2026-10-10 · v1.5.1
+
+### Corregido
+
+- **Los aportes a metas en la Proyección.** Cada meta pide la misma cuota todos los meses
+  hasta su fecha deseada y después deja de pedir plata. Antes, la cuota subía mes a mes y,
+  pasada la fecha, volvía a pedir todo lo que faltaba en cada mes.
+
 ## 2026-09-25 · v1.5.0
 
 ### Nuevo

@@ -89,7 +89,7 @@ export class CashFlowProjectionUseCase {
       }
 
       const goalContributions = goals.reduce(
-        (acc, goal) => unwrap(acc.add(goal.requiredMonthlyContribution(firstDayOf(year, month)))),
+        (acc, goal) => unwrap(acc.add(goal.plannedContributionIn(firstDayOf(year, month), from))),
         zero,
       )
 

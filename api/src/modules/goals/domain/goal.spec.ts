@@ -128,3 +128,45 @@ describe('una meta en pausa', () => {
     expect(reactivada.requiredMonthlyContribution(utc('2026-09-01')).isZero()).toBe(false)
   })
 })
+
+describe('el aporte planeado de cada mes proyectado', () => {
+  const metaPara = (desiredDate: string, minorUnits: bigint, extra: Partial<GoalProps> = {}) =>
+    unwrap(Goal.create({ ...props, target: crc(minorUnits), desiredDate: utc(desiredDate), ...extra }))
+
+  const plan = (goal: Goal, from: string, meses: string[]) =>
+    meses.map((mes) => goal.plannedContributionIn(utc(mes), utc(from)).minorUnits)
+
+  it('repite la misma cuota hasta el mes anterior a la fecha deseada, también al cambiar de año', () => {
+    const goal = metaPara('2027-02-10', 300_000_00n)
+
+    expect(
+      plan(goal, '2026-11-30', ['2026-11-01', '2026-12-01', '2027-01-01', '2027-02-01', '2027-03-01']),
+    ).toEqual([100_000_00n, 100_000_00n, 100_000_00n, 0n, 0n])
+  })
+
+  it('con la fecha deseada en el mes en curso pide el saldo una vez y después nada', () => {
+    const goal = metaPara('2026-10-25', 500_000_00n)
+
+    expect(plan(goal, '2026-10-11', ['2026-10-01', '2026-11-01', '2026-12-01'])).toEqual([500_000_00n, 0n, 0n])
+  })
+
+  it('con la fecha deseada vencida pide el saldo solo en el primer mes', () => {
+    const goal = metaPara('2026-06-01', 500_000_00n)
+
+    expect(plan(goal, '2026-10-01', ['2026-10-01', '2026-11-01'])).toEqual([500_000_00n, 0n])
+  })
+
+  it('no planea nada para un mes anterior al inicio', () => {
+    const goal = metaPara('2027-02-10', 300_000_00n)
+
+    expect(plan(goal, '2026-11-01', ['2026-10-01'])).toEqual([0n])
+  })
+
+  it('una meta en pausa o cumplida no planea aportes', () => {
+    const enPausa = metaPara('2027-02-10', 300_000_00n, { active: false })
+    const cumplida = metaPara('2027-02-10', 300_000_00n, { contributions: [aporte('2026-09-01', 300_000_00n)] })
+
+    expect(plan(enPausa, '2026-11-01', ['2026-11-01', '2026-12-01'])).toEqual([0n, 0n])
+    expect(plan(cumplida, '2026-11-01', ['2026-11-01', '2026-12-01'])).toEqual([0n, 0n])
+  })
+})

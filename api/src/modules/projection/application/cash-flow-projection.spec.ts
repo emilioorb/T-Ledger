@@ -149,6 +149,54 @@ describe('CashFlowProjectionUseCase', () => {
     expect(flow[0]?.committed.minorUnits).toBe(200_000_00n)
   })
 
+  it('reparte lo que falta en cuotas iguales hasta la fecha deseada y después no pide más', async () => {
+    // El caso de producción: faltan 500.000 para el 25 de diciembre, mirando desde octubre.
+    goals.findAll.mockResolvedValue([
+      unwrap(
+        Goal.create({
+          id: 'ps5',
+          name: 'Play Station 5',
+          target: crc(500_000_00n),
+          desiredDate: utc('2026-12-25'),
+          priority: 1,
+          accountCode: null,
+          contributions: [],
+        }),
+      ),
+    ])
+
+    const flow = await useCase.execute(6, utc('2026-10-11'))
+
+    expect(flow.map((mes) => mes.goalContributions.minorUnits)).toEqual([
+      250_000_00n,
+      250_000_00n,
+      0n,
+      0n,
+      0n,
+      0n,
+    ])
+  })
+
+  it('una meta con la fecha deseada vencida pide el saldo una sola vez, no cada mes', async () => {
+    goals.findAll.mockResolvedValue([
+      unwrap(
+        Goal.create({
+          id: 'vencida',
+          name: 'Vencida',
+          target: crc(300_000_00n),
+          desiredDate: utc('2026-08-01'),
+          priority: 1,
+          accountCode: null,
+          contributions: [],
+        }),
+      ),
+    ])
+
+    const flow = await useCase.execute(3, utc('2026-10-01'))
+
+    expect(flow.map((mes) => mes.goalContributions.minorUnits)).toEqual([300_000_00n, 0n, 0n])
+  })
+
   it('el excedente es ingreso menos comprometido, y puede ser negativo', async () => {
     goals.findAll.mockResolvedValue([metaConAporteMensual(200_000_00n)])
 

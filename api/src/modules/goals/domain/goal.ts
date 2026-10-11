@@ -128,6 +128,21 @@ export class Goal {
     return Money.fromDecimal(remaining.toDecimal().div(months), remaining.currency)
   }
 
+  // La cuota se fija en `from` y se repite solo en los meses antes de la fecha deseada. Si
+  // esa fecha ya llegó al empezar, el saldo va una sola vez, en el primer mes.
+  plannedContributionIn(month: Date, from: Date): Money {
+    const zero = Money.zero(this.props.target.currency)
+    const monthsFromStart = monthsBetween(from, month)
+    if (monthsFromStart < 0) return zero
+
+    const dueAtStart = monthsBetween(from, this.props.desiredDate) <= 0
+    const asksForMoney = dueAtStart
+      ? monthsFromStart === 0
+      : monthsBetween(month, this.props.desiredDate) > 0
+
+    return asksForMoney ? this.requiredMonthlyContribution(from) : zero
+  }
+
   // El ritmo que Emilio lleva de verdad, no el que se propuso: total aportado sobre los
   // meses transcurridos desde el primer aporte.
   observedMonthlyPace(from: Date): Money | null {
